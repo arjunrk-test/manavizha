@@ -21,12 +21,12 @@ export function AnimatedGradientText({
     >
       <div
         className={cn(
-          "absolute inset-0 block h-full w-full animate-gradient rounded-full bg-gradient-to-r from-violet-500/20 via-purple-500/20 to-amber-500/20 bg-[length:var(--bg-size)_100%] p-[1px] ![mask-composite:subtract] [border-radius:inherit] [mask:linear-gradient(#fff_0_0)_content-box,linear-gradient(#fff_0_0)]",
+          "absolute inset-0 block h-full w-full animate-gradient rounded-full bg-gradient-to-r from-[#1F4068]/20 via-[#4B0082]/20 to-[#FF1493]/20 bg-[length:var(--bg-size)_100%] p-[1px] ![mask-composite:subtract] [border-radius:inherit] [mask:linear-gradient(#fff_0_0)_content-box,linear-gradient(#fff_0_0)]",
         )}
         style={{ '--bg-size': '300%' } as React.CSSProperties}
       />
 
-      <span className="relative z-10 bg-gradient-to-r from-violet-600 via-purple-600 to-amber-600 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+      <span className="relative z-10 bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
         {children}
       </span>
     </motion.div>

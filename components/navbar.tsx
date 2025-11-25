@@ -39,9 +39,9 @@ export function Navbar() {
               whileHover={{ rotate: [0, -10, 10, -10, 0] }}
               transition={{ duration: 0.5 }}
             >
-              <Heart className="h-5 w-5 text-violet-600 fill-violet-600" />
+              <Heart className="h-5 w-5 text-[#1F4068] fill-[#1F4068]" />
             </motion.div>
-            <span className="text-xl font-bold bg-gradient-to-r from-violet-600 via-purple-600 to-amber-600 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+            <span className="text-xl font-bold bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
               Manavizha
             </span>
           </motion.div>
@@ -54,10 +54,10 @@ export function Navbar() {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="text-gray-700 dark:text-gray-300 hover:text-violet-600 transition-colors font-medium relative group"
+                className="text-gray-700 dark:text-gray-300 hover:text-[#1F4068] transition-colors font-medium relative group"
               >
                 {item}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-violet-600 to-purple-600 group-hover:w-full transition-all duration-300" />
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#1F4068] to-[#4B0082] group-hover:w-full transition-all duration-300" />
               </motion.a>
             ))}
             <motion.div
@@ -67,7 +67,7 @@ export function Navbar() {
               className="flex items-center gap-3"
             >
               <Button variant="ghost" size="sm">Login</Button>
-              <Button className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 rounded-full">
+              <Button className="bg-gradient-to-r from-[#1F4068] to-[#4B0082] hover:from-[#1F4068]/90 hover:to-[#4B0082]/90 rounded-full">
                 Sign Up
               </Button>
             </motion.div>
@@ -116,7 +116,7 @@ export function Navbar() {
                 <a
                   key={item}
                   href={`#${item.toLowerCase()}`}
-                  className="block text-gray-700 dark:text-gray-300 hover:text-violet-600 transition-colors font-medium py-2"
+                  className="block text-gray-700 dark:text-gray-300 hover:text-[#1F4068] transition-colors font-medium py-2"
                   onClick={() => setIsOpen(false)}
                 >
                   {item}
@@ -124,7 +124,7 @@ export function Navbar() {
               ))}
               <div className="flex gap-2 pt-2">
                 <Button variant="ghost" size="sm" className="flex-1">Login</Button>
-                <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600">Sign Up</Button>
+                <Button size="sm" className="flex-1 bg-gradient-to-r from-[#1F4068] to-[#4B0082]">Sign Up</Button>
               </div>
             </motion.div>
           )}

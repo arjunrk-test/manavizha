@@ -53,6 +53,11 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Custom brand colors
+        ocean: "#1F4068",
+        violet: "#4B0082",
+        pink: "#FF1493",
+        orange: "#FFA500",
       },
       borderRadius: {
         lg: "var(--radius)",

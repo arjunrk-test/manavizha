@@ -8,7 +8,7 @@ export function CTASection() {
   return (
     <section className="py-32 relative overflow-hidden">
       {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-r from-violet-600 via-purple-600 via-amber-600 to-violet-600 bg-[length:200%_auto] animate-gradient" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
       
       {/* Overlay pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
@@ -81,9 +81,9 @@ export function CTASection() {
             className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
             <Button
-              className="rounded-full bg-white text-violet-600 hover:bg-gray-100 shadow-lg hover:shadow-xl transition-all duration-200"
+              className="rounded-full bg-white text-[#1F4068] hover:bg-gray-100 shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              <Heart className="h-4 w-4 fill-violet-600" />
+              <Heart className="h-4 w-4 fill-[#1F4068]" />
               Create Free Profile
             </Button>
             <Button
