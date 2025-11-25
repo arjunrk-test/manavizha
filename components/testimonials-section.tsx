@@ -62,51 +62,81 @@ export function TestimonialsSection() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
-            <motion.div
-              key={testimonial.name}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              whileHover={{ y: -4 }}
-            >
-              <Card className="h-full border-0 shadow-xl hover:shadow-2xl transition-all duration-200 bg-white/95 dark:bg-gray-800/95 overflow-hidden relative group">
-                {/* Decorative gradient */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493]" />
-                
-                <CardContent className="p-8">
-                  <div className="text-5xl mb-4">{testimonial.image}</div>
-                  <Quote className="h-8 w-8 text-[#1F4068]/50 mb-4" />
-                  <p className="text-gray-700 dark:text-gray-300 mb-6 italic text-lg leading-relaxed">
-                    "{testimonial.text}"
-                  </p>
-                  <div className="flex items-center gap-1 mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, scale: 0 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: index * 0.1 + i * 0.05 }}
-                      >
-                        <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                      </motion.div>
-                    ))}
-                  </div>
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <div className="font-bold text-gray-900 dark:text-gray-100 text-lg mb-1">
-                      {testimonial.name}
+        {/* Auto-scrolling carousel container */}
+        <div className="relative overflow-hidden">
+          <div className="flex gap-6 animate-scroll">
+            {/* First set of testimonials */}
+            {testimonials.map((testimonial, index) => (
+              <div
+                key={`first-${testimonial.name}`}
+                className="flex-shrink-0 w-[85vw] sm:w-[400px] md:w-[450px] lg:w-[380px] group relative"
+              >
+                <Card className="h-full border-0 shadow-xl hover:shadow-2xl transition-all duration-200 bg-white/95 dark:bg-gray-800/95 overflow-hidden relative">
+                  {/* Decorative gradient */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493]" />
+                  
+                  <CardContent className="p-8">
+                    <div className="text-5xl mb-4">{testimonial.image}</div>
+                    <Quote className="h-8 w-8 text-[#1F4068]/50 mb-4" />
+                    <p className="text-gray-700 dark:text-gray-300 mb-6 italic text-lg leading-relaxed">
+                      "{testimonial.text}"
+                    </p>
+                    <div className="flex items-center gap-1 mb-4">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <div key={i}>
+                          <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                        </div>
+                      ))}
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      {testimonial.location}
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div className="font-bold text-gray-900 dark:text-gray-100 text-lg mb-1">
+                        {testimonial.name}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        {testimonial.location}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+                  </CardContent>
+                </Card>
+              </div>
+            ))}
+            
+            {/* Duplicate set for seamless loop */}
+            {testimonials.map((testimonial, index) => (
+              <div
+                key={`second-${testimonial.name}`}
+                className="flex-shrink-0 w-[85vw] sm:w-[400px] md:w-[450px] lg:w-[380px] group relative"
+              >
+                <Card className="h-full border-0 shadow-xl hover:shadow-2xl transition-all duration-200 bg-white/95 dark:bg-gray-800/95 overflow-hidden relative">
+                  {/* Decorative gradient */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493]" />
+                  
+                  <CardContent className="p-8">
+                    <div className="text-5xl mb-4">{testimonial.image}</div>
+                    <Quote className="h-8 w-8 text-[#1F4068]/50 mb-4" />
+                    <p className="text-gray-700 dark:text-gray-300 mb-6 italic text-lg leading-relaxed">
+                      "{testimonial.text}"
+                    </p>
+                    <div className="flex items-center gap-1 mb-4">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <div key={i}>
+                          <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div className="font-bold text-gray-900 dark:text-gray-100 text-lg mb-1">
+                        {testimonial.name}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        {testimonial.location}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

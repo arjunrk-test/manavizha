@@ -87,49 +87,129 @@ export function FeaturesSection() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => {
-            const Icon = feature.icon
-            return (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-                whileHover={{ y: -4 }}
-                className="group"
-              >
-                <Card className="h-full border-0 shadow-lg hover:shadow-2xl transition-all duration-200 bg-white/90 dark:bg-gray-800/90 overflow-hidden relative">
-                  {/* Gradient background */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.bgColor} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+        {/* Auto-scrolling carousel container */}
+        <div className="relative overflow-hidden">
+          <div className="flex gap-6 animate-scroll">
+            {/* First set of cards */}
+            {features.map((feature, index) => {
+              const Icon = feature.icon
+              return (
+                <div
+                  key={`first-${feature.title}`}
+                  className="flex-shrink-0 w-[85vw] sm:w-[400px] md:w-[450px] lg:w-[380px] group relative"
+                >
+                  {/* Gradient border effect */}
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300 -z-10" />
                   
-                  {/* Icon */}
-                  <CardHeader className="relative z-10">
-                    <motion.div
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      className={`w-16 h-16 rounded-2xl ${feature.iconBg} flex items-center justify-center mb-4 shadow-lg group-hover:shadow-xl transition-shadow`}
-                    >
-                      <Icon className="h-8 w-8 text-white" />
-                    </motion.div>
-                    <CardTitle className="text-2xl font-bold relative z-10">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="relative z-10">
-                    <CardDescription className="text-base leading-relaxed mb-4">
-                      {feature.description}
-                    </CardDescription>
-                    <motion.div
-                      whileHover={{ x: 5 }}
-                      className="inline-flex items-center text-sm font-medium text-[#1F4068] dark:text-[#4B0082] cursor-pointer group/link"
-                    >
-                      Learn more
-                      <ArrowRight className="ml-2 h-4 w-4 group-hover/link:translate-x-1 transition-transform" />
-                    </motion.div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )
-          })}
+                  {/* Main card */}
+                  <div className="relative h-full rounded-2xl bg-white/80 dark:bg-[#181818]/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-800/50 overflow-hidden transition-all duration-300 group-hover:border-transparent group-hover:shadow-2xl">
+                    {/* Animated gradient overlay */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${feature.bgColor} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                    
+                    {/* Top accent bar */}
+                    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${feature.color} opacity-60 group-hover:opacity-100 transition-opacity duration-300`} />
+                    
+                    {/* Content */}
+                    <div className="relative z-10 p-8">
+                      {/* Icon with modern design */}
+                      <div className="mb-6">
+                        <div className="relative inline-block">
+                          {/* Icon glow effect */}
+                          <div className={`absolute inset-0 ${feature.iconBg} opacity-20 blur-xl group-hover:opacity-40 transition-opacity duration-300 rounded-2xl`} />
+                          {/* Icon container */}
+                          <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-lg group-hover:shadow-2xl transition-all duration-300`}>
+                            <Icon className="h-8 w-8 text-white relative z-10" />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Title */}
+                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-[#1F4068] group-hover:to-[#4B0082] transition-all duration-300">
+                        {feature.title}
+                      </h3>
+                      
+                      {/* Description */}
+                      <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-6 text-base">
+                        {feature.description}
+                      </p>
+                      
+                      {/* Learn more link with modern design */}
+                      <div className="inline-flex items-center gap-2 text-sm font-semibold text-[#1F4068] dark:text-[#4B0082] cursor-pointer group/link">
+                        <span className="relative">
+                          Learn more
+                          <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#1F4068] to-[#4B0082] group-hover/link:w-full transition-all duration-300" />
+                        </span>
+                        <ArrowRight className="h-4 w-4 group-hover/link:translate-x-1 transition-transform duration-300" />
+                      </div>
+                    </div>
+                    
+                    {/* Decorative corner element */}
+                    <div className={`absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500 rounded-tl-full`} />
+                  </div>
+                </div>
+              )
+            })}
+            
+            {/* Duplicate set for seamless loop */}
+            {features.map((feature, index) => {
+              const Icon = feature.icon
+              return (
+                <div
+                  key={`second-${feature.title}`}
+                  className="flex-shrink-0 w-[85vw] sm:w-[400px] md:w-[450px] lg:w-[380px] group relative"
+                >
+                  {/* Gradient border effect */}
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300 -z-10" />
+                  
+                  {/* Main card */}
+                  <div className="relative h-full rounded-2xl bg-white/80 dark:bg-[#181818]/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-800/50 overflow-hidden transition-all duration-300 group-hover:border-transparent group-hover:shadow-2xl">
+                    {/* Animated gradient overlay */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${feature.bgColor} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                    
+                    {/* Top accent bar */}
+                    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${feature.color} opacity-60 group-hover:opacity-100 transition-opacity duration-300`} />
+                    
+                    {/* Content */}
+                    <div className="relative z-10 p-8">
+                      {/* Icon with modern design */}
+                      <div className="mb-6">
+                        <div className="relative inline-block">
+                          {/* Icon glow effect */}
+                          <div className={`absolute inset-0 ${feature.iconBg} opacity-20 blur-xl group-hover:opacity-40 transition-opacity duration-300 rounded-2xl`} />
+                          {/* Icon container */}
+                          <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-lg group-hover:shadow-2xl transition-all duration-300`}>
+                            <Icon className="h-8 w-8 text-white relative z-10" />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Title */}
+                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-[#1F4068] group-hover:to-[#4B0082] transition-all duration-300">
+                        {feature.title}
+                      </h3>
+                      
+                      {/* Description */}
+                      <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-6 text-base">
+                        {feature.description}
+                      </p>
+                      
+                      {/* Learn more link with modern design */}
+                      <div className="inline-flex items-center gap-2 text-sm font-semibold text-[#1F4068] dark:text-[#4B0082] cursor-pointer group/link">
+                        <span className="relative">
+                          Learn more
+                          <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#1F4068] to-[#4B0082] group-hover/link:w-full transition-all duration-300" />
+                        </span>
+                        <ArrowRight className="h-4 w-4 group-hover/link:translate-x-1 transition-transform duration-300" />
+                      </div>
+                    </div>
+                    
+                    {/* Decorative corner element */}
+                    <div className={`absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500 rounded-tl-full`} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
     </section>
