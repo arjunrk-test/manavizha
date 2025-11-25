@@ -9,14 +9,14 @@ export function HeroSection() {
     <section 
       className="relative min-h-screen flex items-center justify-center overflow-hidden"
     >
-      {/* Premium gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#1F4068]/10 via-white via-95% to-[#4B0082]/10 dark:from-[#181818] dark:via-[#000000] dark:to-[#181818]" />
+      {/* Animated gradient background - lighter version */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/40 via-[#4B0082]/40 via-[#FF1493]/40 to-[#FFA500]/40 bg-[length:200%_auto] animate-gradient" />
       
-      {/* Animated mesh gradient overlay */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_30%_20%,rgba(31,64,104,0.3),transparent_50%)]" />
-        <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_80%,rgba(255,165,0,0.3),transparent_50%)]" />
-      </div>
+      {/* White overlay to lighten */}
+      <div className="absolute inset-0 bg-white/60 dark:bg-[#181818]/60" />
+      
+      {/* Overlay pattern */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
 
       {/* Floating orbs - optimized for performance */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -130,7 +130,7 @@ export function HeroSection() {
                 className="relative group"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-[#1F4068]/20 to-[#4B0082]/20 dark:from-[#1F4068]/30 dark:to-[#4B0082]/30 rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity duration-200" />
-                <div className="relative bg-white/90 dark:bg-gray-900/90 rounded-2xl p-8 border border-gray-200/50 dark:border-gray-800/50 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]">
+                <div className="relative bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-2xl p-8 border border-gray-200/50 dark:border-gray-800/50 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]">
                   <div className={`text-5xl font-bold mb-3 bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
                     {stat.value}
                   </div>

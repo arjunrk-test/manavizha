@@ -57,11 +57,15 @@ const features = [
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-32 bg-white dark:bg-gray-900 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#1F4068]/5 to-transparent dark:via-[#1F4068]/10" />
-      <div className="absolute top-0 left-0 w-96 h-96 bg-[#1F4068]/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#4B0082]/10 rounded-full blur-3xl" />
+    <section id="features" className="py-32 relative overflow-hidden">
+      {/* Animated gradient background - lighter version */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/40 via-[#4B0082]/40 via-[#FF1493]/40 to-[#FFA500]/40 bg-[length:200%_auto] animate-gradient" />
+      
+      {/* White overlay to lighten */}
+      <div className="absolute inset-0 bg-white/60 dark:bg-[#181818]/60" />
+      
+      {/* Overlay pattern */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div

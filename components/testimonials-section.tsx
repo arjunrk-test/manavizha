@@ -30,12 +30,15 @@ const testimonials = [
 
 export function TestimonialsSection() {
   return (
-    <section id="testimonials" className="py-32 bg-gradient-to-br from-[#1F4068]/5 via-[#4B0082]/5 to-[#FF1493]/5 dark:from-[#181818] dark:via-[#000000] dark:to-[#181818] relative overflow-hidden">
-      {/* Decorative elements */}
-      <div className="absolute top-0 left-0 w-full h-full">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-[#1F4068]/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#FF1493]/20 rounded-full blur-3xl" />
-      </div>
+    <section id="testimonials" className="py-32 relative overflow-hidden">
+      {/* Animated gradient background - lighter version */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/40 via-[#4B0082]/40 via-[#FF1493]/40 to-[#FFA500]/40 bg-[length:200%_auto] animate-gradient" />
+      
+      {/* White overlay to lighten */}
+      <div className="absolute inset-0 bg-white/60 dark:bg-[#181818]/60" />
+      
+      {/* Overlay pattern */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div

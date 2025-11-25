@@ -88,7 +88,7 @@ export function CTASection() {
             </Button>
             <Button
               variant="outline"
-              className="rounded-full border-white text-white hover:bg-white/10 backdrop-blur-sm transition-all duration-200"
+              className="rounded-full border-white text-black hover:bg-white/10 backdrop-blur-sm transition-all duration-200"
             >
               Learn More
               <ArrowRight className="h-4 w-4" />
