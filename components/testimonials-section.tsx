@@ -32,10 +32,10 @@ export function TestimonialsSection() {
   return (
     <section id="testimonials" className="py-32 relative overflow-hidden">
       {/* Animated gradient background - lighter version */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/40 via-[#4B0082]/40 via-[#FF1493]/40 to-[#FFA500]/40 bg-[length:200%_auto] animate-gradient" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#4B0082]/50 via-[#FF1493]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
       
       {/* White overlay to lighten */}
-      <div className="absolute inset-0 bg-white/60 dark:bg-[#181818]/60" />
+      <div className="absolute inset-0 bg-white/50 dark:bg-[#181818]/50" />
       
       {/* Overlay pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
