@@ -17,7 +17,8 @@ module.exports = {
     },
     extend: {
       fontFamily: {
-        satoshi: ['Satoshi', 'sans-serif'],
+        sans: ['Josefin Sans', 'sans-serif'],
+        josefin: ['Josefin Sans', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
