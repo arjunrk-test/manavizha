@@ -237,3 +237,15 @@ html {
 .group:hover {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Custom text selection with yellow color */
+::selection {
+  background: #FCD34D;
+  color: #000000;
+  -webkit-text-fill-color: #000000;
+}
+
+::-moz-selection {
+  background: #FCD34D;
+  color: #000000;
+}
