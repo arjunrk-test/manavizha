@@ -188,27 +188,64 @@ export function Navbar() {
       <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
         <DialogContent className="w-[95vw] max-w-5xl border-0 bg-transparent p-0 sm:p-0">
           <div className="grid lg:grid-cols-[1.1fr,1fr] overflow-hidden rounded-2xl bg-[#080b16] text-white">
-            <div className="relative flex flex-col gap-6 bg-gradient-to-br from-[#05070f] via-[#0d1324] to-[#111a34] p-8 sm:p-10">
-              <div className="space-y-4">
-                <p className="text-xs uppercase tracking-[0.4em] text-pink-300">Welcome back</p>
-                <h3 className="text-3xl sm:text-4xl font-semibold leading-tight">
+            <div className="relative flex flex-col gap-6 p-8 sm:p-10 overflow-hidden">
+              {/* Animated gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+              
+              {/* Overlay pattern */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
+              
+              {/* Modern grid overlay */}
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px] opacity-30" />
+              
+              {/* Decorative elements */}
+              <div className="absolute inset-0">
+                <motion.div
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.3, 0.5, 0.3],
+                  }}
+                  transition={{
+                    duration: 8,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  className="absolute top-0 left-0 w-96 h-96 bg-white/20 rounded-full blur-3xl"
+                />
+                <motion.div
+                  animate={{
+                    scale: [1.2, 1, 1.2],
+                    opacity: [0.5, 0.3, 0.5],
+                  }}
+                  transition={{
+                    duration: 10,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: 2,
+                  }}
+                  className="absolute bottom-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl"
+                />
+              </div>
+              
+              <div className="relative z-10 space-y-4">
+                <p className="text-xs uppercase tracking-[0.4em] text-white/90">Welcome back</p>
+                <h3 className="text-3xl sm:text-4xl font-semibold leading-tight text-white">
                   Find your perfect match with confidence.
                 </h3>
-                <p className="text-sm text-gray-300">
+                <p className="text-sm text-white/90">
                   Sign in to access personalized recommendations, connect with verified members, and
                   continue meaningful conversations.
                 </p>
               </div>
-              <div className="mt-auto flex items-center gap-4 text-sm text-gray-300">
-                <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-lg font-semibold">
+              <div className="relative z-10 mt-auto flex items-center gap-4 text-sm text-white/90">
+                <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center text-lg font-semibold backdrop-blur-sm">
                   M
                 </div>
                 <div>
                   <p className="font-medium text-white">Trusted by 10,000+ families</p>
-                  <p className="text-xs text-gray-400">Secure. Verified. Confidential.</p>
+                  <p className="text-xs text-white/70">Secure. Verified. Confidential.</p>
                 </div>
               </div>
-              <div className="absolute -bottom-10 -right-10 h-32 w-32 rounded-full border border-white/20 blur-3xl opacity-50" />
             </div>
 
             <div className="bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-200 p-6 sm:p-8 space-y-6">
