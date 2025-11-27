@@ -2,9 +2,23 @@
 
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Heart, Users, ArrowRight, CheckCircle2 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Heart, Users, ArrowRight, CheckCircle2, Search } from "lucide-react"
+import { useState } from "react"
 
 export function HeroSection() {
+  const [searchType, setSearchType] = useState("Bride")
+  const [location, setLocation] = useState("Any")
+  const [minAge, setMinAge] = useState("23")
+  const [maxAge, setMaxAge] = useState("30")
+
   return (
     <section 
       className="relative min-h-screen flex items-center justify-center overflow-hidden pt-14"
@@ -45,7 +59,9 @@ export function HeroSection() {
       <div 
         className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24"
       >
-        <div className="text-center max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-16 items-start max-w-7xl mx-auto">
+          {/* Left Section - Content */}
+          <div className="text-center lg:text-left">
           {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -90,7 +106,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-12 sm:mb-16 px-4"
+            className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start items-center mb-12 sm:mb-16 px-4"
           >
             <Button 
               size="lg"
@@ -131,40 +147,154 @@ export function HeroSection() {
             </div>
           </motion.div>
 
-          {/* Stats with modern design */}
+          </div>
+
+          {/* Right Section - Search Form */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
-            className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-5xl mx-auto px-4"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="w-full"
           >
-            {[
-              { value: "10K+", label: "Active Members", color: "from-[#1F4068] to-[#4B0082]", icon: "👥" },
-              { value: "5K+", label: "Successful Matches", color: "from-[#FF1493] to-[#FFA500]", icon: "💑" },
-              { value: "98%", label: "Satisfaction Rate", color: "from-[#4B0082] to-[#1F4068]", icon: "⭐" },
-            ].map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.9 + index * 0.1 }}
-                whileHover={{ y: -5 }}
-                className="relative group cursor-pointer"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-[#1F4068]/20 to-[#4B0082]/20 dark:from-[#1F4068]/30 dark:to-[#4B0082]/30 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-300" />
-                <div className="relative bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-3xl p-6 sm:p-8 lg:p-10 border border-gray-200/60 dark:border-gray-800/60 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.03] overflow-hidden">
-                  {/* Decorative gradient bar */}
-                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.color}`} />
-                  <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">{stat.icon}</div>
-                  <div className={`text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-2 sm:mb-3 bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
-                    {stat.value}
+            <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl border border-gray-200/60 dark:border-gray-800/60 shadow-2xl p-6 sm:p-8 lg:p-10">
+              {/* Header */}
+              <div className="flex items-center gap-3 mb-6 sm:mb-8">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FF1493] to-[#FFA500] flex items-center justify-center shadow-lg">
+                  <Search className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                  Start Your Search Instantly
+                </h3>
+              </div>
+
+              {/* Search Form */}
+              <form className="space-y-4 sm:space-y-5">
+                {/* Row 1: Looking for & Location */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      I'm looking for a
+                    </label>
+                    <Select value={searchType} onValueChange={setSearchType}>
+                      <SelectTrigger className="h-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 rounded-lg">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Bride">Bride</SelectItem>
+                        <SelectItem value="Groom">Groom</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-400 font-medium">
-                    {stat.label}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Location/Community
+                    </label>
+                    <Select value={location} onValueChange={setLocation}>
+                      <SelectTrigger className="h-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 rounded-lg">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Any">Any</SelectItem>
+                        <SelectItem value="Mumbai">Mumbai</SelectItem>
+                        <SelectItem value="Delhi">Delhi</SelectItem>
+                        <SelectItem value="Bangalore">Bangalore</SelectItem>
+                        <SelectItem value="Chennai">Chennai</SelectItem>
+                        <SelectItem value="Hyderabad">Hyderabad</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              </motion.div>
-            ))}
+
+                {/* Row 2: Min Age & Max Age */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Min Age (21+)
+                    </label>
+                    <Input
+                      type="number"
+                      min="21"
+                      max="45"
+                      value={minAge}
+                      onChange={(e) => setMinAge(e.target.value)}
+                      className="h-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 rounded-lg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Max Age (45)
+                    </label>
+                    <Input
+                      type="number"
+                      min="21"
+                      max="45"
+                      value={maxAge}
+                      onChange={(e) => setMaxAge(e.target.value)}
+                      className="h-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 rounded-lg"
+                    />
+                  </div>
+                </div>
+
+                {/* Search Button */}
+                <Button
+                  type="submit"
+                  className="w-full h-14 rounded-lg bg-gradient-to-r from-[#4B0082] to-[#1F4068] hover:from-[#4B0082]/90 hover:to-[#1F4068]/90 text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  Search Matches ({searchType}s)
+                </Button>
+
+                {/* Footer Link */}
+                <div className="text-center pt-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Need a profile?{" "}
+                    <a
+                      href="#"
+                      className="text-[#4B0082] dark:text-[#FF1493] font-semibold underline hover:text-[#1F4068] dark:hover:text-[#FF1493]/80 transition-colors"
+                    >
+                      Create a Free Profile
+                    </a>
+                  </span>
+                </div>
+              </form>
+            </div>
+
+            {/* Stats with modern design */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.8 }}
+              className="mt-6 sm:mt-8"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  { value: "10K+", label: "Active Members", color: "from-[#1F4068] to-[#4B0082]", icon: "👥" },
+                  { value: "5K+", label: "Successful Matches", color: "from-[#FF1493] to-[#FFA500]", icon: "💑" },
+                  { value: "98%", label: "Satisfaction Rate", color: "from-[#4B0082] to-[#1F4068]", icon: "⭐" },
+                ].map((stat, index) => (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.9 + index * 0.1 }}
+                    whileHover={{ y: -5 }}
+                    className="relative group cursor-pointer"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#1F4068]/20 to-[#4B0082]/20 dark:from-[#1F4068]/30 dark:to-[#4B0082]/30 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-300" />
+                    <div className="relative bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-3xl p-4 sm:p-6 border border-gray-200/60 dark:border-gray-800/60 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.03] overflow-hidden">
+                      {/* Decorative gradient bar */}
+                      <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.color}`} />
+                      <div className="text-2xl sm:text-3xl mb-2 sm:mb-3">{stat.icon}</div>
+                      <div className={`text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
+                        {stat.value}
+                      </div>
+                      <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium">
+                        {stat.label}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
           </motion.div>
         </div>
       </div>
