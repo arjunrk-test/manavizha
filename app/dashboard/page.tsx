@@ -12,6 +12,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const [profileProgress, setProfileProgress] = useState(0)
 
   useEffect(() => {
     // Check if user is authenticated
@@ -175,19 +176,62 @@ export default function DashboardPage() {
                 <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
               )}
             </div>
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-4">
+              {/* Profile Progress Icon */}
+              <div className="relative">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] p-0.5">
+                  <div className="h-full w-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center">
+                    <span className="text-sm font-bold text-gray-900 dark:text-white">
+                      {profileProgress}%
+                    </span>
+                  </div>
+                </div>
+                {/* Circular progress ring */}
+                <svg className="absolute inset-0 h-12 w-12 transform -rotate-90" viewBox="0 0 48 48">
+                  <circle
+                    cx="24"
+                    cy="24"
+                    r="22"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="text-gray-200 dark:text-gray-700"
+                  />
+                  <circle
+                    cx="24"
+                    cy="24"
+                    r="22"
+                    fill="none"
+                    stroke="url(#progress-gradient)"
+                    strokeWidth="2"
+                    strokeDasharray={`${2 * Math.PI * 22}`}
+                    strokeDashoffset={`${2 * Math.PI * 22 * (1 - profileProgress / 100)}`}
+                    strokeLinecap="round"
+                    className="transition-all duration-300"
+                  />
+                  <defs>
+                    <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#1F4068" />
+                      <stop offset="50%" stopColor="#4B0082" />
+                      <stop offset="100%" stopColor="#FF1493" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Profile Setup Form */}
-        {user && <ProfileSetupForm userId={user.id} />}
+        {user && <ProfileSetupForm userId={user.id} onProgressChange={setProfileProgress} />}
       </div>
     </div>
   )

@@ -89,7 +89,7 @@ const formSteps = [
   { id: "referral", title: "Referral" },
 ]
 
-export function ProfileSetupForm({ userId }: { userId: string }) {
+export function ProfileSetupForm({ userId, onProgressChange }: { userId: string; onProgressChange?: (progress: number) => void }) {
   const [currentStep, setCurrentStep] = useState(0)
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -215,47 +215,69 @@ export function ProfileSetupForm({ userId }: { userId: string }) {
 
   const overallProgress = calculateOverallProgress()
 
+  // Notify parent of progress changes
+  useEffect(() => {
+    if (onProgressChange) {
+      onProgressChange(overallProgress)
+    }
+  }, [overallProgress, onProgressChange])
+
+  const stepProgress = calculateStepProgress(formSteps[currentStep].id)
+
   return (
     <div className="min-h-screen py-8">
       <div className="max-w-4xl mx-auto px-4">
-        {/* Overall Progress */}
-        <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-lg p-6 mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Profile Completion
-            </h2>
-            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              {overallProgress}%
-            </span>
-          </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-            <div
-              className="bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] h-3 rounded-full transition-all duration-300"
-              style={{ width: `${overallProgress}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Step Progress */}
-        <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-lg p-6 mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-md font-semibold text-gray-900 dark:text-white">
-              {formSteps[currentStep].title}
-            </h3>
-            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              {calculateStepProgress(formSteps[currentStep].id)}%
-            </span>
-          </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div
-              className="bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] h-2 rounded-full transition-all duration-300"
-              style={{ width: `${calculateStepProgress(formSteps[currentStep].id)}%` }}
-            />
-          </div>
-        </div>
-
         {/* Form Content */}
-        <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-lg p-8">
+        <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-lg p-8 relative">
+          {/* Step Progress Icon - Top Right Corner */}
+          <div className="absolute top-4 right-4">
+            <div className="relative">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] p-0.5">
+                <div className="h-full w-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center">
+                  <span className="text-xs font-bold text-gray-900 dark:text-white">
+                    {stepProgress}%
+                  </span>
+                </div>
+              </div>
+              {/* Circular progress ring */}
+              <svg className="absolute inset-0 h-10 w-10 transform -rotate-90" viewBox="0 0 40 40">
+                <circle
+                  cx="20"
+                  cy="20"
+                  r="18"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  className="text-gray-200 dark:text-gray-700"
+                />
+                <circle
+                  cx="20"
+                  cy="20"
+                  r="18"
+                  fill="none"
+                  stroke="url(#step-progress-gradient)"
+                  strokeWidth="1.5"
+                  strokeDasharray={`${2 * Math.PI * 18}`}
+                  strokeDashoffset={`${2 * Math.PI * 18 * (1 - stepProgress / 100)}`}
+                  strokeLinecap="round"
+                  className="transition-all duration-300"
+                />
+                <defs>
+                  <linearGradient id="step-progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#1F4068" />
+                    <stop offset="50%" stopColor="#4B0082" />
+                    <stop offset="100%" stopColor="#FF1493" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+          </div>
+          
+          {/* Step Title */}
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 pr-16">
+            {formSteps[currentStep].title}
+          </h2>
+
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStep}
@@ -341,8 +363,6 @@ function PersonalDetailsStep({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Personal Details</h2>
-      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="name">Full Name *</Label>
@@ -546,7 +566,6 @@ function PersonalDetailsStep({
 function EducationalDetailsStep({ formData, onChange }: { formData: FormData; onChange: (field: keyof FormData, value: any) => void }) {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Educational Details</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="education">Education Level *</Label>
@@ -605,7 +624,6 @@ function EducationalDetailsStep({ formData, onChange }: { formData: FormData; on
 function ProfessionalDetailsStep({ formData, onChange }: { formData: FormData; onChange: (field: keyof FormData, value: any) => void }) {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Professional Details</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="occupation">Occupation/Profession *</Label>
@@ -655,7 +673,6 @@ function ProfessionalDetailsStep({ formData, onChange }: { formData: FormData; o
 function FamilyDetailsStep({ formData, onChange }: { formData: FormData; onChange: (field: keyof FormData, value: any) => void }) {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Family Details</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="fatherName">Father's Name</Label>
@@ -721,7 +738,6 @@ function FamilyDetailsStep({ formData, onChange }: { formData: FormData; onChang
 function HoroscopeDetailsStep({ formData, onChange }: { formData: FormData; onChange: (field: keyof FormData, value: any) => void }) {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Horoscope Details</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="dateOfBirth">Date of Birth *</Label>
@@ -804,7 +820,6 @@ function InterestsStep({ formData, onChange }: { formData: FormData; onChange: (
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Interests</h2>
       <div className="space-y-6">
         <div className="space-y-2">
           <Label>Hobbies</Label>
@@ -859,7 +874,6 @@ function InterestsStep({ formData, onChange }: { formData: FormData; onChange: (
 function SocialHabitsStep({ formData, onChange }: { formData: FormData; onChange: (field: keyof FormData, value: any) => void }) {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Social Habits</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="smoking">Smoking</Label>
@@ -913,7 +927,6 @@ function SocialHabitsStep({ formData, onChange }: { formData: FormData; onChange
 function PartnerPreferencesStep({ formData, onChange }: { formData: FormData; onChange: (field: keyof FormData, value: any) => void }) {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Partner Preferences</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="preferredAgeMin">Preferred Age (Min)</Label>
@@ -993,7 +1006,6 @@ function PhotosStep({ formData, onChange }: { formData: FormData; onChange: (fie
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Photos</h2>
       <div className="space-y-4">
         <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-8 text-center">
           <input
@@ -1043,7 +1055,6 @@ function PhotosStep({ formData, onChange }: { formData: FormData; onChange: (fie
 function ReferralStep({ formData, onChange }: { formData: FormData; onChange: (field: keyof FormData, value: any) => void }) {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Referral Partner ID</h2>
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="referralPartnerId">Referral Partner ID (Optional)</Label>
