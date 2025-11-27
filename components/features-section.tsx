@@ -57,7 +57,7 @@ const features = [
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-32 relative overflow-hidden">
+    <section id="features" className="py-16 sm:py-24 lg:py-32 relative overflow-hidden">
       {/* Animated gradient background - lighter version */}
       <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#4B0082]/50 via-[#FF1493]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
       
@@ -66,6 +66,10 @@ export function FeaturesSection() {
       
       {/* Overlay pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
+      
+      {/* Modern geometric elements */}
+      <div className="absolute top-10 right-10 w-20 h-20 sm:w-32 sm:h-32 border border-[#1F4068]/10 rounded-full blur-2xl hidden md:block" />
+      <div className="absolute bottom-10 left-10 w-16 h-16 sm:w-24 sm:h-24 border border-[#FF1493]/10 rotate-45 blur-xl hidden lg:block" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
@@ -73,20 +77,20 @@ export function FeaturesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-20"
+          className="text-center mb-12 sm:mb-16 lg:mb-20"
         >
           <motion.span
             initial={{ opacity: 0, scale: 0.8 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-[#1F4068]/20 to-[#4B0082]/20 dark:from-[#1F4068]/50 dark:to-[#4B0082]/50 text-[#1F4068] dark:text-[#4B0082] font-medium mb-6"
+            className="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-[#1F4068]/20 to-[#4B0082]/20 dark:from-[#1F4068]/50 dark:to-[#4B0082]/50 text-[#1F4068] dark:text-[#4B0082] font-medium mb-4 sm:mb-6 text-sm sm:text-base"
           >
             Why Choose Us
           </motion.span>
-          <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient px-4">
             Everything You Need
           </h2>
-          <p className="mt-4 text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-4 text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed px-4">
             Experience the best in matrimonial matchmaking with our comprehensive platform designed for modern families
           </p>
         </motion.div>
@@ -100,7 +104,7 @@ export function FeaturesSection() {
               return (
                 <div
                   key={`first-${feature.title}`}
-                  className="flex-shrink-0 w-[85vw] sm:w-[400px] md:w-[450px] lg:w-[380px] group relative"
+                  className="flex-shrink-0 w-[90vw] sm:w-[400px] md:w-[420px] lg:w-[380px] xl:w-[400px] group relative"
                 >
                   {/* Gradient border effect */}
                   <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300 -z-10" />
@@ -160,7 +164,7 @@ export function FeaturesSection() {
               return (
                 <div
                   key={`second-${feature.title}`}
-                  className="flex-shrink-0 w-[85vw] sm:w-[400px] md:w-[450px] lg:w-[380px] group relative"
+                  className="flex-shrink-0 w-[90vw] sm:w-[400px] md:w-[420px] lg:w-[380px] xl:w-[400px] group relative"
                 >
                   {/* Gradient border effect */}
                   <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300 -z-10" />
