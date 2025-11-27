@@ -4,10 +4,13 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Heart, Menu, X } from "lucide-react"
 import { useState, useEffect } from "react"
+import { AuthDialog } from "@/components/auth-dialog"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [isLoginOpen, setIsLoginOpen] = useState(false)
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -64,11 +67,13 @@ export function Navbar() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.4 }}
-              className="flex items-center gap-3"
             >
-              <Button variant="ghost" size="sm">Login</Button>
-              <Button className="bg-gradient-to-r from-[#1F4068] to-[#4B0082] hover:from-[#1F4068]/90 hover:to-[#4B0082]/90 rounded-full">
-                Sign Up
+              <Button
+                size="sm"
+                className="rounded-full bg-red-500 hover:bg-white text-white hover:text-black border-0 shadow-sm hover:shadow-md transition-all px-6 py-2"
+                onClick={() => setIsLoginOpen(true)}
+              >
+                Login
               </Button>
             </motion.div>
           </div>
@@ -122,14 +127,24 @@ export function Navbar() {
                   {item}
                 </a>
               ))}
-              <div className="flex gap-2 pt-2">
-                <Button variant="ghost" size="sm" className="flex-1">Login</Button>
-                <Button size="sm" className="flex-1 bg-gradient-to-r from-[#1F4068] to-[#4B0082]">Sign Up</Button>
+              <div className="pt-2">
+                <Button
+                  size="sm"
+                  className="w-full rounded-full bg-red-500 hover:bg-white text-white hover:text-black border-0 shadow-sm hover:shadow-md transition-all py-2"
+                  onClick={() => {
+                    setIsLoginOpen(true)
+                    setIsOpen(false)
+                  }}
+                >
+                  Login
+                </Button>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      <AuthDialog open={isLoginOpen} onOpenChange={setIsLoginOpen} />
     </motion.nav>
   )
 }
