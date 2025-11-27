@@ -6,7 +6,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CheckCircle2, XCircle, Eye, EyeOff } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
 
 interface AuthDialogProps {
   open: boolean
@@ -41,11 +43,30 @@ const coupleStories = [
 ]
 
 export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
+  const router = useRouter()
   const [authMode, setAuthMode] = useState<"login" | "signup">("login")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  // Clear all fields when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setEmail("")
+      setPassword("")
+      setConfirmPassword("")
+      setShowPassword(false)
+      setShowConfirmPassword(false)
+      setAuthMode("login")
+      setError(null)
+      setSuccessMessage(null)
+    }
+  }, [open])
 
   const passwordStrength = (() => {
     if (!password) return { label: "", value: 0, color: "bg-gray-200", isValid: false }
@@ -70,14 +91,92 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
   const passwordsMatch = authMode === "login" || !confirmPassword || password === confirmPassword
 
-  const handleAuthSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAuthSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (authMode === "signup" && !passwordsMatch) {
-      return
+    setError(null)
+    
+    if (authMode === "signup") {
+      if (!passwordsMatch || !passwordStrength.isValid) {
+        setError("Please ensure your password meets all requirements and matches the confirmation.")
+        return
+      }
     }
-    onOpenChange(false)
-    setPassword("")
-    setConfirmPassword("")
+
+    setIsLoading(true)
+
+    try {
+      if (authMode === "signup") {
+        // Sign up the user (email confirmation disabled in Supabase settings)
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: undefined, // No email confirmation needed
+          },
+        })
+
+        if (authError) throw authError
+
+        if (authData.user) {
+          // Add user to users table using upsert to handle duplicates gracefully
+          const { data: insertData, error: insertError } = await supabase
+            .from("users")
+            .upsert(
+              {
+                id: authData.user.id,
+                email: authData.user.email,
+              },
+              {
+                onConflict: "id",
+              }
+            )
+            .select()
+
+          if (insertError) {
+            // Only log meaningful errors (not empty objects or duplicate key errors)
+            const hasErrorDetails = insertError.message || insertError.code || insertError.details || insertError.hint
+            const isDuplicateError = insertError.code === "23505" || insertError.message?.includes("duplicate")
+            
+            if (hasErrorDetails && !isDuplicateError) {
+              console.error("Error adding user to users table:", {
+                message: insertError.message,
+                code: insertError.code,
+                details: insertError.details,
+                hint: insertError.hint,
+              })
+            }
+            // Don't throw here, as auth was successful
+          } else if (insertData) {
+            // Successfully added/updated user in users table
+            console.log("User added to users table:", insertData)
+          }
+
+          // Switch to login mode with prefilled email
+          setAuthMode("login")
+          setPassword("")
+          setConfirmPassword("")
+          setSuccessMessage("Account created successfully! Please sign in to continue.")
+          // Email is already set, so it will remain prefilled
+        }
+      } else {
+        // Login
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+
+        if (signInError) throw signInError
+
+        // Clear success message, close dialog, and navigate to dashboard
+        setSuccessMessage(null)
+        onOpenChange(false)
+        router.push("/dashboard")
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -196,6 +295,8 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   setAuthMode("login")
                   setPassword("")
                   setConfirmPassword("")
+                  setError(null)
+                  setSuccessMessage(null)
                 }}
               >
                 Login
@@ -213,6 +314,8 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   setAuthMode("signup")
                   setPassword("")
                   setConfirmPassword("")
+                  setError(null)
+                  setSuccessMessage(null)
                 }}
               >
                 Sign Up
@@ -225,7 +328,19 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               <span className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
             </div>
 
-            <form className="space-y-4" onSubmit={handleAuthSubmit}>
+            {error && (
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+                {error}
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="rounded-2xl border border-green-200 bg-green-50 p-3 text-sm text-green-600 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
+                {successMessage}
+              </div>
+            )}
+
+            <form className="space-y-4" onSubmit={handleAuthSubmit} autoComplete="off">
               <div className="space-y-2">
                 <Label htmlFor="auth-email">Email</Label>
                 <Input
@@ -233,6 +348,11 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   type="email"
                   placeholder="you@email.com"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="off"
+                  data-1p-ignore
+                  data-lpignore="true"
                   className="rounded-2xl border-gray-200 bg-gray-50 focus-visible:ring-gray-900 dark:bg-gray-900 dark:border-gray-800"
                 />
               </div>
@@ -247,6 +367,9 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="new-password"
+                      data-1p-ignore
+                      data-lpignore="true"
                       className="rounded-2xl border-gray-200 bg-gray-50 pr-12 focus-visible:ring-gray-900 dark:bg-gray-900 dark:border-gray-800"
                     />
                     <button
@@ -260,7 +383,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   </div>
                 </div>
 
-                {password && (
+                {password && authMode === "signup" && (
                   <div className="space-y-2 rounded-2xl border border-gray-200 bg-white p-3 text-sm dark:border-gray-800 dark:bg-gray-900">
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
@@ -325,6 +448,9 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                       required
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
+                      autoComplete="new-password"
+                      data-1p-ignore
+                      data-lpignore="true"
                       className="rounded-2xl border-gray-200 bg-gray-50 pr-12 focus-visible:ring-gray-900 dark:bg-gray-900 dark:border-gray-800"
                     />
                     <button
@@ -359,12 +485,20 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               )}
               <Button
                 type="submit"
-                className="w-full rounded-full bg-gray-900 text-white hover:bg-white hover:text-gray-900 border-0 shadow-sm hover:shadow-md transition-all"
+                className="w-full rounded-full bg-gray-900 text-white hover:bg-white hover:text-gray-900 border-0 shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={
-                  authMode === "signup" && (!passwordsMatch || !passwordStrength.isValid)
+                  isLoading ||
+                  (authMode === "signup" && (!passwordsMatch || !passwordStrength.isValid))
                 }
               >
-                {authMode === "login" ? "Continue" : "Create Account"}
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    {authMode === "login" ? "Signing in..." : "Creating account..."}
+                  </span>
+                ) : (
+                  authMode === "login" ? "Continue" : "Create Account"
+                )}
               </Button>
             </form>
 
