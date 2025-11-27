@@ -2,12 +2,22 @@
 
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Heart, Menu, X } from "lucide-react"
 import { useState, useEffect } from "react"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [isLoginOpen, setIsLoginOpen] = useState(false)
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login")
+
+  const handleAuthSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsLoginOpen(false)
+  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -64,11 +74,13 @@ export function Navbar() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.4 }}
-              className="flex items-center gap-3"
             >
-              <Button variant="ghost" size="sm">Login</Button>
-              <Button className="bg-gradient-to-r from-[#1F4068] to-[#4B0082] hover:from-[#1F4068]/90 hover:to-[#4B0082]/90 rounded-full">
-                Sign Up
+              <Button
+                size="sm"
+                className="rounded-full bg-red-500 hover:bg-white text-white hover:text-black border-0 shadow-sm hover:shadow-md transition-all px-6 py-2"
+                onClick={() => setIsLoginOpen(true)}
+              >
+                Login
               </Button>
             </motion.div>
           </div>
@@ -122,14 +134,87 @@ export function Navbar() {
                   {item}
                 </a>
               ))}
-              <div className="flex gap-2 pt-2">
-                <Button variant="ghost" size="sm" className="flex-1">Login</Button>
-                <Button size="sm" className="flex-1 bg-gradient-to-r from-[#1F4068] to-[#4B0082]">Sign Up</Button>
+              <div className="pt-2">
+                <Button
+                  size="sm"
+                  className="w-full rounded-full bg-red-500 hover:bg-white text-white hover:text-black border-0 shadow-sm hover:shadow-md transition-all py-2"
+                  onClick={() => {
+                    setIsLoginOpen(true)
+                    setIsOpen(false)
+                  }}
+                >
+                  Login
+                </Button>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
+        <DialogContent className="w-[90vw] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{authMode === "login" ? "Login" : "Create an account"}</DialogTitle>
+            <DialogDescription>
+              {authMode === "login"
+                ? "Sign in to access your account."
+                : "Create a free account to get started."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex gap-2 rounded-full bg-gray-100 p-1 text-sm font-medium">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className={`flex-1 rounded-full transition-all ${
+                authMode === "login"
+                  ? "bg-red-500 text-white"
+                  : "bg-transparent text-gray-500 hover:text-gray-900"
+              }`}
+              onClick={() => setAuthMode("login")}
+            >
+              Login
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className={`flex-1 rounded-full transition-all ${
+                authMode === "signup"
+                  ? "bg-red-500 text-white"
+                  : "bg-transparent text-gray-500 hover:text-gray-900"
+              }`}
+              onClick={() => setAuthMode("signup")}
+            >
+              Sign Up
+            </Button>
+          </div>
+
+          <form className="space-y-4" onSubmit={handleAuthSubmit}>
+            <div className="space-y-2">
+              <Label htmlFor="auth-email">Email</Label>
+              <Input id="auth-email" type="email" placeholder="you@email.com" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="auth-password">Password</Label>
+              <Input id="auth-password" type="password" placeholder="••••••••" required />
+            </div>
+            {authMode === "signup" && (
+              <div className="space-y-2">
+                <Label htmlFor="auth-confirm">Confirm Password</Label>
+                <Input id="auth-confirm" type="password" placeholder="Repeat password" required />
+              </div>
+            )}
+            <Button
+              type="submit"
+              className="w-full rounded-full bg-red-500 hover:bg-white text-white hover:text-black border-0 shadow-sm hover:shadow-md transition-all"
+            >
+              {authMode === "login" ? "Continue" : "Create Account"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </motion.nav>
   )
 }
