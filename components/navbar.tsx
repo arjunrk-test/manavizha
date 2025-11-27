@@ -20,7 +20,6 @@ export function Navbar() {
 
   const passwordStrength = (() => {
     if (!password) return { label: "", value: 0, color: "bg-gray-200", isValid: false }
-
     const hasMinLength = password.length >= 11
     const hasLowercase = /[a-z]/.test(password)
     const hasUppercase = /[A-Z]/.test(password)
@@ -39,6 +38,33 @@ export function Navbar() {
 
     return { label: "Meets minimum requirements", value: 70, color: "bg-yellow-500", isValid: true }
   })()
+
+  const coupleStories = [
+    {
+      name: "Arjun & Priya",
+      location: "Chennai • Married 2024",
+      image:
+        "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+      name: "Rahul & Meera",
+      location: "Coimbatore • Married 2023",
+      image:
+        "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+      name: "Vikram & Aditi",
+      location: "Hyderabad • Married 2022",
+      image:
+        "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+      name: "Naveen & Kavya",
+      location: "Bengaluru • Married 2024",
+      image:
+        "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
+    },
+  ]
 
   const passwordsMatch = authMode === "login" || !confirmPassword || password === confirmPassword
 
@@ -236,6 +262,32 @@ export function Navbar() {
                   Sign in to access personalized recommendations, connect with verified members, and
                   continue meaningful conversations.
                 </p>
+              </div>
+
+              <div className="relative z-10 mt-2 space-y-3">
+                <p className="text-xs uppercase tracking-[0.3em] text-white/80">Success stories</p>
+                <div className="overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-sm">
+                  <div className="flex gap-4 p-4 animate-scroll-couples">
+                    {[...coupleStories, ...coupleStories, ...coupleStories].map((couple, index) => (
+                      <div
+                        key={`${couple.name}-${index}`}
+                        className="relative min-w-[280px] h-[200px] overflow-hidden rounded-xl flex-shrink-0"
+                      >
+                        <img
+                          src={couple.image}
+                          alt={couple.name}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                          <p className="font-semibold text-lg mb-1">{couple.name}</p>
+                          <p className="text-xs text-white/90">{couple.location}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
               <div className="relative z-10 mt-auto flex items-center gap-4 text-sm text-white/90">
                 <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center text-lg font-semibold backdrop-blur-sm">

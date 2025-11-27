@@ -184,6 +184,33 @@ body {
   }
 }
 
+/* Auto-scrolling carousel animation for couple images (3 sets) */
+@keyframes scrollCouples {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-33.333% - 16px));
+  }
+}
+
+.animate-scroll-couples {
+  animation: scrollCouples 20s linear infinite;
+  display: flex;
+  width: fit-content;
+}
+
+/* Pause on hover */
+.animate-scroll-couples:hover {
+  animation-play-state: paused;
+}
+
+@media (max-width: 768px) {
+  .animate-scroll-couples {
+    animation-duration: 10s;
+  }
+}
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
