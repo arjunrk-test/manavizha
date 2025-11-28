@@ -2,9 +2,10 @@
 
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Heart, Menu, X } from "lucide-react"
+import { Menu, X } from "lucide-react"
 import { useState, useEffect } from "react"
 import { AuthDialog } from "@/components/auth-dialog"
+import Image from "next/image"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -39,14 +40,22 @@ export function Navbar() {
             className="flex items-center gap-3 group cursor-pointer"
           >
             <motion.div
-              whileHover={{ rotate: [0, -10, 10, -10, 0] }}
-              transition={{ duration: 0.5 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.3 }}
+              className="flex items-center gap-3"
             >
-              <Heart className="h-5 w-5 text-[#1F4068] fill-[#1F4068]" />
+              <Image 
+                src="/logo.png" 
+                alt="Manavizha Logo" 
+                width={48}
+                height={48}
+                className="h-10 w-auto object-contain"
+                priority
+              />
+              <span className="text-xl font-bold bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+                Manavizha
+              </span>
             </motion.div>
-            <span className="text-xl font-bold bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
-              Manavizha
-            </span>
           </motion.div>
 
           <div className="hidden md:flex items-center gap-8">
