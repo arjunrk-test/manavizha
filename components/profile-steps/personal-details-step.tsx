@@ -156,7 +156,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="weight">Weight (kg)</Label>
+          <Label htmlFor="weight">Weight (kg) *</Label>
           <Input
             id="weight"
             type="number"
@@ -170,11 +170,12 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
             }}
             placeholder="Enter weight in kg"
             maxLength={3}
+            required
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="skinColor">Skin Color</Label>
+          <Label htmlFor="skinColor">Skin Color *</Label>
           <div className="relative" ref={skinColorRef}>
             <button
               type="button"
@@ -222,12 +223,13 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:col-span-2">
           <div className="space-y-2">
-            <Label htmlFor="bodyType">Body Type</Label>
+            <Label htmlFor="bodyType">Body Type *</Label>
             <select
               id="bodyType"
               value={formData.bodyType}
               onChange={(e) => onChange("bodyType", e.target.value)}
               className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
+              required
             >
               <option value="" disabled>Select</option>
               <option value="slim">Slim</option>
@@ -257,12 +259,13 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="foodPreference">Food Preference</Label>
+            <Label htmlFor="foodPreference">Food Preference *</Label>
             <select
               id="foodPreference"
               value={formData.foodPreference}
               onChange={(e) => onChange("foodPreference", e.target.value)}
               className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
+              required
             >
               <option value="" disabled>Select</option>
               <option value="vegetarian">Vegetarian</option>
@@ -276,11 +279,10 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <Label>Languages Known</Label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Indian Languages Dropdown */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Indian Languages</Label>
+              <Label className="text-sm font-medium">Indian Languages *</Label>
               <div className="relative" ref={indianLangRef}>
                 <button
                   type="button"
@@ -326,7 +328,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
 
             {/* International Languages Dropdown */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">International Languages</Label>
+              <Label className="text-sm font-medium">International Languages *</Label>
               <div className="relative" ref={internationalLangRef}>
                 <button
                   type="button"
@@ -374,7 +376,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
 
         <div className="space-y-2 md:col-span-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="about">About Yourself</Label>
+            <Label htmlFor="about">About Yourself *</Label>
             <span className={`text-sm ${formData.about.length < 100 ? "text-gray-500" : formData.about.length > 600 ? "text-red-500" : "text-gray-600"}`}>
               {formData.about.length} / 600 {formData.about.length < 100 && "(min 100)"}
             </span>
@@ -393,6 +395,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
               placeholder="Tell us about yourself... (minimum 100 characters)"
               rows={4}
               maxLength={600}
+              required
               className={`w-full rounded-2xl border px-3 py-2 focus:outline-none focus:ring-2 dark:bg-gray-900 ${
                 formData.about.length > 600
                   ? "border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-900/10"
