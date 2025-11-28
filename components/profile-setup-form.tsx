@@ -173,8 +173,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       const value = formData[field]
       if (field === "educationDetails") {
         // For education details, check if at least one entry has education level filled
-        if (Array.isArray(value) && value.length > 0) {
-          return value.some((edu) => edu && edu.education && edu.education !== "")
+        const educationDetails = value as FormData["educationDetails"]
+        if (Array.isArray(educationDetails) && educationDetails.length > 0) {
+          return educationDetails.some((edu) => edu && edu.education && edu.education !== "")
         }
         return false
       }
