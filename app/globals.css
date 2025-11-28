@@ -249,3 +249,45 @@ html {
   background: #FCD34D;
   color: #000000;
 }
+
+/* Custom scrollbar for language dropdowns */
+.language-dropdown-scroll::-webkit-scrollbar {
+  width: 8px;
+  display: block;
+}
+
+.language-dropdown-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.language-dropdown-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #1F4068, #4B0082, #FF1493);
+  border-radius: 10px;
+}
+
+.language-dropdown-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #4B0082, #FF1493, #FFA500);
+}
+
+.dark .language-dropdown-scroll::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+
+.dark .language-dropdown-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #1F4068, #4B0082, #FF1493);
+}
+
+.dark .language-dropdown-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #4B0082, #FF1493, #FFA500);
+}
+
+/* Firefox scrollbar for language dropdowns */
+.language-dropdown-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #4B0082 #f1f1f1;
+}
+
+.dark .language-dropdown-scroll {
+  scrollbar-color: #4B0082 #2d2d2d;
+}
