@@ -40,10 +40,12 @@ export interface FormData {
   languages: string[]
   
   // Educational Details
-  education: string
-  degree: string
-  institution: string
-  yearOfGraduation: string
+  educationDetails: {
+    education: string
+    degree: string
+    institution: string
+    yearOfGraduation: string
+  }[]
   
   // Professional Details
   occupation: string

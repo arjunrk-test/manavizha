@@ -70,10 +70,14 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     about: "",
     foodPreference: "",
     languages: [],
-    education: "",
-    degree: "",
-    institution: "",
-    yearOfGraduation: "",
+    educationDetails: [
+      {
+        education: "",
+        degree: "",
+        institution: "",
+        yearOfGraduation: "",
+      },
+    ],
     occupation: "",
     company: "",
     salary: "",
@@ -143,7 +147,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         "currentState",
         "currentCountry",
       ],
-      education: ["education", "degree", "institution", "yearOfGraduation"],
+      education: ["educationDetails"],
       professional: ["occupation", "company", "salary", "workLocation"],
       family: ["fatherName", "motherName", "siblings", "familyType", "familyStatus"],
       horoscope: ["dateOfBirth", "timeOfBirth", "placeOfBirth", "zodiacSign", "rashi", "nakshatra"],
@@ -157,6 +161,13 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     const fields = stepFields[stepId] || []
     const filled = fields.filter((field) => {
       const value = formData[field]
+      if (field === "educationDetails") {
+        // For education details, check if at least one entry has education level filled
+        if (Array.isArray(value) && value.length > 0) {
+          return value.some((edu) => edu && edu.education && edu.education !== "")
+        }
+        return false
+      }
       if (Array.isArray(value)) {
         return value.length > 0
       }
