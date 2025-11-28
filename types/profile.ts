@@ -55,18 +55,26 @@ export interface FormData {
   
   // Family Details
   fatherName: string
+  fatherOccupation: string
   motherName: string
+  motherOccupation: string
+  parentsResidence: string
   siblings: string
+  familyDescription: string
+  caste: string
+  subcaste: string
+  kulam: string
   familyType: string
   familyStatus: string
   
   // Horoscope Details
-  dateOfBirth: string
+  jaadhagam: string
   timeOfBirth: string
   placeOfBirth: string
   zodiacSign: string
-  rashi: string
-  nakshatra: string
+  star: string
+  lagnam: string
+  dhosham: string
   
   // Interests
   hobbies: string[]
@@ -75,6 +83,8 @@ export interface FormData {
   // Social Habits
   smoking: string
   drinking: string
+  parties: string
+  pubs: string
   diet: string
   
   // Partner Preferences
@@ -86,7 +96,10 @@ export interface FormData {
   preferredLocation: string
   
   // Photo Section
-  photos: string[]
+  userPhotos: string[]
+  familyPhoto: string
+  aadharFront: string
+  aadharBack: string
   
   // Referral
   referralPartnerId: string

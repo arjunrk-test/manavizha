@@ -14,7 +14,6 @@ import { FamilyDetailsStep } from "@/components/profile-steps/family-details-ste
 import { HoroscopeDetailsStep } from "@/components/profile-steps/horoscope-details-step"
 import { InterestsStep } from "@/components/profile-steps/interests-step"
 import { SocialHabitsStep } from "@/components/profile-steps/social-habits-step"
-import { PartnerPreferencesStep } from "@/components/profile-steps/partner-preferences-step"
 import { PhotosStep } from "@/components/profile-steps/photos-step"
 import { ReferralStep } from "@/components/profile-steps/referral-step"
 
@@ -27,7 +26,6 @@ const formSteps = [
   { id: "horoscope", title: "Horoscope Details" },
   { id: "interests", title: "Interests" },
   { id: "social", title: "Social Habits" },
-  { id: "partner", title: "Partner Preferences" },
   { id: "photos", title: "Photos" },
   { id: "referral", title: "Referral" },
 ]
@@ -80,23 +78,33 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     ],
     occupation: "",
     company: "",
-    salary: "",
+    salary: "₹",
     workLocation: "",
     fatherName: "",
+    fatherOccupation: "",
     motherName: "",
+    motherOccupation: "",
+    parentsResidence: "",
     siblings: "",
+    familyDescription: "",
+    caste: "",
+    subcaste: "",
+    kulam: "",
     familyType: "",
     familyStatus: "",
-    dateOfBirth: "",
+    jaadhagam: "",
     timeOfBirth: "",
     placeOfBirth: "",
     zodiacSign: "",
-    rashi: "",
-    nakshatra: "",
+    star: "",
+    lagnam: "",
+    dhosham: "",
     hobbies: [],
     interests: [],
     smoking: "",
     drinking: "",
+    parties: "",
+    pubs: "",
     diet: "",
     preferredAgeMin: "",
     preferredAgeMax: "",
@@ -104,7 +112,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     preferredEducation: "",
     preferredOccupation: "",
     preferredLocation: "",
-    photos: [],
+    userPhotos: [],
+    familyPhoto: "",
+    aadharFront: "",
+    aadharBack: "",
     referralPartnerId: "",
   })
   const [isSaving, setIsSaving] = useState(false)
@@ -149,12 +160,11 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       ],
       education: ["educationDetails"],
       professional: ["occupation", "company", "salary", "workLocation"],
-      family: ["fatherName", "motherName", "siblings", "familyType", "familyStatus"],
-      horoscope: ["dateOfBirth", "timeOfBirth", "placeOfBirth", "zodiacSign", "rashi", "nakshatra"],
+      family: ["fatherName", "fatherOccupation", "motherName", "motherOccupation", "parentsResidence", "caste", "familyType", "familyStatus"],
+      horoscope: ["jaadhagam", "timeOfBirth", "placeOfBirth", "zodiacSign", "star", "lagnam"],
       interests: ["hobbies", "interests"],
-      social: ["smoking", "drinking", "diet"],
-      partner: ["preferredAgeMin", "preferredAgeMax", "preferredHeight", "preferredEducation", "preferredOccupation", "preferredLocation"],
-      photos: ["photos"],
+      social: ["smoking", "drinking", "parties", "pubs"],
+      photos: ["userPhotos", "familyPhoto", "aadharFront", "aadharBack"],
       referral: ["referralPartnerId"],
     }
 
@@ -167,6 +177,14 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           return value.some((edu) => edu && edu.education && edu.education !== "")
         }
         return false
+      }
+      if (field === "userPhotos") {
+        // User photos: minimum 3 required
+        return Array.isArray(value) && value.length >= 3
+      }
+      if (field === "salary") {
+        // Salary field starts with ₹, so check if there's a value after it
+        return value && value !== "₹" && value !== "" && value !== null && value !== undefined
       }
       if (Array.isArray(value)) {
         return value.length > 0
@@ -291,9 +309,8 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               {currentStep === 5 && <HoroscopeDetailsStep formData={formData} onChange={handleInputChange} />}
               {currentStep === 6 && <InterestsStep formData={formData} onChange={handleInputChange} />}
               {currentStep === 7 && <SocialHabitsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 8 && <PartnerPreferencesStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 9 && <PhotosStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 10 && <ReferralStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 8 && <PhotosStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 9 && <ReferralStep formData={formData} onChange={handleInputChange} />}
             </motion.div>
           </AnimatePresence>
 
