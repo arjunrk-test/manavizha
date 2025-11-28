@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react"
 import type { FormData } from "@/types/profile"
 import { PersonalDetailsStep } from "@/components/profile-steps/personal-details-step"
+import { ContactDetailsStep } from "@/components/profile-steps/contact-details-step"
 import { EducationalDetailsStep } from "@/components/profile-steps/educational-details-step"
 import { ProfessionalDetailsStep } from "@/components/profile-steps/professional-details-step"
 import { FamilyDetailsStep } from "@/components/profile-steps/family-details-step"
@@ -19,6 +20,7 @@ import { ReferralStep } from "@/components/profile-steps/referral-step"
 
 const formSteps = [
   { id: "personal", title: "Personal Details" },
+  { id: "contact", title: "Contact Details" },
   { id: "education", title: "Educational Details" },
   { id: "professional", title: "Professional Details" },
   { id: "family", title: "Family Details" },
@@ -34,8 +36,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const [currentStep, setCurrentStep] = useState(0)
   const [formData, setFormData] = useState<FormData>({
     name: "",
-    phone: "",
     age: "",
+    phone: "",
+    whatsappNumber: "",
     sex: "",
     height: "",
     weight: "",
@@ -97,7 +100,8 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   // Calculate step progress
   const calculateStepProgress = (stepId: string) => {
     const stepFields: Record<string, (keyof FormData)[]> = {
-      personal: ["name", "phone", "age", "sex", "height", "weight", "skinColor", "bodyType", "address", "currentAddress", "maritalStatus", "about", "foodPreference", "languages"],
+      personal: ["name", "age", "sex", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"],
+      contact: ["phone", "whatsappNumber", "address", "currentAddress"],
       education: ["education", "degree", "institution", "yearOfGraduation"],
       professional: ["occupation", "company", "salary", "workLocation"],
       family: ["fatherName", "motherName", "siblings", "familyType", "familyStatus"],
@@ -228,15 +232,16 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               transition={{ duration: 0.3 }}
             >
               {currentStep === 0 && <PersonalDetailsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 1 && <EducationalDetailsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 2 && <ProfessionalDetailsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 3 && <FamilyDetailsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 4 && <HoroscopeDetailsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 5 && <InterestsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 6 && <SocialHabitsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 7 && <PartnerPreferencesStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 8 && <PhotosStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 9 && <ReferralStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 1 && <ContactDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 2 && <EducationalDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 3 && <ProfessionalDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 4 && <FamilyDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 5 && <HoroscopeDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 6 && <InterestsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 7 && <SocialHabitsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 8 && <PartnerPreferencesStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 9 && <PhotosStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 10 && <ReferralStep formData={formData} onChange={handleInputChange} />}
             </motion.div>
           </AnimatePresence>
 

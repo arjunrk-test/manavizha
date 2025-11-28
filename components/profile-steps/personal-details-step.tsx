@@ -27,18 +27,6 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone Number *</Label>
-          <Input
-            id="phone"
-            type="tel"
-            value={formData.phone}
-            onChange={(e) => onChange("phone", e.target.value)}
-            placeholder="Enter your phone number"
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
           <Label htmlFor="age">Age *</Label>
           <Input
             id="age"
@@ -119,27 +107,6 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
             <option value="athletic">Athletic</option>
             <option value="heavy">Heavy</option>
           </select>
-        </div>
-
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="address">Permanent Address</Label>
-          <Input
-            id="address"
-            value={formData.address}
-            onChange={(e) => onChange("address", e.target.value)}
-            placeholder="Enter your permanent address"
-          />
-        </div>
-
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="currentAddress">Current Address of Residence *</Label>
-          <Input
-            id="currentAddress"
-            value={formData.currentAddress}
-            onChange={(e) => onChange("currentAddress", e.target.value)}
-            placeholder="Enter your current address"
-            required
-          />
         </div>
 
         <div className="space-y-2">
