@@ -33,15 +33,29 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="salary">Annual Salary (₹)</Label>
-          <Input
-            id="salary"
-            type="number"
-            value={formData.salary}
-            onChange={(e) => onChange("salary", e.target.value)}
-            placeholder="Enter annual salary"
-            min="0"
-          />
+          <Label htmlFor="salary">Annual Salary *</Label>
+          <div className="relative">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none z-10">
+              ₹
+            </div>
+            <Input
+              id="salary"
+              type="text"
+              value={formData.salary.startsWith("₹") ? formData.salary.slice(1) : formData.salary}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9]/g, "")
+                onChange("salary", value ? `₹${value}` : "₹")
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Backspace" && formData.salary === "₹") {
+                  e.preventDefault()
+                }
+              }}
+              placeholder="Enter annual salary"
+              required
+              className="pl-8"
+            />
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="workLocation">Work Location</Label>
