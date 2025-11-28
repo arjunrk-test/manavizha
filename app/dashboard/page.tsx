@@ -51,21 +51,21 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative">
       {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+      <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
       
       {/* White overlay to lighten the gradient */}
-      <div className="absolute inset-0 bg-white/40 dark:bg-[#181818]/40" />
+      <div className="fixed inset-0 bg-white/40 dark:bg-[#181818]/40" />
       
       {/* Overlay pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
       
       {/* Modern grid overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px] opacity-30" />
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px] opacity-30" />
       
       {/* Decorative elements */}
-      <div className="absolute inset-0">
+      <div className="fixed inset-0">
         <motion.div
           animate={{
             scale: [1, 1.2, 1],
@@ -94,7 +94,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Animated PNG Background Images */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {[
           "/patterns/pattern1.png",
           "/patterns/pattern2.png",
@@ -165,73 +165,95 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* Content */}
-      <div className="relative z-10">
-        {/* Header with Logout */}
-        <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
-          <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Profile Setup</h1>
-              {user?.email && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
-              )}
-            </div>
-            <div className="flex items-center gap-4">
-              {/* Profile Progress Icon */}
-              <div className="relative">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] p-0.5">
-                  <div className="h-full w-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center">
-                    <span className="text-sm font-bold text-gray-900 dark:text-white">
-                      {profileProgress}%
-                    </span>
-                  </div>
+      {/* Header with Logout - Sticky */}
+      <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Profile Setup</h1>
+            {user?.email && (
+              <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-4">
+            {/* Profile Progress Icon */}
+            <div className="relative">
+              <div className="h-12 w-12 rounded-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] p-0.5">
+                <div className="h-full w-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center">
+                  <span className="text-sm font-bold text-gray-900 dark:text-white">
+                    {profileProgress}%
+                  </span>
                 </div>
-                {/* Circular progress ring */}
-                <svg className="absolute inset-0 h-12 w-12 transform -rotate-90" viewBox="0 0 48 48">
-                  <circle
-                    cx="24"
-                    cy="24"
-                    r="22"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className="text-gray-200 dark:text-gray-700"
-                  />
-                  <circle
-                    cx="24"
-                    cy="24"
-                    r="22"
-                    fill="none"
-                    stroke="url(#progress-gradient)"
-                    strokeWidth="2"
-                    strokeDasharray={`${2 * Math.PI * 22}`}
-                    strokeDashoffset={`${2 * Math.PI * 22 * (1 - profileProgress / 100)}`}
-                    strokeLinecap="round"
-                    className="transition-all duration-300"
-                  />
-                  <defs>
-                    <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#1F4068" />
-                      <stop offset="50%" stopColor="#4B0082" />
-                      <stop offset="100%" stopColor="#FF1493" />
-                    </linearGradient>
-                  </defs>
-                </svg>
               </div>
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
+              {/* Circular progress ring */}
+              <svg className="absolute inset-0 h-12 w-12 transform -rotate-90" viewBox="0 0 48 48">
+                <circle
+                  cx="24"
+                  cy="24"
+                  r="22"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="text-gray-200 dark:text-gray-700"
+                />
+                <circle
+                  cx="24"
+                  cy="24"
+                  r="22"
+                  fill="none"
+                  stroke="url(#progress-gradient)"
+                  strokeWidth="2"
+                  strokeDasharray={`${2 * Math.PI * 22}`}
+                  strokeDashoffset={`${2 * Math.PI * 22 * (1 - profileProgress / 100)}`}
+                  strokeLinecap="round"
+                  className="transition-all duration-300"
+                />
+                <defs>
+                  <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#1F4068" />
+                    <stop offset="50%" stopColor="#4B0082" />
+                    <stop offset="100%" stopColor="#FF1493" />
+                  </linearGradient>
+                </defs>
+              </svg>
             </div>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
           </div>
         </div>
+      </div>
 
+      {/* Content */}
+      <div className="relative z-10">
         {/* Profile Setup Form */}
         {user && <ProfileSetupForm userId={user.id} onProgressChange={setProfileProgress} />}
+
+        {/* Footer - Sticky */}
+        <footer className="sticky bottom-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-t border-gray-200/60 dark:border-gray-700/60 mt-8">
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-2">
+                <span>© 2024 Manavizha. All rights reserved.</span>
+              </div>
+              <div className="flex items-center gap-6">
+                <a href="#" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                  Privacy Policy
+                </a>
+                <a href="#" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                  Terms of Service
+                </a>
+                <a href="#" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                  Contact Us
+                </a>
+              </div>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   )

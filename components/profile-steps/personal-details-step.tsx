@@ -220,100 +220,59 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="bodyType">Body Type</Label>
-          <select
-            id="bodyType"
-            value={formData.bodyType}
-            onChange={(e) => onChange("bodyType", e.target.value)}
-            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-          >
-            <option value="" disabled>Select</option>
-            <option value="slim">Slim</option>
-            <option value="average-medium">Average / Medium Build</option>
-            <option value="athletic-fit">Athletic / Fit</option>
-            <option value="muscular">Muscular</option>
-            <option value="few-extra-kilos">Few Extra Kilos</option>
-            <option value="plus-size">Plus Size</option>
-          </select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="maritalStatus">Marital Status *</Label>
-          <select
-            id="maritalStatus"
-            value={formData.maritalStatus}
-            onChange={(e) => onChange("maritalStatus", e.target.value)}
-            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-            required
-          >
-            <option value="" disabled>Select</option>
-            <option value="never-married">Never Married</option>
-            <option value="divorced">Divorced</option>
-            <option value="separated">Separated</option>
-            <option value="widowed">Widowed</option>
-          </select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="foodPreference">Food Preference</Label>
-          <select
-            id="foodPreference"
-            value={formData.foodPreference}
-            onChange={(e) => onChange("foodPreference", e.target.value)}
-            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-          >
-            <option value="" disabled>Select</option>
-            <option value="vegetarian">Vegetarian</option>
-            <option value="eggetarian">Eggetarian</option>
-            <option value="non-vegetarian">Non-Vegetarian</option>
-            <option value="vegan">Vegan</option>
-            <option value="jain-vegetarian">Jain Vegetarian</option>
-            <option value="no-preference">No preference</option>
-          </select>
-        </div>
-
-        <div className="space-y-2 md:col-span-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="about">About Yourself</Label>
-            <span className={`text-sm ${formData.about.length < 100 ? "text-gray-500" : formData.about.length > 600 ? "text-red-500" : "text-gray-600"}`}>
-              {formData.about.length} / 600 {formData.about.length < 100 && "(min 100)"}
-            </span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:col-span-2">
+          <div className="space-y-2">
+            <Label htmlFor="bodyType">Body Type</Label>
+            <select
+              id="bodyType"
+              value={formData.bodyType}
+              onChange={(e) => onChange("bodyType", e.target.value)}
+              className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
+            >
+              <option value="" disabled>Select</option>
+              <option value="slim">Slim</option>
+              <option value="average-medium">Average / Medium Build</option>
+              <option value="athletic-fit">Athletic / Fit</option>
+              <option value="muscular">Muscular</option>
+              <option value="few-extra-kilos">Few Extra Kilos</option>
+              <option value="plus-size">Plus Size</option>
+            </select>
           </div>
-          <div className="relative">
-            <textarea
-              id="about"
-              value={formData.about}
-              onChange={(e) => {
-                const value = e.target.value
-                // Prevent typing if already at max limit
-                if (value.length <= 600) {
-                  onChange("about", value)
-                }
-              }}
-              placeholder="Tell us about yourself... (minimum 100 characters)"
-              rows={4}
-              maxLength={600}
-              className={`w-full rounded-2xl border px-3 py-2 focus:outline-none focus:ring-2 dark:bg-gray-900 ${
-                formData.about.length > 600
-                  ? "border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-900/10"
-                  : formData.about.length < 100 && formData.about.length > 0
-                  ? "border-yellow-500 focus:ring-yellow-500 bg-yellow-50 dark:bg-yellow-900/10"
-                  : "border-gray-200 focus:ring-[#4B0082] bg-gray-50 dark:border-gray-800"
-              }`}
-            />
-            {formData.about.length >= 600 && (
-              <div className="absolute left-0 top-full mt-1 z-10 px-3 py-2 bg-gray-900 dark:bg-gray-800 text-white text-sm rounded-lg shadow-lg max-w-xs">
-                Maximum character limit reached (600 characters)
-                <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900 dark:bg-gray-800 transform rotate-45"></div>
-              </div>
-            )}
+
+          <div className="space-y-2">
+            <Label htmlFor="maritalStatus">Marital Status *</Label>
+            <select
+              id="maritalStatus"
+              value={formData.maritalStatus}
+              onChange={(e) => onChange("maritalStatus", e.target.value)}
+              className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
+              required
+            >
+              <option value="" disabled>Select</option>
+              <option value="never-married">Never Married</option>
+              <option value="divorced">Divorced</option>
+              <option value="separated">Separated</option>
+              <option value="widowed">Widowed</option>
+            </select>
           </div>
-          {formData.about.length > 0 && formData.about.length < 100 && (
-            <p className="text-sm text-yellow-600 dark:text-yellow-400">
-              Please enter at least 100 characters (currently {formData.about.length} characters)
-            </p>
-          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="foodPreference">Food Preference</Label>
+            <select
+              id="foodPreference"
+              value={formData.foodPreference}
+              onChange={(e) => onChange("foodPreference", e.target.value)}
+              className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
+            >
+              <option value="" disabled>Select</option>
+              <option value="vegetarian">Vegetarian</option>
+              <option value="eggetarian">Eggetarian</option>
+              <option value="non-vegetarian">Non-Vegetarian</option>
+              <option value="vegan">Vegan</option>
+              <option value="jain-vegetarian">Jain Vegetarian</option>
+              <option value="no-preference">No preference</option>
+            </select>
+          </div>
         </div>
 
         <div className="space-y-2 md:col-span-2">
@@ -340,7 +299,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
                   <ChevronDown className={`h-4 w-4 transition-transform ${isIndianLangOpen ? "rotate-180" : ""}`} />
                 </button>
                 {isIndianLangOpen && (
-                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden max-h-60 overflow-y-auto language-dropdown-scroll">
                     {indianLanguages.map((lang) => (
                       <button
                         key={lang}
@@ -386,7 +345,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
                   <ChevronDown className={`h-4 w-4 transition-transform ${isInternationalLangOpen ? "rotate-180" : ""}`} />
                 </button>
                 {isInternationalLangOpen && (
-                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden max-h-60 overflow-y-auto language-dropdown-scroll">
                     {internationalLanguages.map((lang) => (
                       <button
                         key={lang}
@@ -411,6 +370,49 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="space-y-2 md:col-span-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="about">About Yourself</Label>
+            <span className={`text-sm ${formData.about.length < 100 ? "text-gray-500" : formData.about.length > 600 ? "text-red-500" : "text-gray-600"}`}>
+              {formData.about.length} / 600 {formData.about.length < 100 && "(min 100)"}
+            </span>
+          </div>
+          <div className="relative">
+            <textarea
+              id="about"
+              value={formData.about}
+              onChange={(e) => {
+                const value = e.target.value
+                // Prevent typing if already at max limit
+                if (value.length <= 600) {
+                  onChange("about", value)
+                }
+              }}
+              placeholder="Tell us about yourself... (minimum 100 characters)"
+              rows={4}
+              maxLength={600}
+              className={`w-full rounded-2xl border px-3 py-2 focus:outline-none focus:ring-2 dark:bg-gray-900 ${
+                formData.about.length > 600
+                  ? "border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-900/10"
+                  : formData.about.length < 100 && formData.about.length > 0
+                  ? "border-yellow-500 focus:ring-yellow-500 bg-yellow-50 dark:bg-yellow-900/10"
+                  : "border-gray-200 focus:ring-[#4B0082] bg-gray-50 dark:border-gray-800"
+              }`}
+            />
+            {formData.about.length >= 600 && (
+              <div className="absolute left-0 top-full mt-1 z-10 px-3 py-2 bg-gray-900 dark:bg-gray-800 text-white text-sm rounded-lg shadow-lg max-w-xs">
+                Maximum character limit reached (600 characters)
+                <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900 dark:bg-gray-800 transform rotate-45"></div>
+              </div>
+            )}
+          </div>
+          {formData.about.length > 0 && formData.about.length < 100 && (
+            <p className="text-sm text-yellow-600 dark:text-yellow-400">
+              Please enter at least 100 characters (currently {formData.about.length} characters)
+            </p>
+          )}
         </div>
       </div>
     </div>
