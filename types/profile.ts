@@ -13,18 +13,26 @@ export interface FormData {
   // Permanent Address
   permanentAddressLine1: string
   permanentAddressLine2: string
-  permanentArea: string
-  permanentCity: string
   permanentPincode: string
+  permanentArea: string
+  permanentTaluk: string
+  permanentDistrict: string
+  permanentDivision: string
+  permanentRegion: string
   permanentState: string
+  permanentCountry: string
   permanentLandmark: string
   // Current Address
   currentAddressLine1: string
   currentAddressLine2: string
-  currentArea: string
-  currentCity: string
   currentPincode: string
+  currentArea: string
+  currentTaluk: string
+  currentDistrict: string
+  currentDivision: string
+  currentRegion: string
   currentState: string
+  currentCountry: string
   currentLandmark: string
   maritalStatus: string
   about: string

@@ -6,65 +6,201 @@ import { Label } from "@/components/ui/label"
 import { FormData } from "@/types/profile"
 import { ChevronDown } from "lucide-react"
 
-const indianStates = [
-  "Andhra Pradesh",
-  "Arunachal Pradesh",
-  "Assam",
-  "Bihar",
-  "Chhattisgarh",
-  "Goa",
-  "Gujarat",
-  "Haryana",
-  "Himachal Pradesh",
-  "Jharkhand",
-  "Karnataka",
-  "Kerala",
-  "Madhya Pradesh",
-  "Maharashtra",
-  "Manipur",
-  "Meghalaya",
-  "Mizoram",
-  "Nagaland",
-  "Odisha",
-  "Punjab",
-  "Rajasthan",
-  "Sikkim",
-  "Tamil Nadu",
-  "Telangana",
-  "Tripura",
-  "Uttar Pradesh",
-  "Uttarakhand",
-  "West Bengal",
-  "Andaman and Nicobar Islands",
-  "Chandigarh",
-  "Dadra and Nagar Haveli and Daman and Diu",
-  "Delhi",
-  "Jammu and Kashmir",
-  "Ladakh",
-  "Lakshadweep",
-  "Puducherry",
-]
-
 interface ContactDetailsStepProps {
   formData: FormData
   onChange: (field: keyof FormData, value: any) => void
 }
 
+interface PostOffice {
+  Name: string
+  Taluk?: string
+  Tehsil?: string
+  Block?: string
+  District: string
+  Division: string
+  Circle?: string
+  Region?: string
+  State: string
+  Country: string
+}
+
 export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepProps) {
   const [isWhatsappSameAsPhone, setIsWhatsappSameAsPhone] = useState(false)
   const [isCurrentAddressSameAsPermanent, setIsCurrentAddressSameAsPermanent] = useState(false)
-  const [isPermanentStateOpen, setIsPermanentStateOpen] = useState(false)
-  const [isCurrentStateOpen, setIsCurrentStateOpen] = useState(false)
-  const permanentStateRef = useRef<HTMLDivElement>(null)
-  const currentStateRef = useRef<HTMLDivElement>(null)
+  const [isLoadingPermanentAddress, setIsLoadingPermanentAddress] = useState(false)
+  const [isLoadingCurrentAddress, setIsLoadingCurrentAddress] = useState(false)
+  const [permanentAreas, setPermanentAreas] = useState<PostOffice[]>([])
+  const [currentAreas, setCurrentAreas] = useState<PostOffice[]>([])
+  const [isPermanentAreaOpen, setIsPermanentAreaOpen] = useState(false)
+  const [isCurrentAreaOpen, setIsCurrentAreaOpen] = useState(false)
+  const permanentAreaRef = useRef<HTMLDivElement>(null)
+  const currentAreaRef = useRef<HTMLDivElement>(null)
 
+  // Function to fetch areas from pincode
+  const fetchAreasFromPincode = async (pincode: string, type: "permanent" | "current") => {
+    if (!pincode || pincode.length !== 6) {
+      if (type === "permanent") {
+        setIsLoadingPermanentAddress(false)
+        setPermanentAreas([])
+        // Clear fields if pincode is incomplete
+        onChange("permanentArea", "")
+        onChange("permanentTaluk", "")
+        onChange("permanentDistrict", "")
+        onChange("permanentDivision", "")
+        onChange("permanentRegion", "")
+        onChange("permanentState", "")
+        onChange("permanentCountry", "")
+      } else {
+        setIsLoadingCurrentAddress(false)
+        setCurrentAreas([])
+        // Clear fields if pincode is incomplete
+        onChange("currentArea", "")
+        onChange("currentTaluk", "")
+        onChange("currentDistrict", "")
+        onChange("currentDivision", "")
+        onChange("currentRegion", "")
+        onChange("currentState", "")
+        onChange("currentCountry", "")
+      }
+      return
+    }
+
+    try {
+      // Using PostPincode.in API - free API for pincode lookup
+      const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+      const data = await response.json()
+
+      if (data && data[0] && data[0].Status === "Success" && data[0].PostOffice && data[0].PostOffice.length > 0) {
+        const postOffices = data[0].PostOffice as PostOffice[]
+
+        if (type === "permanent") {
+          setPermanentAreas(postOffices)
+          // Auto-select first area if only one area exists
+          if (postOffices.length === 1) {
+            const postOffice = postOffices[0]
+            onChange("permanentArea", postOffice.Name || "")
+            onChange("permanentTaluk", postOffice.Taluk || postOffice.Tehsil || postOffice.Block || "")
+            onChange("permanentDistrict", postOffice.District || "")
+            onChange("permanentDivision", postOffice.Division || "")
+            onChange("permanentRegion", postOffice.Circle || postOffice.Region || "")
+            onChange("permanentState", postOffice.State || "")
+            onChange("permanentCountry", postOffice.Country || "")
+          }
+        } else {
+          setCurrentAreas(postOffices)
+          // Auto-select first area if only one area exists
+          if (postOffices.length === 1) {
+            const postOffice = postOffices[0]
+            onChange("currentArea", postOffice.Name || "")
+            onChange("currentTaluk", postOffice.Taluk || postOffice.Tehsil || postOffice.Block || "")
+            onChange("currentDistrict", postOffice.District || "")
+            onChange("currentDivision", postOffice.Division || "")
+            onChange("currentRegion", postOffice.Circle || postOffice.Region || "")
+            onChange("currentState", postOffice.State || "")
+            onChange("currentCountry", postOffice.Country || "")
+          }
+        }
+      } else {
+        // No areas found
+        if (type === "permanent") {
+          setPermanentAreas([])
+          onChange("permanentArea", "")
+          onChange("permanentTaluk", "")
+          onChange("permanentDistrict", "")
+          onChange("permanentDivision", "")
+          onChange("permanentRegion", "")
+          onChange("permanentState", "")
+          onChange("permanentCountry", "")
+        } else {
+          setCurrentAreas([])
+          onChange("currentArea", "")
+          onChange("currentTaluk", "")
+          onChange("currentDistrict", "")
+          onChange("currentDivision", "")
+          onChange("currentRegion", "")
+          onChange("currentState", "")
+          onChange("currentCountry", "")
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching address from pincode:", error)
+      if (type === "permanent") {
+        setPermanentAreas([])
+      } else {
+        setCurrentAreas([])
+      }
+    } finally {
+      if (type === "permanent") {
+        setIsLoadingPermanentAddress(false)
+      } else {
+        setIsLoadingCurrentAddress(false)
+      }
+    }
+  }
+
+  // Function to handle area selection
+  const handleAreaSelect = (postOffice: PostOffice, type: "permanent" | "current") => {
+    if (type === "permanent") {
+      onChange("permanentArea", postOffice.Name || "")
+      onChange("permanentTaluk", postOffice.Taluk || postOffice.Tehsil || postOffice.Block || "")
+      onChange("permanentDistrict", postOffice.District || "")
+      onChange("permanentDivision", postOffice.Division || "")
+      onChange("permanentRegion", postOffice.Circle || postOffice.Region || "")
+      onChange("permanentState", postOffice.State || "")
+      onChange("permanentCountry", postOffice.Country || "")
+      setIsPermanentAreaOpen(false)
+    } else {
+      onChange("currentArea", postOffice.Name || "")
+      onChange("currentTaluk", postOffice.Taluk || postOffice.Tehsil || postOffice.Block || "")
+      onChange("currentDistrict", postOffice.District || "")
+      onChange("currentDivision", postOffice.Division || "")
+      onChange("currentRegion", postOffice.Circle || postOffice.Region || "")
+      onChange("currentState", postOffice.State || "")
+      onChange("currentCountry", postOffice.Country || "")
+      setIsCurrentAreaOpen(false)
+    }
+  }
+
+  // Auto-fetch areas for permanent address when pincode is entered
+  useEffect(() => {
+    if (formData.permanentPincode && formData.permanentPincode.length === 6) {
+      // Set loading immediately
+      setIsLoadingPermanentAddress(true)
+      // Small delay to show loading, then fetch
+      const timeoutId = setTimeout(() => {
+        fetchAreasFromPincode(formData.permanentPincode, "permanent")
+      }, 300)
+      return () => clearTimeout(timeoutId)
+    } else {
+      setIsLoadingPermanentAddress(false)
+      setPermanentAreas([])
+    }
+  }, [formData.permanentPincode])
+
+  // Auto-fetch areas for current address when pincode is entered
+  useEffect(() => {
+    if (formData.currentPincode && formData.currentPincode.length === 6 && !isCurrentAddressSameAsPermanent) {
+      // Set loading immediately
+      setIsLoadingCurrentAddress(true)
+      // Small delay to show loading, then fetch
+      const timeoutId = setTimeout(() => {
+        fetchAreasFromPincode(formData.currentPincode, "current")
+      }, 300)
+      return () => clearTimeout(timeoutId)
+    } else {
+      setIsLoadingCurrentAddress(false)
+      setCurrentAreas([])
+    }
+  }, [formData.currentPincode, isCurrentAddressSameAsPermanent])
+
+  // Handle click outside for area dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (permanentStateRef.current && !permanentStateRef.current.contains(event.target as Node)) {
-        setIsPermanentStateOpen(false)
+      if (permanentAreaRef.current && !permanentAreaRef.current.contains(event.target as Node)) {
+        setIsPermanentAreaOpen(false)
       }
-      if (currentStateRef.current && !currentStateRef.current.contains(event.target as Node)) {
-        setIsCurrentStateOpen(false)
+      if (currentAreaRef.current && !currentAreaRef.current.contains(event.target as Node)) {
+        setIsCurrentAreaOpen(false)
       }
     }
 
@@ -84,19 +220,32 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
     if (isCurrentAddressSameAsPermanent) {
       onChange("currentAddressLine1", formData.permanentAddressLine1)
       onChange("currentAddressLine2", formData.permanentAddressLine2)
-      onChange("currentArea", formData.permanentArea)
-      onChange("currentCity", formData.permanentCity)
       onChange("currentPincode", formData.permanentPincode)
+      onChange("currentArea", formData.permanentArea)
+      onChange("currentTaluk", formData.permanentTaluk)
+      onChange("currentDistrict", formData.permanentDistrict)
+      onChange("currentDivision", formData.permanentDivision)
+      onChange("currentRegion", formData.permanentRegion)
       onChange("currentState", formData.permanentState)
+      onChange("currentCountry", formData.permanentCountry)
       onChange("currentLandmark", formData.permanentLandmark)
+      setCurrentAreas([])
+      setIsCurrentAreaOpen(false)
+    } else {
+      setCurrentAreas([])
+      setIsCurrentAreaOpen(false)
     }
   }, [
     formData.permanentAddressLine1,
     formData.permanentAddressLine2,
-    formData.permanentArea,
-    formData.permanentCity,
     formData.permanentPincode,
+    formData.permanentArea,
+    formData.permanentTaluk,
+    formData.permanentDistrict,
+    formData.permanentDivision,
+    formData.permanentRegion,
     formData.permanentState,
+    formData.permanentCountry,
     formData.permanentLandmark,
     isCurrentAddressSameAsPermanent,
   ])
@@ -209,74 +358,179 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="permanentArea">Area *</Label>
-              <Input
-                id="permanentArea"
-                value={formData.permanentArea}
-                onChange={(e) => onChange("permanentArea", e.target.value)}
-                placeholder="Enter area"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="permanentCity">City *</Label>
-              <Input
-                id="permanentCity"
-                value={formData.permanentCity}
-                onChange={(e) => onChange("permanentCity", e.target.value)}
-                placeholder="Enter city"
-                required
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="permanentPincode">Pincode *</Label>
-              <Input
-                id="permanentPincode"
-                type="number"
-                value={formData.permanentPincode}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, "")
-                  if (value.length <= 6) {
-                    onChange("permanentPincode", value)
-                  }
-                }}
-                placeholder="Enter pincode"
-                maxLength={6}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="permanentPincode"
+                  type="number"
+                  value={formData.permanentPincode}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9]/g, "")
+                    if (value.length <= 6) {
+                      onChange("permanentPincode", value)
+                    }
+                  }}
+                  placeholder="Enter pincode"
+                  maxLength={6}
+                  required
+                  className={isLoadingPermanentAddress ? "pr-10" : ""}
+                />
+                {isLoadingPermanentAddress && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="permanentState">State *</Label>
-              <div className="relative" ref={permanentStateRef}>
+              <Label htmlFor="permanentArea">Area Name *</Label>
+              <div className="relative" ref={permanentAreaRef}>
                 <button
                   type="button"
-                  onClick={() => setIsPermanentStateOpen(!isPermanentStateOpen)}
-                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem]"
+                  onClick={() => permanentAreas.length > 0 && setIsPermanentAreaOpen(!isPermanentAreaOpen)}
+                  disabled={isLoadingPermanentAddress || permanentAreas.length === 0}
+                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem] disabled:bg-gray-100 disabled:dark:bg-gray-800 disabled:cursor-not-allowed"
                 >
-                  <span className={formData.permanentState ? "" : "text-gray-500"}>
-                    {formData.permanentState || "Select State"}
+                  <span className={formData.permanentArea ? "" : "text-gray-500"}>
+                    {formData.permanentArea || (isLoadingPermanentAddress ? "Loading areas..." : permanentAreas.length === 0 ? "Enter pincode first" : "Select Area")}
                   </span>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${isPermanentStateOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-4 w-4 transition-transform ${isPermanentAreaOpen ? "rotate-180" : ""}`} />
                 </button>
-                {isPermanentStateOpen && (
+                {isLoadingPermanentAddress && (
+                  <div className="absolute right-8 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+                {isPermanentAreaOpen && permanentAreas.length > 0 && (
                   <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden">
-                    <div className="overflow-y-auto state-dropdown-scroll" style={{ maxHeight: '250px' }}>
-                      {indianStates.map((state) => (
+                    <div className="overflow-y-auto language-dropdown-scroll" style={{ maxHeight: '250px' }}>
+                      {permanentAreas.map((postOffice, index) => (
                         <button
-                          key={state}
+                          key={index}
                           type="button"
-                          onClick={() => {
-                            onChange("permanentState", state)
-                            setIsPermanentStateOpen(false)
-                          }}
+                          onClick={() => handleAreaSelect(postOffice, "permanent")}
                           className={`w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-left transition-colors ${
-                            formData.permanentState === state ? "bg-gray-100 dark:bg-gray-800" : ""
+                            formData.permanentArea === postOffice.Name ? "bg-gray-100 dark:bg-gray-800" : ""
                           }`}
                         >
-                          {state}
+                          {postOffice.Name}
                         </button>
                       ))}
                     </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="permanentTaluk">Taluk *</Label>
+              <div className="relative">
+                <Input
+                  id="permanentTaluk"
+                  value={formData.permanentTaluk || ""}
+                  onChange={(e) => onChange("permanentTaluk", e.target.value)}
+                  placeholder="Taluk (auto-filled)"
+                  required
+                  readOnly
+                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                />
+                {isLoadingPermanentAddress && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="permanentDistrict">District *</Label>
+              <div className="relative">
+                <Input
+                  id="permanentDistrict"
+                  value={formData.permanentDistrict}
+                  onChange={(e) => onChange("permanentDistrict", e.target.value)}
+                  placeholder="District (auto-filled)"
+                  required
+                  readOnly
+                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                />
+                {isLoadingPermanentAddress && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="permanentDivision">Division *</Label>
+              <div className="relative">
+                <Input
+                  id="permanentDivision"
+                  value={formData.permanentDivision}
+                  onChange={(e) => onChange("permanentDivision", e.target.value)}
+                  placeholder="Division (auto-filled)"
+                  required
+                  readOnly
+                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                />
+                {isLoadingPermanentAddress && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="permanentRegion">Region *</Label>
+              <div className="relative">
+                <Input
+                  id="permanentRegion"
+                  value={formData.permanentRegion}
+                  onChange={(e) => onChange("permanentRegion", e.target.value)}
+                  placeholder="Region (auto-filled)"
+                  required
+                  readOnly
+                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                />
+                {isLoadingPermanentAddress && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="permanentState">State *</Label>
+              <div className="relative">
+                <Input
+                  id="permanentState"
+                  value={formData.permanentState}
+                  onChange={(e) => onChange("permanentState", e.target.value)}
+                  placeholder="State (auto-filled)"
+                  required
+                  readOnly
+                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                />
+                {isLoadingPermanentAddress && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="permanentCountry">Country *</Label>
+              <div className="relative">
+                <Input
+                  id="permanentCountry"
+                  value={formData.permanentCountry}
+                  onChange={(e) => onChange("permanentCountry", e.target.value)}
+                  placeholder="Country (auto-filled)"
+                  required
+                  readOnly
+                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                />
+                {isLoadingPermanentAddress && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
                   </div>
                 )}
               </div>
@@ -306,18 +560,26 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                   if (e.target.checked) {
                     onChange("currentAddressLine1", formData.permanentAddressLine1)
                     onChange("currentAddressLine2", formData.permanentAddressLine2)
-                    onChange("currentArea", formData.permanentArea)
-                    onChange("currentCity", formData.permanentCity)
                     onChange("currentPincode", formData.permanentPincode)
+                    onChange("currentArea", formData.permanentArea)
+                    onChange("currentTaluk", formData.permanentTaluk)
+                    onChange("currentDistrict", formData.permanentDistrict)
+                    onChange("currentDivision", formData.permanentDivision)
+                    onChange("currentRegion", formData.permanentRegion)
                     onChange("currentState", formData.permanentState)
+                    onChange("currentCountry", formData.permanentCountry)
                     onChange("currentLandmark", formData.permanentLandmark)
                   } else {
                     onChange("currentAddressLine1", "")
                     onChange("currentAddressLine2", "")
-                    onChange("currentArea", "")
-                    onChange("currentCity", "")
                     onChange("currentPincode", "")
+                    onChange("currentArea", "")
+                    onChange("currentTaluk", "")
+                    onChange("currentDistrict", "")
+                    onChange("currentDivision", "")
+                    onChange("currentRegion", "")
                     onChange("currentState", "")
+                    onChange("currentCountry", "")
                     onChange("currentLandmark", "")
                   }
                 }}
@@ -353,83 +615,188 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="currentArea">Area *</Label>
-              <Input
-                id="currentArea"
-                value={formData.currentArea}
-                onChange={(e) => onChange("currentArea", e.target.value)}
-                placeholder="Enter area"
-                required
-                disabled={isCurrentAddressSameAsPermanent}
-                className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : ""}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="currentCity">City *</Label>
-              <Input
-                id="currentCity"
-                value={formData.currentCity}
-                onChange={(e) => onChange("currentCity", e.target.value)}
-                placeholder="Enter city"
-                required
-                disabled={isCurrentAddressSameAsPermanent}
-                className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : ""}
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="currentPincode">Pincode *</Label>
-              <Input
-                id="currentPincode"
-                type="number"
-                value={formData.currentPincode}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, "")
-                  if (value.length <= 6) {
-                    onChange("currentPincode", value)
-                  }
-                }}
-                placeholder="Enter pincode"
-                maxLength={6}
-                required
-                disabled={isCurrentAddressSameAsPermanent}
-                className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : ""}
-              />
+              <div className="relative">
+                <Input
+                  id="currentPincode"
+                  type="number"
+                  value={formData.currentPincode}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9]/g, "")
+                    if (value.length <= 6) {
+                      onChange("currentPincode", value)
+                    }
+                  }}
+                  placeholder="Enter pincode"
+                  maxLength={6}
+                  required
+                  disabled={isCurrentAddressSameAsPermanent}
+                  className={`${isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : ""} ${isLoadingCurrentAddress ? "pr-10" : ""}`}
+                />
+                {isLoadingCurrentAddress && !isCurrentAddressSameAsPermanent && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="currentState">State *</Label>
-              <div className="relative" ref={currentStateRef}>
+              <Label htmlFor="currentArea">Area Name *</Label>
+              <div className="relative" ref={currentAreaRef}>
                 <button
                   type="button"
-                  onClick={() => !isCurrentAddressSameAsPermanent && setIsCurrentStateOpen(!isCurrentStateOpen)}
-                  disabled={isCurrentAddressSameAsPermanent}
+                  onClick={() => !isCurrentAddressSameAsPermanent && currentAreas.length > 0 && setIsCurrentAreaOpen(!isCurrentAreaOpen)}
+                  disabled={isCurrentAddressSameAsPermanent || isLoadingCurrentAddress || currentAreas.length === 0}
                   className={`w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem] ${
-                    isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : ""
+                    isCurrentAddressSameAsPermanent || isLoadingCurrentAddress || currentAreas.length === 0 ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : ""
                   }`}
                 >
-                  <span className={formData.currentState ? "" : "text-gray-500"}>
-                    {formData.currentState || "Select State"}
+                  <span className={formData.currentArea ? "" : "text-gray-500"}>
+                    {formData.currentArea || (isCurrentAddressSameAsPermanent ? "Same as permanent" : isLoadingCurrentAddress ? "Loading areas..." : currentAreas.length === 0 ? "Enter pincode first" : "Select Area")}
                   </span>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${isCurrentStateOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-4 w-4 transition-transform ${isCurrentAreaOpen ? "rotate-180" : ""}`} />
                 </button>
-                {isCurrentStateOpen && !isCurrentAddressSameAsPermanent && (
+                {isLoadingCurrentAddress && !isCurrentAddressSameAsPermanent && (
+                  <div className="absolute right-8 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+                {isCurrentAreaOpen && !isCurrentAddressSameAsPermanent && currentAreas.length > 0 && (
                   <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden">
-                    <div className="max-h-[250px] overflow-y-auto state-dropdown-scroll">
-                      {indianStates.map((state) => (
+                    <div className="overflow-y-auto language-dropdown-scroll" style={{ maxHeight: '250px' }}>
+                      {currentAreas.map((postOffice, index) => (
                         <button
-                          key={state}
+                          key={index}
                           type="button"
-                          onClick={() => {
-                            onChange("currentState", state)
-                            setIsCurrentStateOpen(false)
-                          }}
+                          onClick={() => handleAreaSelect(postOffice, "current")}
                           className={`w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-left transition-colors ${
-                            formData.currentState === state ? "bg-gray-100 dark:bg-gray-800" : ""
+                            formData.currentArea === postOffice.Name ? "bg-gray-100 dark:bg-gray-800" : ""
                           }`}
                         >
-                          {state}
+                          {postOffice.Name}
                         </button>
                       ))}
                     </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="currentTaluk">Taluk *</Label>
+              <div className="relative">
+                <Input
+                  id="currentTaluk"
+                  value={formData.currentTaluk || ""}
+                  onChange={(e) => onChange("currentTaluk", e.target.value)}
+                  placeholder="Taluk (auto-filled)"
+                  required
+                  readOnly
+                  disabled={isCurrentAddressSameAsPermanent}
+                  className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : "bg-gray-100 dark:bg-gray-800 cursor-not-allowed"}
+                />
+                {isLoadingCurrentAddress && !isCurrentAddressSameAsPermanent && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="currentDistrict">District *</Label>
+              <div className="relative">
+                <Input
+                  id="currentDistrict"
+                  value={formData.currentDistrict}
+                  onChange={(e) => onChange("currentDistrict", e.target.value)}
+                  placeholder="District (auto-filled)"
+                  required
+                  readOnly
+                  disabled={isCurrentAddressSameAsPermanent}
+                  className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : "bg-gray-100 dark:bg-gray-800 cursor-not-allowed"}
+                />
+                {isLoadingCurrentAddress && !isCurrentAddressSameAsPermanent && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="currentDivision">Division *</Label>
+              <div className="relative">
+                <Input
+                  id="currentDivision"
+                  value={formData.currentDivision}
+                  onChange={(e) => onChange("currentDivision", e.target.value)}
+                  placeholder="Division (auto-filled)"
+                  required
+                  readOnly
+                  disabled={isCurrentAddressSameAsPermanent}
+                  className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : "bg-gray-100 dark:bg-gray-800 cursor-not-allowed"}
+                />
+                {isLoadingCurrentAddress && !isCurrentAddressSameAsPermanent && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="currentRegion">Region *</Label>
+              <div className="relative">
+                <Input
+                  id="currentRegion"
+                  value={formData.currentRegion}
+                  onChange={(e) => onChange("currentRegion", e.target.value)}
+                  placeholder="Region (auto-filled)"
+                  required
+                  readOnly
+                  disabled={isCurrentAddressSameAsPermanent}
+                  className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : "bg-gray-100 dark:bg-gray-800 cursor-not-allowed"}
+                />
+                {isLoadingCurrentAddress && !isCurrentAddressSameAsPermanent && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="currentState">State *</Label>
+              <div className="relative">
+                <Input
+                  id="currentState"
+                  value={formData.currentState}
+                  onChange={(e) => onChange("currentState", e.target.value)}
+                  placeholder="State (auto-filled)"
+                  required
+                  readOnly
+                  disabled={isCurrentAddressSameAsPermanent}
+                  className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : "bg-gray-100 dark:bg-gray-800 cursor-not-allowed"}
+                />
+                {isLoadingCurrentAddress && !isCurrentAddressSameAsPermanent && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="currentCountry">Country *</Label>
+              <div className="relative">
+                <Input
+                  id="currentCountry"
+                  value={formData.currentCountry}
+                  onChange={(e) => onChange("currentCountry", e.target.value)}
+                  placeholder="Country (auto-filled)"
+                  required
+                  readOnly
+                  disabled={isCurrentAddressSameAsPermanent}
+                  className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : "bg-gray-100 dark:bg-gray-800 cursor-not-allowed"}
+                />
+                {isLoadingCurrentAddress && !isCurrentAddressSameAsPermanent && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
                   </div>
                 )}
               </div>
