@@ -4,7 +4,7 @@ import { ReferralPartnerNavbar } from "@/components/referral-partner-navbar"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { LogOut, User } from "lucide-react"
+import { LogOut, User, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 
@@ -196,6 +196,14 @@ export default function ReferralPartnerDashboardPage() {
             >
               <User className="h-4 w-4" />
               Profile
+            </Button>
+            <Button
+              onClick={() => router.push("/referral-partner/settings")}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Settings className="h-4 w-4" />
+              Settings
             </Button>
             <Button
               onClick={handleLogout}
