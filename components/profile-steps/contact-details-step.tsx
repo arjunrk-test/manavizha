@@ -719,7 +719,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
                   </div>
                 )}
-              </div>
+              </div>        
             </div>
             <div className="space-y-2">
               <Label htmlFor="currentDivision">Division *</Label>
