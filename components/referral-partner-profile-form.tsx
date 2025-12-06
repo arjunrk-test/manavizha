@@ -109,6 +109,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
   const [isLoadingIFSC, setIsLoadingIFSC] = useState(false)
   const [uploadingField, setUploadingField] = useState<string | null>(null)
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({}) // Cache for signed URLs
+  const [savedFormData, setSavedFormData] = useState<FormData | null>(null) // Track saved state
 
   // Helper function to get signed URL if public URL fails
   const getImageUrl = async (field: string, url: string): Promise<string> => {
@@ -191,6 +192,36 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
           
           setIsWhatsappSameAsPhone(isSame)
 
+          // Store the loaded data as the saved state
+          const loadedFormData: FormData = {
+            name: data.name || "",
+            phone: phoneWithPrefix,
+            whatsapp_number: whatsappWithPrefix,
+            company_name: data.company_name || "",
+            organization_type: data.organization_type || "",
+            address_line1: data.address_line1 || "",
+            address_line2: data.address_line2 || "",
+            area: data.area || "",
+            taluk: data.taluk || "",
+            district: data.district || "",
+            division: data.division || "",
+            region: data.region || "",
+            city: data.city || "",
+            state: data.state || "",
+            pincode: data.pincode || "",
+            country: data.country || "India",
+            account_number: data.account_number || "",
+            account_holder_name: data.account_holder_name || "",
+            ifsc_code: data.ifsc_code || "",
+            branch_name: data.branch_name || "",
+            partner_photo: data.partner_photo || "",
+            aadhar_front: data.aadhar_front || "",
+            aadhar_back: data.aadhar_back || "",
+            pancard_front: data.pancard_front || "",
+            pancard_back: data.pancard_back || "",
+          }
+          setSavedFormData(loadedFormData)
+
           // Try to get signed URLs for images if they exist
           const imageFields = ['partner_photo', 'aadhar_front', 'aadhar_back', 'pancard_front', 'pancard_back']
           const urlPromises = imageFields.map(async (field) => {
@@ -217,6 +248,9 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
           if (Object.keys(urlMap).length > 0) {
             setImageUrls(urlMap)
           }
+        } else {
+          // No saved data, so set savedFormData to null
+          setSavedFormData(null)
         }
       } catch (err) {
         console.error("Error loading profile:", err)
@@ -398,7 +432,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
       const fileName = `${userId}/${field}_${Date.now()}.${fileExt}`
       const filePath = fileName
 
-      // Delete old file if exists
+      // Delete old file if exists and clear cached signed URL
       const oldUrl = formData[field]
       if (oldUrl && oldUrl.startsWith('http')) {
         try {
@@ -416,6 +450,12 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
           console.warn("Could not delete old file:", deleteError)
         }
       }
+      
+      // Clear the cached signed URL for this field before uploading new file
+      setImageUrls((prev) => {
+        const { [field]: _, ...rest } = prev
+        return rest
+      })
 
       // Upload to Supabase storage
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -452,7 +492,13 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
 
       if (urlData?.publicUrl) {
         console.log(`Successfully uploaded ${field} to:`, urlData.publicUrl)
+        // Update form data with new URL
         setFormData((prev) => ({ ...prev, [field]: urlData.publicUrl }))
+        // Clear any cached signed URL since we have a new public URL
+        setImageUrls((prev) => {
+          const { [field]: _, ...rest } = prev
+          return rest
+        })
       } else {
         console.error("Failed to get public URL. urlData:", urlData)
         throw new Error("Failed to get public URL for uploaded file")
@@ -469,29 +515,15 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
   }
 
   const handleFileDelete = async (field: keyof FormData) => {
-    const currentUrl = formData[field]
-    
-    if (currentUrl && currentUrl.startsWith('http')) {
-      try {
-        // Extract file path from URL
-        // URL format: https://[project].supabase.co/storage/v1/object/public/[bucket]/[path]
-        const urlMatch = currentUrl.match(/\/storage\/v1\/object\/public\/referral-partners\/(.+)$/)
-        if (urlMatch && urlMatch[1]) {
-          const filePath = urlMatch[1]
-          const { error: deleteError } = await supabase.storage
-            .from('referral-partners')
-            .remove([filePath])
-
-          if (deleteError) {
-            console.error("Error deleting file:", deleteError)
-          }
-        }
-      } catch (err) {
-        console.error("Error deleting file:", err)
-      }
-    }
-
+    // Only clear form data locally - don't delete from storage yet
+    // Storage deletion will happen when:
+    // 1. A new file is uploaded to replace it (handled in handleFileUpload)
+    // 2. Form is saved and the file is no longer referenced (can be cleaned up later)
     handleInputChange(field, "")
+    setImageUrls((prev) => {
+      const { [field]: _, ...rest } = prev
+      return rest
+    })
   }
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -534,6 +566,84 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
     return Object.keys(newErrors).length === 0
   }
 
+  // Check if all required fields are filled
+  const areAllFieldsFilled = (): boolean => {
+    return !!(
+      formData.name?.trim() &&
+      formData.phone?.trim() && formData.phone !== "+91" &&
+      formData.whatsapp_number?.trim() && formData.whatsapp_number !== "+91" &&
+      formData.company_name?.trim() &&
+      formData.organization_type?.trim() &&
+      formData.address_line1?.trim() &&
+      formData.area?.trim() &&
+      formData.taluk?.trim() &&
+      formData.district?.trim() &&
+      formData.division?.trim() &&
+      formData.region?.trim() &&
+      formData.city?.trim() &&
+      formData.state?.trim() &&
+      formData.pincode?.trim() &&
+      formData.country?.trim() &&
+      formData.account_number?.trim() &&
+      formData.account_holder_name?.trim() &&
+      formData.ifsc_code?.trim() &&
+      formData.branch_name?.trim() &&
+      formData.partner_photo?.trim() &&
+      formData.aadhar_front?.trim() &&
+      formData.aadhar_back?.trim() &&
+      formData.pancard_front?.trim() &&
+      formData.pancard_back?.trim()
+    )
+  }
+
+  // Check if form has been modified
+  const hasFormChanged = (): boolean => {
+    if (!savedFormData) return true // If no saved data, consider it changed
+    
+    // Compare all fields (normalize phone numbers for comparison)
+    const normalizePhone = (phone: string) => phone?.replace(/^\+91/, "").trim() || ""
+    
+    return (
+      formData.name?.trim() !== savedFormData.name?.trim() ||
+      normalizePhone(formData.phone) !== normalizePhone(savedFormData.phone) ||
+      normalizePhone(formData.whatsapp_number) !== normalizePhone(savedFormData.whatsapp_number) ||
+      formData.company_name?.trim() !== savedFormData.company_name?.trim() ||
+      formData.organization_type?.trim() !== savedFormData.organization_type?.trim() ||
+      formData.address_line1?.trim() !== savedFormData.address_line1?.trim() ||
+      formData.address_line2?.trim() !== savedFormData.address_line2?.trim() ||
+      formData.area?.trim() !== savedFormData.area?.trim() ||
+      formData.taluk?.trim() !== savedFormData.taluk?.trim() ||
+      formData.district?.trim() !== savedFormData.district?.trim() ||
+      formData.division?.trim() !== savedFormData.division?.trim() ||
+      formData.region?.trim() !== savedFormData.region?.trim() ||
+      formData.city?.trim() !== savedFormData.city?.trim() ||
+      formData.state?.trim() !== savedFormData.state?.trim() ||
+      formData.pincode?.trim() !== savedFormData.pincode?.trim() ||
+      formData.country?.trim() !== savedFormData.country?.trim() ||
+      formData.account_number?.trim() !== savedFormData.account_number?.trim() ||
+      formData.account_holder_name?.trim() !== savedFormData.account_holder_name?.trim() ||
+      formData.ifsc_code?.trim() !== savedFormData.ifsc_code?.trim() ||
+      formData.branch_name?.trim() !== savedFormData.branch_name?.trim() ||
+      formData.partner_photo?.trim() !== savedFormData.partner_photo?.trim() ||
+      formData.aadhar_front?.trim() !== savedFormData.aadhar_front?.trim() ||
+      formData.aadhar_back?.trim() !== savedFormData.aadhar_back?.trim() ||
+      formData.pancard_front?.trim() !== savedFormData.pancard_front?.trim() ||
+      formData.pancard_back?.trim() !== savedFormData.pancard_back?.trim()
+    )
+  }
+
+  // Determine if save button should be disabled
+  const isSaveDisabled = (): boolean => {
+    // Disable if saving
+    if (isSaving) return true
+    
+    // Enable if not all fields are filled
+    if (!areAllFieldsFilled()) return false
+    
+    // Disable if all fields are filled and nothing has changed
+    return !hasFormChanged()
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSaving(true)
@@ -546,6 +656,39 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
     }
 
     try {
+      // Delete files from storage that are no longer in the form data
+      if (savedFormData) {
+        const imageFields: (keyof FormData)[] = ['partner_photo', 'aadhar_front', 'aadhar_back', 'pancard_front', 'pancard_back']
+        const filesToDelete: string[] = []
+
+        for (const field of imageFields) {
+          const savedUrl = savedFormData[field]
+          const currentUrl = formData[field]
+          
+          // If there was a saved URL but it's now empty or different, mark it for deletion
+          if (savedUrl && savedUrl.trim() && savedUrl.startsWith('http')) {
+            if (!currentUrl || !currentUrl.trim() || currentUrl !== savedUrl) {
+              // Extract file path from saved URL
+              const urlMatch = savedUrl.match(/\/storage\/v1\/object\/public\/referral-partners\/(.+)$/)
+              if (urlMatch && urlMatch[1]) {
+                filesToDelete.push(urlMatch[1])
+              }
+            }
+          }
+        }
+
+        // Delete orphaned files from storage (non-blocking, don't wait for completion)
+        if (filesToDelete.length > 0) {
+          supabase.storage
+            .from('referral-partners')
+            .remove(filesToDelete)
+            .catch((err) => {
+              console.warn("Error cleaning up old files:", err)
+              // Don't fail the save if cleanup fails
+            })
+        }
+      }
+
       const { error } = await supabase
         .from("referral_partners")
         .upsert(
@@ -565,6 +708,8 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
       } else {
         setSaveSuccess(true)
         setTimeout(() => setSaveSuccess(false), 3000)
+        // Update saved form data to current form data after successful save
+        setSavedFormData({ ...formData })
       }
     } catch (err: any) {
       console.error("Error saving profile:", err)
@@ -1095,8 +1240,9 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
             </div>
           )}
           {formData.partner_photo && formData.partner_photo.trim() && formData.partner_photo.startsWith('http') ? (
-            <div className="relative max-w-md">
+            <div className="relative max-w-md mx-auto">
               <img
+                key={formData.partner_photo} // Force re-render when URL changes
                 src={imageUrls.partner_photo || formData.partner_photo}
                 alt="Partner photo"
                 className="w-full h-auto max-h-96 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
@@ -1104,19 +1250,36 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   const imgElement = e.currentTarget
                   if (!imgElement) return
                   
-                  console.error("Error loading partner photo:", formData.partner_photo)
-                  // Try to get signed URL as fallback
-                  if (!imageUrls.partner_photo) {
+                  const currentUrl = formData.partner_photo
+                  const attemptedUrl = imgElement.src
+                  
+                  // Only try fallback if the URL matches (not a stale error)
+                  if (attemptedUrl !== currentUrl && attemptedUrl !== imageUrls.partner_photo) {
+                    return // This is a stale error, ignore it
+                  }
+                  
+                  // Try to get signed URL as fallback if we haven't already
+                  if (!imageUrls.partner_photo && currentUrl && currentUrl.startsWith('http')) {
                     try {
-                      const signedUrl = await getImageUrl('partner_photo', formData.partner_photo)
-                      if (signedUrl !== formData.partner_photo && imgElement) {
-                        imgElement.src = signedUrl
-                        return
+                      const signedUrl = await getImageUrl('partner_photo', currentUrl)
+                      if (signedUrl && signedUrl !== currentUrl && imgElement) {
+                        // Only update if the element is still trying to load the same URL
+                        if (imgElement.src === currentUrl || imgElement.src === attemptedUrl) {
+                          imgElement.src = signedUrl
+                          return // Exit early, let the new URL try to load
+                        }
                       }
                     } catch (err) {
-                      console.error("Failed to get signed URL:", err)
+                      // Silently handle - signed URL might not be available
                     }
                   }
+                  
+                  // If we get here, both public and signed URLs failed
+                  // Only log if this is the current URL we're trying to load
+                  if (attemptedUrl === currentUrl || attemptedUrl === imageUrls.partner_photo) {
+                    console.warn("Failed to load partner photo. The file may have been deleted or is not accessible.")
+                  }
+                  
                   if (imgElement) {
                     imgElement.style.display = 'none'
                   }
@@ -1185,7 +1348,8 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
         <div className="space-y-6">
           <Label className="text-lg">Aadhar Card *</Label>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-6">
+            {/* Aadhar Front */}
             <div className="space-y-4">
               <Label htmlFor="aadhar-front">Aadhar Front *</Label>
               {errors.aadhar_front && (
@@ -1195,7 +1359,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 </div>
               )}
               {formData.aadhar_front && formData.aadhar_front.trim() && formData.aadhar_front.startsWith('http') ? (
-                <div className="relative">
+                <div className="relative max-w-md mx-auto">
                   <img
                     src={imageUrls.aadhar_front || formData.aadhar_front}
                     alt="Aadhar front"
@@ -1204,19 +1368,34 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                       const imgElement = e.currentTarget
                       if (!imgElement) return
                       
-                      console.error("Error loading aadhar front:", formData.aadhar_front)
-                      // Try to get signed URL as fallback
-                      if (!imageUrls.aadhar_front) {
+                      const currentUrl = formData.aadhar_front
+                      const attemptedUrl = imgElement.src
+                      
+                      // Only try fallback if the URL matches (not a stale error)
+                      if (attemptedUrl !== currentUrl && attemptedUrl !== imageUrls.aadhar_front) {
+                        return // This is a stale error, ignore it
+                      }
+                      
+                      // Try to get signed URL as fallback if we haven't already
+                      if (!imageUrls.aadhar_front && currentUrl && currentUrl.startsWith('http')) {
                         try {
-                          const signedUrl = await getImageUrl('aadhar_front', formData.aadhar_front)
-                          if (signedUrl !== formData.aadhar_front && imgElement) {
-                            imgElement.src = signedUrl
-                            return
+                          const signedUrl = await getImageUrl('aadhar_front', currentUrl)
+                          if (signedUrl && signedUrl !== currentUrl && imgElement) {
+                            if (imgElement.src === currentUrl || imgElement.src === attemptedUrl) {
+                              imgElement.src = signedUrl
+                              return
+                            }
                           }
                         } catch (err) {
-                          console.error("Failed to get signed URL:", err)
+                          // Silently handle - signed URL might not be available
                         }
                       }
+                      
+                      // If we get here, both public and signed URLs failed
+                      if (attemptedUrl === currentUrl || attemptedUrl === imageUrls.aadhar_front) {
+                        console.warn("Failed to load aadhar front. The file may have been deleted or is not accessible.")
+                      }
+                      
                       if (imgElement) {
                         imgElement.style.display = 'none'
                       }
@@ -1269,6 +1448,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
               )}
             </div>
 
+            {/* Aadhar Back */}
             <div className="space-y-4">
               <Label htmlFor="aadhar-back">Aadhar Back *</Label>
               {errors.aadhar_back && (
@@ -1278,7 +1458,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 </div>
               )}
               {formData.aadhar_back && formData.aadhar_back.trim() && formData.aadhar_back.startsWith('http') ? (
-                <div className="relative">
+                <div className="relative max-w-md mx-auto">
                   <img
                     src={imageUrls.aadhar_back || formData.aadhar_back}
                     alt="Aadhar back"
@@ -1287,19 +1467,34 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                       const imgElement = e.currentTarget
                       if (!imgElement) return
                       
-                      console.error("Error loading aadhar back:", formData.aadhar_back)
-                      // Try to get signed URL as fallback
-                      if (!imageUrls.aadhar_back) {
+                      const currentUrl = formData.aadhar_back
+                      const attemptedUrl = imgElement.src
+                      
+                      // Only try fallback if the URL matches (not a stale error)
+                      if (attemptedUrl !== currentUrl && attemptedUrl !== imageUrls.aadhar_back) {
+                        return // This is a stale error, ignore it
+                      }
+                      
+                      // Try to get signed URL as fallback if we haven't already
+                      if (!imageUrls.aadhar_back && currentUrl && currentUrl.startsWith('http')) {
                         try {
-                          const signedUrl = await getImageUrl('aadhar_back', formData.aadhar_back)
-                          if (signedUrl !== formData.aadhar_back && imgElement) {
-                            imgElement.src = signedUrl
-                            return
+                          const signedUrl = await getImageUrl('aadhar_back', currentUrl)
+                          if (signedUrl && signedUrl !== currentUrl && imgElement) {
+                            if (imgElement.src === currentUrl || imgElement.src === attemptedUrl) {
+                              imgElement.src = signedUrl
+                              return
+                            }
                           }
                         } catch (err) {
-                          console.error("Failed to get signed URL:", err)
+                          // Silently handle - signed URL might not be available
                         }
                       }
+                      
+                      // If we get here, both public and signed URLs failed
+                      if (attemptedUrl === currentUrl || attemptedUrl === imageUrls.aadhar_back) {
+                        console.warn("Failed to load aadhar back. The file may have been deleted or is not accessible.")
+                      }
+                      
                       if (imgElement) {
                         imgElement.style.display = 'none'
                       }
@@ -1368,7 +1563,8 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
         <div className="space-y-6">
           <Label className="text-lg">PAN Card *</Label>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-6">
+            {/* PAN Front */}
             <div className="space-y-4">
               <Label htmlFor="pancard-front">PAN Front *</Label>
               {errors.pancard_front && (
@@ -1378,7 +1574,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 </div>
               )}
               {formData.pancard_front && formData.pancard_front.trim() && formData.pancard_front.startsWith('http') ? (
-                <div className="relative">
+                <div className="relative max-w-md mx-auto">
                   <img
                     src={imageUrls.pancard_front || formData.pancard_front}
                     alt="PAN front"
@@ -1387,19 +1583,34 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                       const imgElement = e.currentTarget
                       if (!imgElement) return
                       
-                      console.error("Error loading PAN front:", formData.pancard_front)
-                      // Try to get signed URL as fallback
-                      if (!imageUrls.pancard_front) {
+                      const currentUrl = formData.pancard_front
+                      const attemptedUrl = imgElement.src
+                      
+                      // Only try fallback if the URL matches (not a stale error)
+                      if (attemptedUrl !== currentUrl && attemptedUrl !== imageUrls.pancard_front) {
+                        return // This is a stale error, ignore it
+                      }
+                      
+                      // Try to get signed URL as fallback if we haven't already
+                      if (!imageUrls.pancard_front && currentUrl && currentUrl.startsWith('http')) {
                         try {
-                          const signedUrl = await getImageUrl('pancard_front', formData.pancard_front)
-                          if (signedUrl !== formData.pancard_front && imgElement) {
-                            imgElement.src = signedUrl
-                            return
+                          const signedUrl = await getImageUrl('pancard_front', currentUrl)
+                          if (signedUrl && signedUrl !== currentUrl && imgElement) {
+                            if (imgElement.src === currentUrl || imgElement.src === attemptedUrl) {
+                              imgElement.src = signedUrl
+                              return
+                            }
                           }
                         } catch (err) {
-                          console.error("Failed to get signed URL:", err)
+                          // Silently handle - signed URL might not be available
                         }
                       }
+                      
+                      // If we get here, both public and signed URLs failed
+                      if (attemptedUrl === currentUrl || attemptedUrl === imageUrls.pancard_front) {
+                        console.warn("Failed to load PAN front. The file may have been deleted or is not accessible.")
+                      }
+                      
                       if (imgElement) {
                         imgElement.style.display = 'none'
                       }
@@ -1462,6 +1673,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
               )}
             </div>
 
+            {/* PAN Back */}
             <div className="space-y-4">
               <Label htmlFor="pancard-back">PAN Back *</Label>
               {errors.pancard_back && (
@@ -1471,7 +1683,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 </div>
               )}
               {formData.pancard_back && formData.pancard_back.trim() && formData.pancard_back.startsWith('http') ? (
-                <div className="relative">
+                <div className="relative max-w-md mx-auto">
                   <img
                     src={imageUrls.pancard_back || formData.pancard_back}
                     alt="PAN back"
@@ -1480,19 +1692,34 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                       const imgElement = e.currentTarget
                       if (!imgElement) return
                       
-                      console.error("Error loading PAN back:", formData.pancard_back)
-                      // Try to get signed URL as fallback
-                      if (!imageUrls.pancard_back) {
+                      const currentUrl = formData.pancard_back
+                      const attemptedUrl = imgElement.src
+                      
+                      // Only try fallback if the URL matches (not a stale error)
+                      if (attemptedUrl !== currentUrl && attemptedUrl !== imageUrls.pancard_back) {
+                        return // This is a stale error, ignore it
+                      }
+                      
+                      // Try to get signed URL as fallback if we haven't already
+                      if (!imageUrls.pancard_back && currentUrl && currentUrl.startsWith('http')) {
                         try {
-                          const signedUrl = await getImageUrl('pancard_back', formData.pancard_back)
-                          if (signedUrl !== formData.pancard_back && imgElement) {
-                            imgElement.src = signedUrl
-                            return
+                          const signedUrl = await getImageUrl('pancard_back', currentUrl)
+                          if (signedUrl && signedUrl !== currentUrl && imgElement) {
+                            if (imgElement.src === currentUrl || imgElement.src === attemptedUrl) {
+                              imgElement.src = signedUrl
+                              return
+                            }
                           }
                         } catch (err) {
-                          console.error("Failed to get signed URL:", err)
+                          // Silently handle - signed URL might not be available
                         }
                       }
+                      
+                      // If we get here, both public and signed URLs failed
+                      if (attemptedUrl === currentUrl || attemptedUrl === imageUrls.pancard_back) {
+                        console.warn("Failed to load PAN back. The file may have been deleted or is not accessible.")
+                      }
+                      
                       if (imgElement) {
                         imgElement.style.display = 'none'
                       }
@@ -1562,7 +1789,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
       <div className="flex justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
         <Button
           type="submit"
-          disabled={isSaving}
+          disabled={isSaveDisabled()}
           className="px-8"
         >
           {isSaving ? (
