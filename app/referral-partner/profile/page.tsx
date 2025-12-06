@@ -212,13 +212,13 @@ export default function ReferralPartnerProfilePage() {
               <span>© 2024 Manavizha. All rights reserved.</span>
             </div>
             <div className="flex items-center gap-6">
-              <a href="#" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+              <a href="/privacy-policy" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
                 Privacy Policy
               </a>
-              <a href="#" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+              <a href="/terms-of-service" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
                 Terms of Service
               </a>
-              <a href="#" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+              <a href="/contact" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
                 Contact Us
               </a>
             </div>
