@@ -160,12 +160,27 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
         }
       } else {
         // Login
-        const { error: signInError } = await supabase.auth.signInWithPassword({
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
 
         if (signInError) throw signInError
+
+        if (signInData.user) {
+          // Check if user is a referral partner - if so, deny access
+          const { data: partnerData, error: partnerError } = await supabase
+            .from("referral_partners")
+            .select("user_id")
+            .eq("user_id", signInData.user.id)
+            .single()
+
+          if (!partnerError && partnerData) {
+            // User is a referral partner, sign them out and deny access
+            await supabase.auth.signOut()
+            throw new Error("Access denied. This account is registered as a referral partner. Please use the referral partner login.")
+          }
+        }
 
         // Clear success message, close dialog, and navigate to dashboard
         setSuccessMessage(null)
