@@ -198,27 +198,27 @@ export default function ReferralPartnerProfilePage() {
           </div>
         </div>
 
-        {/* Footer */}
-        <footer className="relative z-10 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-t border-gray-200/60 dark:border-gray-700/60 mt-8">
-          <div className="max-w-7xl mx-auto px-4 py-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-600 dark:text-gray-400">
-              <div className="flex items-center gap-2">
-                <span>© 2024 Manavizha. All rights reserved.</span>
-              </div>
-              <div className="flex items-center gap-6">
-                <a href="#" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
-                  Privacy Policy
-                </a>
-                <a href="#" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
-                  Terms of Service
-                </a>
-                <a href="#" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
-                  Contact Us
-                </a>
-              </div>
+        {/* Footer - Fixed at bottom */}
+      <footer className="fixed bottom-0 left-0 right-0 z-10 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-t border-gray-200/60 dark:border-gray-700/60">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex items-center gap-2">
+              <span>© 2024 Manavizha. All rights reserved.</span>
+            </div>
+            <div className="flex items-center gap-6">
+              <a href="#" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                Privacy Policy
+              </a>
+              <a href="#" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                Terms of Service
+              </a>
+              <a href="#" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                Contact Us
+              </a>
             </div>
           </div>
-        </footer>
+        </div>
+      </footer>
       </div>
     </div>
   )
