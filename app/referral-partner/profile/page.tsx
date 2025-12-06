@@ -194,7 +194,7 @@ export default function ReferralPartnerProfilePage() {
       <div className="relative z-10">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-sm p-8">
-            {user && <ReferralPartnerProfileForm userId={user.id} />}
+            {user && <ReferralPartnerProfileForm userId={user.id} userEmail={user.email || ""} />}
           </div>
         </div>
 

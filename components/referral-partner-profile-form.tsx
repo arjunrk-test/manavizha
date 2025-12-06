@@ -1,16 +1,43 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, X, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Upload, X, AlertCircle, CheckCircle2, ChevronDown } from "lucide-react"
+
+interface PostOffice {
+  Name: string
+  Taluk?: string
+  Tehsil?: string
+  Block?: string
+  District: string
+  Division: string
+  Circle?: string
+  Region?: string
+  State: string
+  Country: string
+}
+
+interface IFSCDetails {
+  BANK: string
+  IFSC: string
+  BRANCH: string
+  ADDRESS: string
+  CONTACT: string
+  CITY: string
+  DISTRICT: string
+  STATE: string
+  RTGS: boolean
+  BANKCODE: string
+}
 
 interface ReferralPartnerProfileFormProps {
   userId: string
+  userEmail: string
 }
 
 interface FormData {
@@ -41,11 +68,11 @@ interface FormData {
   pancard_back: string
 }
 
-export function ReferralPartnerProfileForm({ userId }: ReferralPartnerProfileFormProps) {
+export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartnerProfileFormProps) {
   const [formData, setFormData] = useState<FormData>({
     name: "",
-    phone: "",
-    whatsapp_number: "",
+    phone: "+91",
+    whatsapp_number: "+91",
     company_name: "",
     organization_type: "",
     address_line1: "",
@@ -74,6 +101,12 @@ export function ReferralPartnerProfileForm({ userId }: ReferralPartnerProfileFor
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [isWhatsappSameAsPhone, setIsWhatsappSameAsPhone] = useState(false)
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false)
+  const [areas, setAreas] = useState<PostOffice[]>([])
+  const [isAreaOpen, setIsAreaOpen] = useState(false)
+  const areaRef = useRef<HTMLDivElement>(null)
+  const [isLoadingIFSC, setIsLoadingIFSC] = useState(false)
 
   // Load existing data
   useEffect(() => {
@@ -91,10 +124,17 @@ export function ReferralPartnerProfileForm({ userId }: ReferralPartnerProfileFor
         }
 
         if (data) {
+          // Ensure phone and whatsapp have +91 prefix
+          const phone = data.phone || ""
+          const whatsapp = data.whatsapp_number || ""
+          const phoneWithPrefix = phone && !phone.startsWith("+91") ? `+91${phone.replace(/^\+91/, "")}` : (phone || "+91")
+          const whatsappWithPrefix = whatsapp && !whatsapp.startsWith("+91") ? `+91${whatsapp.replace(/^\+91/, "")}` : (whatsapp || "+91")
+          const isSame = phoneWithPrefix && whatsappWithPrefix && phoneWithPrefix === whatsappWithPrefix
+          
           setFormData({
             name: data.name || "",
-            phone: data.phone || "",
-            whatsapp_number: data.whatsapp_number || "",
+            phone: phoneWithPrefix,
+            whatsapp_number: whatsappWithPrefix,
             company_name: data.company_name || "",
             organization_type: data.organization_type || "",
             address_line1: data.address_line1 || "",
@@ -118,6 +158,8 @@ export function ReferralPartnerProfileForm({ userId }: ReferralPartnerProfileFor
             pancard_front: data.pancard_front || "",
             pancard_back: data.pancard_back || "",
           })
+          
+          setIsWhatsappSameAsPhone(isSame)
         }
       } catch (err) {
         console.error("Error loading profile:", err)
@@ -128,6 +170,147 @@ export function ReferralPartnerProfileForm({ userId }: ReferralPartnerProfileFor
 
     loadProfile()
   }, [userId])
+
+  // Function to fetch areas from pincode
+  const fetchAreasFromPincode = async (pincode: string) => {
+    if (!pincode || pincode.length !== 6) {
+      setIsLoadingAddress(false)
+      setAreas([])
+      // Clear fields if pincode is incomplete
+      handleInputChange("area", "")
+      handleInputChange("taluk", "")
+      handleInputChange("district", "")
+      handleInputChange("division", "")
+      handleInputChange("region", "")
+      handleInputChange("state", "")
+      handleInputChange("country", "")
+      return
+    }
+
+    try {
+      // Using PostPincode.in API - free API for pincode lookup
+      const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+      const data = await response.json()
+
+      if (data && data[0] && data[0].Status === "Success" && data[0].PostOffice && data[0].PostOffice.length > 0) {
+        const postOffices = data[0].PostOffice as PostOffice[]
+        setAreas(postOffices)
+        // Auto-select first area if only one area exists
+        if (postOffices.length === 1) {
+          const postOffice = postOffices[0]
+          handleAreaSelect(postOffice)
+        }
+      } else {
+        // No areas found
+        setAreas([])
+        handleInputChange("area", "")
+        handleInputChange("taluk", "")
+        handleInputChange("district", "")
+        handleInputChange("division", "")
+        handleInputChange("region", "")
+        handleInputChange("state", "")
+        handleInputChange("country", "")
+      }
+    } catch (error) {
+      console.error("Error fetching address from pincode:", error)
+      setAreas([])
+    } finally {
+      setIsLoadingAddress(false)
+    }
+  }
+
+  // Function to handle area selection
+  const handleAreaSelect = (postOffice: PostOffice) => {
+    handleInputChange("area", postOffice.Name || "")
+    handleInputChange("taluk", postOffice.Taluk || postOffice.Tehsil || postOffice.Block || "")
+    handleInputChange("district", postOffice.District || "")
+    handleInputChange("division", postOffice.Division || "")
+    handleInputChange("region", postOffice.Circle || postOffice.Region || "")
+    handleInputChange("state", postOffice.State || "")
+    handleInputChange("country", postOffice.Country || "")
+    // Use district as city if city is empty
+    if (!formData.city) {
+      handleInputChange("city", postOffice.District || "")
+    }
+    setIsAreaOpen(false)
+  }
+
+  // Auto-fetch areas when pincode is entered
+  useEffect(() => {
+    if (formData.pincode && formData.pincode.length === 6) {
+      // Set loading immediately
+      setIsLoadingAddress(true)
+      // Small delay to show loading, then fetch
+      const timeoutId = setTimeout(() => {
+        fetchAreasFromPincode(formData.pincode)
+      }, 300)
+      return () => clearTimeout(timeoutId)
+    } else {
+      setIsLoadingAddress(false)
+      setAreas([])
+    }
+  }, [formData.pincode])
+
+  // Handle click outside for area dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (areaRef.current && !areaRef.current.contains(event.target as Node)) {
+        setIsAreaOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  // Function to fetch IFSC details from Razorpay API
+  const fetchIFSCDetails = async (ifscCode: string) => {
+    if (!ifscCode || ifscCode.length !== 11) {
+      setIsLoadingIFSC(false)
+      return
+    }
+
+    try {
+      setIsLoadingIFSC(true)
+      const response = await fetch(`https://ifsc.razorpay.com/${ifscCode}`)
+      
+      if (!response.ok) {
+        throw new Error("IFSC code not found")
+      }
+
+      const data: IFSCDetails = await response.json()
+
+      if (data && data.BRANCH) {
+        // Auto-fill branch name
+        handleInputChange("branch_name", data.BRANCH)
+      }
+    } catch (error) {
+      console.error("Error fetching IFSC details:", error)
+      // Don't show error to user, just don't auto-fill
+    } finally {
+      setIsLoadingIFSC(false)
+    }
+  }
+
+  // Auto-fetch IFSC details when IFSC code is entered
+  useEffect(() => {
+    if (formData.ifsc_code && formData.ifsc_code.length === 11) {
+      // Small delay to avoid too many API calls
+      const timeoutId = setTimeout(() => {
+        fetchIFSCDetails(formData.ifsc_code)
+      }, 500)
+      return () => clearTimeout(timeoutId)
+    } else {
+      setIsLoadingIFSC(false)
+    }
+  }, [formData.ifsc_code])
+
+  // Sync WhatsApp number with phone number when checkbox is checked
+  useEffect(() => {
+    if (isWhatsappSameAsPhone && formData.whatsapp_number !== formData.phone) {
+      handleInputChange("whatsapp_number", formData.phone)
+    }
+  }, [formData.phone, isWhatsappSameAsPhone])
 
   const validateFile = (file: File): string | null => {
     if (file.size > 5 * 1024 * 1024) {
@@ -215,6 +398,7 @@ export function ReferralPartnerProfileForm({ userId }: ReferralPartnerProfileFor
         .upsert(
           {
             user_id: userId,
+            email: userEmail,
             ...formData,
           },
           {
@@ -285,33 +469,102 @@ export function ReferralPartnerProfileForm({ userId }: ReferralPartnerProfileFor
           </div>
           <div className="space-y-2">
             <Label htmlFor="phone">Phone Number *</Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => handleInputChange("phone", e.target.value.replace(/[^0-9]/g, ""))}
-              placeholder="Enter phone number"
-              maxLength={20}
-              required
-            />
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none z-10">
+                +91
+              </div>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone.startsWith("+91") ? formData.phone.slice(3) : formData.phone}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, "")
+                  // Limit to 10 digits
+                  if (value.length <= 10) {
+                    handleInputChange("phone", value ? `+91${value}` : "+91")
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Backspace" && formData.phone === "+91") {
+                    e.preventDefault()
+                  }
+                }}
+                placeholder="Enter your phone number"
+                maxLength={10}
+                required
+                className="pl-12"
+              />
+            </div>
             {errors.phone && (
               <p className="text-sm text-red-600 dark:text-red-400">{errors.phone}</p>
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="whatsapp_number">WhatsApp Number *</Label>
-            <Input
-              id="whatsapp_number"
-              type="tel"
-              value={formData.whatsapp_number}
-              onChange={(e) => handleInputChange("whatsapp_number", e.target.value.replace(/[^0-9]/g, ""))}
-              placeholder="Enter WhatsApp number"
-              maxLength={20}
-              required
-            />
+            <div className="flex items-center justify-between">
+              <Label htmlFor="whatsapp_number">WhatsApp Number *</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="isWhatsappSameAsPhone"
+                  checked={isWhatsappSameAsPhone}
+                  onChange={(e) => {
+                    setIsWhatsappSameAsPhone(e.target.checked)
+                    if (e.target.checked) {
+                      handleInputChange("whatsapp_number", formData.phone)
+                    } else {
+                      handleInputChange("whatsapp_number", "")
+                    }
+                  }}
+                  className="rounded border-gray-300"
+                />
+                <Label htmlFor="isWhatsappSameAsPhone" className="text-sm font-normal cursor-pointer">
+                  Same as phone number
+                </Label>
+              </div>
+            </div>
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none z-10">
+                +91
+              </div>
+              <Input
+                id="whatsapp_number"
+                type="tel"
+                value={formData.whatsapp_number.startsWith("+91") ? formData.whatsapp_number.slice(3) : formData.whatsapp_number}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, "")
+                  // Limit to 10 digits
+                  if (value.length <= 10) {
+                    handleInputChange("whatsapp_number", value ? `+91${value}` : "+91")
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Backspace" && formData.whatsapp_number === "+91") {
+                    e.preventDefault()
+                  }
+                }}
+                placeholder="Enter your WhatsApp number"
+                maxLength={10}
+                required
+                disabled={isWhatsappSameAsPhone}
+                className={`pl-12 ${isWhatsappSameAsPhone ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : ""}`}
+              />
+            </div>
             {errors.whatsapp_number && (
               <p className="text-sm text-red-600 dark:text-red-400">{errors.whatsapp_number}</p>
             )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email *</Label>
+            <Input
+              id="email"
+              type="email"
+              value={userEmail}
+              placeholder="Email address"
+              required
+              readOnly
+              disabled
+              className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+            />
           </div>
         </div>
       </div>
@@ -384,71 +637,164 @@ export function ReferralPartnerProfileForm({ userId }: ReferralPartnerProfileFor
               id="address_line2"
               value={formData.address_line2}
               onChange={(e) => handleInputChange("address_line2", e.target.value)}
-              placeholder="Enter address line 2"
+              placeholder="Enter address line 2 (optional)"
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="area">Area *</Label>
-              <Input
-                id="area"
-                value={formData.area}
-                onChange={(e) => handleInputChange("area", e.target.value)}
-                placeholder="Enter area"
-                required
-              />
+              <Label htmlFor="pincode">Pincode *</Label>
+              <div className="relative">
+                <Input
+                  id="pincode"
+                  type="number"
+                  value={formData.pincode}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9]/g, "")
+                    if (value.length <= 6) {
+                      handleInputChange("pincode", value)
+                    }
+                  }}
+                  placeholder="Enter pincode"
+                  maxLength={6}
+                  required
+                  className={isLoadingAddress ? "pr-10" : ""}
+                />
+                {isLoadingAddress && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
+              {errors.pincode && (
+                <p className="text-sm text-red-600 dark:text-red-400">{errors.pincode}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="area">Area Name *</Label>
+              <div className="relative" ref={areaRef}>
+                <button
+                  type="button"
+                  onClick={() => areas.length > 0 && setIsAreaOpen(!isAreaOpen)}
+                  disabled={isLoadingAddress || areas.length === 0}
+                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem] disabled:bg-gray-100 disabled:dark:bg-gray-800 disabled:cursor-not-allowed"
+                >
+                  <span className={formData.area ? "" : "text-gray-500"}>
+                    {formData.area || (isLoadingAddress ? "Loading areas..." : areas.length === 0 ? "Enter pincode first" : "Select Area")}
+                  </span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${isAreaOpen ? "rotate-180" : ""}`} />
+                </button>
+                {isLoadingAddress && (
+                  <div className="absolute right-8 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+                {isAreaOpen && areas.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                    <div className="overflow-y-auto language-dropdown-scroll" style={{ maxHeight: '250px' }}>
+                      {areas.map((postOffice, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => handleAreaSelect(postOffice)}
+                          className={`w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-left transition-colors ${
+                            formData.area === postOffice.Name ? "bg-gray-100 dark:bg-gray-800" : ""
+                          }`}
+                        >
+                          {postOffice.Name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               {errors.area && (
                 <p className="text-sm text-red-600 dark:text-red-400">{errors.area}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="taluk">Taluk *</Label>
-              <Input
-                id="taluk"
-                value={formData.taluk}
-                onChange={(e) => handleInputChange("taluk", e.target.value)}
-                placeholder="Enter taluk"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="taluk"
+                  value={formData.taluk || ""}
+                  onChange={(e) => handleInputChange("taluk", e.target.value)}
+                  placeholder="Taluk (auto-filled)"
+                  required
+                  readOnly
+                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                />
+                {isLoadingAddress && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
               {errors.taluk && (
                 <p className="text-sm text-red-600 dark:text-red-400">{errors.taluk}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="district">District *</Label>
-              <Input
-                id="district"
-                value={formData.district}
-                onChange={(e) => handleInputChange("district", e.target.value)}
-                placeholder="Enter district"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="district"
+                  value={formData.district}
+                  onChange={(e) => handleInputChange("district", e.target.value)}
+                  placeholder="District (auto-filled)"
+                  required
+                  readOnly
+                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                />
+                {isLoadingAddress && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
               {errors.district && (
                 <p className="text-sm text-red-600 dark:text-red-400">{errors.district}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="division">Division *</Label>
-              <Input
-                id="division"
-                value={formData.division}
-                onChange={(e) => handleInputChange("division", e.target.value)}
-                placeholder="Enter division"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="division"
+                  value={formData.division}
+                  onChange={(e) => handleInputChange("division", e.target.value)}
+                  placeholder="Division (auto-filled)"
+                  required
+                  readOnly
+                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                />
+                {isLoadingAddress && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
               {errors.division && (
                 <p className="text-sm text-red-600 dark:text-red-400">{errors.division}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="region">Region *</Label>
-              <Input
-                id="region"
-                value={formData.region}
-                onChange={(e) => handleInputChange("region", e.target.value)}
-                placeholder="Enter region"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="region"
+                  value={formData.region}
+                  onChange={(e) => handleInputChange("region", e.target.value)}
+                  placeholder="Region (auto-filled)"
+                  required
+                  readOnly
+                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                />
+                {isLoadingAddress && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
               {errors.region && (
                 <p className="text-sm text-red-600 dark:text-red-400">{errors.region}</p>
               )}
@@ -468,41 +814,44 @@ export function ReferralPartnerProfileForm({ userId }: ReferralPartnerProfileFor
             </div>
             <div className="space-y-2">
               <Label htmlFor="state">State *</Label>
-              <Input
-                id="state"
-                value={formData.state}
-                onChange={(e) => handleInputChange("state", e.target.value)}
-                placeholder="Enter state"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="state"
+                  value={formData.state}
+                  onChange={(e) => handleInputChange("state", e.target.value)}
+                  placeholder="State (auto-filled)"
+                  required
+                  readOnly
+                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                />
+                {isLoadingAddress && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
               {errors.state && (
                 <p className="text-sm text-red-600 dark:text-red-400">{errors.state}</p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pincode">Pincode *</Label>
-              <Input
-                id="pincode"
-                type="text"
-                value={formData.pincode}
-                onChange={(e) => handleInputChange("pincode", e.target.value.replace(/[^0-9]/g, ""))}
-                placeholder="Enter pincode"
-                maxLength={10}
-                required
-              />
-              {errors.pincode && (
-                <p className="text-sm text-red-600 dark:text-red-400">{errors.pincode}</p>
-              )}
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="country">Country *</Label>
-              <Input
-                id="country"
-                value={formData.country}
-                onChange={(e) => handleInputChange("country", e.target.value)}
-                placeholder="Enter country"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="country"
+                  value={formData.country}
+                  onChange={(e) => handleInputChange("country", e.target.value)}
+                  placeholder="Country (auto-filled)"
+                  required
+                  readOnly
+                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                />
+                {isLoadingAddress && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  </div>
+                )}
+              </div>
               {errors.country && (
                 <p className="text-sm text-red-600 dark:text-red-400">{errors.country}</p>
               )}
@@ -543,14 +892,22 @@ export function ReferralPartnerProfileForm({ userId }: ReferralPartnerProfileFor
           </div>
           <div className="space-y-2">
             <Label htmlFor="ifsc_code">IFSC Code *</Label>
-            <Input
-              id="ifsc_code"
-              value={formData.ifsc_code}
-              onChange={(e) => handleInputChange("ifsc_code", e.target.value.toUpperCase())}
-              placeholder="Enter IFSC code"
-              maxLength={11}
-              required
-            />
+            <div className="relative">
+              <Input
+                id="ifsc_code"
+                value={formData.ifsc_code}
+                onChange={(e) => handleInputChange("ifsc_code", e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+                placeholder="Enter IFSC code"
+                maxLength={11}
+                required
+                className={isLoadingIFSC ? "pr-10" : ""}
+              />
+              {isLoadingIFSC && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                </div>
+              )}
+            </div>
             {errors.ifsc_code && (
               <p className="text-sm text-red-600 dark:text-red-400">{errors.ifsc_code}</p>
             )}
@@ -561,7 +918,7 @@ export function ReferralPartnerProfileForm({ userId }: ReferralPartnerProfileFor
               id="branch_name"
               value={formData.branch_name}
               onChange={(e) => handleInputChange("branch_name", e.target.value)}
-              placeholder="Enter branch name"
+              placeholder="Enter branch name (auto-filled from IFSC)"
               required
             />
             {errors.branch_name && (
