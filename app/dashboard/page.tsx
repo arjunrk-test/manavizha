@@ -15,13 +15,28 @@ export default function DashboardPage() {
   const [profileProgress, setProfileProgress] = useState(0)
 
   useEffect(() => {
-    // Check if user is authenticated
+    // Check if user is authenticated and is NOT a referral partner
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push("/")
         return
       }
+
+      // Check if user is a referral partner - if so, deny access
+      const { data: partnerData, error: partnerError } = await supabase
+        .from("referral_partners")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .single()
+
+      if (!partnerError && partnerData) {
+        // User is a referral partner, sign them out and redirect
+        await supabase.auth.signOut()
+        router.push("/")
+        return
+      }
+
       setUser(user)
       setIsLoading(false)
     }
