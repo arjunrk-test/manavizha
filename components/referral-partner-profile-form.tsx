@@ -111,7 +111,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({}) // Cache for signed URLs
   const [savedFormData, setSavedFormData] = useState<FormData | null>(null) // Track saved state
 
-  // Helper function to get signed URL if public URL fails
+  // Helper function to get signed URL - use signed URLs directly for better performance
   const getImageUrl = async (field: string, url: string): Promise<string> => {
     if (!url || !url.startsWith('http')) return url
 
@@ -123,16 +123,23 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
     if (urlMatch && urlMatch[1]) {
       const filePath = urlMatch[1]
       
-      // Try to get signed URL as fallback (valid for 1 hour)
-      const { data: signedUrlData, error } = await supabase.storage
-        .from('referral-partners')
-        .createSignedUrl(filePath, 3600)
-      
-      if (signedUrlData?.signedUrl) {
-        setImageUrls(prev => ({ ...prev, [field]: signedUrlData.signedUrl }))
-        return signedUrlData.signedUrl
-      } else if (error) {
-        console.warn(`Failed to get signed URL for ${field}:`, error)
+      // Get signed URL directly (valid for 1 hour) - more reliable than public URLs
+      try {
+        const { data: signedUrlData, error } = await supabase.storage
+          .from('referral-partners')
+          .createSignedUrl(filePath, 3600)
+        
+        if (signedUrlData?.signedUrl) {
+          setImageUrls(prev => ({ ...prev, [field]: signedUrlData.signedUrl }))
+          return signedUrlData.signedUrl
+        } else if (error) {
+          console.warn(`Failed to get signed URL for ${field}:`, error)
+          // Fallback to public URL if signed URL fails
+          return url
+        }
+      } catch (err) {
+        console.warn(`Error getting signed URL for ${field}:`, err)
+        return url
       }
     }
     
@@ -222,32 +229,49 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
           }
           setSavedFormData(loadedFormData)
 
-          // Try to get signed URLs for images if they exist
+          // Pre-fetch signed URLs for all images immediately for faster loading
+          // Don't wait for this to complete - let images load in parallel
           const imageFields = ['partner_photo', 'aadhar_front', 'aadhar_back', 'pancard_front', 'pancard_back']
           const urlPromises = imageFields.map(async (field) => {
             const url = data[field]
             if (url && url.startsWith('http')) {
               try {
-                const signedUrl = await getImageUrl(field, url)
-                return { field, url: signedUrl }
+                // Extract path and get signed URL directly
+                const urlMatch = url.match(/\/storage\/v1\/object\/public\/referral-partners\/(.+)$/)
+                if (urlMatch && urlMatch[1]) {
+                  const filePath = urlMatch[1]
+                  const { data: signedUrlData } = await supabase.storage
+                    .from('referral-partners')
+                    .createSignedUrl(filePath, 3600)
+                  
+                  if (signedUrlData?.signedUrl) {
+                    return { field, url: signedUrlData.signedUrl }
+                  }
+                }
+                // Fallback to original URL if signed URL fails
+                return { field, url }
               } catch (err) {
                 console.warn(`Failed to get signed URL for ${field}:`, err)
-                return null
+                return { field, url: data[field] } // Use original URL as fallback
               }
             }
             return null
           })
 
-          const urlResults = await Promise.all(urlPromises)
-          const urlMap: Record<string, string> = {}
-          urlResults.forEach(result => {
-            if (result) {
-              urlMap[result.field] = result.url
+          // Set signed URLs as they become available (don't block UI)
+          Promise.all(urlPromises).then(urlResults => {
+            const urlMap: Record<string, string> = {}
+            urlResults.forEach(result => {
+              if (result) {
+                urlMap[result.field] = result.url
+              }
+            })
+            if (Object.keys(urlMap).length > 0) {
+              setImageUrls(urlMap)
             }
+          }).catch(err => {
+            console.warn("Error pre-fetching image URLs:", err)
           })
-          if (Object.keys(urlMap).length > 0) {
-            setImageUrls(urlMap)
-          }
         } else {
           // No saved data, so set savedFormData to null
           setSavedFormData(null)
@@ -1258,6 +1282,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 key={formData.partner_photo} // Force re-render when URL changes
                 src={imageUrls.partner_photo || formData.partner_photo}
                 alt="Partner photo"
+                loading="eager"
                 className="w-full h-auto max-h-96 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
                 onError={async (e) => {
                   const imgElement = e.currentTarget
@@ -1376,6 +1401,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   <img
                     src={imageUrls.aadhar_front || formData.aadhar_front}
                     alt="Aadhar front"
+                    loading="lazy"
                     className="w-full h-auto max-h-96 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
                     onError={async (e) => {
                       const imgElement = e.currentTarget
@@ -1475,6 +1501,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   <img
                     src={imageUrls.aadhar_back || formData.aadhar_back}
                     alt="Aadhar back"
+                    loading="lazy"
                     className="w-full h-auto max-h-96 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
                     onError={async (e) => {
                       const imgElement = e.currentTarget
@@ -1591,6 +1618,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   <img
                     src={imageUrls.pancard_front || formData.pancard_front}
                     alt="PAN front"
+                    loading="lazy"
                     className="w-full h-auto max-h-96 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
                     onError={async (e) => {
                       const imgElement = e.currentTarget
@@ -1700,6 +1728,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   <img
                     src={imageUrls.pancard_back || formData.pancard_back}
                     alt="PAN back"
+                    loading="lazy"
                     className="w-full h-auto max-h-96 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
                     onError={async (e) => {
                       const imgElement = e.currentTarget
