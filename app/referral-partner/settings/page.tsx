@@ -42,7 +42,11 @@ export default function ReferralPartnerSettingsPage() {
         return
       }
 
-      setUser(user)
+      // Merge user data with partner data (including partner_id)
+      setUser({
+        ...user,
+        partner_id: partnerData.partner_id
+      })
       setPartnerData(partnerData)
       // Load existing partner_id if it exists
       if (partnerData.partner_id) {
@@ -305,7 +309,9 @@ export default function ReferralPartnerSettingsPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
             {user?.email && (
-              <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {user?.partner_id ? `${user.partner_id} (${user.email})` : user.email}
+              </p>
             )}
           </div>
         </div>

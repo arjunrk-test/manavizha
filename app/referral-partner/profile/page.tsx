@@ -23,10 +23,10 @@ export default function ReferralPartnerProfilePage() {
         return
       }
 
-      // Verify user is a referral partner
+      // Verify user is a referral partner and get partner data including partner_id
       const { data: partnerData, error: partnerError } = await supabase
         .from("referral_partners")
-        .select("user_id")
+        .select("user_id, partner_id")
         .eq("user_id", user.id)
         .single()
 
@@ -37,7 +37,11 @@ export default function ReferralPartnerProfilePage() {
         return
       }
 
-      setUser(user)
+      // Merge user data with partner data (including partner_id)
+      setUser({
+        ...user,
+        partner_id: partnerData.partner_id
+      })
       setIsLoading(false)
     }
 
@@ -184,7 +188,9 @@ export default function ReferralPartnerProfilePage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Profile</h1>
             {user?.email && (
-              <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {user?.partner_id ? `${user.partner_id} (${user.email})` : user.email}
+              </p>
             )}
           </div>
         </div>
