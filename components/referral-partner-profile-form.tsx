@@ -656,7 +656,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
     }
 
     try {
-      // Delete files from storage that are no longer in the form data
+      // Delete old files from storage that have been replaced or removed
       if (savedFormData) {
         const imageFields: (keyof FormData)[] = ['partner_photo', 'aadhar_front', 'aadhar_back', 'pancard_front', 'pancard_back']
         const filesToDelete: string[] = []
@@ -667,25 +667,38 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
           
           // If there was a saved URL but it's now empty or different, mark it for deletion
           if (savedUrl && savedUrl.trim() && savedUrl.startsWith('http')) {
+            // Check if the file was removed (empty) or replaced (different URL)
             if (!currentUrl || !currentUrl.trim() || currentUrl !== savedUrl) {
               // Extract file path from saved URL
               const urlMatch = savedUrl.match(/\/storage\/v1\/object\/public\/referral-partners\/(.+)$/)
               if (urlMatch && urlMatch[1]) {
-                filesToDelete.push(urlMatch[1])
+                const filePath = urlMatch[1]
+                // Only delete if it's a different file (not the same file)
+                // This handles both removal and replacement cases
+                filesToDelete.push(filePath)
               }
             }
           }
         }
 
-        // Delete orphaned files from storage (non-blocking, don't wait for completion)
+        // Delete old/replaced files from storage before saving
+        // Wait for deletion to complete to ensure storage is cleaned up
         if (filesToDelete.length > 0) {
-          supabase.storage
-            .from('referral-partners')
-            .remove(filesToDelete)
-            .catch((err) => {
-              console.warn("Error cleaning up old files:", err)
-              // Don't fail the save if cleanup fails
-            })
+          try {
+            const { error: deleteError } = await supabase.storage
+              .from('referral-partners')
+              .remove(filesToDelete)
+            
+            if (deleteError) {
+              console.warn("Error cleaning up old files:", deleteError)
+              // Continue with save even if cleanup fails
+            } else {
+              console.log(`Successfully deleted ${filesToDelete.length} old file(s) from storage`)
+            }
+          } catch (deleteErr) {
+            console.warn("Error during file cleanup:", deleteErr)
+            // Continue with save even if cleanup fails
+          }
         }
       }
 
