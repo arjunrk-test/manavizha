@@ -107,6 +107,36 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
   const [isAreaOpen, setIsAreaOpen] = useState(false)
   const areaRef = useRef<HTMLDivElement>(null)
   const [isLoadingIFSC, setIsLoadingIFSC] = useState(false)
+  const [uploadingField, setUploadingField] = useState<string | null>(null)
+  const [imageUrls, setImageUrls] = useState<Record<string, string>>({}) // Cache for signed URLs
+
+  // Helper function to get signed URL if public URL fails
+  const getImageUrl = async (field: string, url: string): Promise<string> => {
+    if (!url || !url.startsWith('http')) return url
+
+    // Check cache first
+    if (imageUrls[field]) return imageUrls[field]
+
+    // Try to extract path from public URL
+    const urlMatch = url.match(/\/storage\/v1\/object\/public\/referral-partners\/(.+)$/)
+    if (urlMatch && urlMatch[1]) {
+      const filePath = urlMatch[1]
+      
+      // Try to get signed URL as fallback (valid for 1 hour)
+      const { data: signedUrlData, error } = await supabase.storage
+        .from('referral-partners')
+        .createSignedUrl(filePath, 3600)
+      
+      if (signedUrlData?.signedUrl) {
+        setImageUrls(prev => ({ ...prev, [field]: signedUrlData.signedUrl }))
+        return signedUrlData.signedUrl
+      } else if (error) {
+        console.warn(`Failed to get signed URL for ${field}:`, error)
+      }
+    }
+    
+    return url
+  }
 
   // Load existing data
   useEffect(() => {
@@ -160,6 +190,33 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
           })
           
           setIsWhatsappSameAsPhone(isSame)
+
+          // Try to get signed URLs for images if they exist
+          const imageFields = ['partner_photo', 'aadhar_front', 'aadhar_back', 'pancard_front', 'pancard_back']
+          const urlPromises = imageFields.map(async (field) => {
+            const url = data[field]
+            if (url && url.startsWith('http')) {
+              try {
+                const signedUrl = await getImageUrl(field, url)
+                return { field, url: signedUrl }
+              } catch (err) {
+                console.warn(`Failed to get signed URL for ${field}:`, err)
+                return null
+              }
+            }
+            return null
+          })
+
+          const urlResults = await Promise.all(urlPromises)
+          const urlMap: Record<string, string> = {}
+          urlResults.forEach(result => {
+            if (result) {
+              urlMap[result.field] = result.url
+            }
+          })
+          if (Object.keys(urlMap).length > 0) {
+            setImageUrls(urlMap)
+          }
         }
       } catch (err) {
         console.error("Error loading profile:", err)
@@ -322,23 +379,119 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
     return null
   }
 
-  const handleFileUpload = (field: keyof FormData, file: File) => {
+  const handleFileUpload = async (field: keyof FormData, file: File) => {
     const error = validateFile(file)
     if (error) {
       setErrors((prev) => ({ ...prev, [field]: error }))
       return
     }
 
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      const result = reader.result as string
-      setFormData((prev) => ({ ...prev, [field]: result }))
+    try {
+      setUploadingField(field)
       setErrors((prev) => {
         const { [field]: _, ...rest } = prev
         return rest
       })
+
+      // Generate unique file name
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${userId}/${field}_${Date.now()}.${fileExt}`
+      const filePath = fileName
+
+      // Delete old file if exists
+      const oldUrl = formData[field]
+      if (oldUrl && oldUrl.startsWith('http')) {
+        try {
+          // Extract file path from old URL
+          // URL format: https://[project].supabase.co/storage/v1/object/public/[bucket]/[path]
+          const urlMatch = oldUrl.match(/\/storage\/v1\/object\/public\/referral-partners\/(.+)$/)
+          if (urlMatch && urlMatch[1]) {
+            const oldPath = urlMatch[1]
+            await supabase.storage
+              .from('referral-partners')
+              .remove([oldPath])
+          }
+        } catch (deleteError) {
+          // Ignore delete errors (file might not exist)
+          console.warn("Could not delete old file:", deleteError)
+        }
+      }
+
+      // Upload to Supabase storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('referral-partners')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (uploadError) {
+        console.error("Error uploading file:", uploadError)
+        setErrors((prev) => ({ 
+          ...prev, 
+          [field]: uploadError.message || "Failed to upload image. Please try again." 
+        }))
+        setUploadingField(null)
+        return
+      }
+
+      if (!uploadData?.path) {
+        console.error("Upload succeeded but no path returned:", uploadData)
+        setErrors((prev) => ({ 
+          ...prev, 
+          [field]: "Upload succeeded but failed to get file path. Please try again." 
+        }))
+        setUploadingField(null)
+        return
+      }
+
+      // Get public URL using the actual uploaded path
+      const { data: urlData } = supabase.storage
+        .from('referral-partners')
+        .getPublicUrl(uploadData.path)
+
+      if (urlData?.publicUrl) {
+        console.log(`Successfully uploaded ${field} to:`, urlData.publicUrl)
+        setFormData((prev) => ({ ...prev, [field]: urlData.publicUrl }))
+      } else {
+        console.error("Failed to get public URL. urlData:", urlData)
+        throw new Error("Failed to get public URL for uploaded file")
+      }
+    } catch (err: any) {
+      console.error("Error uploading file:", err)
+      setErrors((prev) => ({ 
+        ...prev, 
+        [field]: err.message || "Failed to upload image. Please try again." 
+      }))
+    } finally {
+      setUploadingField(null)
     }
-    reader.readAsDataURL(file)
+  }
+
+  const handleFileDelete = async (field: keyof FormData) => {
+    const currentUrl = formData[field]
+    
+    if (currentUrl && currentUrl.startsWith('http')) {
+      try {
+        // Extract file path from URL
+        // URL format: https://[project].supabase.co/storage/v1/object/public/[bucket]/[path]
+        const urlMatch = currentUrl.match(/\/storage\/v1\/object\/public\/referral-partners\/(.+)$/)
+        if (urlMatch && urlMatch[1]) {
+          const filePath = urlMatch[1]
+          const { error: deleteError } = await supabase.storage
+            .from('referral-partners')
+            .remove([filePath])
+
+          if (deleteError) {
+            console.error("Error deleting file:", deleteError)
+          }
+        }
+      } catch (err) {
+        console.error("Error deleting file:", err)
+      }
+    }
+
+    handleInputChange(field, "")
   }
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -941,22 +1094,56 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
               <span>{errors.partner_photo}</span>
             </div>
           )}
-          {formData.partner_photo ? (
+          {formData.partner_photo && formData.partner_photo.trim() && formData.partner_photo.startsWith('http') ? (
             <div className="relative max-w-md">
               <img
-                src={formData.partner_photo}
+                src={imageUrls.partner_photo || formData.partner_photo}
                 alt="Partner photo"
-                className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
+                className="w-full h-auto max-h-96 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                onError={async (e) => {
+                  const imgElement = e.currentTarget
+                  if (!imgElement) return
+                  
+                  console.error("Error loading partner photo:", formData.partner_photo)
+                  // Try to get signed URL as fallback
+                  if (!imageUrls.partner_photo) {
+                    try {
+                      const signedUrl = await getImageUrl('partner_photo', formData.partner_photo)
+                      if (signedUrl !== formData.partner_photo && imgElement) {
+                        imgElement.src = signedUrl
+                        return
+                      }
+                    } catch (err) {
+                      console.error("Failed to get signed URL:", err)
+                    }
+                  }
+                  if (imgElement) {
+                    imgElement.style.display = 'none'
+                  }
+                }}
               />
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={() => handleInputChange("partner_photo", "")}
-                className="absolute top-2 right-2"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="absolute top-2 right-2 flex gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    const input = document.getElementById('partner-photo-upload') as HTMLInputElement
+                    input?.click()
+                  }}
+                  className="bg-white/90 hover:bg-white"
+                >
+                  Replace
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleFileDelete("partner_photo")}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
@@ -973,13 +1160,22 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
               />
               <label
                 htmlFor="partner-photo-upload"
-                className="cursor-pointer flex flex-col items-center gap-2"
+                className={`cursor-pointer flex flex-col items-center gap-2 ${uploadingField === "partner_photo" ? "opacity-50 cursor-not-allowed" : ""}`}
               >
-                <Upload className="h-8 w-8 text-gray-400" />
-                <span className="text-gray-600 dark:text-gray-400">
-                  Click to upload partner photo or drag and drop
-                </span>
-                <span className="text-sm text-gray-500">PNG, JPG up to 5MB</span>
+                {uploadingField === "partner_photo" ? (
+                  <>
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#4B0082]" />
+                    <span className="text-gray-600 dark:text-gray-400">Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-8 w-8 text-gray-400" />
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Click to upload partner photo or drag and drop
+                    </span>
+                    <span className="text-sm text-gray-500">PNG, JPG up to 5MB</span>
+                  </>
+                )}
               </label>
             </div>
           )}
@@ -998,22 +1194,56 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   <span>{errors.aadhar_front}</span>
                 </div>
               )}
-              {formData.aadhar_front ? (
+              {formData.aadhar_front && formData.aadhar_front.trim() && formData.aadhar_front.startsWith('http') ? (
                 <div className="relative">
                   <img
-                    src={formData.aadhar_front}
+                    src={imageUrls.aadhar_front || formData.aadhar_front}
                     alt="Aadhar front"
-                    className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
+                    className="w-full h-auto max-h-96 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                    onError={async (e) => {
+                      const imgElement = e.currentTarget
+                      if (!imgElement) return
+                      
+                      console.error("Error loading aadhar front:", formData.aadhar_front)
+                      // Try to get signed URL as fallback
+                      if (!imageUrls.aadhar_front) {
+                        try {
+                          const signedUrl = await getImageUrl('aadhar_front', formData.aadhar_front)
+                          if (signedUrl !== formData.aadhar_front && imgElement) {
+                            imgElement.src = signedUrl
+                            return
+                          }
+                        } catch (err) {
+                          console.error("Failed to get signed URL:", err)
+                        }
+                      }
+                      if (imgElement) {
+                        imgElement.style.display = 'none'
+                      }
+                    }}
                   />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleInputChange("aadhar_front", "")}
-                    className="absolute top-2 right-2"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <div className="absolute top-2 right-2 flex gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        const input = document.getElementById('aadhar-front-upload') as HTMLInputElement
+                        input?.click()
+                      }}
+                      className="bg-white/90 hover:bg-white"
+                    >
+                      Replace
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleFileDelete("aadhar_front")}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
@@ -1047,22 +1277,56 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   <span>{errors.aadhar_back}</span>
                 </div>
               )}
-              {formData.aadhar_back ? (
+              {formData.aadhar_back && formData.aadhar_back.trim() && formData.aadhar_back.startsWith('http') ? (
                 <div className="relative">
                   <img
-                    src={formData.aadhar_back}
+                    src={imageUrls.aadhar_back || formData.aadhar_back}
                     alt="Aadhar back"
-                    className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
+                    className="w-full h-auto max-h-96 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                    onError={async (e) => {
+                      const imgElement = e.currentTarget
+                      if (!imgElement) return
+                      
+                      console.error("Error loading aadhar back:", formData.aadhar_back)
+                      // Try to get signed URL as fallback
+                      if (!imageUrls.aadhar_back) {
+                        try {
+                          const signedUrl = await getImageUrl('aadhar_back', formData.aadhar_back)
+                          if (signedUrl !== formData.aadhar_back && imgElement) {
+                            imgElement.src = signedUrl
+                            return
+                          }
+                        } catch (err) {
+                          console.error("Failed to get signed URL:", err)
+                        }
+                      }
+                      if (imgElement) {
+                        imgElement.style.display = 'none'
+                      }
+                    }}
                   />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleInputChange("aadhar_back", "")}
-                    className="absolute top-2 right-2"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <div className="absolute top-2 right-2 flex gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        const input = document.getElementById('aadhar-back-upload') as HTMLInputElement
+                        input?.click()
+                      }}
+                      className="bg-white/90 hover:bg-white"
+                    >
+                      Replace
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleFileDelete("aadhar_back")}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
@@ -1076,13 +1340,23 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                     }}
                     className="hidden"
                     id="aadhar-back-upload"
+                    disabled={uploadingField === "aadhar_back"}
                   />
                   <label
                     htmlFor="aadhar-back-upload"
-                    className="cursor-pointer flex flex-col items-center gap-2"
+                    className={`cursor-pointer flex flex-col items-center gap-2 ${uploadingField === "aadhar_back" ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    <Upload className="h-8 w-8 text-gray-400" />
-                    <span className="text-sm text-gray-500">PNG, JPG up to 5MB</span>
+                    {uploadingField === "aadhar_back" ? (
+                      <>
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#4B0082]" />
+                        <span className="text-sm text-gray-500">Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-8 w-8 text-gray-400" />
+                        <span className="text-sm text-gray-500">PNG, JPG up to 5MB</span>
+                      </>
+                    )}
                   </label>
                 </div>
               )}
@@ -1103,22 +1377,56 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   <span>{errors.pancard_front}</span>
                 </div>
               )}
-              {formData.pancard_front ? (
+              {formData.pancard_front && formData.pancard_front.trim() && formData.pancard_front.startsWith('http') ? (
                 <div className="relative">
                   <img
-                    src={formData.pancard_front}
+                    src={imageUrls.pancard_front || formData.pancard_front}
                     alt="PAN front"
-                    className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
+                    className="w-full h-auto max-h-96 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                    onError={async (e) => {
+                      const imgElement = e.currentTarget
+                      if (!imgElement) return
+                      
+                      console.error("Error loading PAN front:", formData.pancard_front)
+                      // Try to get signed URL as fallback
+                      if (!imageUrls.pancard_front) {
+                        try {
+                          const signedUrl = await getImageUrl('pancard_front', formData.pancard_front)
+                          if (signedUrl !== formData.pancard_front && imgElement) {
+                            imgElement.src = signedUrl
+                            return
+                          }
+                        } catch (err) {
+                          console.error("Failed to get signed URL:", err)
+                        }
+                      }
+                      if (imgElement) {
+                        imgElement.style.display = 'none'
+                      }
+                    }}
                   />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleInputChange("pancard_front", "")}
-                    className="absolute top-2 right-2"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <div className="absolute top-2 right-2 flex gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        const input = document.getElementById('pancard-front-upload') as HTMLInputElement
+                        input?.click()
+                      }}
+                      className="bg-white/90 hover:bg-white"
+                    >
+                      Replace
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleFileDelete("pancard_front")}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
@@ -1132,13 +1440,23 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                     }}
                     className="hidden"
                     id="pancard-front-upload"
+                    disabled={uploadingField === "pancard_front"}
                   />
                   <label
                     htmlFor="pancard-front-upload"
-                    className="cursor-pointer flex flex-col items-center gap-2"
+                    className={`cursor-pointer flex flex-col items-center gap-2 ${uploadingField === "pancard_front" ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    <Upload className="h-8 w-8 text-gray-400" />
-                    <span className="text-sm text-gray-500">PNG, JPG up to 5MB</span>
+                    {uploadingField === "pancard_front" ? (
+                      <>
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#4B0082]" />
+                        <span className="text-sm text-gray-500">Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-8 w-8 text-gray-400" />
+                        <span className="text-sm text-gray-500">PNG, JPG up to 5MB</span>
+                      </>
+                    )}
                   </label>
                 </div>
               )}
@@ -1152,22 +1470,56 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   <span>{errors.pancard_back}</span>
                 </div>
               )}
-              {formData.pancard_back ? (
+              {formData.pancard_back && formData.pancard_back.trim() && formData.pancard_back.startsWith('http') ? (
                 <div className="relative">
                   <img
-                    src={formData.pancard_back}
+                    src={imageUrls.pancard_back || formData.pancard_back}
                     alt="PAN back"
-                    className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
+                    className="w-full h-auto max-h-96 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                    onError={async (e) => {
+                      const imgElement = e.currentTarget
+                      if (!imgElement) return
+                      
+                      console.error("Error loading PAN back:", formData.pancard_back)
+                      // Try to get signed URL as fallback
+                      if (!imageUrls.pancard_back) {
+                        try {
+                          const signedUrl = await getImageUrl('pancard_back', formData.pancard_back)
+                          if (signedUrl !== formData.pancard_back && imgElement) {
+                            imgElement.src = signedUrl
+                            return
+                          }
+                        } catch (err) {
+                          console.error("Failed to get signed URL:", err)
+                        }
+                      }
+                      if (imgElement) {
+                        imgElement.style.display = 'none'
+                      }
+                    }}
                   />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleInputChange("pancard_back", "")}
-                    className="absolute top-2 right-2"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <div className="absolute top-2 right-2 flex gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        const input = document.getElementById('pancard-back-upload') as HTMLInputElement
+                        input?.click()
+                      }}
+                      className="bg-white/90 hover:bg-white"
+                    >
+                      Replace
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleFileDelete("pancard_back")}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
@@ -1181,13 +1533,23 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                     }}
                     className="hidden"
                     id="pancard-back-upload"
+                    disabled={uploadingField === "pancard_back"}
                   />
                   <label
                     htmlFor="pancard-back-upload"
-                    className="cursor-pointer flex flex-col items-center gap-2"
+                    className={`cursor-pointer flex flex-col items-center gap-2 ${uploadingField === "pancard_back" ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    <Upload className="h-8 w-8 text-gray-400" />
-                    <span className="text-sm text-gray-500">PNG, JPG up to 5MB</span>
+                    {uploadingField === "pancard_back" ? (
+                      <>
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#4B0082]" />
+                        <span className="text-sm text-gray-500">Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-8 w-8 text-gray-400" />
+                        <span className="text-sm text-gray-500">PNG, JPG up to 5MB</span>
+                      </>
+                    )}
                   </label>
                 </div>
               )}
