@@ -2,6 +2,7 @@ export interface FormData {
   // Personal Details
   name: string
   age: string
+  dateOfBirth: string
   // Contact Details
   phone: string
   whatsappNumber: string

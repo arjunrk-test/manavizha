@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Manavizha - Find Your Perfect Match",
@@ -15,6 +16,7 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth">
       <body className="font-josefin antialiased">
         {children}
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );
