@@ -123,10 +123,33 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   // Calculate overall progress
   const calculateOverallProgress = () => {
     const totalFields = Object.keys(formData).length
-    const filledFields = Object.values(formData).filter((value) => {
+    const filledFields = Object.entries(formData).filter(([key, value]) => {
+      // Special handling for salary field - only count if it has more than just "₹"
+      if (key === "salary") {
+        return value !== "₹" && value !== "" && value !== null && value !== undefined
+      }
+      
+      // Special handling for educationDetails - check if at least one entry has actual data
+      if (key === "educationDetails") {
+        if (Array.isArray(value) && value.length > 0) {
+          return value.some((edu: any) => 
+            edu && (edu.education || edu.degree || edu.institution || edu.yearOfGraduation)
+          )
+        }
+        return false
+      }
+      
+      // For arrays, check if they have meaningful content
       if (Array.isArray(value)) {
+        // For userPhotos, require at least 3 photos
+        if (key === "userPhotos") {
+          return value.length >= 3
+        }
+        // For other arrays, check if they have any items
         return value.length > 0
       }
+      
+      // For regular fields, check if they're not empty
       return value !== "" && value !== null && value !== undefined
     }).length
     return Math.round((filledFields / totalFields) * 100)

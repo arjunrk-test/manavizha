@@ -5,7 +5,8 @@ import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { ProfileSetupForm } from "@/components/profile-setup-form"
-import { LogOut } from "lucide-react"
+import { UserLandingPage } from "@/components/user-landing-page"
+import { LogOut, ArrowLeft } from "lucide-react"
 import { motion } from "framer-motion"
 
 export default function DashboardPage() {
@@ -13,6 +14,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const [profileProgress, setProfileProgress] = useState(0)
+  const [showProfileSetup, setShowProfileSetup] = useState(false)
 
   useEffect(() => {
     // Check if user is authenticated and is NOT a referral partner
@@ -182,43 +184,57 @@ export default function DashboardPage() {
 
       {/* Header with Logout - Sticky */}
       <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Profile Setup</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+              {showProfileSetup ? "Profile Setup" : "Dashboard"}
+            </h1>
             {user?.email && (
-              <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">{user.email}</p>
             )}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* Back Button - Only show when in profile setup */}
+            {showProfileSetup && (
+              <Button
+                onClick={() => setShowProfileSetup(false)}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Back to Dashboard
+              </Button>
+            )}
             {/* Profile Progress Icon */}
             <div className="relative">
-              <div className="h-12 w-12 rounded-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] p-0.5">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] p-0.5">
                 <div className="h-full w-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center">
-                  <span className="text-sm font-bold text-gray-900 dark:text-white">
+                  <span className="text-xs font-bold text-gray-900 dark:text-white">
                     {profileProgress}%
                   </span>
                 </div>
               </div>
               {/* Circular progress ring */}
-              <svg className="absolute inset-0 h-12 w-12 transform -rotate-90" viewBox="0 0 48 48">
+              <svg className="absolute inset-0 h-10 w-10 transform -rotate-90" viewBox="0 0 40 40">
                 <circle
-                  cx="24"
-                  cy="24"
-                  r="22"
+                  cx="20"
+                  cy="20"
+                  r="18"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2"
+                  strokeWidth="1.5"
                   className="text-gray-200 dark:text-gray-700"
                 />
                 <circle
-                  cx="24"
-                  cy="24"
-                  r="22"
+                  cx="20"
+                  cy="20"
+                  r="18"
                   fill="none"
                   stroke="url(#progress-gradient)"
-                  strokeWidth="2"
-                  strokeDasharray={`${2 * Math.PI * 22}`}
-                  strokeDashoffset={`${2 * Math.PI * 22 * (1 - profileProgress / 100)}`}
+                  strokeWidth="1.5"
+                  strokeDasharray={`${2 * Math.PI * 18}`}
+                  strokeDashoffset={`${2 * Math.PI * 18 * (1 - profileProgress / 100)}`}
                   strokeLinecap="round"
                   className="transition-all duration-300"
                 />
@@ -233,10 +249,10 @@ export default function DashboardPage() {
             </div>
             <Button
               onClick={handleLogout}
-              variant="outline"
-              className="flex items-center gap-2"
+              size="sm"
+              className="flex items-center gap-2 bg-red-400 hover:bg-red-500 text-white border-0"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-3.5 w-3.5" />
               Logout
             </Button>
           </div>
@@ -245,12 +261,21 @@ export default function DashboardPage() {
 
       {/* Content */}
       <div className="relative z-10">
-        {/* Profile Setup Form */}
-        {user && <ProfileSetupForm userId={user.id} onProgressChange={setProfileProgress} />}
+        {/* Show Landing Page or Profile Setup Form */}
+        {user && (
+          showProfileSetup ? (
+            <ProfileSetupForm userId={user.id} onProgressChange={setProfileProgress} />
+          ) : (
+            <UserLandingPage 
+              userEmail={user.email || ""}
+              onNavigateToProfileSetup={() => setShowProfileSetup(true)}
+            />
+          )
+        )}
 
         {/* Footer - Sticky */}
         <footer className="sticky bottom-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-t border-gray-200/60 dark:border-gray-700/60 mt-8">
-          <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="max-w-7xl mx-auto px-4 py-4">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-600 dark:text-gray-400">
               <div className="flex items-center gap-2">
                 <span>© 2024 Manavizha. All rights reserved.</span>
