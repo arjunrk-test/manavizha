@@ -122,6 +122,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   })
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [originalPersonalDetails, setOriginalPersonalDetails] = useState<Partial<FormData> | null>(null)
 
   // Load personal details from database on mount
   useEffect(() => {
@@ -141,8 +142,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
         if (data) {
           // Map database column names (snake_case) to form field names (camelCase)
-          setFormData((prev) => ({
-            ...prev,
+          const loadedData = {
             name: data.name || "",
             dateOfBirth: data.date_of_birth || "",
             age: data.age ? data.age.toString() : "",
@@ -155,6 +155,15 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             about: data.about || "",
             foodPreference: data.food_preference || "",
             languages: data.languages || [],
+          }
+          
+          // Store original data for comparison
+          setOriginalPersonalDetails(loadedData)
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
           }))
         }
       } catch (error) {
@@ -205,7 +214,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   // Calculate step progress
   const calculateStepProgress = (stepId: string) => {
     const stepFields: Record<string, (keyof FormData)[]> = {
-      personal: ["name", "age", "sex", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"],
+      personal: ["name", "dateOfBirth", "age", "sex", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"],
       contact: [
         "phone",
         "whatsappNumber",
@@ -334,6 +343,47 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     return true
   }
 
+  // Check if personal details have changed
+  const hasPersonalDetailsChanged = (): boolean => {
+    if (!originalPersonalDetails) {
+      // If no original data exists, check if any field is filled
+      const personalFields = ["name", "dateOfBirth", "age", "sex", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"]
+      return personalFields.some((field) => {
+        const value = formData[field as keyof FormData]
+        if (Array.isArray(value)) {
+          return value.length > 0
+        }
+        return value !== "" && value !== null && value !== undefined
+      })
+    }
+
+    // Compare current form data with original saved data
+    const fieldsToCompare: (keyof FormData)[] = ["name", "dateOfBirth", "age", "sex", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"]
+    
+    for (const field of fieldsToCompare) {
+      const currentValue = formData[field]
+      const originalValue = originalPersonalDetails[field]
+      
+      // Handle array comparison (languages)
+      if (Array.isArray(currentValue) || Array.isArray(originalValue)) {
+        const currentArr = Array.isArray(currentValue) ? currentValue : []
+        const originalArr = Array.isArray(originalValue) ? originalValue : []
+        if (JSON.stringify(currentArr.sort()) !== JSON.stringify(originalArr.sort())) {
+          return true
+        }
+      } else {
+        // Handle string/number comparison
+        const currentStr = currentValue?.toString().trim() || ""
+        const originalStr = originalValue?.toString().trim() || ""
+        if (currentStr !== originalStr) {
+          return true
+        }
+      }
+    }
+    
+    return false
+  }
+
   const handleSave = async () => {
     setIsSaving(true)
     try {
@@ -344,6 +394,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           setIsSaving(false)
           return
         }
+
+        // Calculate completion percentage for personal details
+        const personalDetailsProgress = calculateStepProgress("personal")
 
         const personalDetailsData = {
           user_id: userId,
@@ -359,6 +412,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           about: formData.about || null,
           food_preference: formData.foodPreference || null,
           languages: formData.languages || [],
+          completion_percentage: personalDetailsProgress,
         }
 
         const { error } = await supabase
@@ -368,6 +422,23 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           })
 
         if (error) throw error
+        
+        // Update original data after successful save
+        setOriginalPersonalDetails({
+          name: formData.name,
+          dateOfBirth: formData.dateOfBirth,
+          age: formData.age,
+          sex: formData.sex,
+          height: formData.height,
+          weight: formData.weight,
+          skinColor: formData.skinColor,
+          bodyType: formData.bodyType,
+          maritalStatus: formData.maritalStatus,
+          about: formData.about,
+          foodPreference: formData.foodPreference,
+          languages: formData.languages,
+        })
+        
         toast.success("Personal details saved successfully!", {
           style: {
             background: "#dcfce7",
@@ -583,8 +654,8 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   onClick={handleSave}
-                  disabled={isSaving}
-                  className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-3"
+                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged())}
+                  className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-3 disabled:opacity-50 disabled:pointer-events-auto disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
                     <>
