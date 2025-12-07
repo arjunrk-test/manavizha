@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react"
+import { CheckCircle2, Circle, CheckCircle } from "lucide-react"
 import type { FormData } from "@/types/profile"
 import { PersonalDetailsStep } from "@/components/profile-steps/personal-details-step"
 import { ContactDetailsStep } from "@/components/profile-steps/contact-details-step"
@@ -35,6 +35,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const [formData, setFormData] = useState<FormData>({
     name: "",
     age: "",
+    dateOfBirth: "",
     phone: "",
     whatsappNumber: "",
     sex: "",
@@ -222,16 +223,8 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleNext = () => {
-    if (currentStep < formSteps.length - 1) {
-      setCurrentStep(currentStep + 1)
-    }
-  }
-
-  const handlePrevious = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1)
-    }
+  const handleStepClick = (stepIndex: number) => {
+    setCurrentStep(stepIndex)
   }
 
   const handleSave = async () => {
@@ -265,124 +258,175 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
   return (
     <div className="min-h-screen py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        {/* Form Content */}
-        <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-lg p-8 relative">
-          {/* Step Progress Icon - Top Right Corner */}
-          <div className="absolute top-4 right-4">
-            <div className="relative">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] p-0.5">
-                <div className="h-full w-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center">
-                  <span className="text-xs font-bold text-gray-900 dark:text-white">
-                    {stepProgress}%
-                  </span>
-                </div>
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Sidebar Navigation */}
+          <div className="lg:col-span-1">
+            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-lg p-6 sticky top-24">
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Profile Setup</h3>
               </div>
-              {/* Circular progress ring */}
-              <svg className="absolute inset-0 h-10 w-10 transform -rotate-90" viewBox="0 0 40 40">
-                <circle
-                  cx="20"
-                  cy="20"
-                  r="18"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  className="text-gray-200 dark:text-gray-700"
-                />
-                <circle
-                  cx="20"
-                  cy="20"
-                  r="18"
-                  fill="none"
-                  stroke="url(#step-progress-gradient)"
-                  strokeWidth="1.5"
-                  strokeDasharray={`${2 * Math.PI * 18}`}
-                  strokeDashoffset={`${2 * Math.PI * 18 * (1 - stepProgress / 100)}`}
-                  strokeLinecap="round"
-                  className="transition-all duration-300"
-                />
-                <defs>
-                  <linearGradient id="step-progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#1F4068" />
-                    <stop offset="50%" stopColor="#4B0082" />
-                    <stop offset="100%" stopColor="#FF1493" />
-                  </linearGradient>
-                </defs>
-              </svg>
+
+              <div className="space-y-2">
+                {formSteps.map((step, index) => {
+                  const stepProg = calculateStepProgress(step.id)
+                  const isActive = index === currentStep
+                  const isCompleted = stepProg === 100
+
+                  return (
+                    <motion.button
+                      key={step.id}
+                      onClick={() => handleStepClick(index)}
+                      className={`w-full text-left p-4 rounded-lg transition-all ${
+                        isActive
+                          ? "bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] text-white shadow-lg scale-105"
+                          : isCompleted
+                          ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-2 border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30"
+                          : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-600"
+                      }`}
+                      whileHover={!isActive ? { scale: 1.02 } : {}}
+                      whileTap={!isActive ? { scale: 0.98 } : {}}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0">
+                          {isCompleted ? (
+                            <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                          ) : isActive ? (
+                            <Circle className="h-5 w-5 fill-white text-white" />
+                          ) : (
+                            <Circle className="h-5 w-5" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm">{step.title}</div>
+                        </div>
+                      </div>
+                    </motion.button>
+                  )
+                })}
+              </div>
+
+              {/* Save Button */}
+              {currentStep === formSteps.length - 1 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-6"
+                >
+                  <Button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3"
+                  >
+                    {isSaving ? (
+                      <>
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Save Profile
+                      </>
+                    )}
+                  </Button>
+                </motion.div>
+              )}
             </div>
           </div>
-          
-          {/* Step Title */}
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 pr-16">
-            {formSteps[currentStep].title}
-          </h2>
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {currentStep === 0 && <PersonalDetailsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 1 && <ContactDetailsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 2 && <EducationalDetailsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 3 && <ProfessionalDetailsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 4 && <FamilyDetailsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 5 && <HoroscopeDetailsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 6 && <InterestsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 7 && <SocialHabitsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 8 && <PhotosStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 9 && <ReferralStep formData={formData} onChange={handleInputChange} />}
-            </motion.div>
-          </AnimatePresence>
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-lg p-8">
+              {/* Step Title */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {formSteps[currentStep].title}
+                </h2>
+                <div className="relative">
+                  <div className="h-12 w-12 rounded-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] p-0.5">
+                    <div className="h-full w-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center">
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">
+                        {stepProgress}%
+                      </span>
+                    </div>
+                  </div>
+                  {/* Circular progress ring */}
+                  <svg className="absolute inset-0 h-12 w-12 transform -rotate-90" viewBox="0 0 48 48">
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="22"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className="text-gray-200 dark:text-gray-700"
+                    />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="22"
+                      fill="none"
+                      stroke="url(#step-progress-gradient)"
+                      strokeWidth="2"
+                      strokeDasharray={`${2 * Math.PI * 22}`}
+                      strokeDashoffset={`${2 * Math.PI * 22 * (1 - stepProgress / 100)}`}
+                      strokeLinecap="round"
+                      className="transition-all duration-300"
+                    />
+                    <defs>
+                      <linearGradient id="step-progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#1F4068" />
+                        <stop offset="50%" stopColor="#4B0082" />
+                        <stop offset="100%" stopColor="#FF1493" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+              </div>
 
-          {/* Navigation Buttons */}
-          <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              onClick={handlePrevious}
-              disabled={currentStep === 0}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Button>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentStep}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {currentStep === 0 && <PersonalDetailsStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 1 && <ContactDetailsStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 2 && <EducationalDetailsStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 3 && <ProfessionalDetailsStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 4 && <FamilyDetailsStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 5 && <HoroscopeDetailsStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 6 && <InterestsStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 7 && <SocialHabitsStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 8 && <PhotosStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 9 && <ReferralStep formData={formData} onChange={handleInputChange} />}
+                </motion.div>
+              </AnimatePresence>
 
-            <div className="flex items-center gap-2">
-              {formSteps.map((step, index) => (
-                <div
-                  key={step.id}
-                  className={`h-2 w-2 rounded-full transition-all ${
-                    index === currentStep
-                      ? "bg-[#4B0082] w-8"
-                      : index < currentStep
-                      ? "bg-green-500"
-                      : "bg-gray-300 dark:bg-gray-600"
-                  }`}
-                />
-              ))}
+              {/* Save Button for each form */}
+              <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <Button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-3"
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      Save {formSteps[currentStep].title}
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-
-            {currentStep < formSteps.length - 1 ? (
-              <Button
-                onClick={handleNext}
-                className="flex items-center gap-2 bg-[#4B0082] hover:bg-[#5a0099]"
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex items-center gap-2 bg-green-500 hover:bg-green-600"
-              >
-                {isSaving ? "Saving..." : "Save Profile"}
-                <CheckCircle2 className="h-4 w-4" />
-              </Button>
-            )}
           </div>
         </div>
       </div>

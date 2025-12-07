@@ -71,45 +71,68 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="name">Full Name *</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => onChange("name", e.target.value)}
-            placeholder="Enter your full name"
-            required
-          />
-        </div>
+        {/* Full Name, Date of Birth, and Age in a single row */}
+        <div className="space-y-2 md:col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => onChange("name", e.target.value)}
+                placeholder="Enter your full name"
+                required
+              />
+            </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="age">Age *</Label>
-          <div className="relative">
-            <Input
-              id="age"
-              type="number"
-              value={formData.age}
-              onChange={(e) => {
-                const value = e.target.value
-                // Restrict to 2 digits only
-                if (value === "" || (value.length <= 2 && /^\d+$/.test(value))) {
-                  onChange("age", value)
-                }
-              }}
-              placeholder="Enter your age"
-              min="18"
-              max="50"
-              maxLength={2}
-              required
-              className={formData.age && (Number(formData.age) > 50 || formData.age.length > 2) ? "border-red-500 focus-visible:ring-red-500" : ""}
-            />
-            {formData.age && (Number(formData.age) > 50 || formData.age.length > 2) && (
-              <div className="absolute left-0 top-full mt-1 z-10 px-3 py-2 bg-gray-900 dark:bg-gray-800 text-white text-sm rounded-lg shadow-lg max-w-xs">
-                Currently we accept profiles with age less than or equal to 50
-                <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900 dark:bg-gray-800 transform rotate-45"></div>
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+              <Input
+                id="dateOfBirth"
+                type="date"
+                value={formData.dateOfBirth || ""}
+                onChange={(e) => {
+                  const selectedDate = e.target.value
+                  if (selectedDate) {
+                    const birthDate = new Date(selectedDate)
+                    const today = new Date()
+                    const age = today.getFullYear() - birthDate.getFullYear()
+                    const monthDiff = today.getMonth() - birthDate.getMonth()
+                    const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age
+                    
+                    // Set both dateOfBirth and calculate age for backward compatibility
+                    onChange("dateOfBirth", selectedDate)
+                    onChange("age", actualAge.toString())
+                  } else {
+                    onChange("dateOfBirth", "")
+                    onChange("age", "")
+                  }
+                }}
+                max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                min={new Date(new Date().setFullYear(new Date().getFullYear() - 100)).toISOString().split('T')[0]}
+                required
+                className="w-full"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="age">Age</Label>
+              <Input
+                id="age"
+                type="number"
+                value={formData.age || ""}
+                readOnly
+                disabled
+                placeholder="Auto-calculated"
+                className="w-full bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-75"
+              />
+            </div>
           </div>
+          {formData.dateOfBirth && formData.age && Number(formData.age) > 50 && (
+            <p className="text-sm text-red-500 dark:text-red-400">
+              Currently we accept profiles with age less than or equal to 50
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
