@@ -68,11 +68,14 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
                 required
               >
                 <option value="">Select</option>
-                <option value="high-school">High School</option>
-                <option value="diploma">Diploma</option>
-                <option value="bachelor">Bachelor's Degree</option>
-                <option value="master">Master's Degree</option>
-                <option value="phd">PhD</option>
+                <option value="10th-standard">10th Standard</option>
+                <option value="12th-standard">12th Standard</option>
+                <option value="diploma-iti">Diploma / ITI</option>
+                <option value="bachelors-degree">Bachelor's Degree</option>
+                <option value="masters-degree">Master's Degree</option>
+                <option value="doctorate-phd">Doctorate (PhD)</option>
+                <option value="professional-certification">Professional Certification</option>
+                <option value="no-educational-qualification">No Educational qualification</option>
                 <option value="other">Other</option>
               </select>
             </div>
