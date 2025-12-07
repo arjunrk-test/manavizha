@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase"
 import { motion, AnimatePresence } from "framer-motion"
 import { CheckCircle2, Circle, CheckCircle } from "lucide-react"
 import type { FormData } from "@/types/profile"
+import { toast } from "sonner"
 import { PersonalDetailsStep } from "@/components/profile-steps/personal-details-step"
 import { ContactDetailsStep } from "@/components/profile-steps/contact-details-step"
 import { EducationalDetailsStep } from "@/components/profile-steps/educational-details-step"
@@ -120,6 +121,51 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     referralPartnerId: "",
   })
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Load personal details from database on mount
+  useEffect(() => {
+    const loadPersonalDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("personal_details")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error loading personal details:", error)
+          setIsLoading(false)
+          return
+        }
+
+        if (data) {
+          // Map database column names (snake_case) to form field names (camelCase)
+          setFormData((prev) => ({
+            ...prev,
+            name: data.name || "",
+            dateOfBirth: data.date_of_birth || "",
+            age: data.age ? data.age.toString() : "",
+            sex: data.sex || "",
+            height: data.height ? data.height.toString() : "",
+            weight: data.weight ? data.weight.toString() : "",
+            skinColor: data.skin_color || "",
+            bodyType: data.body_type || "",
+            maritalStatus: data.marital_status || "",
+            about: data.about || "",
+            foodPreference: data.food_preference || "",
+            languages: data.languages || [],
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading personal details:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadPersonalDetails()
+  }, [userId])
 
   // Calculate overall progress
   const calculateOverallProgress = () => {
@@ -227,19 +273,134 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     setCurrentStep(stepIndex)
   }
 
+  const validatePersonalDetails = (): boolean => {
+    const requiredFields = [
+      { key: "name", label: "Full Name" },
+      { key: "dateOfBirth", label: "Date of Birth" },
+      { key: "sex", label: "Gender" },
+      { key: "height", label: "Height" },
+      { key: "weight", label: "Weight" },
+      { key: "skinColor", label: "Skin Color" },
+      { key: "bodyType", label: "Body Type" },
+      { key: "maritalStatus", label: "Marital Status" },
+      { key: "about", label: "About Yourself" },
+      { key: "foodPreference", label: "Food Preference" },
+    ]
+
+    const missingFields: string[] = []
+
+    requiredFields.forEach((field) => {
+      const value = formData[field.key as keyof FormData]
+      if (!value || (typeof value === "string" && value.trim() === "")) {
+        missingFields.push(field.label)
+      }
+    })
+
+    // Check languages separately
+    if (!formData.languages || formData.languages.length === 0) {
+      missingFields.push("Languages")
+    }
+
+    // Check about field minimum length
+    if (formData.about && formData.about.trim().length > 0 && formData.about.trim().length < 100) {
+      missingFields.push("About Yourself (minimum 100 characters)")
+    }
+
+    if (missingFields.length > 0) {
+      if (missingFields.length === 1) {
+        // Show specific field name if only one field is missing
+        toast.error(`Please fill out ${missingFields[0]}`, {
+          description: "This field is required to save your personal details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      } else {
+        // Show generic message if multiple fields are missing
+        toast.error("Please fill out all fields", {
+          description: "All fields are required to save your personal details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      }
+      return false
+    }
+
+    return true
+  }
+
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      const { error } = await supabase
-        .from("users")
-        .update(formData)
-        .eq("id", userId)
+      // Save personal details if we're on the personal details step
+      if (currentStep === 0) {
+        // Validate all fields
+        if (!validatePersonalDetails()) {
+          setIsSaving(false)
+          return
+        }
 
-      if (error) throw error
-      alert("Profile saved successfully!")
+        const personalDetailsData = {
+          user_id: userId,
+          name: formData.name,
+          date_of_birth: formData.dateOfBirth || null,
+          age: formData.age ? parseInt(formData.age) : null,
+          sex: formData.sex || null,
+          height: formData.height ? parseInt(formData.height) : null,
+          weight: formData.weight ? parseInt(formData.weight) : null,
+          skin_color: formData.skinColor || null,
+          body_type: formData.bodyType || null,
+          marital_status: formData.maritalStatus || null,
+          about: formData.about || null,
+          food_preference: formData.foodPreference || null,
+          languages: formData.languages || [],
+        }
+
+        const { error } = await supabase
+          .from("personal_details")
+          .upsert(personalDetailsData, {
+            onConflict: "user_id",
+          })
+
+        if (error) throw error
+        toast.success("Personal details saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
+      } else {
+        // For other steps, use the existing save logic
+        const { error } = await supabase
+          .from("users")
+          .update(formData)
+          .eq("id", userId)
+
+        if (error) throw error
+        toast.success("Profile saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
+      }
     } catch (error: any) {
       console.error("Error saving profile:", error)
-      alert("Error saving profile. Please try again.")
+      toast.error("Error saving profile", {
+        description: "Please try again.",
+        style: {
+          background: "#fee2e2",
+          border: "1px solid #ef4444",
+          color: "#991b1b",
+        },
+      })
     } finally {
       setIsSaving(false)
     }
@@ -253,6 +414,18 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       onProgressChange(overallProgress)
     }
   }, [overallProgress, onProgressChange])
+
+  // Show loading state while data is being loaded
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">Loading your profile...</p>
+        </div>
+      </div>
+    )
+  }
 
   const stepProgress = calculateStepProgress(formSteps[currentStep].id)
 

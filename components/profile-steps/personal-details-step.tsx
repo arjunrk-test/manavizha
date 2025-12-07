@@ -203,7 +203,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
             <button
               type="button"
               onClick={() => setIsSkinColorOpen(!isSkinColorOpen)}
-              className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem]"
+                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem]"
             >
               <div className="flex items-center gap-2">
                 {selectedSkinColor ? (
