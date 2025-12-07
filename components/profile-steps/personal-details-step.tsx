@@ -74,18 +74,18 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
         {/* Full Name, Date of Birth, and Age in a single row */}
         <div className="space-y-2 md:col-span-2">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => onChange("name", e.target.value)}
-                placeholder="Enter your full name"
-                required
-              />
-            </div>
+        <div className="space-y-2">
+          <Label htmlFor="name">Full Name *</Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={(e) => onChange("name", e.target.value)}
+            placeholder="Enter your full name"
+            required
+          />
+        </div>
 
-            <div className="space-y-2">
+        <div className="space-y-2">
               <Label htmlFor="dateOfBirth">Date of Birth *</Label>
               <Input
                 id="dateOfBirth"
@@ -117,9 +117,9 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
 
             <div className="space-y-2">
               <Label htmlFor="age">Age</Label>
-              <Input
-                id="age"
-                type="number"
+            <Input
+              id="age"
+              type="number"
                 value={formData.age || ""}
                 readOnly
                 disabled
@@ -130,9 +130,9 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
           </div>
           {formData.dateOfBirth && formData.age && Number(formData.age) > 50 && (
             <p className="text-sm text-red-500 dark:text-red-400">
-              Currently we accept profiles with age less than or equal to 50
+                Currently we accept profiles with age less than or equal to 50
             </p>
-          )}
+            )}
         </div>
 
         <div className="space-y-2">
@@ -203,7 +203,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
             <button
               type="button"
               onClick={() => setIsSkinColorOpen(!isSkinColorOpen)}
-                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem]"
+              className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem]"
             >
               <div className="flex items-center gap-2">
                 {selectedSkinColor ? (

@@ -123,6 +123,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [originalPersonalDetails, setOriginalPersonalDetails] = useState<Partial<FormData> | null>(null)
+  const [originalContactDetails, setOriginalContactDetails] = useState<Partial<FormData> | null>(null)
 
   // Load personal details from database on mount
   useEffect(() => {
@@ -174,6 +175,67 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     }
 
     loadPersonalDetails()
+  }, [userId])
+
+  // Load contact details from database on mount
+  useEffect(() => {
+    const loadContactDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("contact_details")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error loading contact details:", error)
+          return
+        }
+
+        if (data) {
+          // Map database column names (snake_case) to form field names (camelCase)
+          const loadedData = {
+            phone: data.phone || "",
+            whatsappNumber: data.whatsapp_number || "",
+            permanentAddressLine1: data.permanent_address_line1 || "",
+            permanentAddressLine2: data.permanent_address_line2 || "",
+            permanentPincode: data.permanent_pincode || "",
+            permanentArea: data.permanent_area || "",
+            permanentTaluk: data.permanent_taluk || "",
+            permanentDistrict: data.permanent_district || "",
+            permanentDivision: data.permanent_division || "",
+            permanentRegion: data.permanent_region || "",
+            permanentState: data.permanent_state || "",
+            permanentCountry: data.permanent_country || "",
+            permanentLandmark: data.permanent_landmark || "",
+            currentAddressLine1: data.current_address_line1 || "",
+            currentAddressLine2: data.current_address_line2 || "",
+            currentPincode: data.current_pincode || "",
+            currentArea: data.current_area || "",
+            currentTaluk: data.current_taluk || "",
+            currentDistrict: data.current_district || "",
+            currentDivision: data.current_division || "",
+            currentRegion: data.current_region || "",
+            currentState: data.current_state || "",
+            currentCountry: data.current_country || "",
+            currentLandmark: data.current_landmark || "",
+          }
+          
+          // Store original data for comparison
+          setOriginalContactDetails(loadedData)
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading contact details:", error)
+      }
+    }
+
+    loadContactDetails()
   }, [userId])
 
   // Calculate overall progress
@@ -384,6 +446,35 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     return false
   }
 
+  // Check if contact details have changed
+  const hasContactDetailsChanged = (): boolean => {
+    if (!originalContactDetails) {
+      // If no original data exists, check if any field is filled
+      const contactFields = ["phone", "whatsappNumber", "permanentAddressLine1", "permanentPincode", "permanentArea", "permanentTaluk", "permanentDistrict", "permanentDivision", "permanentRegion", "permanentState", "permanentCountry", "currentAddressLine1", "currentPincode", "currentArea", "currentTaluk", "currentDistrict", "currentDivision", "currentRegion", "currentState", "currentCountry"]
+      return contactFields.some((field) => {
+        const value = formData[field as keyof FormData]
+        return value !== "" && value !== null && value !== undefined
+      })
+    }
+
+    // Compare current form data with original saved data
+    const fieldsToCompare: (keyof FormData)[] = ["phone", "whatsappNumber", "permanentAddressLine1", "permanentAddressLine2", "permanentPincode", "permanentArea", "permanentTaluk", "permanentDistrict", "permanentDivision", "permanentRegion", "permanentState", "permanentCountry", "permanentLandmark", "currentAddressLine1", "currentAddressLine2", "currentPincode", "currentArea", "currentTaluk", "currentDistrict", "currentDivision", "currentRegion", "currentState", "currentCountry", "currentLandmark"]
+    
+    for (const field of fieldsToCompare) {
+      const currentValue = formData[field]
+      const originalValue = originalContactDetails[field]
+      
+      // Handle string comparison
+      const currentStr = currentValue?.toString().trim() || ""
+      const originalStr = originalValue?.toString().trim() || ""
+      if (currentStr !== originalStr) {
+        return true
+      }
+    }
+    
+    return false
+  }
+
   const handleSave = async () => {
     setIsSaving(true)
     try {
@@ -440,6 +531,83 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         })
         
         toast.success("Personal details saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
+      } else if (currentStep === 1) {
+        // Save contact details if we're on the contact details step
+        // Calculate completion percentage for contact details
+        const contactDetailsProgress = calculateStepProgress("contact")
+
+        const contactDetailsData = {
+          user_id: userId,
+          phone: formData.phone || null,
+          whatsapp_number: formData.whatsappNumber || null,
+          permanent_address_line1: formData.permanentAddressLine1 || null,
+          permanent_address_line2: formData.permanentAddressLine2 || null,
+          permanent_pincode: formData.permanentPincode || null,
+          permanent_area: formData.permanentArea || null,
+          permanent_taluk: formData.permanentTaluk || null,
+          permanent_district: formData.permanentDistrict || null,
+          permanent_division: formData.permanentDivision || null,
+          permanent_region: formData.permanentRegion || null,
+          permanent_state: formData.permanentState || null,
+          permanent_country: formData.permanentCountry || null,
+          permanent_landmark: formData.permanentLandmark || null,
+          current_address_line1: formData.currentAddressLine1 || null,
+          current_address_line2: formData.currentAddressLine2 || null,
+          current_pincode: formData.currentPincode || null,
+          current_area: formData.currentArea || null,
+          current_taluk: formData.currentTaluk || null,
+          current_district: formData.currentDistrict || null,
+          current_division: formData.currentDivision || null,
+          current_region: formData.currentRegion || null,
+          current_state: formData.currentState || null,
+          current_country: formData.currentCountry || null,
+          current_landmark: formData.currentLandmark || null,
+          completion_percentage: contactDetailsProgress,
+        }
+
+        const { error } = await supabase
+          .from("contact_details")
+          .upsert(contactDetailsData, {
+            onConflict: "user_id",
+          })
+
+        if (error) throw error
+        
+        // Update original data after successful save
+        setOriginalContactDetails({
+          phone: formData.phone,
+          whatsappNumber: formData.whatsappNumber,
+          permanentAddressLine1: formData.permanentAddressLine1,
+          permanentAddressLine2: formData.permanentAddressLine2,
+          permanentPincode: formData.permanentPincode,
+          permanentArea: formData.permanentArea,
+          permanentTaluk: formData.permanentTaluk,
+          permanentDistrict: formData.permanentDistrict,
+          permanentDivision: formData.permanentDivision,
+          permanentRegion: formData.permanentRegion,
+          permanentState: formData.permanentState,
+          permanentCountry: formData.permanentCountry,
+          permanentLandmark: formData.permanentLandmark,
+          currentAddressLine1: formData.currentAddressLine1,
+          currentAddressLine2: formData.currentAddressLine2,
+          currentPincode: formData.currentPincode,
+          currentArea: formData.currentArea,
+          currentTaluk: formData.currentTaluk,
+          currentDistrict: formData.currentDistrict,
+          currentDivision: formData.currentDivision,
+          currentRegion: formData.currentRegion,
+          currentState: formData.currentState,
+          currentCountry: formData.currentCountry,
+          currentLandmark: formData.currentLandmark,
+        })
+        
+        toast.success("Contact details saved successfully!", {
           style: {
             background: "#dcfce7",
             border: "1px solid #22c55e",
@@ -654,7 +822,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   onClick={handleSave}
-                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged())}
+                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged())}
                   className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-3 disabled:opacity-50 disabled:pointer-events-auto disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
