@@ -43,9 +43,13 @@ export interface FormData {
   // Educational Details
   educationDetails: {
     education: string
+    educationOther?: string
     degree: string
+    degreeOther?: string
+    branch: string
     institution: string
     yearOfGraduation: string
+    status: string
   }[]
   
   // Professional Details

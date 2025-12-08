@@ -73,9 +73,13 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     educationDetails: [
       {
         education: "",
+        educationOther: "",
         degree: "",
+        degreeOther: "",
+        branch: "",
         institution: "",
         yearOfGraduation: "",
+        status: "",
       },
     ],
     occupation: "",
@@ -124,6 +128,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const [isLoading, setIsLoading] = useState(true)
   const [originalPersonalDetails, setOriginalPersonalDetails] = useState<Partial<FormData> | null>(null)
   const [originalContactDetails, setOriginalContactDetails] = useState<Partial<FormData> | null>(null)
+  const [originalEducationDetails, setOriginalEducationDetails] = useState<FormData["educationDetails"] | null>(null)
 
   // Load personal details from database on mount
   useEffect(() => {
@@ -236,6 +241,51 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     }
 
     loadContactDetails()
+  }, [userId])
+
+  // Load education details from database on mount
+  useEffect(() => {
+    const loadEducationDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("education_details")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: true })
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error loading education details:", error)
+          return
+        }
+
+        if (data && data.length > 0) {
+          // Map database column names (snake_case) to form field names (camelCase)
+          const loadedData = data.map((edu) => ({
+            education: edu.education || "",
+            educationOther: edu.education_other || "",
+            degree: edu.degree || "",
+            degreeOther: edu.degree_other || "",
+            branch: edu.branch || "",
+            institution: edu.institution || "",
+            yearOfGraduation: edu.year_of_graduation ? edu.year_of_graduation.toString() : "",
+            status: edu.status || "",
+          }))
+          
+          // Store original data for comparison
+          setOriginalEducationDetails(loadedData)
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            educationDetails: loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading education details:", error)
+      }
+    }
+
+    loadEducationDetails()
   }, [userId])
 
   // Calculate overall progress
@@ -446,6 +496,77 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     return false
   }
 
+  const validateEducationDetails = (): boolean => {
+    if (!formData.educationDetails || formData.educationDetails.length === 0) {
+      toast.error("Please add at least one education entry", {
+        description: "At least one education detail is required.",
+        style: {
+          background: "#fee2e2",
+          border: "1px solid #ef4444",
+          color: "#991b1b",
+        },
+      })
+      return false
+    }
+
+    const missingFields: string[] = []
+
+    formData.educationDetails.forEach((edu, index) => {
+      const entryNum = index + 1
+      
+      if (!edu.education || edu.education.trim() === "") {
+        missingFields.push(`Education ${entryNum}: Education Level`)
+      } else if (edu.education === "other" && (!edu.educationOther || edu.educationOther.trim() === "")) {
+        missingFields.push(`Education ${entryNum}: Education Level (Other)`)
+      }
+      
+      if (!edu.degree || edu.degree.trim() === "") {
+        missingFields.push(`Education ${entryNum}: Degree/Qualification`)
+      } else if (edu.degree === "other" && (!edu.degreeOther || edu.degreeOther.trim() === "")) {
+        missingFields.push(`Education ${entryNum}: Degree/Qualification (Other)`)
+      }
+      
+      if (!edu.institution || edu.institution.trim() === "") {
+        missingFields.push(`Education ${entryNum}: Institution/University`)
+      }
+      
+      if (!edu.status || edu.status.trim() === "") {
+        missingFields.push(`Education ${entryNum}: Status`)
+      }
+      
+      // Year of graduation is required only if status is completed or discontinued
+      if ((edu.status === "completed" || edu.status === "discontinued") && 
+          (!edu.yearOfGraduation || edu.yearOfGraduation.trim() === "")) {
+        missingFields.push(`Education ${entryNum}: Year of Graduation`)
+      }
+    })
+
+    if (missingFields.length > 0) {
+      if (missingFields.length === 1) {
+        toast.error(`Please fill out ${missingFields[0]}`, {
+          description: "This field is required to save your education details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      } else {
+        toast.error("Please fill out all fields", {
+          description: "All fields are required to save your education details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      }
+      return false
+    }
+
+    return true
+  }
+
   // Check if contact details have changed
   const hasContactDetailsChanged = (): boolean => {
     if (!originalContactDetails) {
@@ -469,6 +590,47 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       const originalStr = originalValue?.toString().trim() || ""
       if (currentStr !== originalStr) {
         return true
+      }
+    }
+    
+    return false
+  }
+
+  // Check if education details have changed
+  const hasEducationDetailsChanged = (): boolean => {
+    if (!originalEducationDetails || originalEducationDetails.length === 0) {
+      // If no original data exists, check if any education entry has data
+      if (!formData.educationDetails || formData.educationDetails.length === 0) {
+        return false
+      }
+      return formData.educationDetails.some((edu) => 
+        edu.education || edu.degree || edu.institution || edu.status
+      )
+    }
+
+    // Compare current form data with original saved data
+    const current = formData.educationDetails || []
+    const original = originalEducationDetails
+
+    // Check if lengths are different
+    if (current.length !== original.length) {
+      return true
+    }
+
+    // Compare each education entry
+    for (let i = 0; i < current.length; i++) {
+      const curr = current[i]
+      const orig = original[i] || {}
+
+      const fieldsToCompare = ["education", "educationOther", "degree", "degreeOther", "branch", "institution", "yearOfGraduation", "status"]
+      
+      for (const field of fieldsToCompare) {
+        const currValue = curr[field as keyof typeof curr]?.toString().trim() || ""
+        const origValue = orig[field as keyof typeof orig]?.toString().trim() || ""
+        
+        if (currValue !== origValue) {
+          return true
+        }
       }
     }
     
@@ -608,6 +770,56 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         })
         
         toast.success("Contact details saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
+      } else if (currentStep === 2) {
+        // Save education details if we're on the education details step
+        // Validate all fields
+        if (!validateEducationDetails()) {
+          setIsSaving(false)
+          return
+        }
+
+        // Calculate completion percentage for education details
+        const educationDetailsProgress = calculateStepProgress("education")
+
+        // Delete all existing education details for this user
+        const { error: deleteError } = await supabase
+          .from("education_details")
+          .delete()
+          .eq("user_id", userId)
+
+        if (deleteError) throw deleteError
+
+        // Insert all education details
+        if (formData.educationDetails && formData.educationDetails.length > 0) {
+          const educationDetailsData = formData.educationDetails.map((edu) => ({
+            user_id: userId,
+            education: edu.education || null,
+            education_other: edu.education === "other" ? (edu.educationOther || null) : null,
+            degree: edu.degree || null,
+            degree_other: edu.degree === "other" ? (edu.degreeOther || null) : null,
+            branch: edu.branch || null,
+            institution: edu.institution || null,
+            year_of_graduation: edu.yearOfGraduation ? parseInt(edu.yearOfGraduation) : null,
+            status: edu.status || null,
+          }))
+
+          const { error: insertError } = await supabase
+            .from("education_details")
+            .insert(educationDetailsData)
+
+          if (insertError) throw insertError
+        }
+        
+        // Update original data after successful save
+        setOriginalEducationDetails(formData.educationDetails || [])
+        
+        toast.success("Education details saved successfully!", {
           style: {
             background: "#dcfce7",
             border: "1px solid #22c55e",
@@ -822,7 +1034,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   onClick={handleSave}
-                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged())}
+                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged())}
                   className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-3 disabled:opacity-50 disabled:pointer-events-auto disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
