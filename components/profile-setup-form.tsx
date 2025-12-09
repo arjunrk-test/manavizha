@@ -73,9 +73,13 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     educationDetails: [
       {
         education: "",
+        educationOther: "",
         degree: "",
+        degreeOther: "",
+        branch: "",
         institution: "",
         yearOfGraduation: "",
+        status: "",
       },
     ],
     occupation: "",
@@ -86,12 +90,23 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     fatherOccupation: "",
     motherName: "",
     motherOccupation: "",
-    parentsResidence: "",
+    parentsAddressLine1: "",
+    parentsAddressLine2: "",
+    parentsPincode: "",
+    parentsArea: "",
+    parentsTaluk: "",
+    parentsDistrict: "",
+    parentsDivision: "",
+    parentsRegion: "",
+    parentsState: "",
+    parentsCountry: "",
+    parentsLandmark: "",
     siblings: "",
     familyDescription: "",
     caste: "",
     subcaste: "",
     kulam: "",
+    gotram: "",
     familyType: "",
     familyStatus: "",
     jaadhagam: "",
@@ -122,6 +137,13 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   })
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [originalPersonalDetails, setOriginalPersonalDetails] = useState<Partial<FormData> | null>(null)
+  const [originalContactDetails, setOriginalContactDetails] = useState<Partial<FormData> | null>(null)
+  const [originalEducationDetails, setOriginalEducationDetails] = useState<FormData["educationDetails"] | null>(null)
+  const [originalFamilyDetails, setOriginalFamilyDetails] = useState<Partial<FormData> | null>(null)
+  const [originalHoroscopeDetails, setOriginalHoroscopeDetails] = useState<Partial<FormData> | null>(null)
+  const [originalInterestsDetails, setOriginalInterestsDetails] = useState<Partial<FormData> | null>(null)
+  const [originalSocialHabitsDetails, setOriginalSocialHabitsDetails] = useState<Partial<FormData> | null>(null)
 
   // Load personal details from database on mount
   useEffect(() => {
@@ -141,8 +163,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
         if (data) {
           // Map database column names (snake_case) to form field names (camelCase)
-          setFormData((prev) => ({
-            ...prev,
+          const loadedData = {
             name: data.name || "",
             dateOfBirth: data.date_of_birth || "",
             age: data.age ? data.age.toString() : "",
@@ -155,6 +176,15 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             about: data.about || "",
             foodPreference: data.food_preference || "",
             languages: data.languages || [],
+          }
+          
+          // Store original data for comparison
+          setOriginalPersonalDetails(loadedData)
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
           }))
         }
       } catch (error) {
@@ -165,6 +195,296 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     }
 
     loadPersonalDetails()
+  }, [userId])
+
+  // Load contact details from database on mount
+  useEffect(() => {
+    const loadContactDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("contact_details")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error loading contact details:", error)
+          return
+        }
+
+        if (data) {
+          // Map database column names (snake_case) to form field names (camelCase)
+          const loadedData = {
+            phone: data.phone || "",
+            whatsappNumber: data.whatsapp_number || "",
+            permanentAddressLine1: data.permanent_address_line1 || "",
+            permanentAddressLine2: data.permanent_address_line2 || "",
+            permanentPincode: data.permanent_pincode || "",
+            permanentArea: data.permanent_area || "",
+            permanentTaluk: data.permanent_taluk || "",
+            permanentDistrict: data.permanent_district || "",
+            permanentDivision: data.permanent_division || "",
+            permanentRegion: data.permanent_region || "",
+            permanentState: data.permanent_state || "",
+            permanentCountry: data.permanent_country || "",
+            permanentLandmark: data.permanent_landmark || "",
+            currentAddressLine1: data.current_address_line1 || "",
+            currentAddressLine2: data.current_address_line2 || "",
+            currentPincode: data.current_pincode || "",
+            currentArea: data.current_area || "",
+            currentTaluk: data.current_taluk || "",
+            currentDistrict: data.current_district || "",
+            currentDivision: data.current_division || "",
+            currentRegion: data.current_region || "",
+            currentState: data.current_state || "",
+            currentCountry: data.current_country || "",
+            currentLandmark: data.current_landmark || "",
+          }
+          
+          // Store original data for comparison
+          setOriginalContactDetails(loadedData)
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading contact details:", error)
+      }
+    }
+
+    loadContactDetails()
+  }, [userId])
+
+  // Load education details from database on mount
+  useEffect(() => {
+    const loadEducationDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("education_details")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: true })
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error loading education details:", error)
+          return
+        }
+
+        if (data && data.length > 0) {
+          // Map database column names (snake_case) to form field names (camelCase)
+          const loadedData = data.map((edu) => ({
+            education: edu.education || "",
+            educationOther: edu.education_other || "",
+            degree: edu.degree || "",
+            degreeOther: edu.degree_other || "",
+            branch: edu.branch || "",
+            institution: edu.institution || "",
+            yearOfGraduation: edu.year_of_graduation ? edu.year_of_graduation.toString() : "",
+            status: edu.status || "",
+          }))
+          
+          // Store original data for comparison
+          setOriginalEducationDetails(loadedData)
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            educationDetails: loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading education details:", error)
+      }
+    }
+
+    loadEducationDetails()
+  }, [userId])
+
+  // Load family details from database on mount
+  useEffect(() => {
+    const loadFamilyDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("family_details")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error loading family details:", error)
+          return
+        }
+
+        if (data) {
+          // Map database column names (snake_case) to form field names (camelCase)
+          const loadedData = {
+            fatherName: data.father_name || "",
+            fatherOccupation: data.father_occupation || "",
+            motherName: data.mother_name || "",
+            motherOccupation: data.mother_occupation || "",
+            parentsAddressLine1: data.parents_address_line1 || "",
+            parentsAddressLine2: data.parents_address_line2 || "",
+            parentsPincode: data.parents_pincode || "",
+            parentsArea: data.parents_area || "",
+            parentsTaluk: data.parents_taluk || "",
+            parentsDistrict: data.parents_district || "",
+            parentsDivision: data.parents_division || "",
+            parentsRegion: data.parents_region || "",
+            parentsState: data.parents_state || "",
+            parentsCountry: data.parents_country || "",
+            parentsLandmark: data.parents_landmark || "",
+            siblings: data.siblings || "",
+            familyDescription: data.family_description || "",
+            caste: data.caste || "",
+            subcaste: data.subcaste || "",
+            kulam: data.kulam || "",
+            gotram: data.gotram || "",
+            familyType: data.family_type || "",
+            familyStatus: data.family_status || "",
+          }
+          
+          // Store original data for comparison
+          setOriginalFamilyDetails(loadedData)
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading family details:", error)
+      }
+    }
+
+    loadFamilyDetails()
+  }, [userId])
+
+  // Load horoscope details from database on mount
+  useEffect(() => {
+    const loadHoroscopeDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("horoscope_details")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error loading horoscope details:", error)
+          return
+        }
+
+        if (data) {
+          // Map database column names (snake_case) to form field names (camelCase)
+          const loadedData = {
+            jaadhagam: data.jaadhagam_url || "",
+            timeOfBirth: data.time_of_birth || "",
+            placeOfBirth: data.place_of_birth || "",
+            zodiacSign: data.zodiac_sign || "",
+            star: data.star || "",
+            lagnam: data.lagnam || "",
+            dhosham: data.dhosham || "",
+          }
+          
+          // Store original data for comparison
+          setOriginalHoroscopeDetails(loadedData)
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading horoscope details:", error)
+      }
+    }
+
+    loadHoroscopeDetails()
+  }, [userId])
+
+  // Load interests from database on mount
+  useEffect(() => {
+    const loadInterestsDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("interests")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error loading interests:", error)
+          return
+        }
+
+        if (data) {
+          // Map database column names (snake_case) to form field names (camelCase)
+          const loadedData = {
+            hobbies: data.hobbies || [],
+            interests: data.interests || [],
+          }
+          
+          // Store original data for comparison
+          setOriginalInterestsDetails(loadedData)
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading interests:", error)
+      }
+    }
+
+    loadInterestsDetails()
+  }, [userId])
+
+  // Load social habits from database on mount
+  useEffect(() => {
+    const loadSocialHabitsDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("social_habits")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error loading social habits:", error)
+          return
+        }
+
+        if (data) {
+          // Map database column names (snake_case) to form field names (camelCase)
+          const loadedData = {
+            smoking: data.smoking || "",
+            drinking: data.drinking || "",
+            parties: data.parties || "",
+            pubs: data.pubs || "",
+          }
+          
+          // Store original data for comparison
+          setOriginalSocialHabitsDetails(loadedData)
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading social habits:", error)
+      }
+    }
+
+    loadSocialHabitsDetails()
   }, [userId])
 
   // Calculate overall progress
@@ -205,7 +525,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   // Calculate step progress
   const calculateStepProgress = (stepId: string) => {
     const stepFields: Record<string, (keyof FormData)[]> = {
-      personal: ["name", "age", "sex", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"],
+      personal: ["name", "dateOfBirth", "age", "sex", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"],
       contact: [
         "phone",
         "whatsappNumber",
@@ -230,8 +550,8 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       ],
       education: ["educationDetails"],
       professional: ["occupation", "company", "salary", "workLocation"],
-      family: ["fatherName", "fatherOccupation", "motherName", "motherOccupation", "parentsResidence", "caste", "familyType", "familyStatus"],
-      horoscope: ["jaadhagam", "timeOfBirth", "placeOfBirth", "zodiacSign", "star", "lagnam"],
+      family: ["fatherName", "fatherOccupation", "motherName", "motherOccupation", "parentsAddressLine1", "parentsPincode", "parentsArea", "parentsTaluk", "parentsDistrict", "parentsDivision", "parentsRegion", "parentsState", "parentsCountry", "caste", "familyType", "familyStatus"],
+      horoscope: ["jaadhagam", "timeOfBirth", "placeOfBirth", "zodiacSign", "star", "lagnam", "dhosham"],
       interests: ["hobbies", "interests"],
       social: ["smoking", "drinking", "parties", "pubs"],
       photos: ["userPhotos", "familyPhoto", "aadharFront", "aadharBack"],
@@ -334,6 +654,496 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     return true
   }
 
+  // Check if personal details have changed
+  const hasPersonalDetailsChanged = (): boolean => {
+    if (!originalPersonalDetails) {
+      // If no original data exists, check if any field is filled
+      const personalFields = ["name", "dateOfBirth", "age", "sex", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"]
+      return personalFields.some((field) => {
+        const value = formData[field as keyof FormData]
+        if (Array.isArray(value)) {
+          return value.length > 0
+        }
+        return value !== "" && value !== null && value !== undefined
+      })
+    }
+
+    // Compare current form data with original saved data
+    const fieldsToCompare: (keyof FormData)[] = ["name", "dateOfBirth", "age", "sex", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"]
+    
+    for (const field of fieldsToCompare) {
+      const currentValue = formData[field]
+      const originalValue = originalPersonalDetails[field]
+      
+      // Handle array comparison (languages)
+      if (Array.isArray(currentValue) || Array.isArray(originalValue)) {
+        const currentArr = Array.isArray(currentValue) ? currentValue : []
+        const originalArr = Array.isArray(originalValue) ? originalValue : []
+        if (JSON.stringify(currentArr.sort()) !== JSON.stringify(originalArr.sort())) {
+          return true
+        }
+      } else {
+        // Handle string/number comparison
+        const currentStr = currentValue?.toString().trim() || ""
+        const originalStr = originalValue?.toString().trim() || ""
+        if (currentStr !== originalStr) {
+          return true
+        }
+      }
+    }
+    
+    return false
+  }
+
+  const validateEducationDetails = (): boolean => {
+    if (!formData.educationDetails || formData.educationDetails.length === 0) {
+      toast.error("Please add at least one education entry", {
+        description: "At least one education detail is required.",
+        style: {
+          background: "#fee2e2",
+          border: "1px solid #ef4444",
+          color: "#991b1b",
+        },
+      })
+      return false
+    }
+
+    const missingFields: string[] = []
+
+    formData.educationDetails.forEach((edu, index) => {
+      const entryNum = index + 1
+      
+      if (!edu.education || edu.education.trim() === "") {
+        missingFields.push(`Education ${entryNum}: Education Level`)
+      } else if (edu.education === "other" && (!edu.educationOther || edu.educationOther.trim() === "")) {
+        missingFields.push(`Education ${entryNum}: Education Level (Other)`)
+      }
+      
+      if (!edu.degree || edu.degree.trim() === "") {
+        missingFields.push(`Education ${entryNum}: Degree/Qualification`)
+      } else if (edu.degree === "other" && (!edu.degreeOther || edu.degreeOther.trim() === "")) {
+        missingFields.push(`Education ${entryNum}: Degree/Qualification (Other)`)
+      }
+      
+      if (!edu.institution || edu.institution.trim() === "") {
+        missingFields.push(`Education ${entryNum}: Institution/University`)
+      }
+      
+      if (!edu.status || edu.status.trim() === "") {
+        missingFields.push(`Education ${entryNum}: Status`)
+      }
+      
+      // Year of graduation is required only if status is completed or discontinued
+      if ((edu.status === "completed" || edu.status === "discontinued") && 
+          (!edu.yearOfGraduation || edu.yearOfGraduation.trim() === "")) {
+        missingFields.push(`Education ${entryNum}: Year of Graduation`)
+      }
+    })
+
+    if (missingFields.length > 0) {
+      if (missingFields.length === 1) {
+        toast.error(`Please fill out ${missingFields[0]}`, {
+          description: "This field is required to save your education details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      } else {
+        toast.error("Please fill out all fields", {
+          description: "All fields are required to save your education details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      }
+      return false
+    }
+
+    return true
+  }
+
+  const validateHoroscopeDetails = (): boolean => {
+    const requiredFields = [
+      { key: "jaadhagam", label: "Jaadhagam" },
+      { key: "timeOfBirth", label: "Time of Birth" },
+      { key: "placeOfBirth", label: "Place of Birth" },
+      { key: "zodiacSign", label: "Zodiac or Moon Sign" },
+      { key: "star", label: "Star" },
+      { key: "lagnam", label: "Lagnam" },
+      { key: "dhosham", label: "Dhosham" },
+    ]
+
+    const missingFields: string[] = []
+
+    requiredFields.forEach((field) => {
+      const value = formData[field.key as keyof FormData]
+      if (!value || (typeof value === "string" && value.trim() === "")) {
+        missingFields.push(field.label)
+      }
+    })
+
+    if (missingFields.length > 0) {
+      if (missingFields.length === 1) {
+        toast.error(`Please fill out ${missingFields[0]}`, {
+          description: "This field is required to save your horoscope details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      } else {
+        toast.error("Please fill out all fields", {
+          description: "All fields are required to save your horoscope details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      }
+      return false
+    }
+
+    return true
+  }
+
+  const validateInterestsDetails = (): boolean => {
+    const errors: string[] = []
+
+    // Check hobbies - at least 3 required
+    if (!formData.hobbies || formData.hobbies.length < 3) {
+      errors.push("Please select at least 3 hobbies")
+    }
+
+    // Check interests - at least 3 required
+    if (!formData.interests || formData.interests.length < 3) {
+      errors.push("Please select at least 3 interests")
+    }
+
+    if (errors.length > 0) {
+      if (errors.length === 1) {
+        toast.error(errors[0], {
+          description: "This is required to save your interests.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      } else {
+        toast.error("Please select at least 3 hobbies and 3 interests", {
+          description: "Both hobbies and interests are required to save.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      }
+      return false
+    }
+
+    return true
+  }
+
+  const validateSocialHabitsDetails = (): boolean => {
+    const requiredFields = [
+      { key: "smoking", label: "Smoking" },
+      { key: "drinking", label: "Drinking" },
+      { key: "parties", label: "Parties" },
+      { key: "pubs", label: "Pubs" },
+    ]
+
+    const missingFields: string[] = []
+
+    requiredFields.forEach((field) => {
+      const value = formData[field.key as keyof FormData]
+      if (!value || (typeof value === "string" && value.trim() === "")) {
+        missingFields.push(field.label)
+      }
+    })
+
+    if (missingFields.length > 0) {
+      if (missingFields.length === 1) {
+        toast.error(`Please fill out ${missingFields[0]}`, {
+          description: "This field is required to save your social habits.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      } else {
+        toast.error("Please fill out all fields", {
+          description: "All fields are required to save your social habits.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      }
+      return false
+    }
+
+    return true
+  }
+
+  const validateFamilyDetails = (): boolean => {
+    const requiredFields = [
+      { key: "fatherName", label: "Father Name" },
+      { key: "fatherOccupation", label: "Father's Occupation" },
+      { key: "motherName", label: "Mother Name" },
+      { key: "motherOccupation", label: "Mother's Occupation" },
+      { key: "parentsAddressLine1", label: "Parents Address Line 1" },
+      { key: "parentsPincode", label: "Parents Pincode" },
+      { key: "parentsArea", label: "Parents Area" },
+      { key: "parentsTaluk", label: "Parents Taluk" },
+      { key: "parentsDistrict", label: "Parents District" },
+      { key: "parentsDivision", label: "Parents Division" },
+      { key: "parentsRegion", label: "Parents Region" },
+      { key: "parentsState", label: "Parents State" },
+      { key: "parentsCountry", label: "Parents Country" },
+      { key: "siblings", label: "Siblings Details" },
+      { key: "familyDescription", label: "Brief Description About Family" },
+      { key: "caste", label: "Caste" },
+      { key: "subcaste", label: "Subcaste" },
+      { key: "kulam", label: "Kulam" },
+      { key: "gotram", label: "Gotram" },
+      { key: "familyType", label: "Family Type" },
+      { key: "familyStatus", label: "Family Status" },
+    ]
+
+    const missingFields: string[] = []
+
+    requiredFields.forEach((field) => {
+      const value = formData[field.key as keyof FormData]
+      if (!value || (typeof value === "string" && value.trim() === "")) {
+        missingFields.push(field.label)
+      }
+    })
+
+    if (missingFields.length > 0) {
+      if (missingFields.length === 1) {
+        toast.error(`Please fill out ${missingFields[0]}`, {
+          description: "This field is required to save your family details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      } else {
+        toast.error("Please fill out all fields", {
+          description: "All fields are required to save your family details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      }
+      return false
+    }
+
+    return true
+  }
+
+  // Check if contact details have changed
+  const hasContactDetailsChanged = (): boolean => {
+    if (!originalContactDetails) {
+      // If no original data exists, check if any field is filled
+      const contactFields = ["phone", "whatsappNumber", "permanentAddressLine1", "permanentPincode", "permanentArea", "permanentTaluk", "permanentDistrict", "permanentDivision", "permanentRegion", "permanentState", "permanentCountry", "currentAddressLine1", "currentPincode", "currentArea", "currentTaluk", "currentDistrict", "currentDivision", "currentRegion", "currentState", "currentCountry"]
+      return contactFields.some((field) => {
+        const value = formData[field as keyof FormData]
+        return value !== "" && value !== null && value !== undefined
+      })
+    }
+
+    // Compare current form data with original saved data
+    const fieldsToCompare: (keyof FormData)[] = ["phone", "whatsappNumber", "permanentAddressLine1", "permanentAddressLine2", "permanentPincode", "permanentArea", "permanentTaluk", "permanentDistrict", "permanentDivision", "permanentRegion", "permanentState", "permanentCountry", "permanentLandmark", "currentAddressLine1", "currentAddressLine2", "currentPincode", "currentArea", "currentTaluk", "currentDistrict", "currentDivision", "currentRegion", "currentState", "currentCountry", "currentLandmark"]
+    
+    for (const field of fieldsToCompare) {
+      const currentValue = formData[field]
+      const originalValue = originalContactDetails[field]
+      
+      // Handle string comparison
+      const currentStr = currentValue?.toString().trim() || ""
+      const originalStr = originalValue?.toString().trim() || ""
+      if (currentStr !== originalStr) {
+        return true
+      }
+    }
+    
+    return false
+  }
+
+  // Check if education details have changed
+  const hasEducationDetailsChanged = (): boolean => {
+    if (!originalEducationDetails || originalEducationDetails.length === 0) {
+      // If no original data exists, check if any education entry has data
+      if (!formData.educationDetails || formData.educationDetails.length === 0) {
+        return false
+      }
+      return formData.educationDetails.some((edu) => 
+        edu.education || edu.degree || edu.institution || edu.status
+      )
+    }
+
+    // Compare current form data with original saved data
+    const current = formData.educationDetails || []
+    const original = originalEducationDetails
+
+    // Check if lengths are different
+    if (current.length !== original.length) {
+      return true
+    }
+
+    // Compare each education entry
+    for (let i = 0; i < current.length; i++) {
+      const curr = current[i]
+      const orig = original[i] || {}
+
+      const fieldsToCompare = ["education", "educationOther", "degree", "degreeOther", "branch", "institution", "yearOfGraduation", "status"]
+      
+      for (const field of fieldsToCompare) {
+        const currValue = curr[field as keyof typeof curr]?.toString().trim() || ""
+        const origValue = orig[field as keyof typeof orig]?.toString().trim() || ""
+        
+        if (currValue !== origValue) {
+          return true
+        }
+      }
+    }
+    
+    return false
+  }
+
+  // Check if family details have changed
+  const hasFamilyDetailsChanged = (): boolean => {
+    if (!originalFamilyDetails) {
+      // If no original data exists, check if any field is filled
+      const familyFields = ["fatherName", "fatherOccupation", "motherName", "motherOccupation", "parentsAddressLine1", "parentsPincode", "parentsArea", "parentsTaluk", "parentsDistrict", "parentsDivision", "parentsRegion", "parentsState", "parentsCountry", "siblings", "familyDescription", "caste", "subcaste", "kulam", "gotram", "familyType", "familyStatus"]
+      return familyFields.some((field) => {
+        const value = formData[field as keyof FormData]
+        return value !== "" && value !== null && value !== undefined
+      })
+    }
+
+    // Compare current form data with original saved data
+    const fieldsToCompare: (keyof FormData)[] = ["fatherName", "fatherOccupation", "motherName", "motherOccupation", "parentsAddressLine1", "parentsAddressLine2", "parentsPincode", "parentsArea", "parentsTaluk", "parentsDistrict", "parentsDivision", "parentsRegion", "parentsState", "parentsCountry", "parentsLandmark", "siblings", "familyDescription", "caste", "subcaste", "kulam", "gotram", "familyType", "familyStatus"]
+    
+    for (const field of fieldsToCompare) {
+      const currentValue = formData[field]
+      const originalValue = originalFamilyDetails[field]
+      
+      // Handle string comparison
+      const currentStr = currentValue?.toString().trim() || ""
+      const originalStr = originalValue?.toString().trim() || ""
+      if (currentStr !== originalStr) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  // Check if horoscope details have changed
+  const hasHoroscopeDetailsChanged = (): boolean => {
+    if (!originalHoroscopeDetails) {
+      // If no original data exists, check if any field is filled
+      const horoscopeFields = ["jaadhagam", "timeOfBirth", "placeOfBirth", "zodiacSign", "star", "lagnam", "dhosham"]
+      return horoscopeFields.some((field) => {
+        const value = formData[field as keyof FormData]
+        return value !== "" && value !== null && value !== undefined
+      })
+    }
+
+    // Compare current form data with original saved data
+    const fieldsToCompare: (keyof FormData)[] = ["jaadhagam", "timeOfBirth", "placeOfBirth", "zodiacSign", "star", "lagnam", "dhosham"]
+    
+    for (const field of fieldsToCompare) {
+      const currentValue = formData[field]
+      const originalValue = originalHoroscopeDetails[field]
+      
+      // Handle string comparison
+      const currentStr = currentValue?.toString().trim() || ""
+      const originalStr = originalValue?.toString().trim() || ""
+      if (currentStr !== originalStr) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  // Check if interests details have changed
+  const hasInterestsDetailsChanged = (): boolean => {
+    if (!originalInterestsDetails) {
+      // If no original data exists, check if any field has selections
+      return (formData.hobbies && formData.hobbies.length > 0) || 
+             (formData.interests && formData.interests.length > 0)
+    }
+
+    // Compare current form data with original saved data
+    const currentHobbies = formData.hobbies || []
+    const originalHobbies = originalInterestsDetails.hobbies || []
+    const currentInterests = formData.interests || []
+    const originalInterests = originalInterestsDetails.interests || []
+
+    // Check if arrays are different
+    if (currentHobbies.length !== originalHobbies.length) {
+      return true
+    }
+    if (currentInterests.length !== originalInterests.length) {
+      return true
+    }
+
+    // Check if hobbies content is different
+    const hobbiesChanged = currentHobbies.some((hobby) => !originalHobbies.includes(hobby)) ||
+                          originalHobbies.some((hobby) => !currentHobbies.includes(hobby))
+
+    // Check if interests content is different
+    const interestsChanged = currentInterests.some((interest) => !originalInterests.includes(interest)) ||
+                            originalInterests.some((interest) => !currentInterests.includes(interest))
+
+    return hobbiesChanged || interestsChanged
+  }
+
+  // Check if social habits details have changed
+  const hasSocialHabitsDetailsChanged = (): boolean => {
+    if (!originalSocialHabitsDetails) {
+      // If no original data exists, check if any field is filled
+      const socialHabitsFields = ["smoking", "drinking", "parties", "pubs"]
+      return socialHabitsFields.some((field) => {
+        const value = formData[field as keyof FormData]
+        return value !== "" && value !== null && value !== undefined
+      })
+    }
+
+    // Compare current form data with original saved data
+    const fieldsToCompare: (keyof FormData)[] = ["smoking", "drinking", "parties", "pubs"]
+    
+    for (const field of fieldsToCompare) {
+      const currentValue = formData[field]
+      const originalValue = originalSocialHabitsDetails[field]
+      
+      // Handle string comparison
+      const currentStr = currentValue?.toString().trim() || ""
+      const originalStr = originalValue?.toString().trim() || ""
+      if (currentStr !== originalStr) {
+        return true
+      }
+    }
+
+    return false
+  }
+
   const handleSave = async () => {
     setIsSaving(true)
     try {
@@ -344,6 +1154,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           setIsSaving(false)
           return
         }
+
+        // Calculate completion percentage for personal details
+        const personalDetailsProgress = calculateStepProgress("personal")
 
         const personalDetailsData = {
           user_id: userId,
@@ -359,6 +1172,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           about: formData.about || null,
           food_preference: formData.foodPreference || null,
           languages: formData.languages || [],
+          completion_percentage: personalDetailsProgress,
         }
 
         const { error } = await supabase
@@ -368,7 +1182,420 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           })
 
         if (error) throw error
+        
+        // Update original data after successful save
+        setOriginalPersonalDetails({
+          name: formData.name,
+          dateOfBirth: formData.dateOfBirth,
+          age: formData.age,
+          sex: formData.sex,
+          height: formData.height,
+          weight: formData.weight,
+          skinColor: formData.skinColor,
+          bodyType: formData.bodyType,
+          maritalStatus: formData.maritalStatus,
+          about: formData.about,
+          foodPreference: formData.foodPreference,
+          languages: formData.languages,
+        })
+        
         toast.success("Personal details saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
+      } else if (currentStep === 1) {
+        // Save contact details if we're on the contact details step
+        // Calculate completion percentage for contact details
+        const contactDetailsProgress = calculateStepProgress("contact")
+
+        const contactDetailsData = {
+          user_id: userId,
+          phone: formData.phone || null,
+          whatsapp_number: formData.whatsappNumber || null,
+          permanent_address_line1: formData.permanentAddressLine1 || null,
+          permanent_address_line2: formData.permanentAddressLine2 || null,
+          permanent_pincode: formData.permanentPincode || null,
+          permanent_area: formData.permanentArea || null,
+          permanent_taluk: formData.permanentTaluk || null,
+          permanent_district: formData.permanentDistrict || null,
+          permanent_division: formData.permanentDivision || null,
+          permanent_region: formData.permanentRegion || null,
+          permanent_state: formData.permanentState || null,
+          permanent_country: formData.permanentCountry || null,
+          permanent_landmark: formData.permanentLandmark || null,
+          current_address_line1: formData.currentAddressLine1 || null,
+          current_address_line2: formData.currentAddressLine2 || null,
+          current_pincode: formData.currentPincode || null,
+          current_area: formData.currentArea || null,
+          current_taluk: formData.currentTaluk || null,
+          current_district: formData.currentDistrict || null,
+          current_division: formData.currentDivision || null,
+          current_region: formData.currentRegion || null,
+          current_state: formData.currentState || null,
+          current_country: formData.currentCountry || null,
+          current_landmark: formData.currentLandmark || null,
+          completion_percentage: contactDetailsProgress,
+        }
+
+        const { error } = await supabase
+          .from("contact_details")
+          .upsert(contactDetailsData, {
+            onConflict: "user_id",
+          })
+
+        if (error) throw error
+        
+        // Update original data after successful save
+        setOriginalContactDetails({
+          phone: formData.phone,
+          whatsappNumber: formData.whatsappNumber,
+          permanentAddressLine1: formData.permanentAddressLine1,
+          permanentAddressLine2: formData.permanentAddressLine2,
+          permanentPincode: formData.permanentPincode,
+          permanentArea: formData.permanentArea,
+          permanentTaluk: formData.permanentTaluk,
+          permanentDistrict: formData.permanentDistrict,
+          permanentDivision: formData.permanentDivision,
+          permanentRegion: formData.permanentRegion,
+          permanentState: formData.permanentState,
+          permanentCountry: formData.permanentCountry,
+          permanentLandmark: formData.permanentLandmark,
+          currentAddressLine1: formData.currentAddressLine1,
+          currentAddressLine2: formData.currentAddressLine2,
+          currentPincode: formData.currentPincode,
+          currentArea: formData.currentArea,
+          currentTaluk: formData.currentTaluk,
+          currentDistrict: formData.currentDistrict,
+          currentDivision: formData.currentDivision,
+          currentRegion: formData.currentRegion,
+          currentState: formData.currentState,
+          currentCountry: formData.currentCountry,
+          currentLandmark: formData.currentLandmark,
+        })
+        
+        toast.success("Contact details saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
+      } else if (currentStep === 2) {
+        // Save education details if we're on the education details step
+        // Validate all fields
+        if (!validateEducationDetails()) {
+          setIsSaving(false)
+          return
+        }
+
+        // Calculate completion percentage for education details
+        const educationDetailsProgress = calculateStepProgress("education")
+
+        // Delete all existing education details for this user
+        const { error: deleteError } = await supabase
+          .from("education_details")
+          .delete()
+          .eq("user_id", userId)
+
+        if (deleteError) throw deleteError
+
+        // Insert all education details
+        if (formData.educationDetails && formData.educationDetails.length > 0) {
+          const educationDetailsData = formData.educationDetails.map((edu) => ({
+            user_id: userId,
+            education: edu.education || null,
+            education_other: edu.education === "other" ? (edu.educationOther || null) : null,
+            degree: edu.degree || null,
+            degree_other: edu.degree === "other" ? (edu.degreeOther || null) : null,
+            branch: edu.branch || null,
+            institution: edu.institution || null,
+            year_of_graduation: edu.yearOfGraduation ? parseInt(edu.yearOfGraduation) : null,
+            status: edu.status || null,
+          }))
+
+          const { error: insertError } = await supabase
+            .from("education_details")
+            .insert(educationDetailsData)
+
+          if (insertError) throw insertError
+        }
+        
+        // Update original data after successful save
+        setOriginalEducationDetails(formData.educationDetails || [])
+        
+        toast.success("Education details saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
+      } else if (currentStep === 4) {
+        // Save family details if we're on the family details step
+        // Validate all fields
+        if (!validateFamilyDetails()) {
+          setIsSaving(false)
+          return
+        }
+
+        // Calculate completion percentage for family details
+        const familyDetailsProgress = calculateStepProgress("family")
+
+        const familyDetailsData = {
+          user_id: userId,
+          father_name: formData.fatherName || null,
+          father_occupation: formData.fatherOccupation || null,
+          mother_name: formData.motherName || null,
+          mother_occupation: formData.motherOccupation || null,
+          parents_address_line1: formData.parentsAddressLine1 || null,
+          parents_address_line2: formData.parentsAddressLine2 || null,
+          parents_pincode: formData.parentsPincode || null,
+          parents_area: formData.parentsArea || null,
+          parents_taluk: formData.parentsTaluk || null,
+          parents_district: formData.parentsDistrict || null,
+          parents_division: formData.parentsDivision || null,
+          parents_region: formData.parentsRegion || null,
+          parents_state: formData.parentsState || null,
+          parents_country: formData.parentsCountry || null,
+          parents_landmark: formData.parentsLandmark || null,
+          siblings: formData.siblings || null,
+          family_description: formData.familyDescription || null,
+          caste: formData.caste || null,
+          subcaste: formData.subcaste || null,
+          kulam: formData.kulam || null,
+          gotram: formData.gotram || null,
+          family_type: formData.familyType || null,
+          family_status: formData.familyStatus || null,
+          completion_percentage: familyDetailsProgress,
+        }
+
+        const { error } = await supabase
+          .from("family_details")
+          .upsert(familyDetailsData, {
+            onConflict: "user_id",
+          })
+
+        if (error) throw error
+        
+        // Update original data after successful save
+        setOriginalFamilyDetails({
+          fatherName: formData.fatherName,
+          fatherOccupation: formData.fatherOccupation,
+          motherName: formData.motherName,
+          motherOccupation: formData.motherOccupation,
+          parentsAddressLine1: formData.parentsAddressLine1,
+          parentsAddressLine2: formData.parentsAddressLine2,
+          parentsPincode: formData.parentsPincode,
+          parentsArea: formData.parentsArea,
+          parentsTaluk: formData.parentsTaluk,
+          parentsDistrict: formData.parentsDistrict,
+          parentsDivision: formData.parentsDivision,
+          parentsRegion: formData.parentsRegion,
+          parentsState: formData.parentsState,
+          parentsCountry: formData.parentsCountry,
+          parentsLandmark: formData.parentsLandmark,
+          siblings: formData.siblings,
+          familyDescription: formData.familyDescription,
+          caste: formData.caste,
+          subcaste: formData.subcaste,
+          kulam: formData.kulam,
+          gotram: formData.gotram,
+          familyType: formData.familyType,
+          familyStatus: formData.familyStatus,
+        })
+        
+        toast.success("Family details saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
+      } else if (currentStep === 5) {
+        // Save horoscope details if we're on the horoscope details step
+        // Validate all fields
+        if (!validateHoroscopeDetails()) {
+          setIsSaving(false)
+          return
+        }
+
+        // Calculate completion percentage for horoscope details
+        const horoscopeDetailsProgress = calculateStepProgress("horoscope")
+
+        // Handle jaadhagam image upload
+        let jaadhagamUrl = formData.jaadhagam || ""
+
+        // If jaadhagam is a base64 data URL (new upload), upload to Supabase storage
+        if (formData.jaadhagam && formData.jaadhagam.startsWith("data:image/")) {
+          try {
+            // Convert base64 to blob
+            const response = await fetch(formData.jaadhagam)
+            const blob = await response.blob()
+            
+            // Get file extension from data URL
+            const matches = formData.jaadhagam.match(/data:image\/(\w+);base64/)
+            const extension = matches ? matches[1] : "jpg"
+            
+            // Create file path: {user_id}/jaadhagam.{extension}
+            const filePath = `${userId}/jaadhagam.${extension}`
+            
+            // Upload to Supabase storage
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from("jaadhagam")
+              .upload(filePath, blob, {
+                upsert: true,
+                contentType: blob.type,
+              })
+
+            if (uploadError) throw uploadError
+
+            // Get signed URL (valid for 1 year) since bucket is private
+            const { data: urlData, error: urlError } = await supabase.storage
+              .from("jaadhagam")
+              .createSignedUrl(filePath, 31536000) // 1 year in seconds
+
+            if (urlError) throw urlError
+            jaadhagamUrl = urlData.signedUrl
+          } catch (error) {
+            console.error("Error uploading jaadhagam image:", error)
+            toast.error("Error uploading jaadhagam image", {
+              description: "Please try again.",
+              style: {
+                background: "#fee2e2",
+                border: "1px solid #ef4444",
+                color: "#991b1b",
+              },
+            })
+            setIsSaving(false)
+            return
+          }
+        }
+
+        const horoscopeDetailsData = {
+          user_id: userId,
+          jaadhagam_url: jaadhagamUrl || null,
+          time_of_birth: formData.timeOfBirth || null,
+          place_of_birth: formData.placeOfBirth || null,
+          zodiac_sign: formData.zodiacSign || null,
+          star: formData.star || null,
+          lagnam: formData.lagnam || null,
+          dhosham: formData.dhosham || null,
+          completion_percentage: horoscopeDetailsProgress,
+        }
+
+        const { error } = await supabase
+          .from("horoscope_details")
+          .upsert(horoscopeDetailsData, {
+            onConflict: "user_id",
+          })
+
+        if (error) throw error
+        
+        // Update original data after successful save
+        setOriginalHoroscopeDetails({
+          jaadhagam: jaadhagamUrl,
+          timeOfBirth: formData.timeOfBirth,
+          placeOfBirth: formData.placeOfBirth,
+          zodiacSign: formData.zodiacSign,
+          star: formData.star,
+          lagnam: formData.lagnam,
+          dhosham: formData.dhosham,
+        })
+        
+        // Update form data with the URL if it was uploaded
+        if (jaadhagamUrl !== formData.jaadhagam) {
+          setFormData((prev) => ({
+            ...prev,
+            jaadhagam: jaadhagamUrl,
+          }))
+        }
+        
+        toast.success("Horoscope details saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
+      } else if (currentStep === 6) {
+        // Save interests if we're on the interests step
+        // Validate all fields
+        if (!validateInterestsDetails()) {
+          setIsSaving(false)
+          return
+        }
+
+        // Calculate completion percentage for interests
+        const interestsProgress = calculateStepProgress("interests")
+
+        const interestsData = {
+          user_id: userId,
+          hobbies: formData.hobbies || [],
+          interests: formData.interests || [],
+          completion_percentage: interestsProgress,
+        }
+
+        const { error } = await supabase
+          .from("interests")
+          .upsert(interestsData, {
+            onConflict: "user_id",
+          })
+
+        if (error) throw error
+        
+        // Update original data after successful save
+        setOriginalInterestsDetails({
+          hobbies: formData.hobbies,
+          interests: formData.interests,
+        })
+        
+        toast.success("Interests saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
+      } else if (currentStep === 7) {
+        // Save social habits if we're on the social habits step
+        // Validate all fields
+        if (!validateSocialHabitsDetails()) {
+          setIsSaving(false)
+          return
+        }
+
+        // Calculate completion percentage for social habits
+        const socialHabitsProgress = calculateStepProgress("social")
+
+        const socialHabitsData = {
+          user_id: userId,
+          smoking: formData.smoking || null,
+          drinking: formData.drinking || null,
+          parties: formData.parties || null,
+          pubs: formData.pubs || null,
+          completion_percentage: socialHabitsProgress,
+        }
+
+        const { error } = await supabase
+          .from("social_habits")
+          .upsert(socialHabitsData, {
+            onConflict: "user_id",
+          })
+
+        if (error) throw error
+        
+        // Update original data after successful save
+        setOriginalSocialHabitsDetails({
+          smoking: formData.smoking,
+          drinking: formData.drinking,
+          parties: formData.parties,
+          pubs: formData.pubs,
+        })
+        
+        toast.success("Social habits saved successfully!", {
           style: {
             background: "#dcfce7",
             border: "1px solid #22c55e",
@@ -583,8 +1810,8 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   onClick={handleSave}
-                  disabled={isSaving}
-                  className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-3"
+                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged()) || (currentStep === 6 && !hasInterestsDetailsChanged()) || (currentStep === 7 && !hasSocialHabitsDetailsChanged())}
+                  className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-3 disabled:opacity-50 disabled:pointer-events-auto disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
                     <>

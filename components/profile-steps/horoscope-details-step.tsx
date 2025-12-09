@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,15 @@ interface HoroscopeDetailsStepProps {
 export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsStepProps) {
   const [preview, setPreview] = useState<string | null>(formData.jaadhagam || null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Update preview when formData.jaadhagam changes (e.g., when loading from database)
+  useEffect(() => {
+    if (formData.jaadhagam) {
+      setPreview(formData.jaadhagam)
+    } else {
+      setPreview(null)
+    }
+  }, [formData.jaadhagam])
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -55,9 +64,9 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2 md:col-span-2">
           <Label htmlFor="jaadhagam">Jaadhagam *</Label>
-          <div className="space-y-4">
+          <div className="space-y-4 flex justify-center">
             {preview ? (
-              <div className="relative w-full max-w-md">
+              <div className="relative w-full max-w-md mx-auto">
                 <img
                   src={preview}
                   alt="Jaadhagam preview"
@@ -74,7 +83,7 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
                 </Button>
               </div>
             ) : (
-              <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center">
+              <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center w-full max-w-md mx-auto">
                 <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                 <Label htmlFor="jaadhagam-upload" className="cursor-pointer">
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -168,12 +177,13 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="dhosham">Dhosham (if any)</Label>
+          <Label htmlFor="dhosham">Dhosham *</Label>
           <Input
             id="dhosham"
             value={formData.dhosham || ""}
             onChange={(e) => onChange("dhosham", e.target.value)}
-            placeholder="Enter Dhosham if any"
+            placeholder="Enter Dhosham"
+            required
           />
         </div>
       </div>
