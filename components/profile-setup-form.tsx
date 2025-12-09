@@ -141,6 +141,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const [originalContactDetails, setOriginalContactDetails] = useState<Partial<FormData> | null>(null)
   const [originalEducationDetails, setOriginalEducationDetails] = useState<FormData["educationDetails"] | null>(null)
   const [originalFamilyDetails, setOriginalFamilyDetails] = useState<Partial<FormData> | null>(null)
+  const [originalHoroscopeDetails, setOriginalHoroscopeDetails] = useState<Partial<FormData> | null>(null)
 
   // Load personal details from database on mount
   useEffect(() => {
@@ -360,6 +361,50 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     loadFamilyDetails()
   }, [userId])
 
+  // Load horoscope details from database on mount
+  useEffect(() => {
+    const loadHoroscopeDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("horoscope_details")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error loading horoscope details:", error)
+          return
+        }
+
+        if (data) {
+          // Map database column names (snake_case) to form field names (camelCase)
+          const loadedData = {
+            jaadhagam: data.jaadhagam_url || "",
+            timeOfBirth: data.time_of_birth || "",
+            placeOfBirth: data.place_of_birth || "",
+            zodiacSign: data.zodiac_sign || "",
+            star: data.star || "",
+            lagnam: data.lagnam || "",
+            dhosham: data.dhosham || "",
+          }
+          
+          // Store original data for comparison
+          setOriginalHoroscopeDetails(loadedData)
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading horoscope details:", error)
+      }
+    }
+
+    loadHoroscopeDetails()
+  }, [userId])
+
   // Calculate overall progress
   const calculateOverallProgress = () => {
     const totalFields = Object.keys(formData).length
@@ -424,7 +469,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       education: ["educationDetails"],
       professional: ["occupation", "company", "salary", "workLocation"],
       family: ["fatherName", "fatherOccupation", "motherName", "motherOccupation", "parentsAddressLine1", "parentsPincode", "parentsArea", "parentsTaluk", "parentsDistrict", "parentsDivision", "parentsRegion", "parentsState", "parentsCountry", "caste", "familyType", "familyStatus"],
-      horoscope: ["jaadhagam", "timeOfBirth", "placeOfBirth", "zodiacSign", "star", "lagnam"],
+      horoscope: ["jaadhagam", "timeOfBirth", "placeOfBirth", "zodiacSign", "star", "lagnam", "dhosham"],
       interests: ["hobbies", "interests"],
       social: ["smoking", "drinking", "parties", "pubs"],
       photos: ["userPhotos", "familyPhoto", "aadharFront", "aadharBack"],
@@ -639,6 +684,52 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     return true
   }
 
+  const validateHoroscopeDetails = (): boolean => {
+    const requiredFields = [
+      { key: "jaadhagam", label: "Jaadhagam" },
+      { key: "timeOfBirth", label: "Time of Birth" },
+      { key: "placeOfBirth", label: "Place of Birth" },
+      { key: "zodiacSign", label: "Zodiac or Moon Sign" },
+      { key: "star", label: "Star" },
+      { key: "lagnam", label: "Lagnam" },
+      { key: "dhosham", label: "Dhosham" },
+    ]
+
+    const missingFields: string[] = []
+
+    requiredFields.forEach((field) => {
+      const value = formData[field.key as keyof FormData]
+      if (!value || (typeof value === "string" && value.trim() === "")) {
+        missingFields.push(field.label)
+      }
+    })
+
+    if (missingFields.length > 0) {
+      if (missingFields.length === 1) {
+        toast.error(`Please fill out ${missingFields[0]}`, {
+          description: "This field is required to save your horoscope details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      } else {
+        toast.error("Please fill out all fields", {
+          description: "All fields are required to save your horoscope details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      }
+      return false
+    }
+
+    return true
+  }
+
   const validateFamilyDetails = (): boolean => {
     const requiredFields = [
       { key: "fatherName", label: "Father Name" },
@@ -786,6 +877,35 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     for (const field of fieldsToCompare) {
       const currentValue = formData[field]
       const originalValue = originalFamilyDetails[field]
+      
+      // Handle string comparison
+      const currentStr = currentValue?.toString().trim() || ""
+      const originalStr = originalValue?.toString().trim() || ""
+      if (currentStr !== originalStr) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  // Check if horoscope details have changed
+  const hasHoroscopeDetailsChanged = (): boolean => {
+    if (!originalHoroscopeDetails) {
+      // If no original data exists, check if any field is filled
+      const horoscopeFields = ["jaadhagam", "timeOfBirth", "placeOfBirth", "zodiacSign", "star", "lagnam", "dhosham"]
+      return horoscopeFields.some((field) => {
+        const value = formData[field as keyof FormData]
+        return value !== "" && value !== null && value !== undefined
+      })
+    }
+
+    // Compare current form data with original saved data
+    const fieldsToCompare: (keyof FormData)[] = ["jaadhagam", "timeOfBirth", "placeOfBirth", "zodiacSign", "star", "lagnam", "dhosham"]
+    
+    for (const field of fieldsToCompare) {
+      const currentValue = formData[field]
+      const originalValue = originalHoroscopeDetails[field]
       
       // Handle string comparison
       const currentStr = currentValue?.toString().trim() || ""
@@ -1068,6 +1188,112 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             color: "#166534",
           },
         })
+      } else if (currentStep === 5) {
+        // Save horoscope details if we're on the horoscope details step
+        // Validate all fields
+        if (!validateHoroscopeDetails()) {
+          setIsSaving(false)
+          return
+        }
+
+        // Calculate completion percentage for horoscope details
+        const horoscopeDetailsProgress = calculateStepProgress("horoscope")
+
+        // Handle jaadhagam image upload
+        let jaadhagamUrl = formData.jaadhagam || ""
+
+        // If jaadhagam is a base64 data URL (new upload), upload to Supabase storage
+        if (formData.jaadhagam && formData.jaadhagam.startsWith("data:image/")) {
+          try {
+            // Convert base64 to blob
+            const response = await fetch(formData.jaadhagam)
+            const blob = await response.blob()
+            
+            // Get file extension from data URL
+            const matches = formData.jaadhagam.match(/data:image\/(\w+);base64/)
+            const extension = matches ? matches[1] : "jpg"
+            
+            // Create file path: {user_id}/jaadhagam.{extension}
+            const filePath = `${userId}/jaadhagam.${extension}`
+            
+            // Upload to Supabase storage
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from("jaadhagam")
+              .upload(filePath, blob, {
+                upsert: true,
+                contentType: blob.type,
+              })
+
+            if (uploadError) throw uploadError
+
+            // Get signed URL (valid for 1 year) since bucket is private
+            const { data: urlData, error: urlError } = await supabase.storage
+              .from("jaadhagam")
+              .createSignedUrl(filePath, 31536000) // 1 year in seconds
+
+            if (urlError) throw urlError
+            jaadhagamUrl = urlData.signedUrl
+          } catch (error) {
+            console.error("Error uploading jaadhagam image:", error)
+            toast.error("Error uploading jaadhagam image", {
+              description: "Please try again.",
+              style: {
+                background: "#fee2e2",
+                border: "1px solid #ef4444",
+                color: "#991b1b",
+              },
+            })
+            setIsSaving(false)
+            return
+          }
+        }
+
+        const horoscopeDetailsData = {
+          user_id: userId,
+          jaadhagam_url: jaadhagamUrl || null,
+          time_of_birth: formData.timeOfBirth || null,
+          place_of_birth: formData.placeOfBirth || null,
+          zodiac_sign: formData.zodiacSign || null,
+          star: formData.star || null,
+          lagnam: formData.lagnam || null,
+          dhosham: formData.dhosham || null,
+          completion_percentage: horoscopeDetailsProgress,
+        }
+
+        const { error } = await supabase
+          .from("horoscope_details")
+          .upsert(horoscopeDetailsData, {
+            onConflict: "user_id",
+          })
+
+        if (error) throw error
+        
+        // Update original data after successful save
+        setOriginalHoroscopeDetails({
+          jaadhagam: jaadhagamUrl,
+          timeOfBirth: formData.timeOfBirth,
+          placeOfBirth: formData.placeOfBirth,
+          zodiacSign: formData.zodiacSign,
+          star: formData.star,
+          lagnam: formData.lagnam,
+          dhosham: formData.dhosham,
+        })
+        
+        // Update form data with the URL if it was uploaded
+        if (jaadhagamUrl !== formData.jaadhagam) {
+          setFormData((prev) => ({
+            ...prev,
+            jaadhagam: jaadhagamUrl,
+          }))
+        }
+        
+        toast.success("Horoscope details saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
       } else {
         // For other steps, use the existing save logic
         const { error } = await supabase
@@ -1276,7 +1502,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   onClick={handleSave}
-                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 4 && !hasFamilyDetailsChanged())}
+                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged())}
                   className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-3 disabled:opacity-50 disabled:pointer-events-auto disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
