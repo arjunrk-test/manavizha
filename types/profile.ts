@@ -63,7 +63,18 @@ export interface FormData {
   fatherOccupation: string
   motherName: string
   motherOccupation: string
-  parentsResidence: string
+  // Parents Address
+  parentsAddressLine1: string
+  parentsAddressLine2: string
+  parentsPincode: string
+  parentsArea: string
+  parentsTaluk: string
+  parentsDistrict: string
+  parentsDivision: string
+  parentsRegion: string
+  parentsState: string
+  parentsCountry: string
+  parentsLandmark: string
   siblings: string
   familyDescription: string
   caste: string
