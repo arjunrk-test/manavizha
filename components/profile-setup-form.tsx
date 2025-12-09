@@ -142,6 +142,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const [originalEducationDetails, setOriginalEducationDetails] = useState<FormData["educationDetails"] | null>(null)
   const [originalFamilyDetails, setOriginalFamilyDetails] = useState<Partial<FormData> | null>(null)
   const [originalHoroscopeDetails, setOriginalHoroscopeDetails] = useState<Partial<FormData> | null>(null)
+  const [originalInterestsDetails, setOriginalInterestsDetails] = useState<Partial<FormData> | null>(null)
 
   // Load personal details from database on mount
   useEffect(() => {
@@ -403,6 +404,45 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     }
 
     loadHoroscopeDetails()
+  }, [userId])
+
+  // Load interests from database on mount
+  useEffect(() => {
+    const loadInterestsDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("interests")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error loading interests:", error)
+          return
+        }
+
+        if (data) {
+          // Map database column names (snake_case) to form field names (camelCase)
+          const loadedData = {
+            hobbies: data.hobbies || [],
+            interests: data.interests || [],
+          }
+          
+          // Store original data for comparison
+          setOriginalInterestsDetails(loadedData)
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading interests:", error)
+      }
+    }
+
+    loadInterestsDetails()
   }, [userId])
 
   // Calculate overall progress
@@ -730,6 +770,45 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     return true
   }
 
+  const validateInterestsDetails = (): boolean => {
+    const errors: string[] = []
+
+    // Check hobbies - at least 3 required
+    if (!formData.hobbies || formData.hobbies.length < 3) {
+      errors.push("Please select at least 3 hobbies")
+    }
+
+    // Check interests - at least 3 required
+    if (!formData.interests || formData.interests.length < 3) {
+      errors.push("Please select at least 3 interests")
+    }
+
+    if (errors.length > 0) {
+      if (errors.length === 1) {
+        toast.error(errors[0], {
+          description: "This is required to save your interests.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      } else {
+        toast.error("Please select at least 3 hobbies and 3 interests", {
+          description: "Both hobbies and interests are required to save.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      }
+      return false
+    }
+
+    return true
+  }
+
   const validateFamilyDetails = (): boolean => {
     const requiredFields = [
       { key: "fatherName", label: "Father Name" },
@@ -916,6 +995,39 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     }
 
     return false
+  }
+
+  // Check if interests details have changed
+  const hasInterestsDetailsChanged = (): boolean => {
+    if (!originalInterestsDetails) {
+      // If no original data exists, check if any field has selections
+      return (formData.hobbies && formData.hobbies.length > 0) || 
+             (formData.interests && formData.interests.length > 0)
+    }
+
+    // Compare current form data with original saved data
+    const currentHobbies = formData.hobbies || []
+    const originalHobbies = originalInterestsDetails.hobbies || []
+    const currentInterests = formData.interests || []
+    const originalInterests = originalInterestsDetails.interests || []
+
+    // Check if arrays are different
+    if (currentHobbies.length !== originalHobbies.length) {
+      return true
+    }
+    if (currentInterests.length !== originalInterests.length) {
+      return true
+    }
+
+    // Check if hobbies content is different
+    const hobbiesChanged = currentHobbies.some((hobby) => !originalHobbies.includes(hobby)) ||
+                          originalHobbies.some((hobby) => !currentHobbies.includes(hobby))
+
+    // Check if interests content is different
+    const interestsChanged = currentInterests.some((interest) => !originalInterests.includes(interest)) ||
+                            originalInterests.some((interest) => !currentInterests.includes(interest))
+
+    return hobbiesChanged || interestsChanged
   }
 
   const handleSave = async () => {
@@ -1294,6 +1406,45 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             color: "#166534",
           },
         })
+      } else if (currentStep === 6) {
+        // Save interests if we're on the interests step
+        // Validate all fields
+        if (!validateInterestsDetails()) {
+          setIsSaving(false)
+          return
+        }
+
+        // Calculate completion percentage for interests
+        const interestsProgress = calculateStepProgress("interests")
+
+        const interestsData = {
+          user_id: userId,
+          hobbies: formData.hobbies || [],
+          interests: formData.interests || [],
+          completion_percentage: interestsProgress,
+        }
+
+        const { error } = await supabase
+          .from("interests")
+          .upsert(interestsData, {
+            onConflict: "user_id",
+          })
+
+        if (error) throw error
+        
+        // Update original data after successful save
+        setOriginalInterestsDetails({
+          hobbies: formData.hobbies,
+          interests: formData.interests,
+        })
+        
+        toast.success("Interests saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
       } else {
         // For other steps, use the existing save logic
         const { error } = await supabase
@@ -1502,7 +1653,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   onClick={handleSave}
-                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged())}
+                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged()) || (currentStep === 6 && !hasInterestsDetailsChanged())}
                   className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-3 disabled:opacity-50 disabled:pointer-events-auto disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
