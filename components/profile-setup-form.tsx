@@ -143,6 +143,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const [originalFamilyDetails, setOriginalFamilyDetails] = useState<Partial<FormData> | null>(null)
   const [originalHoroscopeDetails, setOriginalHoroscopeDetails] = useState<Partial<FormData> | null>(null)
   const [originalInterestsDetails, setOriginalInterestsDetails] = useState<Partial<FormData> | null>(null)
+  const [originalSocialHabitsDetails, setOriginalSocialHabitsDetails] = useState<Partial<FormData> | null>(null)
 
   // Load personal details from database on mount
   useEffect(() => {
@@ -443,6 +444,47 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     }
 
     loadInterestsDetails()
+  }, [userId])
+
+  // Load social habits from database on mount
+  useEffect(() => {
+    const loadSocialHabitsDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("social_habits")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error loading social habits:", error)
+          return
+        }
+
+        if (data) {
+          // Map database column names (snake_case) to form field names (camelCase)
+          const loadedData = {
+            smoking: data.smoking || "",
+            drinking: data.drinking || "",
+            parties: data.parties || "",
+            pubs: data.pubs || "",
+          }
+          
+          // Store original data for comparison
+          setOriginalSocialHabitsDetails(loadedData)
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading social habits:", error)
+      }
+    }
+
+    loadSocialHabitsDetails()
   }, [userId])
 
   // Calculate overall progress
@@ -809,6 +851,49 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     return true
   }
 
+  const validateSocialHabitsDetails = (): boolean => {
+    const requiredFields = [
+      { key: "smoking", label: "Smoking" },
+      { key: "drinking", label: "Drinking" },
+      { key: "parties", label: "Parties" },
+      { key: "pubs", label: "Pubs" },
+    ]
+
+    const missingFields: string[] = []
+
+    requiredFields.forEach((field) => {
+      const value = formData[field.key as keyof FormData]
+      if (!value || (typeof value === "string" && value.trim() === "")) {
+        missingFields.push(field.label)
+      }
+    })
+
+    if (missingFields.length > 0) {
+      if (missingFields.length === 1) {
+        toast.error(`Please fill out ${missingFields[0]}`, {
+          description: "This field is required to save your social habits.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      } else {
+        toast.error("Please fill out all fields", {
+          description: "All fields are required to save your social habits.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      }
+      return false
+    }
+
+    return true
+  }
+
   const validateFamilyDetails = (): boolean => {
     const requiredFields = [
       { key: "fatherName", label: "Father Name" },
@@ -1028,6 +1113,35 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                             originalInterests.some((interest) => !currentInterests.includes(interest))
 
     return hobbiesChanged || interestsChanged
+  }
+
+  // Check if social habits details have changed
+  const hasSocialHabitsDetailsChanged = (): boolean => {
+    if (!originalSocialHabitsDetails) {
+      // If no original data exists, check if any field is filled
+      const socialHabitsFields = ["smoking", "drinking", "parties", "pubs"]
+      return socialHabitsFields.some((field) => {
+        const value = formData[field as keyof FormData]
+        return value !== "" && value !== null && value !== undefined
+      })
+    }
+
+    // Compare current form data with original saved data
+    const fieldsToCompare: (keyof FormData)[] = ["smoking", "drinking", "parties", "pubs"]
+    
+    for (const field of fieldsToCompare) {
+      const currentValue = formData[field]
+      const originalValue = originalSocialHabitsDetails[field]
+      
+      // Handle string comparison
+      const currentStr = currentValue?.toString().trim() || ""
+      const originalStr = originalValue?.toString().trim() || ""
+      if (currentStr !== originalStr) {
+        return true
+      }
+    }
+
+    return false
   }
 
   const handleSave = async () => {
@@ -1445,6 +1559,49 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             color: "#166534",
           },
         })
+      } else if (currentStep === 7) {
+        // Save social habits if we're on the social habits step
+        // Validate all fields
+        if (!validateSocialHabitsDetails()) {
+          setIsSaving(false)
+          return
+        }
+
+        // Calculate completion percentage for social habits
+        const socialHabitsProgress = calculateStepProgress("social")
+
+        const socialHabitsData = {
+          user_id: userId,
+          smoking: formData.smoking || null,
+          drinking: formData.drinking || null,
+          parties: formData.parties || null,
+          pubs: formData.pubs || null,
+          completion_percentage: socialHabitsProgress,
+        }
+
+        const { error } = await supabase
+          .from("social_habits")
+          .upsert(socialHabitsData, {
+            onConflict: "user_id",
+          })
+
+        if (error) throw error
+        
+        // Update original data after successful save
+        setOriginalSocialHabitsDetails({
+          smoking: formData.smoking,
+          drinking: formData.drinking,
+          parties: formData.parties,
+          pubs: formData.pubs,
+        })
+        
+        toast.success("Social habits saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
       } else {
         // For other steps, use the existing save logic
         const { error } = await supabase
@@ -1653,7 +1810,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   onClick={handleSave}
-                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged()) || (currentStep === 6 && !hasInterestsDetailsChanged())}
+                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged()) || (currentStep === 6 && !hasInterestsDetailsChanged()) || (currentStep === 7 && !hasSocialHabitsDetailsChanged())}
                   className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-3 disabled:opacity-50 disabled:pointer-events-auto disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
