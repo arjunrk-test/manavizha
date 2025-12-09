@@ -377,16 +377,17 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
           </div>
         </div>
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="siblings">Siblings Details (if any)</Label>
+          <Label htmlFor="siblings">Siblings Details (if any) *</Label>
           <Input
             id="siblings"
             value={formData.siblings || ""}
             onChange={(e) => onChange("siblings", e.target.value)}
             placeholder="e.g., 1 brother, 1 sister"
+            required
           />
         </div>
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="familyDescription">Brief Description About Family</Label>
+          <Label htmlFor="familyDescription">Brief Description About Family *</Label>
           <Textarea
             id="familyDescription"
             value={formData.familyDescription || ""}
@@ -394,6 +395,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
             placeholder="Enter a brief description about your family"
             rows={4}
             className="resize-none"
+            required
           />
         </div>
         <div className="space-y-2">
@@ -407,30 +409,43 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="subcaste">Subcaste</Label>
+          <Label htmlFor="subcaste">Subcaste *</Label>
           <Input
             id="subcaste"
             value={formData.subcaste || ""}
             onChange={(e) => onChange("subcaste", e.target.value)}
             placeholder="Enter subcaste"
+            required
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="kulam">Kulam</Label>
+          <Label htmlFor="kulam">Kulam *</Label>
           <Input
             id="kulam"
             value={formData.kulam || ""}
             onChange={(e) => onChange("kulam", e.target.value)}
             placeholder="Enter kulam"
+            required
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="familyType">Family Type</Label>
+          <Label htmlFor="gotram">Gotram *</Label>
+          <Input
+            id="gotram"
+            value={formData.gotram || ""}
+            onChange={(e) => onChange("gotram", e.target.value)}
+            placeholder="Enter gotram"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="familyType">Family Type *</Label>
           <select
             id="familyType"
             value={formData.familyType || ""}
             onChange={(e) => onChange("familyType", e.target.value)}
             className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
+            required
           >
             <option value="">Select</option>
             <option value="nuclear">Nuclear Family</option>
@@ -441,14 +456,16 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
           </select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="familyStatus">Family Status</Label>
+          <Label htmlFor="familyStatus">Family Status *</Label>
           <select
             id="familyStatus"
             value={formData.familyStatus || ""}
             onChange={(e) => onChange("familyStatus", e.target.value)}
             className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
+            required
           >
             <option value="">Select</option>
+            <option value="lower-middle-class">Lower Middle Class</option>
             <option value="middle-class">Middle Class</option>
             <option value="upper-middle-class">Upper Middle Class</option>
             <option value="rich">Rich</option>

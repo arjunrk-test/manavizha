@@ -80,6 +80,7 @@ export interface FormData {
   caste: string
   subcaste: string
   kulam: string
+  gotram: string
   familyType: string
   familyStatus: string
   

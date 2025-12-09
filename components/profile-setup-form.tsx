@@ -106,6 +106,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     caste: "",
     subcaste: "",
     kulam: "",
+    gotram: "",
     familyType: "",
     familyStatus: "",
     jaadhagam: "",
@@ -139,6 +140,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const [originalPersonalDetails, setOriginalPersonalDetails] = useState<Partial<FormData> | null>(null)
   const [originalContactDetails, setOriginalContactDetails] = useState<Partial<FormData> | null>(null)
   const [originalEducationDetails, setOriginalEducationDetails] = useState<FormData["educationDetails"] | null>(null)
+  const [originalFamilyDetails, setOriginalFamilyDetails] = useState<Partial<FormData> | null>(null)
 
   // Load personal details from database on mount
   useEffect(() => {
@@ -296,6 +298,66 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     }
 
     loadEducationDetails()
+  }, [userId])
+
+  // Load family details from database on mount
+  useEffect(() => {
+    const loadFamilyDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("family_details")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error loading family details:", error)
+          return
+        }
+
+        if (data) {
+          // Map database column names (snake_case) to form field names (camelCase)
+          const loadedData = {
+            fatherName: data.father_name || "",
+            fatherOccupation: data.father_occupation || "",
+            motherName: data.mother_name || "",
+            motherOccupation: data.mother_occupation || "",
+            parentsAddressLine1: data.parents_address_line1 || "",
+            parentsAddressLine2: data.parents_address_line2 || "",
+            parentsPincode: data.parents_pincode || "",
+            parentsArea: data.parents_area || "",
+            parentsTaluk: data.parents_taluk || "",
+            parentsDistrict: data.parents_district || "",
+            parentsDivision: data.parents_division || "",
+            parentsRegion: data.parents_region || "",
+            parentsState: data.parents_state || "",
+            parentsCountry: data.parents_country || "",
+            parentsLandmark: data.parents_landmark || "",
+            siblings: data.siblings || "",
+            familyDescription: data.family_description || "",
+            caste: data.caste || "",
+            subcaste: data.subcaste || "",
+            kulam: data.kulam || "",
+            gotram: data.gotram || "",
+            familyType: data.family_type || "",
+            familyStatus: data.family_status || "",
+          }
+          
+          // Store original data for comparison
+          setOriginalFamilyDetails(loadedData)
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading family details:", error)
+      }
+    }
+
+    loadFamilyDetails()
   }, [userId])
 
   // Calculate overall progress
@@ -577,6 +639,66 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     return true
   }
 
+  const validateFamilyDetails = (): boolean => {
+    const requiredFields = [
+      { key: "fatherName", label: "Father Name" },
+      { key: "fatherOccupation", label: "Father's Occupation" },
+      { key: "motherName", label: "Mother Name" },
+      { key: "motherOccupation", label: "Mother's Occupation" },
+      { key: "parentsAddressLine1", label: "Parents Address Line 1" },
+      { key: "parentsPincode", label: "Parents Pincode" },
+      { key: "parentsArea", label: "Parents Area" },
+      { key: "parentsTaluk", label: "Parents Taluk" },
+      { key: "parentsDistrict", label: "Parents District" },
+      { key: "parentsDivision", label: "Parents Division" },
+      { key: "parentsRegion", label: "Parents Region" },
+      { key: "parentsState", label: "Parents State" },
+      { key: "parentsCountry", label: "Parents Country" },
+      { key: "siblings", label: "Siblings Details" },
+      { key: "familyDescription", label: "Brief Description About Family" },
+      { key: "caste", label: "Caste" },
+      { key: "subcaste", label: "Subcaste" },
+      { key: "kulam", label: "Kulam" },
+      { key: "gotram", label: "Gotram" },
+      { key: "familyType", label: "Family Type" },
+      { key: "familyStatus", label: "Family Status" },
+    ]
+
+    const missingFields: string[] = []
+
+    requiredFields.forEach((field) => {
+      const value = formData[field.key as keyof FormData]
+      if (!value || (typeof value === "string" && value.trim() === "")) {
+        missingFields.push(field.label)
+      }
+    })
+
+    if (missingFields.length > 0) {
+      if (missingFields.length === 1) {
+        toast.error(`Please fill out ${missingFields[0]}`, {
+          description: "This field is required to save your family details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      } else {
+        toast.error("Please fill out all fields", {
+          description: "All fields are required to save your family details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      }
+      return false
+    }
+
+    return true
+  }
+
   // Check if contact details have changed
   const hasContactDetailsChanged = (): boolean => {
     if (!originalContactDetails) {
@@ -644,6 +766,35 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       }
     }
     
+    return false
+  }
+
+  // Check if family details have changed
+  const hasFamilyDetailsChanged = (): boolean => {
+    if (!originalFamilyDetails) {
+      // If no original data exists, check if any field is filled
+      const familyFields = ["fatherName", "fatherOccupation", "motherName", "motherOccupation", "parentsAddressLine1", "parentsPincode", "parentsArea", "parentsTaluk", "parentsDistrict", "parentsDivision", "parentsRegion", "parentsState", "parentsCountry", "siblings", "familyDescription", "caste", "subcaste", "kulam", "gotram", "familyType", "familyStatus"]
+      return familyFields.some((field) => {
+        const value = formData[field as keyof FormData]
+        return value !== "" && value !== null && value !== undefined
+      })
+    }
+
+    // Compare current form data with original saved data
+    const fieldsToCompare: (keyof FormData)[] = ["fatherName", "fatherOccupation", "motherName", "motherOccupation", "parentsAddressLine1", "parentsAddressLine2", "parentsPincode", "parentsArea", "parentsTaluk", "parentsDistrict", "parentsDivision", "parentsRegion", "parentsState", "parentsCountry", "parentsLandmark", "siblings", "familyDescription", "caste", "subcaste", "kulam", "gotram", "familyType", "familyStatus"]
+    
+    for (const field of fieldsToCompare) {
+      const currentValue = formData[field]
+      const originalValue = originalFamilyDetails[field]
+      
+      // Handle string comparison
+      const currentStr = currentValue?.toString().trim() || ""
+      const originalStr = originalValue?.toString().trim() || ""
+      if (currentStr !== originalStr) {
+        return true
+      }
+    }
+
     return false
   }
 
@@ -830,6 +981,87 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         setOriginalEducationDetails(formData.educationDetails || [])
         
         toast.success("Education details saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
+      } else if (currentStep === 4) {
+        // Save family details if we're on the family details step
+        // Validate all fields
+        if (!validateFamilyDetails()) {
+          setIsSaving(false)
+          return
+        }
+
+        // Calculate completion percentage for family details
+        const familyDetailsProgress = calculateStepProgress("family")
+
+        const familyDetailsData = {
+          user_id: userId,
+          father_name: formData.fatherName || null,
+          father_occupation: formData.fatherOccupation || null,
+          mother_name: formData.motherName || null,
+          mother_occupation: formData.motherOccupation || null,
+          parents_address_line1: formData.parentsAddressLine1 || null,
+          parents_address_line2: formData.parentsAddressLine2 || null,
+          parents_pincode: formData.parentsPincode || null,
+          parents_area: formData.parentsArea || null,
+          parents_taluk: formData.parentsTaluk || null,
+          parents_district: formData.parentsDistrict || null,
+          parents_division: formData.parentsDivision || null,
+          parents_region: formData.parentsRegion || null,
+          parents_state: formData.parentsState || null,
+          parents_country: formData.parentsCountry || null,
+          parents_landmark: formData.parentsLandmark || null,
+          siblings: formData.siblings || null,
+          family_description: formData.familyDescription || null,
+          caste: formData.caste || null,
+          subcaste: formData.subcaste || null,
+          kulam: formData.kulam || null,
+          gotram: formData.gotram || null,
+          family_type: formData.familyType || null,
+          family_status: formData.familyStatus || null,
+          completion_percentage: familyDetailsProgress,
+        }
+
+        const { error } = await supabase
+          .from("family_details")
+          .upsert(familyDetailsData, {
+            onConflict: "user_id",
+          })
+
+        if (error) throw error
+        
+        // Update original data after successful save
+        setOriginalFamilyDetails({
+          fatherName: formData.fatherName,
+          fatherOccupation: formData.fatherOccupation,
+          motherName: formData.motherName,
+          motherOccupation: formData.motherOccupation,
+          parentsAddressLine1: formData.parentsAddressLine1,
+          parentsAddressLine2: formData.parentsAddressLine2,
+          parentsPincode: formData.parentsPincode,
+          parentsArea: formData.parentsArea,
+          parentsTaluk: formData.parentsTaluk,
+          parentsDistrict: formData.parentsDistrict,
+          parentsDivision: formData.parentsDivision,
+          parentsRegion: formData.parentsRegion,
+          parentsState: formData.parentsState,
+          parentsCountry: formData.parentsCountry,
+          parentsLandmark: formData.parentsLandmark,
+          siblings: formData.siblings,
+          familyDescription: formData.familyDescription,
+          caste: formData.caste,
+          subcaste: formData.subcaste,
+          kulam: formData.kulam,
+          gotram: formData.gotram,
+          familyType: formData.familyType,
+          familyStatus: formData.familyStatus,
+        })
+        
+        toast.success("Family details saved successfully!", {
           style: {
             background: "#dcfce7",
             border: "1px solid #22c55e",
@@ -1044,7 +1276,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   onClick={handleSave}
-                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged())}
+                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 4 && !hasFamilyDetailsChanged())}
                   className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-3 disabled:opacity-50 disabled:pointer-events-auto disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
