@@ -144,6 +144,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const [originalHoroscopeDetails, setOriginalHoroscopeDetails] = useState<Partial<FormData> | null>(null)
   const [originalInterestsDetails, setOriginalInterestsDetails] = useState<Partial<FormData> | null>(null)
   const [originalSocialHabitsDetails, setOriginalSocialHabitsDetails] = useState<Partial<FormData> | null>(null)
+  const [originalPhotosDetails, setOriginalPhotosDetails] = useState<Partial<FormData> | null>(null)
 
   // Load personal details from database on mount
   useEffect(() => {
@@ -485,6 +486,98 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     }
 
     loadSocialHabitsDetails()
+  }, [userId])
+
+  // Load photos from database on mount
+  useEffect(() => {
+    const loadPhotosDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("photos")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error loading photos:", error)
+          return
+        }
+
+        if (data) {
+          // Helper function to get signed URL from file path or use existing URL
+          const getPhotoUrl = async (url: string | null, bucket: string, defaultFileName: string): Promise<string> => {
+            if (!url) return ""
+            
+            // If it's already a signed URL (starts with http), use it
+            if (url.startsWith("http")) {
+              return url
+            }
+            
+            // If it's a file path, create a signed URL
+            try {
+              const filePath = url.includes("/") ? url : `${userId}/${url}`
+              const { data: urlData, error: urlError } = await supabase.storage
+                .from(bucket)
+                .createSignedUrl(filePath, 31536000) // 1 year
+              
+              if (urlError) throw urlError
+              return urlData.signedUrl
+            } catch (error) {
+              console.error(`Error getting signed URL for ${defaultFileName}:`, error)
+              return url // Fallback to original
+            }
+          }
+
+          // Load user photos with signed URLs
+          const userPhotos = data.user_photos || []
+          const userPhotoUrls = await Promise.all(
+            userPhotos.map(async (photo: string, index: number) => {
+              if (photo.startsWith("http")) {
+                return photo
+              }
+              try {
+                const filePath = photo.includes("/") ? photo : `${userId}/photo_${index + 1}.jpg`
+                const { data: urlData, error: urlError } = await supabase.storage
+                  .from("user-photos")
+                  .createSignedUrl(filePath, 31536000)
+                
+                if (urlError) throw urlError
+                return urlData.signedUrl
+              } catch (error) {
+                console.error(`Error getting signed URL for user photo ${index + 1}:`, error)
+                return photo
+              }
+            })
+          )
+
+          // Load other photos with signed URLs
+          const familyPhotoUrl = await getPhotoUrl(data.family_photo, "family-photos", "family")
+          const aadharFrontUrl = await getPhotoUrl(data.aadhar_front, "aadhar-photos", "aadhar_front")
+          const aadharBackUrl = await getPhotoUrl(data.aadhar_back, "aadhar-photos", "aadhar_back")
+
+          // Map database column names (snake_case) to form field names (camelCase)
+          const loadedData = {
+            userPhotos: userPhotoUrls,
+            familyPhoto: familyPhotoUrl,
+            aadharFront: aadharFrontUrl,
+            aadharBack: aadharBackUrl,
+          }
+          
+          // Store original data for comparison
+          setOriginalPhotosDetails(loadedData)
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading photos:", error)
+      }
+    }
+
+    loadPhotosDetails()
   }, [userId])
 
   // Calculate overall progress
@@ -894,6 +987,61 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     return true
   }
 
+  const validatePhotosDetails = (): boolean => {
+    const errors: string[] = []
+
+    // Check user photos - minimum 3 required
+    if (!formData.userPhotos || formData.userPhotos.length < 3) {
+      errors.push("userPhotos")
+    }
+
+    // Check family photo
+    if (!formData.familyPhoto || formData.familyPhoto.trim() === "") {
+      errors.push("familyPhoto")
+    }
+
+    // Check Aadhar front
+    if (!formData.aadharFront || formData.aadharFront.trim() === "") {
+      errors.push("aadharFront")
+    }
+
+    // Check Aadhar back
+    if (!formData.aadharBack || formData.aadharBack.trim() === "") {
+      errors.push("aadharBack")
+    }
+
+    if (errors.length > 0) {
+      if (errors.length === 1) {
+        const fieldLabels: Record<string, string> = {
+          userPhotos: "User photos (minimum 3 required)",
+          familyPhoto: "Family photo",
+          aadharFront: "Aadhar card front",
+          aadharBack: "Aadhar card back",
+        }
+        toast.error(`${fieldLabels[errors[0]]} is required`, {
+          description: "Please fill out all required fields.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      } else {
+        toast.error("Please fill out all required fields", {
+          description: "All photo fields are mandatory.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      }
+      return false
+    }
+
+    return true
+  }
+
   const validateFamilyDetails = (): boolean => {
     const requiredFields = [
       { key: "fatherName", label: "Father Name" },
@@ -1142,6 +1290,51 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     }
 
     return false
+  }
+
+  // Check if all photos fields are filled (without showing toasts)
+  const areAllPhotosFieldsFilled = (): boolean => {
+    const userPhotos = formData.userPhotos || []
+    return userPhotos.length >= 3 && 
+           formData.familyPhoto && formData.familyPhoto.trim() !== "" &&
+           formData.aadharFront && formData.aadharFront.trim() !== "" &&
+           formData.aadharBack && formData.aadharBack.trim() !== ""
+  }
+
+  // Check if photos details have changed
+  const hasPhotosDetailsChanged = (): boolean => {
+    if (!originalPhotosDetails) {
+      // If no original data exists, check if all required fields are filled
+      return areAllPhotosFieldsFilled()
+    }
+
+    // Compare current form data with original saved data
+    const currentUserPhotos = formData.userPhotos || []
+    const originalUserPhotos = originalPhotosDetails.userPhotos || []
+    
+    // Check if user photos array is different
+    if (currentUserPhotos.length !== originalUserPhotos.length) {
+      return true
+    }
+    
+    // Check if user photos content is different
+    const userPhotosChanged = currentUserPhotos.some((photo, index) => photo !== originalUserPhotos[index]) ||
+                             originalUserPhotos.some((photo, index) => photo !== currentUserPhotos[index])
+    
+    // Compare other fields
+    const currentFamilyPhoto = formData.familyPhoto?.toString().trim() || ""
+    const originalFamilyPhoto = originalPhotosDetails.familyPhoto?.toString().trim() || ""
+    
+    const currentAadharFront = formData.aadharFront?.toString().trim() || ""
+    const originalAadharFront = originalPhotosDetails.aadharFront?.toString().trim() || ""
+    
+    const currentAadharBack = formData.aadharBack?.toString().trim() || ""
+    const originalAadharBack = originalPhotosDetails.aadharBack?.toString().trim() || ""
+    
+    return userPhotosChanged ||
+           currentFamilyPhoto !== originalFamilyPhoto ||
+           currentAadharFront !== originalAadharFront ||
+           currentAadharBack !== originalAadharBack
   }
 
   const handleSave = async () => {
@@ -1602,14 +1795,345 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             color: "#166534",
           },
         })
-      } else {
-        // For other steps, use the existing save logic
+      } else if (currentStep === 8) {
+        // Save photos if we're on the photos step
+        // Validate all fields
+        if (!validatePhotosDetails()) {
+          setIsSaving(false)
+          return
+        }
+
+        // Calculate completion percentage for photos
+        const photosProgress = calculateStepProgress("photos")
+
+        // First, delete old user photos if the count has changed
+        const originalUserPhotos = originalPhotosDetails?.userPhotos || []
+        if (originalUserPhotos.length > 0) {
+          try {
+            // List all files in user-photos bucket for this user
+            const { data: files, error: listError } = await supabase.storage
+              .from("user-photos")
+              .list(userId)
+
+            if (!listError && files) {
+              // Delete all old photos
+              const filePaths = files.map(file => `${userId}/${file.name}`)
+              if (filePaths.length > 0) {
+                await supabase.storage
+                  .from("user-photos")
+                  .remove(filePaths)
+              }
+            }
+          } catch (error) {
+            console.warn("Error deleting old user photos:", error)
+            // Continue even if deletion fails
+          }
+        }
+
+        // Upload user photos to storage
+        const userPhotoUrls: string[] = []
+        const userPhotos = formData.userPhotos || []
+        
+        for (let i = 0; i < userPhotos.length; i++) {
+          const photo = userPhotos[i]
+          
+          // If photo is a base64 data URL (new upload), upload to Supabase storage
+          if (photo && photo.startsWith("data:image/")) {
+            try {
+              // Convert base64 to blob
+              const response = await fetch(photo)
+              const blob = await response.blob()
+              
+              // Get file extension from data URL
+              const matches = photo.match(/data:image\/(\w+);base64/)
+              const extension = matches ? matches[1] : "jpg"
+              
+              // Create file path: {user_id}/photo_{index + 1}.{extension}
+              const filePath = `${userId}/photo_${i + 1}.${extension}`
+              
+              // Upload to Supabase storage
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from("user-photos")
+                .upload(filePath, blob, {
+                  upsert: true,
+                  contentType: blob.type,
+                })
+
+              if (uploadError) throw uploadError
+
+              // Get signed URL (valid for 1 year) since bucket is private
+              const { data: urlData, error: urlError } = await supabase.storage
+                .from("user-photos")
+                .createSignedUrl(filePath, 31536000) // 1 year in seconds
+
+              if (urlError) throw urlError
+              userPhotoUrls.push(urlData.signedUrl)
+            } catch (error) {
+              console.error(`Error uploading user photo ${i + 1}:`, error)
+              toast.error(`Error uploading user photo ${i + 1}`, {
+                description: "Please try again.",
+                style: {
+                  background: "#fee2e2",
+                  border: "1px solid #ef4444",
+                  color: "#991b1b",
+                },
+              })
+              setIsSaving(false)
+              return
+            }
+          } else if (photo && photo.startsWith("http")) {
+            // Photo is already a signed URL, use it directly
+            userPhotoUrls.push(photo)
+          }
+        }
+
+        // Upload family photo to storage
+        let familyPhotoUrl = formData.familyPhoto || ""
+        if (formData.familyPhoto && formData.familyPhoto.startsWith("data:image/")) {
+          try {
+            // Delete old family photo if exists
+            if (originalPhotosDetails?.familyPhoto) {
+              try {
+                const { data: files } = await supabase.storage
+                  .from("family-photos")
+                  .list(userId)
+                
+                if (files && files.length > 0) {
+                  const filePaths = files.map(file => `${userId}/${file.name}`)
+                  await supabase.storage
+                    .from("family-photos")
+                    .remove(filePaths)
+                }
+              } catch (error) {
+                console.warn("Error deleting old family photo:", error)
+              }
+            }
+
+            const response = await fetch(formData.familyPhoto)
+            const blob = await response.blob()
+            
+            const matches = formData.familyPhoto.match(/data:image\/(\w+);base64/)
+            const extension = matches ? matches[1] : "jpg"
+            
+            const filePath = `${userId}/family.${extension}`
+            
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from("family-photos")
+              .upload(filePath, blob, {
+                upsert: true,
+                contentType: blob.type,
+              })
+
+            if (uploadError) throw uploadError
+
+            const { data: urlData, error: urlError } = await supabase.storage
+              .from("family-photos")
+              .createSignedUrl(filePath, 31536000)
+
+            if (urlError) throw urlError
+            familyPhotoUrl = urlData.signedUrl
+          } catch (error) {
+            console.error("Error uploading family photo:", error)
+            toast.error("Error uploading family photo", {
+              description: "Please try again.",
+              style: {
+                background: "#fee2e2",
+                border: "1px solid #ef4444",
+                color: "#991b1b",
+              },
+            })
+            setIsSaving(false)
+            return
+          }
+        } else if (formData.familyPhoto && formData.familyPhoto.startsWith("http")) {
+          // Already a signed URL, use it
+          familyPhotoUrl = formData.familyPhoto
+        }
+
+        // Upload Aadhar front to storage
+        let aadharFrontUrl = formData.aadharFront || ""
+        if (formData.aadharFront && formData.aadharFront.startsWith("data:image/")) {
+          try {
+            // Delete old Aadhar front if exists
+            if (originalPhotosDetails?.aadharFront) {
+              try {
+                const { data: files } = await supabase.storage
+                  .from("aadhar-photos")
+                  .list(userId)
+                
+                if (files && files.length > 0) {
+                  const frontFiles = files.filter(file => file.name.startsWith("front."))
+                  if (frontFiles.length > 0) {
+                    const filePaths = frontFiles.map(file => `${userId}/${file.name}`)
+                    await supabase.storage
+                      .from("aadhar-photos")
+                      .remove(filePaths)
+                  }
+                }
+              } catch (error) {
+                console.warn("Error deleting old Aadhar front:", error)
+              }
+            }
+
+            const response = await fetch(formData.aadharFront)
+            const blob = await response.blob()
+            
+            const matches = formData.aadharFront.match(/data:image\/(\w+);base64/)
+            const extension = matches ? matches[1] : "jpg"
+            
+            const filePath = `${userId}/front.${extension}`
+            
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from("aadhar-photos")
+              .upload(filePath, blob, {
+                upsert: true,
+                contentType: blob.type,
+              })
+
+            if (uploadError) throw uploadError
+
+            const { data: urlData, error: urlError } = await supabase.storage
+              .from("aadhar-photos")
+              .createSignedUrl(filePath, 31536000)
+
+            if (urlError) throw urlError
+            aadharFrontUrl = urlData.signedUrl
+          } catch (error) {
+            console.error("Error uploading Aadhar front:", error)
+            toast.error("Error uploading Aadhar card front", {
+              description: "Please try again.",
+              style: {
+                background: "#fee2e2",
+                border: "1px solid #ef4444",
+                color: "#991b1b",
+              },
+            })
+            setIsSaving(false)
+            return
+          }
+        } else if (formData.aadharFront && formData.aadharFront.startsWith("http")) {
+          // Already a signed URL, use it
+          aadharFrontUrl = formData.aadharFront
+        }
+
+        // Upload Aadhar back to storage
+        let aadharBackUrl = formData.aadharBack || ""
+        if (formData.aadharBack && formData.aadharBack.startsWith("data:image/")) {
+          try {
+            // Delete old Aadhar back if exists
+            if (originalPhotosDetails?.aadharBack) {
+              try {
+                const { data: files } = await supabase.storage
+                  .from("aadhar-photos")
+                  .list(userId)
+                
+                if (files && files.length > 0) {
+                  const backFiles = files.filter(file => file.name.startsWith("back."))
+                  if (backFiles.length > 0) {
+                    const filePaths = backFiles.map(file => `${userId}/${file.name}`)
+                    await supabase.storage
+                      .from("aadhar-photos")
+                      .remove(filePaths)
+                  }
+                }
+              } catch (error) {
+                console.warn("Error deleting old Aadhar back:", error)
+              }
+            }
+
+            const response = await fetch(formData.aadharBack)
+            const blob = await response.blob()
+            
+            const matches = formData.aadharBack.match(/data:image\/(\w+);base64/)
+            const extension = matches ? matches[1] : "jpg"
+            
+            const filePath = `${userId}/back.${extension}`
+            
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from("aadhar-photos")
+              .upload(filePath, blob, {
+                upsert: true,
+                contentType: blob.type,
+              })
+
+            if (uploadError) throw uploadError
+
+            const { data: urlData, error: urlError } = await supabase.storage
+              .from("aadhar-photos")
+              .createSignedUrl(filePath, 31536000)
+
+            if (urlError) throw urlError
+            aadharBackUrl = urlData.signedUrl
+          } catch (error) {
+            console.error("Error uploading Aadhar back:", error)
+            toast.error("Error uploading Aadhar card back", {
+              description: "Please try again.",
+              style: {
+                background: "#fee2e2",
+                border: "1px solid #ef4444",
+                color: "#991b1b",
+              },
+            })
+            setIsSaving(false)
+            return
+          }
+        } else if (formData.aadharBack && formData.aadharBack.startsWith("http")) {
+          // Already a signed URL, use it
+          aadharBackUrl = formData.aadharBack
+        }
+
+        const photosData = {
+          user_id: userId,
+          user_photos: userPhotoUrls,
+          family_photo: familyPhotoUrl || null,
+          aadhar_front: aadharFrontUrl || null,
+          aadhar_back: aadharBackUrl || null,
+          completion_percentage: photosProgress,
+        }
+
         const { error } = await supabase
-          .from("users")
-          .update(formData)
-          .eq("id", userId)
+          .from("photos")
+          .upsert(photosData, {
+            onConflict: "user_id",
+          })
 
         if (error) throw error
+        
+        // Update original data after successful save
+        setOriginalPhotosDetails({
+          userPhotos: userPhotoUrls,
+          familyPhoto: familyPhotoUrl,
+          aadharFront: aadharFrontUrl,
+          aadharBack: aadharBackUrl,
+        })
+        
+        // Update form data with the URLs if they were uploaded
+        if (userPhotoUrls.length > 0 || familyPhotoUrl !== formData.familyPhoto || 
+            aadharFrontUrl !== formData.aadharFront || aadharBackUrl !== formData.aadharBack) {
+          setFormData((prev) => ({
+            ...prev,
+            userPhotos: userPhotoUrls,
+            familyPhoto: familyPhotoUrl,
+            aadharFront: aadharFrontUrl,
+            aadharBack: aadharBackUrl,
+          }))
+        }
+        
+        toast.success("Photos saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
+      } else {
+        // For other steps, use the existing save logic
+      const { error } = await supabase
+        .from("users")
+        .update(formData)
+        .eq("id", userId)
+
+      if (error) throw error
         toast.success("Profile saved successfully!", {
           style: {
             background: "#dcfce7",
@@ -1743,74 +2267,74 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
                   {formSteps[currentStep].title}
                 </h2>
-                <div className="relative">
+            <div className="relative">
                   <div className="h-12 w-12 rounded-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] p-0.5">
-                    <div className="h-full w-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center">
+                <div className="h-full w-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center">
                       <span className="text-sm font-bold text-gray-900 dark:text-white">
-                        {stepProgress}%
-                      </span>
-                    </div>
-                  </div>
-                  {/* Circular progress ring */}
+                    {stepProgress}%
+                  </span>
+                </div>
+              </div>
+              {/* Circular progress ring */}
                   <svg className="absolute inset-0 h-12 w-12 transform -rotate-90" viewBox="0 0 48 48">
-                    <circle
+                <circle
                       cx="24"
                       cy="24"
                       r="22"
-                      fill="none"
-                      stroke="currentColor"
+                  fill="none"
+                  stroke="currentColor"
                       strokeWidth="2"
-                      className="text-gray-200 dark:text-gray-700"
-                    />
-                    <circle
+                  className="text-gray-200 dark:text-gray-700"
+                />
+                <circle
                       cx="24"
                       cy="24"
                       r="22"
-                      fill="none"
-                      stroke="url(#step-progress-gradient)"
+                  fill="none"
+                  stroke="url(#step-progress-gradient)"
                       strokeWidth="2"
                       strokeDasharray={`${2 * Math.PI * 22}`}
                       strokeDashoffset={`${2 * Math.PI * 22 * (1 - stepProgress / 100)}`}
-                      strokeLinecap="round"
-                      className="transition-all duration-300"
-                    />
-                    <defs>
-                      <linearGradient id="step-progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#1F4068" />
-                        <stop offset="50%" stopColor="#4B0082" />
-                        <stop offset="100%" stopColor="#FF1493" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-              </div>
+                  strokeLinecap="round"
+                  className="transition-all duration-300"
+                />
+                <defs>
+                  <linearGradient id="step-progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#1F4068" />
+                    <stop offset="50%" stopColor="#4B0082" />
+                    <stop offset="100%" stopColor="#FF1493" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+          </div>
 
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentStep}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {currentStep === 0 && <PersonalDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 1 && <ContactDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 2 && <EducationalDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 3 && <ProfessionalDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 4 && <FamilyDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 5 && <HoroscopeDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 6 && <InterestsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 7 && <SocialHabitsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 8 && <PhotosStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 9 && <ReferralStep formData={formData} onChange={handleInputChange} />}
-                </motion.div>
-              </AnimatePresence>
+              transition={{ duration: 0.3 }}
+            >
+              {currentStep === 0 && <PersonalDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 1 && <ContactDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 2 && <EducationalDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 3 && <ProfessionalDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 4 && <FamilyDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 5 && <HoroscopeDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 6 && <InterestsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 7 && <SocialHabitsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 8 && <PhotosStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 9 && <ReferralStep formData={formData} onChange={handleInputChange} />}
+            </motion.div>
+          </AnimatePresence>
 
               {/* Save Button for each form */}
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <Button
-                  onClick={handleSave}
-                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged()) || (currentStep === 6 && !hasInterestsDetailsChanged()) || (currentStep === 7 && !hasSocialHabitsDetailsChanged())}
+              <Button
+                onClick={handleSave}
+                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged()) || (currentStep === 6 && !hasInterestsDetailsChanged()) || (currentStep === 7 && !hasSocialHabitsDetailsChanged()) || (currentStep === 8 && (!areAllPhotosFieldsFilled() || !hasPhotosDetailsChanged()))}
                   className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-3 disabled:opacity-50 disabled:pointer-events-auto disabled:cursor-not-allowed"
                 >
                   {isSaving ? (

@@ -210,8 +210,8 @@ export function PhotosStep({ formData, onChange }: PhotosStepProps) {
             <span>{errors.userPhotos}</span>
           </div>
         )}
-        {userPhotos.length < minPhotos && userPhotos.length > 0 && (
-          <div className="flex items-center gap-2 text-yellow-600 text-sm bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg">
+        {userPhotos.length < minPhotos && (
+          <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
             <AlertCircle className="h-4 w-4" />
             <span>Please upload at least {minPhotos} photos. You have {userPhotos.length} photo(s).</span>
           </div>
@@ -238,23 +238,25 @@ export function PhotosStep({ formData, onChange }: PhotosStepProps) {
           </label>
         </div>
         {userPhotos.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="space-y-4">
             {userPhotos.map((photo, index) => (
-              <div key={index} className="relative group">
-                <img
-                  src={photo}
-                  alt={`User photo ${index + 1}`}
-                  className="w-full aspect-square object-cover rounded-lg border border-gray-200 dark:border-gray-700"
-                />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => removeUserPhoto(index)}
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+              <div key={index} className="relative group flex justify-center">
+                <div className="relative max-w-md w-full">
+                  <img
+                    src={photo}
+                    alt={`User photo ${index + 1}`}
+                    className="w-full aspect-square object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => removeUserPhoto(index)}
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -270,22 +272,30 @@ export function PhotosStep({ formData, onChange }: PhotosStepProps) {
             <span>{errors.familyPhoto}</span>
           </div>
         )}
+        {!formData.familyPhoto && !errors.familyPhoto && (
+          <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+            <AlertCircle className="h-4 w-4" />
+            <span>Family photo is required</span>
+          </div>
+        )}
         {formData.familyPhoto ? (
-          <div className="relative max-w-md">
-            <img
-              src={formData.familyPhoto}
-              alt="Family photo"
-              className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
-            />
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              onClick={removeFamilyPhoto}
-              className="absolute top-2 right-2"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          <div className="flex justify-center">
+            <div className="relative max-w-md w-full">
+              <img
+                src={formData.familyPhoto}
+                alt="Family photo"
+                className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={removeFamilyPhoto}
+                className="absolute top-2 right-2"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
@@ -324,22 +334,30 @@ export function PhotosStep({ formData, onChange }: PhotosStepProps) {
               <span>{errors.aadharFront}</span>
             </div>
           )}
+          {!formData.aadharFront && !errors.aadharFront && (
+            <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+              <AlertCircle className="h-4 w-4" />
+              <span>Aadhar card front is required</span>
+            </div>
+          )}
           {formData.aadharFront ? (
-            <div className="relative max-w-md">
-              <img
-                src={formData.aadharFront}
-                alt="Aadhar front"
-                className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
-              />
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={removeAadharFront}
-                className="absolute top-2 right-2"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+            <div className="flex justify-center">
+              <div className="relative max-w-md w-full">
+                <img
+                  src={formData.aadharFront}
+                  alt="Aadhar front"
+                  className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={removeAadharFront}
+                  className="absolute top-2 right-2"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
@@ -374,22 +392,30 @@ export function PhotosStep({ formData, onChange }: PhotosStepProps) {
               <span>{errors.aadharBack}</span>
             </div>
           )}
+          {!formData.aadharBack && !errors.aadharBack && (
+            <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+              <AlertCircle className="h-4 w-4" />
+              <span>Aadhar card back is required</span>
+            </div>
+          )}
           {formData.aadharBack ? (
-            <div className="relative max-w-md">
-              <img
-                src={formData.aadharBack}
-                alt="Aadhar back"
-                className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
-              />
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={removeAadharBack}
-                className="absolute top-2 right-2"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+            <div className="flex justify-center">
+              <div className="relative max-w-md w-full">
+                <img
+                  src={formData.aadharBack}
+                  alt="Aadhar back"
+                  className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={removeAadharBack}
+                  className="absolute top-2 right-2"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
