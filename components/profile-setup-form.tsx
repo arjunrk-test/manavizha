@@ -82,10 +82,20 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         status: "",
       },
     ],
-    occupation: "",
+    employmentType: "",
+    sector: "",
+    sectorOther: "",
     company: "",
+    designation: "",
     salary: "₹",
     workLocation: "",
+    payslip: "",
+    businessName: "",
+    businessType: "",
+    businessTypeOther: "",
+    annualReturns: "₹",
+    businessLocation: "",
+    itrDocument: "",
     fatherName: "",
     fatherOccupation: "",
     motherName: "",
@@ -145,6 +155,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const [originalInterestsDetails, setOriginalInterestsDetails] = useState<Partial<FormData> | null>(null)
   const [originalSocialHabitsDetails, setOriginalSocialHabitsDetails] = useState<Partial<FormData> | null>(null)
   const [originalPhotosDetails, setOriginalPhotosDetails] = useState<Partial<FormData> | null>(null)
+  const [originalReferralDetails, setOriginalReferralDetails] = useState<Partial<FormData> | null>(null)
+  const [isReferralPartnerValid, setIsReferralPartnerValid] = useState(false)
+  const [referralPartnerName, setReferralPartnerName] = useState<string | null>(null)
 
   // Load personal details from database on mount
   useEffect(() => {
@@ -578,6 +591,49 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     }
 
     loadPhotosDetails()
+  }, [userId])
+
+  // Load referral details from database on mount
+  useEffect(() => {
+    const loadReferralDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("referral_details")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error loading referral details:", error)
+          return
+        }
+
+        if (data) {
+          // Map database column names (snake_case) to form field names (camelCase)
+          const loadedData = {
+            referralPartnerId: data.referral_partner_id || "",
+          }
+          
+          // Store original data for comparison
+          setOriginalReferralDetails(loadedData)
+          
+          // Store partner name if available
+          if (data.referral_partner_name) {
+            setReferralPartnerName(data.referral_partner_name)
+          }
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading referral details:", error)
+      }
+    }
+
+    loadReferralDetails()
   }, [userId])
 
   // Calculate overall progress
@@ -1335,6 +1391,66 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
            currentFamilyPhoto !== originalFamilyPhoto ||
            currentAadharFront !== originalAadharFront ||
            currentAadharBack !== originalAadharBack
+  }
+
+  // Validate referral partner ID pattern
+  const validateReferralDetails = (): boolean => {
+    const partnerIdPattern = /^[A-Z]{2}\d{4}[A-Z]{2}\d{3}$/
+    const partnerId = formData.referralPartnerId || ""
+    
+    if (!partnerId) {
+      // Referral is optional, so empty is valid
+      return true
+    }
+
+    if (!partnerIdPattern.test(partnerId)) {
+      toast.error("Invalid partner ID format", {
+        description: "Format should be: 2 letters, 4 numbers, 2 letters, 3 numbers (e.g., AB1234CD567)",
+        style: {
+          background: "#fee2e2",
+          border: "1px solid #ef4444",
+          color: "#991b1b",
+        },
+      })
+      return false
+    }
+
+    return true
+  }
+
+  // Check if referral details have changed
+  const hasReferralDetailsChanged = (): boolean => {
+    const partnerIdPattern = /^[A-Z]{2}\d{4}[A-Z]{2}\d{3}$/
+    const currentPartnerId = formData.referralPartnerId || ""
+    
+    // If no original data exists, check if partner ID is valid and filled
+    if (!originalReferralDetails) {
+      return currentPartnerId !== "" && partnerIdPattern.test(currentPartnerId)
+    }
+
+    // Compare current form data with original saved data
+    const originalPartnerId = originalReferralDetails.referralPartnerId || ""
+    return currentPartnerId !== originalPartnerId
+  }
+
+  // Check if referral partner ID is valid (pattern matches and partner exists)
+  const isReferralPartnerIdValid = (): boolean => {
+    const partnerIdPattern = /^[A-Z]{2}\d{4}[A-Z]{2}\d{3}$/
+    const partnerId = formData.referralPartnerId || ""
+    
+    // If empty, it's valid (optional field)
+    if (partnerId === "") {
+      return true
+    }
+    
+    // Check pattern and if partner exists in database
+    return partnerIdPattern.test(partnerId) && isReferralPartnerValid
+  }
+
+  // Handle partner name change from ReferralStep component
+  const handlePartnerNameChange = (name: string | null, isValid: boolean) => {
+    setIsReferralPartnerValid(isValid)
+    setReferralPartnerName(name)
   }
 
   const handleSave = async () => {
@@ -2126,6 +2242,98 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             color: "#166534",
           },
         })
+      } else if (currentStep === 9) {
+        // Save referral if we're on the referral step
+        // Validate partner ID format
+        if (!validateReferralDetails()) {
+          setIsSaving(false)
+          return
+        }
+
+        const partnerId = formData.referralPartnerId || ""
+        
+        // If partner ID is provided, validate it exists in referral_partners table
+        if (partnerId) {
+          try {
+            const { data, error: checkError } = await supabase
+              .from("referral_partners")
+              .select("partner_id")
+              .eq("partner_id", partnerId)
+              .maybeSingle()
+
+            if (checkError) {
+              throw checkError
+            }
+
+            if (!data) {
+              toast.error("Invalid partner ID", {
+                description: "This partner id is not valid please get the proper id from the partner",
+                style: {
+                  background: "#fee2e2",
+                  border: "1px solid #ef4444",
+                  color: "#991b1b",
+                },
+              })
+              setIsSaving(false)
+              return
+            }
+          } catch (error) {
+            console.error("Error checking partner ID:", error)
+            toast.error("Error validating partner ID", {
+              description: "Please try again.",
+              style: {
+                background: "#fee2e2",
+                border: "1px solid #ef4444",
+                color: "#991b1b",
+              },
+            })
+            setIsSaving(false)
+            return
+          }
+        }
+
+        // Get partner name from state (set by ReferralStep component)
+        const partnerName = referralPartnerName || null
+
+        // Save referral details to referral_details table
+        const referralData = {
+          user_id: userId,
+          referral_partner_id: partnerId || null,
+          referral_partner_name: partnerName,
+        }
+
+        const { error } = await supabase
+          .from("referral_details")
+          .upsert(referralData, {
+            onConflict: "user_id",
+          })
+
+        if (error) {
+          console.error("Error saving referral details:", error)
+          toast.error("Error saving referral details", {
+            description: "Please try again.",
+            style: {
+              background: "#fee2e2",
+              border: "1px solid #ef4444",
+              color: "#991b1b",
+            },
+          })
+          setIsSaving(false)
+          return
+        }
+        
+        // Update original data after successful save
+        setOriginalReferralDetails({
+          referralPartnerId: partnerId,
+        })
+        
+        toast.success("Referral details saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
       } else {
         // For other steps, use the existing save logic
       const { error } = await supabase
@@ -2326,7 +2534,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               {currentStep === 6 && <InterestsStep formData={formData} onChange={handleInputChange} />}
               {currentStep === 7 && <SocialHabitsStep formData={formData} onChange={handleInputChange} />}
               {currentStep === 8 && <PhotosStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 9 && <ReferralStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 9 && <ReferralStep formData={formData} onChange={handleInputChange} onPartnerNameChange={handlePartnerNameChange} />}
             </motion.div>
           </AnimatePresence>
 
@@ -2334,7 +2542,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
               <Button
                 onClick={handleSave}
-                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged()) || (currentStep === 6 && !hasInterestsDetailsChanged()) || (currentStep === 7 && !hasSocialHabitsDetailsChanged()) || (currentStep === 8 && (!areAllPhotosFieldsFilled() || !hasPhotosDetailsChanged()))}
+                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged()) || (currentStep === 6 && !hasInterestsDetailsChanged()) || (currentStep === 7 && !hasSocialHabitsDetailsChanged()) || (currentStep === 8 && (!areAllPhotosFieldsFilled() || !hasPhotosDetailsChanged())) || (currentStep === 9 && (!isReferralPartnerIdValid() || !hasReferralDetailsChanged()))}
                   className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-3 disabled:opacity-50 disabled:pointer-events-auto disabled:cursor-not-allowed"
                 >
                   {isSaving ? (

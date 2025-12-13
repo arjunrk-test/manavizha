@@ -53,10 +53,20 @@ export interface FormData {
   }[]
   
   // Professional Details
-  occupation: string
+  employmentType: string
+  sector: string
+  sectorOther: string
   company: string
+  designation: string
   salary: string
   workLocation: string
+  payslip: string
+  businessName: string
+  businessType: string
+  businessTypeOther: string
+  annualReturns: string
+  businessLocation: string
+  itrDocument: string
   
   // Family Details
   fatherName: string
