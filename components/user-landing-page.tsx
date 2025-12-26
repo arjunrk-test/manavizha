@@ -23,9 +23,9 @@ interface UserLandingPageProps {
 
 interface ProfileData {
   name?: string
-  age?: string
-  occupation?: string
-  sex?: string
+  contactNumber?: string
+  profession?: string
+  maritalStatus?: string
 }
 
 export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }: UserLandingPageProps) {
@@ -274,16 +274,88 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }:
         // Load profile data for display
         const { data: personalData } = await supabase
           .from("personal_details")
-          .select("name, age, sex")
+          .select("name, marital_status")
           .eq("user_id", userId)
           .maybeSingle()
         
-        if (personalData) {
-          setProfile({
-            name: personalData.name || undefined,
-            age: personalData.age ? personalData.age.toString() : undefined,
-            sex: personalData.sex || undefined,
-          })
+        const { data: contactData } = await supabase
+          .from("contact_details")
+          .select("phone")
+          .eq("user_id", userId)
+          .maybeSingle()
+        
+        // Get profession
+        const { data: employeeData } = await supabase
+          .from("profession_employee")
+          .select("designation, company")
+          .eq("user_id", userId)
+          .maybeSingle()
+        
+        const { data: businessData } = await supabase
+          .from("profession_business")
+          .select("business_name, designation")
+          .eq("user_id", userId)
+          .maybeSingle()
+        
+        const { data: studentData } = await supabase
+          .from("profession_student")
+          .select("course, institution")
+          .eq("user_id", userId)
+          .maybeSingle()
+        
+        // Build profile data
+        const profileData: ProfileData = {}
+        
+        // Name
+        if (personalData && personalData.name) {
+          profileData.name = personalData.name
+        }
+        
+        // Contact Number
+        if (contactData && contactData.phone) {
+          profileData.contactNumber = contactData.phone
+        }
+        
+        // Profession
+        if (employeeData) {
+          if (employeeData.designation && employeeData.company) {
+            profileData.profession = `${employeeData.designation} at ${employeeData.company}`
+          } else if (employeeData.designation) {
+            profileData.profession = employeeData.designation
+          } else if (employeeData.company) {
+            profileData.profession = `Employee at ${employeeData.company}`
+          }
+        } else if (businessData) {
+          if (businessData.designation && businessData.business_name) {
+            profileData.profession = `${businessData.designation} - ${businessData.business_name}`
+          } else if (businessData.business_name) {
+            profileData.profession = `Business Owner - ${businessData.business_name}`
+          } else if (businessData.designation) {
+            profileData.profession = businessData.designation
+          }
+        } else if (studentData) {
+          if (studentData.course && studentData.institution) {
+            profileData.profession = `Student - ${studentData.course} at ${studentData.institution}`
+          } else if (studentData.course) {
+            profileData.profession = `Student - ${studentData.course}`
+          } else {
+            profileData.profession = "Student"
+          }
+        }
+        
+        // Marital Status
+        if (personalData && personalData.marital_status) {
+          const maritalStatusMap: Record<string, string> = {
+            "never-married": "Never Married",
+            "divorced": "Divorced",
+            "separated": "Separated",
+            "widowed": "Widowed"
+          }
+          profileData.maritalStatus = maritalStatusMap[personalData.marital_status] || personalData.marital_status
+        }
+        
+        if (Object.keys(profileData).length > 0) {
+          setProfile(profileData)
         }
       } catch (error) {
         console.error("Error calculating profile progress:", error)
@@ -376,22 +448,22 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }:
                           <p className="font-semibold text-gray-900 dark:text-white">{profile.name}</p>
                         </div>
                       )}
-                      {profile.age && (
+                      {profile.contactNumber && (
                         <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Age</p>
-                          <p className="font-semibold text-gray-900 dark:text-white">{profile.age}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Contact Number</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">{profile.contactNumber}</p>
                         </div>
                       )}
-                      {profile.occupation && (
+                      {profile.profession && (
                         <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Occupation</p>
-                          <p className="font-semibold text-gray-900 dark:text-white">{profile.occupation}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Profession</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">{profile.profession}</p>
                         </div>
                       )}
-                      {profile.sex && (
+                      {profile.maritalStatus && (
                         <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Gender</p>
-                          <p className="font-semibold text-gray-900 dark:text-white">{profile.sex}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Marital Status</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">{profile.maritalStatus}</p>
                         </div>
                       )}
                     </div>
