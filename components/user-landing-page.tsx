@@ -12,9 +12,12 @@ import {
   Users, 
   Sparkles
 } from "lucide-react"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
 
 interface UserLandingPageProps {
   userEmail: string
+  userId: string
   onNavigateToProfileSetup: () => void
 }
 
@@ -25,13 +28,270 @@ interface ProfileData {
   sex?: string
 }
 
-export function UserLandingPage({ userEmail, onNavigateToProfileSetup }: UserLandingPageProps) {
-  // Placeholder data for UI demonstration
-  // TODO: Replace with actual data fetching when database is ready
-  const profile = null as ProfileData | null // No profile data yet
-  const completionPercentage = 0
+export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }: UserLandingPageProps) {
+  const [completionPercentage, setCompletionPercentage] = useState(0)
+  const [profile, setProfile] = useState<ProfileData | null>(null)
   const userName = userEmail.split("@")[0]
-  const isProfileComplete = false
+  const isProfileComplete = completionPercentage === 100
+
+  // Calculate profile completion percentage
+  useEffect(() => {
+    const calculateProgress = async () => {
+      try {
+        const stepIds = ["personal", "contact", "education", "professional", "family", "horoscope", "interests", "social", "photos", "referral"]
+        const stepProgresses: number[] = []
+
+        // Calculate progress for each step
+        for (const stepId of stepIds) {
+          let progress = 0
+
+          if (stepId === "personal") {
+            const { data } = await supabase
+              .from("personal_details")
+              .select("*")
+              .eq("user_id", userId)
+              .maybeSingle()
+            
+            if (data) {
+              const fields = ["name", "date_of_birth", "age", "sex", "height", "weight", "skin_color", "body_type", "marital_status", "about", "food_preference", "languages"]
+              const filled = fields.filter(field => {
+                const value = data[field]
+                if (field === "languages") {
+                  return Array.isArray(value) && value.length > 0
+                }
+                return value !== null && value !== undefined && value !== ""
+              }).length
+              progress = Math.round((filled / fields.length) * 100)
+            }
+          } else if (stepId === "contact") {
+            const { data } = await supabase
+              .from("contact_details")
+              .select("*")
+              .eq("user_id", userId)
+              .maybeSingle()
+            
+            if (data) {
+              const fields = ["phone", "whatsapp_number", "permanent_address_line1", "permanent_pincode", "permanent_area", "permanent_taluk", "permanent_district", "permanent_division", "permanent_region", "permanent_state", "permanent_country", "current_address_line1", "current_pincode", "current_area", "current_taluk", "current_district", "current_division", "current_region", "current_state", "current_country"]
+              const filled = fields.filter(field => {
+                const value = data[field]
+                return value !== null && value !== undefined && value !== ""
+              }).length
+              progress = Math.round((filled / fields.length) * 100)
+            }
+          } else if (stepId === "education") {
+            const { data } = await supabase
+              .from("education_details")
+              .select("*")
+              .eq("user_id", userId)
+            
+            if (data && data.length > 0) {
+              // Check if at least one entry has education level filled
+              const hasData = data.some(edu => edu.education && edu.education !== "")
+              progress = hasData ? 100 : 0
+            }
+          } else if (stepId === "professional") {
+            // Check which employment type exists
+            const { data: employeeData } = await supabase
+              .from("profession_employee")
+              .select("*")
+              .eq("user_id", userId)
+              .maybeSingle()
+            
+            const { data: businessData } = await supabase
+              .from("profession_business")
+              .select("*")
+              .eq("user_id", userId)
+              .maybeSingle()
+            
+            const { data: studentData } = await supabase
+              .from("profession_student")
+              .select("*")
+              .eq("user_id", userId)
+              .maybeSingle()
+            
+            if (employeeData) {
+              // Check sector (with "other" option handling)
+              let sectorValid = false
+              if (employeeData.sector) {
+                if (employeeData.sector === "other") {
+                  sectorValid = employeeData.sector_other && employeeData.sector_other.trim() !== ""
+                } else {
+                  sectorValid = true
+                }
+              }
+              
+              const otherFields = ["company", "designation", "salary", "work_location"]
+              const filled = otherFields.filter(field => {
+                const value = employeeData[field]
+                if (field === "salary") {
+                  return value && value !== "₹" && value !== ""
+                }
+                return value !== null && value !== undefined && value !== ""
+              }).length
+              
+              // Count sector as filled if valid, plus other fields, plus employmentType
+              const totalFilled = (sectorValid ? 1 : 0) + filled + 1
+              progress = Math.round((totalFilled / 6) * 100)
+            } else if (businessData) {
+              // Check sector (with "other" option handling)
+              let sectorValid = false
+              if (businessData.sector) {
+                if (businessData.sector === "other") {
+                  sectorValid = businessData.sector_other && businessData.sector_other.trim() !== ""
+                } else {
+                  sectorValid = true
+                }
+              }
+              
+              // Check businessType (with "other" option handling)
+              let businessTypeValid = false
+              if (businessData.business_type) {
+                if (businessData.business_type === "other") {
+                  businessTypeValid = businessData.business_type_other && businessData.business_type_other.trim() !== ""
+                } else {
+                  businessTypeValid = true
+                }
+              }
+              
+              const otherFields = ["designation", "annual_returns", "business_location"]
+              const filled = otherFields.filter(field => {
+                const value = businessData[field]
+                if (field === "annual_returns") {
+                  return value && value !== "₹" && value !== ""
+                }
+                return value !== null && value !== undefined && value !== ""
+              }).length
+              
+              // Check business_name separately
+              const businessNameFilled = businessData.business_name && businessData.business_name.trim() !== ""
+              
+              // Count sector, businessType, businessName, other fields, plus employmentType
+              const totalFilled = (sectorValid ? 1 : 0) + (businessTypeValid ? 1 : 0) + (businessNameFilled ? 1 : 0) + filled + 1
+              progress = Math.round((totalFilled / 7) * 100)
+            } else if (studentData) {
+              const fields = ["institution", "course", "field_of_study", "year_of_study", "expected_graduation_year"]
+              const filled = fields.filter(field => {
+                const value = studentData[field]
+                return value !== null && value !== undefined && value !== ""
+              }).length
+              progress = Math.round(((filled + 1) / (fields.length + 1)) * 100)
+            }
+          } else if (stepId === "family") {
+            const { data } = await supabase
+              .from("family_details")
+              .select("*")
+              .eq("user_id", userId)
+              .maybeSingle()
+            
+            if (data) {
+              const fields = ["father_name", "father_occupation", "mother_name", "mother_occupation", "parents_address_line1", "parents_pincode", "parents_area", "parents_taluk", "parents_district", "parents_division", "parents_region", "parents_state", "parents_country", "caste", "family_type", "family_status"]
+              const filled = fields.filter(field => {
+                const value = data[field]
+                return value !== null && value !== undefined && value !== ""
+              }).length
+              progress = Math.round((filled / fields.length) * 100)
+            }
+          } else if (stepId === "horoscope") {
+            const { data } = await supabase
+              .from("horoscope_details")
+              .select("*")
+              .eq("user_id", userId)
+              .maybeSingle()
+            
+            if (data) {
+              const fields = ["jaadhagam_url", "time_of_birth", "place_of_birth", "zodiac_sign", "star", "lagnam", "dhosham"]
+              const filled = fields.filter(field => {
+                const value = data[field]
+                return value !== null && value !== undefined && value !== ""
+              }).length
+              progress = Math.round((filled / fields.length) * 100)
+            }
+          } else if (stepId === "interests") {
+            const { data } = await supabase
+              .from("interests")
+              .select("*")
+              .eq("user_id", userId)
+              .maybeSingle()
+            
+            if (data) {
+              const hobbies = data.hobbies || []
+              const interests = data.interests || []
+              if (hobbies.length >= 3 && interests.length >= 3) {
+                progress = 100
+              } else {
+                progress = 0
+              }
+            }
+          } else if (stepId === "social") {
+            const { data } = await supabase
+              .from("social_habits")
+              .select("*")
+              .eq("user_id", userId)
+              .maybeSingle()
+            
+            if (data) {
+              const fields = ["smoking", "drinking", "parties", "pubs"]
+              const filled = fields.filter(field => {
+                const value = data[field]
+                return value !== null && value !== undefined && value !== ""
+              }).length
+              progress = Math.round((filled / fields.length) * 100)
+            }
+          } else if (stepId === "photos") {
+            const { data } = await supabase
+              .from("photos")
+              .select("*")
+              .eq("user_id", userId)
+              .maybeSingle()
+            
+            if (data) {
+              const userPhotos = data.user_photos || []
+              if (userPhotos.length >= 3 && data.family_photo && data.aadhar_front && data.aadhar_back) {
+                progress = 100
+              } else {
+                progress = 0
+              }
+            }
+          } else if (stepId === "referral") {
+            const { data } = await supabase
+              .from("referral_details")
+              .select("*")
+              .eq("user_id", userId)
+              .maybeSingle()
+            
+            // Referral is optional, so if no data exists, it's still 100%
+            progress = 100
+          }
+
+          stepProgresses.push(progress)
+        }
+
+        // Calculate average
+        const totalProgress = stepProgresses.reduce((sum, p) => sum + p, 0)
+        const averageProgress = Math.round(totalProgress / stepIds.length)
+        setCompletionPercentage(averageProgress)
+
+        // Load profile data for display
+        const { data: personalData } = await supabase
+          .from("personal_details")
+          .select("name, age, sex")
+          .eq("user_id", userId)
+          .maybeSingle()
+        
+        if (personalData) {
+          setProfile({
+            name: personalData.name || undefined,
+            age: personalData.age ? personalData.age.toString() : undefined,
+            sex: personalData.sex || undefined,
+          })
+        }
+      } catch (error) {
+        console.error("Error calculating profile progress:", error)
+      }
+    }
+
+    calculateProgress()
+  }, [userId])
 
   return (
     <div className="min-h-screen py-8">

@@ -242,20 +242,20 @@ export function PhotosStep({ formData, onChange }: PhotosStepProps) {
             {userPhotos.map((photo, index) => (
               <div key={index} className="relative group flex justify-center">
                 <div className="relative max-w-md w-full">
-                  <img
-                    src={photo}
-                    alt={`User photo ${index + 1}`}
-                    className="w-full aspect-square object-cover rounded-lg border border-gray-200 dark:border-gray-700"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => removeUserPhoto(index)}
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                <img
+                  src={photo}
+                  alt={`User photo ${index + 1}`}
+                  className="w-full aspect-square object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => removeUserPhoto(index)}
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
                 </div>
               </div>
             ))}
@@ -281,20 +281,20 @@ export function PhotosStep({ formData, onChange }: PhotosStepProps) {
         {formData.familyPhoto ? (
           <div className="flex justify-center">
             <div className="relative max-w-md w-full">
-              <img
-                src={formData.familyPhoto}
-                alt="Family photo"
-                className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
-              />
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={removeFamilyPhoto}
-                className="absolute top-2 right-2"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+            <img
+              src={formData.familyPhoto}
+              alt="Family photo"
+              className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
+            />
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={removeFamilyPhoto}
+              className="absolute top-2 right-2"
+            >
+              <X className="h-4 w-4" />
+            </Button>
             </div>
           </div>
         ) : (
@@ -343,20 +343,20 @@ export function PhotosStep({ formData, onChange }: PhotosStepProps) {
           {formData.aadharFront ? (
             <div className="flex justify-center">
               <div className="relative max-w-md w-full">
-                <img
-                  src={formData.aadharFront}
-                  alt="Aadhar front"
-                  className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
-                />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={removeAadharFront}
-                  className="absolute top-2 right-2"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+              <img
+                src={formData.aadharFront}
+                alt="Aadhar front"
+                className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={removeAadharFront}
+                className="absolute top-2 right-2"
+              >
+                <X className="h-4 w-4" />
+              </Button>
               </div>
             </div>
           ) : (
@@ -401,20 +401,20 @@ export function PhotosStep({ formData, onChange }: PhotosStepProps) {
           {formData.aadharBack ? (
             <div className="flex justify-center">
               <div className="relative max-w-md w-full">
-                <img
-                  src={formData.aadharBack}
-                  alt="Aadhar back"
-                  className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
-                />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={removeAadharBack}
-                  className="absolute top-2 right-2"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+              <img
+                src={formData.aadharBack}
+                alt="Aadhar back"
+                className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={removeAadharBack}
+                className="absolute top-2 right-2"
+              >
+                <X className="h-4 w-4" />
+              </Button>
               </div>
             </div>
           ) : (

@@ -778,39 +778,13 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     loadProfessionalDetails()
   }, [userId])
 
-  // Calculate overall progress
+  // Calculate overall progress - average of all step progress percentages
   const calculateOverallProgress = () => {
-    const totalFields = Object.keys(formData).length
-    const filledFields = Object.entries(formData).filter(([key, value]) => {
-      // Special handling for salary field - only count if it has more than just "₹"
-      if (key === "salary") {
-        return value !== "₹" && value !== "" && value !== null && value !== undefined
-      }
-      
-      // Special handling for educationDetails - check if at least one entry has actual data
-      if (key === "educationDetails") {
-        if (Array.isArray(value) && value.length > 0) {
-          return value.some((edu: any) => 
-            edu && (edu.education || edu.degree || edu.institution || edu.yearOfGraduation)
-          )
-        }
-        return false
-      }
-      
-      // For arrays, check if they have meaningful content
-      if (Array.isArray(value)) {
-        // For userPhotos, require at least 3 photos
-        if (key === "userPhotos") {
-          return value.length >= 3
-        }
-        // For other arrays, check if they have any items
-        return value.length > 0
-      }
-      
-      // For regular fields, check if they're not empty
-      return value !== "" && value !== null && value !== undefined
-    }).length
-    return Math.round((filledFields / totalFields) * 100)
+    const stepIds = ["personal", "contact", "education", "professional", "family", "horoscope", "interests", "social", "photos", "referral"]
+    const stepProgresses = stepIds.map(stepId => calculateStepProgress(stepId))
+    const totalProgress = stepProgresses.reduce((sum, progress) => sum + progress, 0)
+    const averageProgress = totalProgress / stepIds.length
+    return Math.round(averageProgress)
   }
 
   // Calculate step progress
