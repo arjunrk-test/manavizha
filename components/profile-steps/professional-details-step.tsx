@@ -27,29 +27,57 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
   }
 
   const handlePayslipUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = e.target.files
+    if (!files || files.length === 0) return
 
-    const error = validateFile(file)
-    if (error) {
-      setPayslipError(error)
+    const currentPayslips = (formData.payslip as string[]) || []
+    
+    // Check if adding these files would exceed 3 files
+    if (currentPayslips.length + files.length > 3) {
+      setPayslipError("Maximum 3 payslips allowed")
+      e.target.value = ""
       return
     }
 
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      const result = reader.result as string
-      onChange("payslip", result)
-      setPayslipError("")
+    // Validate all files
+    const fileArray = Array.from(files)
+    for (const file of fileArray) {
+      const error = validateFile(file)
+      if (error) {
+        setPayslipError(error)
+        e.target.value = ""
+        return
+      }
     }
-    reader.readAsDataURL(file)
+
+    // Read all files
+    const newPayslips: string[] = []
+    let filesRead = 0
+
+    fileArray.forEach((file) => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const result = reader.result as string
+        newPayslips.push(result)
+        filesRead++
+
+        // When all files are read, update form data
+        if (filesRead === fileArray.length) {
+          onChange("payslip", [...currentPayslips, ...newPayslips])
+          setPayslipError("")
+        }
+      }
+      reader.readAsDataURL(file)
+    })
 
     // Reset input
     e.target.value = ""
   }
 
-  const removePayslip = () => {
-    onChange("payslip", "")
+  const removePayslip = (index: number) => {
+    const currentPayslips = (formData.payslip as string[]) || []
+    const updatedPayslips = currentPayslips.filter((_, i) => i !== index)
+    onChange("payslip", updatedPayslips)
     setPayslipError("")
   }
 
@@ -82,6 +110,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
 
   const isEmployee = formData.employmentType === "employee"
   const isBusiness = formData.employmentType === "business"
+  const isStudent = formData.employmentType === "student"
 
   return (
     <div className="space-y-6">
@@ -213,34 +242,62 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
 
           {/* Payslip Upload */}
           <div className="space-y-2">
-            <Label htmlFor="payslip">Last 3 Months Payslip *</Label>
+            <Label htmlFor="payslip">Last 3 Months Payslip (Optional - Max 3 files, each under 5MB)</Label>
             {payslipError && (
               <div className="text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
                 {payslipError}
               </div>
             )}
-            {formData.payslip ? (
-              <div className="relative max-w-md">
-                {formData.payslip.startsWith("data:image/") ? (
-                  <img
-                    src={formData.payslip}
-                    alt="Payslip"
-                    className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
-                  />
-                ) : (
-                  <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Payslip uploaded</p>
+            {(formData.payslip as string[]) && (formData.payslip as string[]).length > 0 ? (
+              <div className="space-y-4">
+                {(formData.payslip as string[]).map((payslip, index) => (
+                  <div key={index} className="relative max-w-md">
+                    {payslip.startsWith("data:image/") ? (
+                      <img
+                        src={payslip}
+                        alt={`Payslip ${index + 1}`}
+                        className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
+                      />
+                    ) : (
+                      <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Payslip {index + 1} uploaded</p>
+                      </div>
+                    )}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => removePayslip(index)}
+                      className="absolute top-2 right-2"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                {(formData.payslip as string[]).length < 3 && (
+                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      onChange={handlePayslipUpload}
+                      className="hidden"
+                      id="payslip-upload"
+                      multiple
+                    />
+                    <label
+                      htmlFor="payslip-upload"
+                      className="cursor-pointer flex flex-col items-center gap-2"
+                    >
+                      <Upload className="h-8 w-8 text-gray-400" />
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Click to upload more payslips or drag and drop
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {(formData.payslip as string[]).length} of 3 files uploaded. Image or PDF up to 5MB each
+                      </span>
+                    </label>
                   </div>
                 )}
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={removePayslip}
-                  className="absolute top-2 right-2"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
               </div>
             ) : (
               <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
@@ -250,6 +307,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                   onChange={handlePayslipUpload}
                   className="hidden"
                   id="payslip-upload"
+                  multiple
                   required
                 />
                 <label
@@ -258,9 +316,9 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                 >
                   <Upload className="h-8 w-8 text-gray-400" />
                   <span className="text-gray-600 dark:text-gray-400">
-                    Click to upload payslip or drag and drop
+                    Click to upload payslips or drag and drop
                   </span>
-                  <span className="text-sm text-gray-500">Image or PDF up to 5MB</span>
+                  <span className="text-sm text-gray-500">Max 3 files, Image or PDF up to 5MB each</span>
                 </label>
               </div>
             )}
@@ -416,7 +474,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
 
           {/* ITR Document Upload */}
           <div className="space-y-2">
-            <Label htmlFor="itrDocument">Last Filed ITR Document *</Label>
+            <Label htmlFor="itrDocument">Last Filed ITR Document (Optional)</Label>
             {itrError && (
               <div className="text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
                 {itrError}
@@ -453,7 +511,6 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                   onChange={handleItrUpload}
                   className="hidden"
                   id="itr-upload"
-                  required
                 />
                 <label
                   htmlFor="itr-upload"
@@ -467,6 +524,84 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                 </label>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Student-specific fields */}
+      {isStudent && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="institution">Institution / University *</Label>
+              <Input
+                id="institution"
+                value={formData.institution || ""}
+                onChange={(e) => onChange("institution", e.target.value)}
+                placeholder="Enter institution or university name"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="course">Course / Degree *</Label>
+              <select
+                id="course"
+                value={formData.course || ""}
+                onChange={(e) => onChange("course", e.target.value)}
+                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
+                required
+              >
+                <option value="">Select</option>
+                <option value="bachelor">Bachelor's Degree</option>
+                <option value="master">Master's Degree</option>
+                <option value="phd">PhD / Doctorate</option>
+                <option value="diploma">Diploma</option>
+                <option value="certification">Professional Certification</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="fieldOfStudy">Field of Study / Major *</Label>
+              <Input
+                id="fieldOfStudy"
+                value={formData.fieldOfStudy || ""}
+                onChange={(e) => onChange("fieldOfStudy", e.target.value)}
+                placeholder="e.g., Computer Science, Electronics, etc."
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="yearOfStudy">Year of Study *</Label>
+              <select
+                id="yearOfStudy"
+                value={formData.yearOfStudy || ""}
+                onChange={(e) => onChange("yearOfStudy", e.target.value)}
+                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
+                required
+              >
+                <option value="">Select</option>
+                <option value="1st-year">1st Year</option>
+                <option value="2nd-year">2nd Year</option>
+                <option value="3rd-year">3rd Year</option>
+                <option value="4th-year">4th Year</option>
+                <option value="5th-year">5th Year</option>
+                <option value="final-year">Final Year</option>
+                <option value="post-graduate">Post Graduate</option>
+              </select>
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="expectedGraduationYear">Expected Graduation Year *</Label>
+              <Input
+                id="expectedGraduationYear"
+                type="number"
+                value={formData.expectedGraduationYear || ""}
+                onChange={(e) => onChange("expectedGraduationYear", e.target.value)}
+                placeholder="e.g., 2025"
+                min="2000"
+                max="2100"
+                required
+              />
+            </div>
           </div>
         </div>
       )}

@@ -89,13 +89,18 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     designation: "",
     salary: "₹",
     workLocation: "",
-    payslip: "",
+    payslip: [],
     businessName: "",
     businessType: "",
     businessTypeOther: "",
     annualReturns: "₹",
     businessLocation: "",
     itrDocument: "",
+    institution: "",
+    course: "",
+    yearOfStudy: "",
+    expectedGraduationYear: "",
+    fieldOfStudy: "",
     fatherName: "",
     fatherOccupation: "",
     motherName: "",
@@ -156,6 +161,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const [originalSocialHabitsDetails, setOriginalSocialHabitsDetails] = useState<Partial<FormData> | null>(null)
   const [originalPhotosDetails, setOriginalPhotosDetails] = useState<Partial<FormData> | null>(null)
   const [originalReferralDetails, setOriginalReferralDetails] = useState<Partial<FormData> | null>(null)
+  const [originalProfessionalDetails, setOriginalProfessionalDetails] = useState<Partial<FormData> | null>(null)
   const [isReferralPartnerValid, setIsReferralPartnerValid] = useState(false)
   const [referralPartnerName, setReferralPartnerName] = useState<string | null>(null)
 
@@ -636,6 +642,142 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     loadReferralDetails()
   }, [userId])
 
+  // Load professional details from database on mount
+  useEffect(() => {
+    const loadProfessionalDetails = async () => {
+      try {
+        // Check which employment type the user has
+        // First, try to load from employee table
+        const { data: employeeData, error: employeeError } = await supabase
+          .from("profession_employee")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (!employeeError && employeeData) {
+          // Load payslips with signed URLs
+          let payslipUrls: string[] = []
+          const payslips = Array.isArray(employeeData.payslip) ? employeeData.payslip : (employeeData.payslip ? [employeeData.payslip] : [])
+          
+          for (let i = 0; i < payslips.length; i++) {
+            const payslip = payslips[i]
+            if (!payslip) continue
+            
+            // If it's already a signed URL (starts with http), use it
+            if (payslip.startsWith("http")) {
+              payslipUrls.push(payslip)
+            } else {
+              // If it's a file path, create a signed URL
+              try {
+                const filePath = payslip.includes("/") ? payslip : `${userId}/payslip_${i + 1}.pdf`
+                const { data: urlData, error: urlError } = await supabase.storage
+                  .from("payslips")
+                  .createSignedUrl(filePath, 31536000) // 1 year
+                
+                if (urlError) throw urlError
+                payslipUrls.push(urlData.signedUrl)
+              } catch (error) {
+                console.error(`Error getting signed URL for payslip ${i + 1}:`, error)
+                // Continue with other payslips even if one fails
+              }
+            }
+          }
+
+          const loadedData = {
+            employmentType: "employee",
+            sector: employeeData.sector || "",
+            sectorOther: employeeData.sector_other || "",
+            company: employeeData.company || "",
+            designation: employeeData.designation || "",
+            salary: employeeData.salary || "₹",
+            workLocation: employeeData.work_location || "",
+            payslip: payslipUrls,
+          }
+          setOriginalProfessionalDetails(loadedData)
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+          return
+        }
+
+        // Try business table
+        const { data: businessData, error: businessError } = await supabase
+          .from("profession_business")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (!businessError && businessData) {
+          // Load ITR document with signed URL
+          let itrDocumentUrl = businessData.itr_document || ""
+          
+          if (itrDocumentUrl && !itrDocumentUrl.startsWith("http")) {
+            // If it's a file path, create a signed URL
+            try {
+              const filePath = itrDocumentUrl.includes("/") ? itrDocumentUrl : `${userId}/itr_document.pdf`
+              const { data: urlData, error: urlError } = await supabase.storage
+                .from("itr-documents")
+                .createSignedUrl(filePath, 31536000) // 1 year
+              
+              if (urlError) throw urlError
+              itrDocumentUrl = urlData.signedUrl
+            } catch (error) {
+              console.error("Error getting signed URL for ITR document:", error)
+              // Continue even if URL generation fails
+            }
+          }
+
+          const loadedData = {
+            employmentType: "business",
+            sector: businessData.sector || "",
+            sectorOther: businessData.sector_other || "",
+            businessName: businessData.business_name || "",
+            businessType: businessData.business_type || "",
+            businessTypeOther: businessData.business_type_other || "",
+            designation: businessData.designation || "",
+            annualReturns: businessData.annual_returns || "₹",
+            businessLocation: businessData.business_location || "",
+            itrDocument: itrDocumentUrl,
+          }
+          setOriginalProfessionalDetails(loadedData)
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+          return
+        }
+
+        // Try student table
+        const { data: studentData, error: studentError } = await supabase
+          .from("profession_student")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (!studentError && studentData) {
+          const loadedData = {
+            employmentType: "student",
+            institution: studentData.institution || "",
+            course: studentData.course || "",
+            fieldOfStudy: studentData.field_of_study || "",
+            yearOfStudy: studentData.year_of_study || "",
+            expectedGraduationYear: studentData.expected_graduation_year || "",
+          }
+          setOriginalProfessionalDetails(loadedData)
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading professional details:", error)
+      }
+    }
+
+    loadProfessionalDetails()
+  }, [userId])
+
   // Calculate overall progress
   const calculateOverallProgress = () => {
     const totalFields = Object.keys(formData).length
@@ -698,13 +840,67 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         "currentCountry",
       ],
       education: ["educationDetails"],
-      professional: ["occupation", "company", "salary", "workLocation"],
+      professional: [], // Will be calculated dynamically based on employment type
       family: ["fatherName", "fatherOccupation", "motherName", "motherOccupation", "parentsAddressLine1", "parentsPincode", "parentsArea", "parentsTaluk", "parentsDistrict", "parentsDivision", "parentsRegion", "parentsState", "parentsCountry", "caste", "familyType", "familyStatus"],
       horoscope: ["jaadhagam", "timeOfBirth", "placeOfBirth", "zodiacSign", "star", "lagnam", "dhosham"],
       interests: ["hobbies", "interests"],
       social: ["smoking", "drinking", "parties", "pubs"],
       photos: ["userPhotos", "familyPhoto", "aadharFront", "aadharBack"],
       referral: ["referralPartnerId"],
+    }
+
+    // Special handling for professional details - calculate based on employment type
+    if (stepId === "professional") {
+      const employmentType = formData.employmentType || ""
+      
+      if (!employmentType || employmentType.trim() === "") {
+        return 0
+      }
+
+      let fields: (keyof FormData)[] = []
+      if (employmentType === "employee") {
+        // Exclude payslip from progress calculation as it's optional
+        fields = ["employmentType", "sector", "company", "designation", "salary", "workLocation"]
+      } else if (employmentType === "business") {
+        // Exclude itrDocument from progress calculation as it's optional
+        fields = ["employmentType", "sector", "businessName", "businessType", "designation", "annualReturns", "businessLocation"]
+      } else if (employmentType === "student") {
+        fields = ["employmentType", "institution", "course", "fieldOfStudy", "yearOfStudy", "expectedGraduationYear"]
+      }
+
+      const filled = fields.filter((field) => {
+        const value = formData[field]
+        
+        // Special handling for sector with "other" option
+        if (field === "sector") {
+          const sector = value as string || ""
+          if (sector === "other") {
+            return sector.trim() !== "" && formData.sectorOther && formData.sectorOther.trim() !== ""
+          }
+          return sector.trim() !== ""
+        }
+        
+        // Special handling for businessType with "other" option
+        if (field === "businessType") {
+          const businessType = value as string || ""
+          if (businessType === "other") {
+            return businessType.trim() !== "" && formData.businessTypeOther && formData.businessTypeOther.trim() !== ""
+          }
+          return businessType.trim() !== ""
+        }
+        
+        // Special handling for salary and annualReturns
+        if (field === "salary" || field === "annualReturns") {
+          return value && value !== "₹" && value !== "" && value !== null && value !== undefined
+        }
+        
+        if (Array.isArray(value)) {
+          return value.length > 0
+        }
+        return value !== "" && value !== null && value !== undefined
+      }).length
+      
+      return fields.length > 0 ? Math.round((filled / fields.length) * 100) : 0
     }
 
     const fields = stepFields[stepId] || []
@@ -1098,6 +1294,242 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     return true
   }
 
+  const validateProfessionalDetails = (): boolean => {
+    const employmentType = formData.employmentType || ""
+    
+    if (!employmentType || employmentType.trim() === "") {
+      toast.error("Please select employment type", {
+        description: "Employment type is required to save your professional details.",
+        style: {
+          background: "#fee2e2",
+          border: "1px solid #ef4444",
+          color: "#991b1b",
+        },
+      })
+      return false
+    }
+
+    const missingFields: string[] = []
+
+    if (employmentType === "employee") {
+      if (!formData.sector || formData.sector.trim() === "") {
+        missingFields.push("Sector")
+      } else if (formData.sector === "other" && (!formData.sectorOther || formData.sectorOther.trim() === "")) {
+        missingFields.push("Sector (Other)")
+      }
+      if (!formData.company || formData.company.trim() === "") {
+        missingFields.push("Company")
+      }
+      if (!formData.designation || formData.designation.trim() === "") {
+        missingFields.push("Designation")
+      }
+      if (!formData.salary || formData.salary === "₹" || formData.salary.trim() === "") {
+        missingFields.push("Annual Salary")
+      }
+      if (!formData.workLocation || formData.workLocation.trim() === "") {
+        missingFields.push("Work Location")
+      }
+      // Payslip is optional - removed from required fields
+    } else if (employmentType === "business") {
+      if (!formData.sector || formData.sector.trim() === "") {
+        missingFields.push("Sector")
+      } else if (formData.sector === "other" && (!formData.sectorOther || formData.sectorOther.trim() === "")) {
+        missingFields.push("Sector (Other)")
+      }
+      if (!formData.businessName || formData.businessName.trim() === "") {
+        missingFields.push("Business Name")
+      }
+      if (!formData.businessType || formData.businessType.trim() === "") {
+        missingFields.push("Type of Business")
+      } else if (formData.businessType === "other" && (!formData.businessTypeOther || formData.businessTypeOther.trim() === "")) {
+        missingFields.push("Type of Business (Other)")
+      }
+      if (!formData.designation || formData.designation.trim() === "") {
+        missingFields.push("Designation")
+      }
+      if (!formData.annualReturns || formData.annualReturns === "₹" || formData.annualReturns.trim() === "") {
+        missingFields.push("Annual Returns")
+      }
+      if (!formData.businessLocation || formData.businessLocation.trim() === "") {
+        missingFields.push("Business Location")
+      }
+      // ITR Document is optional - removed from required fields
+    } else if (employmentType === "student") {
+      if (!formData.institution || formData.institution.trim() === "") {
+        missingFields.push("Institution / University")
+      }
+      if (!formData.course || formData.course.trim() === "") {
+        missingFields.push("Course / Degree")
+      }
+      if (!formData.fieldOfStudy || formData.fieldOfStudy.trim() === "") {
+        missingFields.push("Field of Study / Major")
+      }
+      if (!formData.yearOfStudy || formData.yearOfStudy.trim() === "") {
+        missingFields.push("Year of Study")
+      }
+      if (!formData.expectedGraduationYear || formData.expectedGraduationYear.trim() === "") {
+        missingFields.push("Expected Graduation Year")
+      }
+    }
+
+    if (missingFields.length > 0) {
+      if (missingFields.length === 1) {
+        toast.error(`Please fill out ${missingFields[0]}`, {
+          description: "This field is required to save your professional details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      } else {
+        toast.error("Please fill out all fields", {
+          description: "All fields are required to save your professional details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      }
+      return false
+    }
+
+    return true
+  }
+
+  // Check if all professional details fields are filled
+  const areAllProfessionalDetailsFilled = (): boolean => {
+    const employmentType = formData.employmentType || ""
+    
+    if (!employmentType || employmentType.trim() === "") {
+      return false
+    }
+
+    if (employmentType === "employee") {
+      const sector = formData.sector || ""
+      const sectorOther = formData.sectorOther || ""
+      const sectorValid = Boolean(sector.trim() !== "" && 
+                         (sector !== "other" || sectorOther.trim() !== ""))
+      const company = formData.company || ""
+      const designation = formData.designation || ""
+      const salary = formData.salary || ""
+      const workLocation = formData.workLocation || ""
+      const payslips = (formData.payslip as string[]) || []
+      
+      return sectorValid &&
+             company.trim() !== "" &&
+             designation.trim() !== "" &&
+             salary !== "₹" && salary.trim() !== "" &&
+             workLocation.trim() !== ""
+             // Payslip is optional - removed from validation
+    } else if (employmentType === "business") {
+      const sector = formData.sector || ""
+      const sectorOther = formData.sectorOther || ""
+      const sectorValid = Boolean(sector.trim() !== "" && 
+                         (sector !== "other" || sectorOther.trim() !== ""))
+      const businessType = formData.businessType || ""
+      const businessTypeOther = formData.businessTypeOther || ""
+      const businessTypeValid = Boolean(businessType.trim() !== "" && 
+                                (businessType !== "other" || businessTypeOther.trim() !== ""))
+      const businessName = formData.businessName || ""
+      const designation = formData.designation || ""
+      const annualReturns = formData.annualReturns || ""
+      const businessLocation = formData.businessLocation || ""
+      const itrDocument = formData.itrDocument || ""
+      
+      return sectorValid &&
+             businessName.trim() !== "" &&
+             businessTypeValid &&
+             designation.trim() !== "" &&
+             annualReturns !== "₹" && annualReturns.trim() !== "" &&
+             businessLocation.trim() !== ""
+             // ITR Document is optional - removed from validation
+    } else if (employmentType === "student") {
+      const institution = formData.institution || ""
+      const course = formData.course || ""
+      const fieldOfStudy = formData.fieldOfStudy || ""
+      const yearOfStudy = formData.yearOfStudy || ""
+      const expectedGraduationYear = formData.expectedGraduationYear || ""
+      
+      return institution.trim() !== "" &&
+             course.trim() !== "" &&
+             fieldOfStudy.trim() !== "" &&
+             yearOfStudy.trim() !== "" &&
+             expectedGraduationYear.trim() !== ""
+    }
+
+    return false
+  }
+
+  // Check if professional details have changed
+  const hasProfessionalDetailsChanged = (): boolean => {
+    if (!originalProfessionalDetails) {
+      // If no original data exists, check if all required fields are filled
+      return areAllProfessionalDetailsFilled()
+    }
+
+    const employmentType = formData.employmentType || ""
+    const originalEmploymentType = originalProfessionalDetails.employmentType || ""
+
+    // If employment type changed, consider it changed
+    if (employmentType !== originalEmploymentType) {
+      return true
+    }
+
+    // Compare fields based on employment type
+    if (employmentType === "employee") {
+      const fieldsToCompare: (keyof FormData)[] = ["sector", "sectorOther", "company", "designation", "salary", "workLocation", "payslip"]
+      for (const field of fieldsToCompare) {
+        const currentValue = formData[field]
+        const originalValue = originalProfessionalDetails[field]
+        
+        // Handle array comparison for payslip
+        if (field === "payslip") {
+          const currentArr = Array.isArray(currentValue) ? currentValue : []
+          const originalArr = Array.isArray(originalValue) ? originalValue : []
+          if (currentArr.length !== originalArr.length) {
+            return true
+          }
+          // Compare array contents
+          for (let i = 0; i < currentArr.length; i++) {
+            if (currentArr[i] !== originalArr[i]) {
+              return true
+            }
+          }
+          continue
+        }
+        
+        // Handle string comparison
+        const currentStr = currentValue?.toString().trim() || ""
+        const originalStr = originalValue?.toString().trim() || ""
+        if (currentStr !== originalStr) {
+          return true
+        }
+      }
+    } else if (employmentType === "business") {
+      const fieldsToCompare: (keyof FormData)[] = ["sector", "sectorOther", "businessName", "businessType", "businessTypeOther", "designation", "annualReturns", "businessLocation", "itrDocument"]
+      for (const field of fieldsToCompare) {
+        const currentValue = formData[field]?.toString().trim() || ""
+        const originalValue = originalProfessionalDetails[field]?.toString().trim() || ""
+        if (currentValue !== originalValue) {
+          return true
+        }
+      }
+    } else if (employmentType === "student") {
+      const fieldsToCompare: (keyof FormData)[] = ["institution", "course", "fieldOfStudy", "yearOfStudy", "expectedGraduationYear"]
+      for (const field of fieldsToCompare) {
+        const currentValue = formData[field]?.toString().trim() || ""
+        const originalValue = originalProfessionalDetails[field]?.toString().trim() || ""
+        if (currentValue !== originalValue) {
+          return true
+        }
+      }
+    }
+
+    return false
+  }
+
   const validateFamilyDetails = (): boolean => {
     const requiredFields = [
       { key: "fatherName", label: "Father Name" },
@@ -1351,10 +1783,13 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   // Check if all photos fields are filled (without showing toasts)
   const areAllPhotosFieldsFilled = (): boolean => {
     const userPhotos = formData.userPhotos || []
+    const familyPhoto = formData.familyPhoto || ""
+    const aadharFront = formData.aadharFront || ""
+    const aadharBack = formData.aadharBack || ""
     return userPhotos.length >= 3 && 
-           formData.familyPhoto && formData.familyPhoto.trim() !== "" &&
-           formData.aadharFront && formData.aadharFront.trim() !== "" &&
-           formData.aadharBack && formData.aadharBack.trim() !== ""
+           familyPhoto.trim() !== "" &&
+           aadharFront.trim() !== "" &&
+           aadharBack.trim() !== ""
   }
 
   // Check if photos details have changed
@@ -1636,6 +2071,330 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         setOriginalEducationDetails(formData.educationDetails || [])
         
         toast.success("Education details saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
+      } else if (currentStep === 3) {
+        // Save professional details if we're on the professional details step
+        // Validate all fields
+        if (!validateProfessionalDetails()) {
+          setIsSaving(false)
+          return
+        }
+
+        // Calculate completion percentage for professional details
+        const professionalDetailsProgress = calculateStepProgress("professional")
+
+        const employmentType = formData.employmentType || ""
+        const originalEmploymentType = originalProfessionalDetails?.employmentType || ""
+
+        // If employment type changed, delete old files from storage
+        if (originalEmploymentType && originalEmploymentType !== employmentType) {
+          try {
+            // Delete old payslips if switching from employee
+            if (originalEmploymentType === "employee") {
+              const { data: files } = await supabase.storage
+                .from("payslips")
+                .list(userId)
+              
+              if (files && files.length > 0) {
+                const filePaths = files.map(file => `${userId}/${file.name}`)
+                await supabase.storage
+                  .from("payslips")
+                  .remove(filePaths)
+              }
+            }
+            
+            // Delete old ITR document if switching from business
+            if (originalEmploymentType === "business") {
+              const { data: files } = await supabase.storage
+                .from("itr-documents")
+                .list(userId)
+              
+              if (files && files.length > 0) {
+                const filePaths = files.map(file => `${userId}/${file.name}`)
+                await supabase.storage
+                  .from("itr-documents")
+                  .remove(filePaths)
+              }
+            }
+          } catch (error) {
+            console.warn("Error deleting old files from storage:", error)
+            // Continue even if deletion fails
+          }
+        }
+
+        // Delete from all tables first (to ensure clean state)
+        await supabase.from("profession_employee").delete().eq("user_id", userId)
+        await supabase.from("profession_business").delete().eq("user_id", userId)
+        await supabase.from("profession_student").delete().eq("user_id", userId)
+
+        if (employmentType === "employee") {
+          // Upload payslips to storage
+          const payslipUrls: string[] = []
+          const payslips = (formData.payslip as string[]) || []
+          
+          // Delete old payslips if they exist (in case of update)
+          if (originalProfessionalDetails?.payslip && Array.isArray(originalProfessionalDetails.payslip)) {
+            try {
+              const { data: files } = await supabase.storage
+                .from("payslips")
+                .list(userId)
+              
+              if (files && files.length > 0) {
+                const filePaths = files.map(file => `${userId}/${file.name}`)
+                await supabase.storage
+                  .from("payslips")
+                  .remove(filePaths)
+              }
+            } catch (error) {
+              console.warn("Error deleting old payslips:", error)
+            }
+          }
+
+          for (let i = 0; i < payslips.length; i++) {
+            const payslip = payslips[i]
+            
+            // If payslip is a base64 data URL (new upload), upload to Supabase storage
+            if (payslip && payslip.startsWith("data:image/") || payslip.startsWith("data:application/pdf")) {
+              try {
+                // Convert base64 to blob
+                const response = await fetch(payslip)
+                const blob = await response.blob()
+                
+                // Get file extension from data URL
+                const matches = payslip.match(/data:(image|application)\/(\w+);base64/)
+                const extension = matches ? matches[2] : "pdf"
+                
+                // Create file path: {user_id}/payslip_{index + 1}.{extension}
+                const filePath = `${userId}/payslip_${i + 1}.${extension}`
+                
+                // Upload to Supabase storage
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                  .from("payslips")
+                  .upload(filePath, blob, {
+                    upsert: true,
+                    contentType: blob.type,
+                  })
+
+                if (uploadError) throw uploadError
+
+                // Get signed URL (valid for 1 year) since bucket is private
+                const { data: urlData, error: urlError } = await supabase.storage
+                  .from("payslips")
+                  .createSignedUrl(filePath, 31536000) // 1 year in seconds
+
+                if (urlError) throw urlError
+                payslipUrls.push(urlData.signedUrl)
+              } catch (error) {
+                console.error(`Error uploading payslip ${i + 1}:`, error)
+                toast.error(`Error uploading payslip ${i + 1}`, {
+                  description: "Please try again.",
+                  style: {
+                    background: "#fee2e2",
+                    border: "1px solid #ef4444",
+                    color: "#991b1b",
+                  },
+                })
+                setIsSaving(false)
+                return
+              }
+            } else if (payslip && payslip.startsWith("http")) {
+              // Payslip is already a signed URL, use it directly
+              payslipUrls.push(payslip)
+            }
+          }
+
+          // Save to employee table
+          const employeeData = {
+            user_id: userId,
+            sector: formData.sector || null,
+            sector_other: formData.sector === "other" ? (formData.sectorOther || null) : null,
+            company: formData.company || null,
+            designation: formData.designation || null,
+            salary: formData.salary || null,
+            work_location: formData.workLocation || null,
+            payslip: payslipUrls.length > 0 ? payslipUrls : null,
+            completion_percentage: professionalDetailsProgress,
+          }
+
+          const { error } = await supabase
+            .from("profession_employee")
+            .upsert(employeeData, {
+              onConflict: "user_id",
+            })
+
+          if (error) throw error
+
+          // Update original data
+          setOriginalProfessionalDetails({
+            employmentType: "employee",
+            sector: formData.sector,
+            sectorOther: formData.sectorOther,
+            company: formData.company,
+            designation: formData.designation,
+            salary: formData.salary,
+            workLocation: formData.workLocation,
+            payslip: payslipUrls,
+          })
+
+          // Update form data with URLs if they were uploaded
+          if (payslipUrls.length > 0) {
+            setFormData((prev) => ({
+              ...prev,
+              payslip: payslipUrls,
+            }))
+          }
+        } else if (employmentType === "business") {
+          // Upload ITR document to storage
+          let itrDocumentUrl = formData.itrDocument || ""
+
+          // Delete old ITR document if it exists (in case of update)
+          if (originalProfessionalDetails?.itrDocument) {
+            try {
+              const { data: files } = await supabase.storage
+                .from("itr-documents")
+                .list(userId)
+              
+              if (files && files.length > 0) {
+                const filePaths = files.map(file => `${userId}/${file.name}`)
+                await supabase.storage
+                  .from("itr-documents")
+                  .remove(filePaths)
+              }
+            } catch (error) {
+              console.warn("Error deleting old ITR document:", error)
+            }
+          }
+
+          // If ITR document is a base64 data URL (new upload), upload to Supabase storage
+          if (formData.itrDocument && (formData.itrDocument.startsWith("data:image/") || formData.itrDocument.startsWith("data:application/pdf"))) {
+            try {
+              // Convert base64 to blob
+              const response = await fetch(formData.itrDocument)
+              const blob = await response.blob()
+              
+              // Get file extension from data URL
+              const matches = formData.itrDocument.match(/data:(image|application)\/(\w+);base64/)
+              const extension = matches ? matches[2] : "pdf"
+              
+              // Create file path: {user_id}/itr_document.{extension}
+              const filePath = `${userId}/itr_document.${extension}`
+              
+              // Upload to Supabase storage
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from("itr-documents")
+                .upload(filePath, blob, {
+                  upsert: true,
+                  contentType: blob.type,
+                })
+
+              if (uploadError) throw uploadError
+
+              // Get signed URL (valid for 1 year) since bucket is private
+              const { data: urlData, error: urlError } = await supabase.storage
+                .from("itr-documents")
+                .createSignedUrl(filePath, 31536000) // 1 year in seconds
+
+              if (urlError) throw urlError
+              itrDocumentUrl = urlData.signedUrl
+            } catch (error) {
+              console.error("Error uploading ITR document:", error)
+              toast.error("Error uploading ITR document", {
+                description: "Please try again.",
+                style: {
+                  background: "#fee2e2",
+                  border: "1px solid #ef4444",
+                  color: "#991b1b",
+                },
+              })
+              setIsSaving(false)
+              return
+            }
+          } else if (formData.itrDocument && formData.itrDocument.startsWith("http")) {
+            // Already a signed URL, use it
+            itrDocumentUrl = formData.itrDocument
+          }
+
+          // Save to business table
+          const businessData = {
+            user_id: userId,
+            sector: formData.sector || null,
+            sector_other: formData.sector === "other" ? (formData.sectorOther || null) : null,
+            business_name: formData.businessName || null,
+            business_type: formData.businessType || null,
+            business_type_other: formData.businessType === "other" ? (formData.businessTypeOther || null) : null,
+            designation: formData.designation || null,
+            annual_returns: formData.annualReturns || null,
+            business_location: formData.businessLocation || null,
+            itr_document: itrDocumentUrl || null,
+            completion_percentage: professionalDetailsProgress,
+          }
+
+          const { error } = await supabase
+            .from("profession_business")
+            .upsert(businessData, {
+              onConflict: "user_id",
+            })
+
+          if (error) throw error
+
+          // Update original data
+          setOriginalProfessionalDetails({
+            employmentType: "business",
+            sector: formData.sector,
+            sectorOther: formData.sectorOther,
+            businessName: formData.businessName,
+            businessType: formData.businessType,
+            businessTypeOther: formData.businessTypeOther,
+            designation: formData.designation,
+            annualReturns: formData.annualReturns,
+            businessLocation: formData.businessLocation,
+            itrDocument: itrDocumentUrl,
+          })
+
+          // Update form data with URL if it was uploaded
+          if (itrDocumentUrl !== formData.itrDocument) {
+            setFormData((prev) => ({
+              ...prev,
+              itrDocument: itrDocumentUrl,
+            }))
+          }
+        } else if (employmentType === "student") {
+          // Save to student table
+          const studentData = {
+            user_id: userId,
+            institution: formData.institution || null,
+            course: formData.course || null,
+            field_of_study: formData.fieldOfStudy || null,
+            year_of_study: formData.yearOfStudy || null,
+            expected_graduation_year: formData.expectedGraduationYear || null,
+            completion_percentage: professionalDetailsProgress,
+          }
+
+          const { error } = await supabase
+            .from("profession_student")
+            .upsert(studentData, {
+              onConflict: "user_id",
+            })
+
+          if (error) throw error
+
+          // Update original data
+          setOriginalProfessionalDetails({
+            employmentType: "student",
+            institution: formData.institution,
+            course: formData.course,
+            fieldOfStudy: formData.fieldOfStudy,
+            yearOfStudy: formData.yearOfStudy,
+            expectedGraduationYear: formData.expectedGraduationYear,
+          })
+        }
+
+        toast.success("Professional details saved successfully!", {
           style: {
             background: "#dcfce7",
             border: "1px solid #22c55e",
@@ -2437,33 +3196,6 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                   )
                 })}
               </div>
-
-              {/* Save Button */}
-              {currentStep === formSteps.length - 1 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-6"
-                >
-                  <Button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3"
-                  >
-                    {isSaving ? (
-                      <>
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Save Profile
-                      </>
-                    )}
-                  </Button>
-                </motion.div>
-              )}
             </div>
           </div>
 
@@ -2542,7 +3274,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
               <Button
                 onClick={handleSave}
-                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged()) || (currentStep === 6 && !hasInterestsDetailsChanged()) || (currentStep === 7 && !hasSocialHabitsDetailsChanged()) || (currentStep === 8 && (!areAllPhotosFieldsFilled() || !hasPhotosDetailsChanged())) || (currentStep === 9 && (!isReferralPartnerIdValid() || !hasReferralDetailsChanged()))}
+                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 3 && (!areAllProfessionalDetailsFilled() || !hasProfessionalDetailsChanged())) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged()) || (currentStep === 6 && !hasInterestsDetailsChanged()) || (currentStep === 7 && !hasSocialHabitsDetailsChanged()) || (currentStep === 8 && (!areAllPhotosFieldsFilled() || !hasPhotosDetailsChanged())) || (currentStep === 9 && (!isReferralPartnerIdValid() || !hasReferralDetailsChanged()))}
                   className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-3 disabled:opacity-50 disabled:pointer-events-auto disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
