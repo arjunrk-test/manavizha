@@ -11,6 +11,8 @@ import { supabase } from "@/lib/supabase"
 interface MasterDataValue {
   id: string
   value: string
+  colour_code?: string
+  category?: string
   created_at: string
   updated_at: string
 }
@@ -24,6 +26,8 @@ interface MasterDataManagerProps {
   inputPlaceholder?: string
   isAddDialogOpen?: boolean
   onAddDialogChange?: (open: boolean) => void
+  showColourCode?: boolean
+  showCategory?: boolean
 }
 
 export function MasterDataManager({
@@ -35,6 +39,8 @@ export function MasterDataManager({
   inputPlaceholder = "Enter value",
   isAddDialogOpen: externalIsDialogOpen,
   onAddDialogChange: externalOnDialogChange,
+  showColourCode = false,
+  showCategory = false,
 }: MasterDataManagerProps) {
   const [values, setValues] = useState<MasterDataValue[]>([])
   const [internalIsDialogOpen, setInternalIsDialogOpen] = useState(false)
@@ -43,6 +49,8 @@ export function MasterDataManager({
   const isDialogOpen = externalIsDialogOpen !== undefined ? externalIsDialogOpen : internalIsDialogOpen
   const setIsDialogOpen = externalOnDialogChange || setInternalIsDialogOpen
   const [inputValue, setInputValue] = useState("")
+  const [colourCodeValue, setColourCodeValue] = useState("")
+  const [categoryValue, setCategoryValue] = useState("")
   const [editingId, setEditingId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   
@@ -72,12 +80,16 @@ export function MasterDataManager({
   const handleAdd = () => {
     setEditingId(null)
     setInputValue("")
+    setColourCodeValue("")
+    setCategoryValue("")
     setIsDialogOpen(true)
   }
 
   const handleEdit = (item: MasterDataValue) => {
     setEditingId(item.id)
     setInputValue(item.value)
+    setColourCodeValue(item.colour_code || "")
+    setCategoryValue(item.category || "")
     setIsDialogOpen(true)
   }
 
@@ -111,27 +123,58 @@ export function MasterDataManager({
       return
     }
 
+    if (showColourCode && !colourCodeValue.trim()) {
+      alert("Please enter a colour code (HEX)")
+      return
+    }
+
+    if (showCategory && !categoryValue.trim()) {
+      alert("Please enter a category")
+      return
+    }
+
+    // Validate HEX color code if provided
+    if (showColourCode && colourCodeValue.trim()) {
+      const hexPattern = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/
+      if (!hexPattern.test(colourCodeValue.trim())) {
+        alert("Please enter a valid HEX color code (e.g., #FF5733 or #F53)")
+        return
+      }
+    }
+
     setIsSaving(true)
     try {
+      const dataToSave: any = {
+        value: inputValue.trim(),
+      }
+
+      if (showColourCode) {
+        dataToSave.colour_code = colourCodeValue.trim().toUpperCase()
+      }
+
+      if (showCategory) {
+        dataToSave.category = categoryValue.trim()
+      }
+
       if (editingId) {
         // Update existing
         const { error } = await supabase
           .from(tableName)
-          .update({ value: inputValue.trim() })
+          .update(dataToSave)
           .eq("id", editingId)
 
         if (error) throw error
       } else {
         // Insert new
-        const { error } = await supabase.from(tableName).insert({
-          value: inputValue.trim(),
-        })
+        const { error } = await supabase.from(tableName).insert(dataToSave)
 
         if (error) throw error
       }
 
       setIsDialogOpen(false)
       setInputValue("")
+      setColourCodeValue("")
+      setCategoryValue("")
       setEditingId(null)
       await fetchValues()
     } catch (error: any) {
@@ -156,9 +199,19 @@ export function MasterDataManager({
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                   S.No
                 </th>
+                {showCategory && (
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    Category
+                  </th>
+                )}
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                   Value
                 </th>
+                {showColourCode && (
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    Colour Code (HEX)
+                  </th>
+                )}
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                   Actions
                 </th>
@@ -167,7 +220,7 @@ export function MasterDataManager({
             <tbody>
               {values.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={showCategory ? (showColourCode ? 5 : 4) : (showColourCode ? 4 : 3)} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                     No {title.toLowerCase()} values found. Click "{addButtonText}" to add one.
                   </td>
                 </tr>
@@ -180,9 +233,29 @@ export function MasterDataManager({
                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                       {index + 1}
                     </td>
+                    {showCategory && (
+                      <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                        {item.category || "-"}
+                      </td>
+                    )}
                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                       {item.value}
                     </td>
+                    {showColourCode && (
+                      <td className="px-6 py-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          {item.colour_code && (
+                            <div
+                              className="w-8 h-8 rounded border border-gray-300 dark:border-gray-600"
+                              style={{ backgroundColor: item.colour_code }}
+                            />
+                          )}
+                          <span className="text-gray-900 dark:text-white font-mono">
+                            {item.colour_code || "-"}
+                          </span>
+                        </div>
+                      </td>
+                    )}
                     <td className="px-6 py-4 text-sm">
                       <div className="flex items-center gap-2">
                         <Button
@@ -225,6 +298,22 @@ export function MasterDataManager({
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            {showCategory && (
+              <div className="grid gap-2">
+                <Label htmlFor="category-input">Category</Label>
+                <Input
+                  id="category-input"
+                  value={categoryValue}
+                  onChange={(e) => setCategoryValue(e.target.value)}
+                  placeholder="Enter category"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !isSaving) {
+                      handleSave()
+                    }
+                  }}
+                />
+              </div>
+            )}
             <div className="grid gap-2">
               <Label htmlFor="value-input">{title} Value</Label>
               <Input
@@ -239,6 +328,41 @@ export function MasterDataManager({
                 }}
               />
             </div>
+            {showColourCode && (
+              <div className="grid gap-2">
+                <Label htmlFor="colour-code-input">Colour Code (HEX)</Label>
+                <div className="flex items-center gap-2">
+                  {colourCodeValue && /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(colourCodeValue.trim()) && (
+                    <div
+                      className="w-10 h-10 rounded border border-gray-300 dark:border-gray-600 flex-shrink-0"
+                      style={{ backgroundColor: colourCodeValue.trim() }}
+                    />
+                  )}
+                  <Input
+                    id="colour-code-input"
+                    value={colourCodeValue}
+                    onChange={(e) => {
+                      let value = e.target.value
+                      // Auto-add # if user types without it
+                      if (value && !value.startsWith("#")) {
+                        value = "#" + value
+                      }
+                      setColourCodeValue(value.toUpperCase())
+                    }}
+                    placeholder="#FF5733 or #F53"
+                    maxLength={7}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !isSaving) {
+                        handleSave()
+                      }
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Enter a valid HEX color code (e.g., #FF5733 or #F53)
+                </p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button
@@ -246,6 +370,8 @@ export function MasterDataManager({
               onClick={() => {
                 setIsDialogOpen(false)
                 setInputValue("")
+                setColourCodeValue("")
+                setCategoryValue("")
                 setEditingId(null)
               }}
               disabled={isSaving}
@@ -254,7 +380,7 @@ export function MasterDataManager({
             </Button>
             <Button
               onClick={handleSave}
-              disabled={isSaving || !inputValue.trim()}
+              disabled={isSaving || !inputValue.trim() || (showColourCode && !colourCodeValue.trim()) || (showCategory && !categoryValue.trim())}
               className="bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white"
             >
               {isSaving ? "Saving..." : editingId ? "Update" : "Save"}

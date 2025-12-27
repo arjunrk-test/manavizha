@@ -343,6 +343,8 @@ export default function AdminMasterDataPage() {
                         inputPlaceholder={getCurrentStepConfig()!.inputPlaceholder}
                         isAddDialogOpen={isAddDialogOpen}
                         onAddDialogChange={setIsAddDialogOpen}
+                        showColourCode={currentStep === "skin-colour"}
+                        showCategory={currentStep === "education-level"}
                       />
                     ) : null}
                       </motion.div>
