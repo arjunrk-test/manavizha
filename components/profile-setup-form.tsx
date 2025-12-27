@@ -162,6 +162,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const [originalPhotosDetails, setOriginalPhotosDetails] = useState<Partial<FormData> | null>(null)
   const [originalReferralDetails, setOriginalReferralDetails] = useState<Partial<FormData> | null>(null)
   const [originalProfessionalDetails, setOriginalProfessionalDetails] = useState<Partial<FormData> | null>(null)
+  const [professionalCompletionPercentage, setProfessionalCompletionPercentage] = useState<number | null>(null)
   const [isReferralPartnerValid, setIsReferralPartnerValid] = useState(false)
   const [referralPartnerName, setReferralPartnerName] = useState<string | null>(null)
 
@@ -655,6 +656,13 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           .maybeSingle()
 
         if (!employeeError && employeeData) {
+          // Store completion percentage from database
+          if (employeeData.completion_percentage === 100) {
+            setProfessionalCompletionPercentage(100)
+          } else {
+            setProfessionalCompletionPercentage(employeeData.completion_percentage || null)
+          }
+
           // Load payslips with signed URLs
           let payslipUrls: string[] = []
           const payslips = Array.isArray(employeeData.payslip) ? employeeData.payslip : (employeeData.payslip ? [employeeData.payslip] : [])
@@ -709,6 +717,13 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           .maybeSingle()
 
         if (!businessError && businessData) {
+          // Store completion percentage from database
+          if (businessData.completion_percentage === 100) {
+            setProfessionalCompletionPercentage(100)
+          } else {
+            setProfessionalCompletionPercentage(businessData.completion_percentage || null)
+          }
+
           // Load ITR document with signed URL
           let itrDocumentUrl = businessData.itr_document || ""
           
@@ -756,6 +771,13 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           .maybeSingle()
 
         if (!studentError && studentData) {
+          // Store completion percentage from database
+          if (studentData.completion_percentage === 100) {
+            setProfessionalCompletionPercentage(100)
+          } else {
+            setProfessionalCompletionPercentage(studentData.completion_percentage || null)
+          }
+
           const loadedData = {
             employmentType: "student",
             institution: studentData.institution || "",
@@ -851,6 +873,11 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
     // Special handling for professional details - calculate based on employment type
     if (stepId === "professional") {
+      // If database has 100% completion, return 100%
+      if (professionalCompletionPercentage === 100) {
+        return 100
+      }
+
       const employmentType = formData.employmentType || ""
       
       if (!employmentType || employmentType.trim() === "") {
@@ -859,9 +886,11 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
       let fields: (keyof FormData)[] = []
       if (employmentType === "employee") {
-        fields = ["employmentType", "sector", "company", "designation", "salary", "workLocation", "payslip"]
+        // Exclude payslip as it's optional
+        fields = ["employmentType", "sector", "company", "designation", "salary", "workLocation"]
       } else if (employmentType === "business") {
-        fields = ["employmentType", "sector", "businessName", "businessType", "designation", "annualReturns", "businessLocation", "itrDocument"]
+        // Exclude itrDocument as it's optional
+        fields = ["employmentType", "sector", "businessName", "businessType", "designation", "annualReturns", "businessLocation"]
       } else if (employmentType === "student") {
         fields = ["employmentType", "institution", "course", "fieldOfStudy", "yearOfStudy", "expectedGraduationYear"]
       }
@@ -885,11 +914,6 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             return businessType.trim() !== "" && formData.businessTypeOther && formData.businessTypeOther.trim() !== ""
           }
           return businessType.trim() !== ""
-        }
-        
-        // Special handling for payslip
-        if (field === "payslip") {
-          return Array.isArray(value) && value.length > 0
         }
         
         // Special handling for salary and annualReturns
@@ -2089,7 +2113,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         }
 
         // Calculate completion percentage for professional details
-        const professionalDetailsProgress = calculateStepProgress("professional")
+        let professionalDetailsProgress = calculateStepProgress("professional")
+        
+        // Update the stored completion percentage after calculation
+        setProfessionalCompletionPercentage(professionalDetailsProgress)
 
         const employmentType = formData.employmentType || ""
         const originalEmploymentType = originalProfessionalDetails?.employmentType || ""

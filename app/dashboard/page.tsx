@@ -268,6 +268,7 @@ export default function DashboardPage() {
           ) : (
             <UserLandingPage 
               userEmail={user.email || ""}
+              userId={user.id}
               onNavigateToProfileSetup={() => setShowProfileSetup(true)}
             />
           )
