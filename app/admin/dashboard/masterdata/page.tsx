@@ -5,9 +5,12 @@ import { AnimatedBackground } from "@/components/animated-background"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { ArrowLeft, Database, Circle, ChevronDown, ChevronRight } from "lucide-react"
+import { ArrowLeft, Database, Circle, ChevronDown, ChevronRight, Plus, Edit, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 const personalDetailsSubmenus = [
   { id: "gender", title: "Gender" },
@@ -60,6 +63,13 @@ const socialHabitsSubmenus = [
   { id: "pubs", title: "Pubs" },
 ]
 
+interface GenderValue {
+  id: string
+  value: string
+  created_at: string
+  updated_at: string
+}
+
 export default function AdminMasterDataPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
@@ -72,6 +82,18 @@ export default function AdminMasterDataPage() {
   const [isInterestsOpen, setIsInterestsOpen] = useState(false)
   const [isSocialHabitsOpen, setIsSocialHabitsOpen] = useState(false)
   const [currentStep, setCurrentStep] = useState<string>("")
+  
+  // Gender dialog and data states
+  const [isGenderDialogOpen, setIsGenderDialogOpen] = useState(false)
+  const [genderValues, setGenderValues] = useState<GenderValue[]>([])
+  const [genderInputValue, setGenderInputValue] = useState("")
+  const [editingGenderId, setEditingGenderId] = useState<string | null>(null)
+  const [isSavingGender, setIsSavingGender] = useState(false)
+  
+  // Delete confirmation dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [genderToDelete, setGenderToDelete] = useState<GenderValue | null>(null)
+  const [isDeletingGender, setIsDeletingGender] = useState(false)
 
   useEffect(() => {
     // Check if user is authenticated and is an admin
@@ -90,6 +112,104 @@ export default function AdminMasterDataPage() {
 
     checkUser()
   }, [router])
+
+  // Fetch gender values when gender step is selected
+  useEffect(() => {
+    if (currentStep === "gender") {
+      fetchGenderValues()
+    }
+  }, [currentStep])
+
+  const fetchGenderValues = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("master_gender")
+        .select("*")
+        .order("created_at", { ascending: true })
+
+      if (error) throw error
+      setGenderValues(data || [])
+    } catch (error) {
+      console.error("Error fetching gender values:", error)
+    }
+  }
+
+  const handleAddGender = () => {
+    setEditingGenderId(null)
+    setGenderInputValue("")
+    setIsGenderDialogOpen(true)
+  }
+
+  const handleEditGender = (gender: GenderValue) => {
+    setEditingGenderId(gender.id)
+    setGenderInputValue(gender.value)
+    setIsGenderDialogOpen(true)
+  }
+
+  const handleDeleteGender = (gender: GenderValue) => {
+    setGenderToDelete(gender)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteGender = async () => {
+    if (!genderToDelete) return
+
+    setIsDeletingGender(true)
+    try {
+      const { error } = await supabase.from("master_gender").delete().eq("id", genderToDelete.id)
+
+      if (error) throw error
+      await fetchGenderValues()
+      setIsDeleteDialogOpen(false)
+      setGenderToDelete(null)
+    } catch (error) {
+      console.error("Error deleting gender value:", error)
+      alert("Failed to delete gender value. Please try again.")
+    } finally {
+      setIsDeletingGender(false)
+    }
+  }
+
+  const handleSaveGender = async () => {
+    if (!genderInputValue.trim()) {
+      alert("Please enter a gender value")
+      return
+    }
+
+    setIsSavingGender(true)
+    try {
+      if (editingGenderId) {
+        // Update existing
+        const { error } = await supabase
+          .from("master_gender")
+          .update({ value: genderInputValue.trim() })
+          .eq("id", editingGenderId)
+
+        if (error) throw error
+      } else {
+        // Insert new
+        const { error } = await supabase.from("master_gender").insert({
+          value: genderInputValue.trim(),
+        })
+
+        if (error) throw error
+      }
+
+      setIsGenderDialogOpen(false)
+      setGenderInputValue("")
+      setEditingGenderId(null)
+      await fetchGenderValues()
+    } catch (error: any) {
+      console.error("Error saving gender value:", error)
+      if (error.code === "23505") {
+        alert("This gender value already exists")
+      } else {
+        alert("Failed to save gender value. Please try again.")
+      }
+    } finally {
+      setIsSavingGender(false)
+    }
+  }
 
   const handleSubmenuClick = (id: string) => {
     setCurrentStep(id)
@@ -584,6 +704,15 @@ export default function AdminMasterDataPage() {
                           socialHabitsSubmenus.find((s) => s.id === currentStep)?.title ||
                           "Master Data"}
                       </h2>
+                      {currentStep === "gender" && (
+                        <Button
+                          onClick={handleAddGender}
+                          className="flex items-center gap-2 bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add Gender
+                        </Button>
+                      )}
                     </div>
 
                     <AnimatePresence mode="wait">
@@ -596,9 +725,68 @@ export default function AdminMasterDataPage() {
                       >
                     {currentStep === "gender" && (
                       <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Gender management content will go here...
-                        </p>
+                        <div className="overflow-x-auto">
+                          <table className="w-full border-collapse">
+                            <thead>
+                              <tr className="bg-gray-50 dark:bg-gray-700/50 border-b-2 border-gray-200 dark:border-gray-600">
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                  S.No
+                                </th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                  Value
+                                </th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                  Actions
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {genderValues.length === 0 ? (
+                                <tr>
+                                  <td colSpan={3} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    No gender values found. Click "Add Gender" to add one.
+                                  </td>
+                                </tr>
+                              ) : (
+                                genderValues.map((gender, index) => (
+                                  <tr
+                                    key={gender.id}
+                                    className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                                  >
+                                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                      {index + 1}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                      {gender.value}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm">
+                                      <div className="flex items-center gap-2">
+                                        <Button
+                                          onClick={() => handleEditGender(gender)}
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-8 w-8 p-0"
+                                          title="Edit"
+                                        >
+                                          <Edit className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                          onClick={() => handleDeleteGender(gender)}
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                          title="Delete"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     )}
                     {currentStep === "skin-colour" && (
@@ -778,6 +966,87 @@ export default function AdminMasterDataPage() {
           </div>
         </div>
       </div>
+
+      {/* Gender Dialog */}
+      <Dialog open={isGenderDialogOpen} onOpenChange={setIsGenderDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{editingGenderId ? "Edit Gender" : "Add Gender"}</DialogTitle>
+            <DialogDescription>
+              {editingGenderId
+                ? "Update the gender value below."
+                : "Enter a new gender value to add to the list."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="gender-value">Gender Value</Label>
+              <Input
+                id="gender-value"
+                value={genderInputValue}
+                onChange={(e) => setGenderInputValue(e.target.value)}
+                placeholder="e.g., Male, Female, Other"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !isSavingGender) {
+                    handleSaveGender()
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsGenderDialogOpen(false)
+                setGenderInputValue("")
+                setEditingGenderId(null)
+              }}
+              disabled={isSavingGender}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveGender}
+              disabled={isSavingGender || !genderInputValue.trim()}
+              className="bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white"
+            >
+              {isSavingGender ? "Saving..." : editingGenderId ? "Update" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Delete Gender Value</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{genderToDelete?.value}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeleteDialogOpen(false)
+                setGenderToDelete(null)
+              }}
+              disabled={isDeletingGender}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmDeleteGender}
+              disabled={isDeletingGender}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isDeletingGender ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
