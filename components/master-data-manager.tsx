@@ -191,28 +191,29 @@ export function MasterDataManager({
 
   return (
     <>
-      <div className="space-y-6">
-        <div className="overflow-x-auto">
+      <div className="h-full flex flex-col min-h-0">
+        {/* Scrollable Table Container */}
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
           <table className="w-full border-collapse">
-            <thead>
+            <thead className="sticky top-0 z-10">
               <tr className="bg-gray-50 dark:bg-gray-700/50 border-b-2 border-gray-200 dark:border-gray-600">
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700/50">
                   S.No
                 </th>
                 {showCategory && (
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700/50">
                     Category
                   </th>
                 )}
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700/50">
                   Value
                 </th>
                 {showColourCode && (
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700/50">
                     Colour Code (HEX)
                   </th>
                 )}
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700/50">
                   Actions
                 </th>
               </tr>
