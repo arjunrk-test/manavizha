@@ -1,7 +1,5 @@
 "use client"
 
-import { motion } from "framer-motion"
-
 export function AnimatedBackground() {
   return (
     <>
@@ -17,36 +15,29 @@ export function AnimatedBackground() {
       {/* Modern grid overlay */}
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px] opacity-30" />
       
-      {/* Decorative elements */}
+      {/* Decorative elements - using CSS animations for better performance */}
       <div className="fixed inset-0">
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
+        <div
           className="absolute top-0 left-0 w-96 h-96 bg-white/20 rounded-full blur-3xl"
+          style={{
+            animation: "float-blob 8s ease-in-out infinite",
+            willChange: "transform, opacity",
+            transform: "translate3d(0, 0, 0)",
+            backfaceVisibility: "hidden",
+          }}
         />
-        <motion.div
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.5, 0.3, 0.5],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2,
-          }}
+        <div
           className="absolute bottom-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl"
+          style={{
+            animation: "float-blob-reverse 10s ease-in-out infinite 2s",
+            willChange: "transform, opacity",
+            transform: "translate3d(0, 0, 0)",
+            backfaceVisibility: "hidden",
+          }}
         />
       </div>
 
-      {/* Animated PNG Background Images */}
+      {/* Animated PNG Background Images - using CSS animations for better performance */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {[
           "/patterns/pattern1.png",
@@ -60,12 +51,12 @@ export function AnimatedBackground() {
           const baseX = 5 + (i * 13) % 82
           const baseY = 8 + (i * 15) % 75
           const size = 280 + (i % 3) * 80
-          const fadeDuration = 8 + Math.random() * 4
+          const fadeDuration = 8 + (i % 4)
           const rotateDuration = 60 + i * 8
-          const moveDuration = 12 + Math.random() * 6
+          const moveDuration = 12 + (i % 6)
           
           return (
-            <motion.div
+            <div
               key={`bg-image-${i}`}
               className="absolute"
               style={{
@@ -73,31 +64,11 @@ export function AnimatedBackground() {
                 top: `${baseY}%`,
                 width: `${size}px`,
                 height: `${size}px`,
-              }}
-              initial={{ opacity: 0.15 }}
-              animate={{
-                opacity: [0.1, 0.25, 0.15, 0.25, 0.1],
-                rotate: [0, 360],
-                x: [-40, 40, -40],
-              }}
-              transition={{
-                opacity: {
-                  duration: fadeDuration,
-                  repeat: Infinity,
-                  delay: i * 1.2,
-                  ease: "easeInOut",
-                },
-                rotate: {
-                  duration: rotateDuration,
-                  repeat: Infinity,
-                  ease: "linear",
-                },
-                x: {
-                  duration: moveDuration,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: i * 0.7,
-                },
+                animation: `pattern-fade-${i % 3} ${fadeDuration}s ease-in-out infinite ${i * 1.2}s, pattern-rotate ${rotateDuration}s linear infinite, pattern-move-${i % 3} ${moveDuration}s ease-in-out infinite ${i * 0.7}s`,
+                willChange: "transform, opacity",
+                transform: "translate3d(0, 0, 0)",
+                backfaceVisibility: "hidden",
+                perspective: "1000px",
               }}
             >
               <img
@@ -113,10 +84,11 @@ export function AnimatedBackground() {
                   e.currentTarget.style.display = "none"
                 }}
               />
-            </motion.div>
+            </div>
           )
         })}
       </div>
+
     </>
   )
 }
