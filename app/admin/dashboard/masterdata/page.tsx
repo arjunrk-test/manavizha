@@ -5,12 +5,11 @@ import { AnimatedBackground } from "@/components/animated-background"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { ArrowLeft, Database, Circle, ChevronDown, ChevronRight, Plus, Edit, Trash2 } from "lucide-react"
+import { ArrowLeft, Database, Circle, ChevronDown, ChevronRight, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { MasterDataManager } from "@/components/master-data-manager"
+import { masterDataConfig } from "@/constants/master-data"
 
 const personalDetailsSubmenus = [
   { id: "gender", title: "Gender" },
@@ -63,11 +62,70 @@ const socialHabitsSubmenus = [
   { id: "pubs", title: "Pubs" },
 ]
 
-interface GenderValue {
-  id: string
-  value: string
-  created_at: string
-  updated_at: string
+interface MenuSectionProps {
+  title: string
+  submenus: { id: string; title: string }[]
+  isOpen: boolean
+  onToggle: () => void
+  currentStep: string
+  onSubmenuClick: (id: string) => void
+}
+
+function MenuSection({ title, submenus, isOpen, onToggle, currentStep, onSubmenuClick }: MenuSectionProps) {
+  return (
+    <div className="mt-2">
+      <button
+        onClick={onToggle}
+        className="w-full text-left p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-600"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0">
+              {isOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-sm">{title}</div>
+            </div>
+          </div>
+        </div>
+      </button>
+
+      {isOpen && (
+        <div>
+          <div className="pl-4 pt-2 space-y-1">
+            {submenus.map((submenu) => {
+              const isActive = currentStep === submenu.id
+
+              return (
+                <button
+                  key={submenu.id}
+                  onClick={() => onSubmenuClick(submenu.id)}
+                  className={`w-full text-left p-3 rounded-lg ${
+                    isActive
+                      ? "bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] text-white shadow-lg"
+                      : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0">
+                      {isActive ? (
+                        <Circle className="h-4 w-4 fill-white text-white" />
+                      ) : (
+                        <Circle className="h-4 w-4" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm">{submenu.title}</div>
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function AdminMasterDataPage() {
@@ -83,17 +141,7 @@ export default function AdminMasterDataPage() {
   const [isSocialHabitsOpen, setIsSocialHabitsOpen] = useState(false)
   const [currentStep, setCurrentStep] = useState<string>("")
   
-  // Gender dialog and data states
-  const [isGenderDialogOpen, setIsGenderDialogOpen] = useState(false)
-  const [genderValues, setGenderValues] = useState<GenderValue[]>([])
-  const [genderInputValue, setGenderInputValue] = useState("")
-  const [editingGenderId, setEditingGenderId] = useState<string | null>(null)
-  const [isSavingGender, setIsSavingGender] = useState(false)
-  
-  // Delete confirmation dialog states
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [genderToDelete, setGenderToDelete] = useState<GenderValue | null>(null)
-  const [isDeletingGender, setIsDeletingGender] = useState(false)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
 
   useEffect(() => {
     // Check if user is authenticated and is an admin
@@ -113,102 +161,21 @@ export default function AdminMasterDataPage() {
     checkUser()
   }, [router])
 
-  // Fetch gender values when gender step is selected
-  useEffect(() => {
-    if (currentStep === "gender") {
-      fetchGenderValues()
-    }
-  }, [currentStep])
-
-  const fetchGenderValues = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("master_gender")
-        .select("*")
-        .order("created_at", { ascending: true })
-
-      if (error) throw error
-      setGenderValues(data || [])
-    } catch (error) {
-      console.error("Error fetching gender values:", error)
-    }
+  const getCurrentStepConfig = () => {
+    return currentStep ? masterDataConfig[currentStep] : null
   }
 
-  const handleAddGender = () => {
-    setEditingGenderId(null)
-    setGenderInputValue("")
-    setIsGenderDialogOpen(true)
-  }
-
-  const handleEditGender = (gender: GenderValue) => {
-    setEditingGenderId(gender.id)
-    setGenderInputValue(gender.value)
-    setIsGenderDialogOpen(true)
-  }
-
-  const handleDeleteGender = (gender: GenderValue) => {
-    setGenderToDelete(gender)
-    setIsDeleteDialogOpen(true)
-  }
-
-  const confirmDeleteGender = async () => {
-    if (!genderToDelete) return
-
-    setIsDeletingGender(true)
-    try {
-      const { error } = await supabase.from("master_gender").delete().eq("id", genderToDelete.id)
-
-      if (error) throw error
-      await fetchGenderValues()
-      setIsDeleteDialogOpen(false)
-      setGenderToDelete(null)
-    } catch (error) {
-      console.error("Error deleting gender value:", error)
-      alert("Failed to delete gender value. Please try again.")
-    } finally {
-      setIsDeletingGender(false)
-    }
-  }
-
-  const handleSaveGender = async () => {
-    if (!genderInputValue.trim()) {
-      alert("Please enter a gender value")
-      return
-    }
-
-    setIsSavingGender(true)
-    try {
-      if (editingGenderId) {
-        // Update existing
-        const { error } = await supabase
-          .from("master_gender")
-          .update({ value: genderInputValue.trim() })
-          .eq("id", editingGenderId)
-
-        if (error) throw error
-      } else {
-        // Insert new
-        const { error } = await supabase.from("master_gender").insert({
-          value: genderInputValue.trim(),
-        })
-
-        if (error) throw error
-      }
-
-      setIsGenderDialogOpen(false)
-      setGenderInputValue("")
-      setEditingGenderId(null)
-      await fetchGenderValues()
-    } catch (error: any) {
-      console.error("Error saving gender value:", error)
-      if (error.code === "23505") {
-        alert("This gender value already exists")
-      } else {
-        alert("Failed to save gender value. Please try again.")
-      }
-    } finally {
-      setIsSavingGender(false)
-    }
+  const getTitleForCurrentStep = () => {
+    const allSubmenus = [
+      ...personalDetailsSubmenus,
+      ...educationalDetailsSubmenus,
+      ...professionalDetailsSubmenus,
+      ...familyDetailsSubmenus,
+      ...horoscopeDetailsSubmenus,
+      ...interestsSubmenus,
+      ...socialHabitsSubmenus,
+    ]
+    return allSubmenus.find((s) => s.id === currentStep)?.title || "Master Data"
   }
 
   const handleSubmenuClick = (id: string) => {
@@ -261,418 +228,68 @@ export default function AdminMasterDataPage() {
                 </div>
 
                 <div className="space-y-2 overflow-y-auto flex-1 pr-2">
-                  {/* Personal Details Menu */}
-                  <div>
-                    <button
-                      onClick={() => setIsPersonalDetailsOpen(!isPersonalDetailsOpen)}
-                      className="w-full text-left p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-600"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0">
-                            {isPersonalDetailsOpen ? (
-                              <ChevronDown className="h-5 w-5" />
-                            ) : (
-                              <ChevronRight className="h-5 w-5" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-sm">Personal Details</div>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
+                  <MenuSection
+                    title="Personal Details"
+                    submenus={personalDetailsSubmenus}
+                    isOpen={isPersonalDetailsOpen}
+                    onToggle={() => setIsPersonalDetailsOpen(!isPersonalDetailsOpen)}
+                    currentStep={currentStep}
+                    onSubmenuClick={handleSubmenuClick}
+                  />
 
-                    {/* Submenus */}
-                    {isPersonalDetailsOpen && (
-                      <div>
-                        <div className="pl-4 pt-2 space-y-1">
-                          {personalDetailsSubmenus.map((submenu) => {
-                            const isActive = currentStep === submenu.id
+                  <MenuSection
+                    title="Educational Details"
+                    submenus={educationalDetailsSubmenus}
+                    isOpen={isEducationalDetailsOpen}
+                    onToggle={() => setIsEducationalDetailsOpen(!isEducationalDetailsOpen)}
+                    currentStep={currentStep}
+                    onSubmenuClick={handleSubmenuClick}
+                  />
 
-                            return (
-                              <button
-                                key={submenu.id}
-                                onClick={() => handleSubmenuClick(submenu.id)}
-                                className={`w-full text-left p-3 rounded-lg ${
-                                  isActive
-                                    ? "bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] text-white shadow-lg"
-                                    : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"
-                                }`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="flex-shrink-0">
-                                    {isActive ? (
-                                      <Circle className="h-4 w-4 fill-white text-white" />
-                                    ) : (
-                                      <Circle className="h-4 w-4" />
-                                    )}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-sm">{submenu.title}</div>
-                                  </div>
-                                </div>
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <MenuSection
+                    title="Professional Details"
+                    submenus={professionalDetailsSubmenus}
+                    isOpen={isProfessionalDetailsOpen}
+                    onToggle={() => setIsProfessionalDetailsOpen(!isProfessionalDetailsOpen)}
+                    currentStep={currentStep}
+                    onSubmenuClick={handleSubmenuClick}
+                  />
 
-                  {/* Educational Details Menu */}
-                  <div className="mt-2">
-                    <button
-                      onClick={() => setIsEducationalDetailsOpen(!isEducationalDetailsOpen)}
-                      className="w-full text-left p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-600"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0">
-                            {isEducationalDetailsOpen ? (
-                              <ChevronDown className="h-5 w-5" />
-                            ) : (
-                              <ChevronRight className="h-5 w-5" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-sm">Educational Details</div>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
+                  <MenuSection
+                    title="Horoscope Details"
+                    submenus={horoscopeDetailsSubmenus}
+                    isOpen={isHoroscopeDetailsOpen}
+                    onToggle={() => setIsHoroscopeDetailsOpen(!isHoroscopeDetailsOpen)}
+                    currentStep={currentStep}
+                    onSubmenuClick={handleSubmenuClick}
+                  />
 
-                    {/* Submenus */}
-                    {isEducationalDetailsOpen && (
-                      <div>
-                        <div className="pl-4 pt-2 space-y-1">
-                          {educationalDetailsSubmenus.map((submenu) => {
-                            const isActive = currentStep === submenu.id
+                  <MenuSection
+                    title="Interests"
+                    submenus={interestsSubmenus}
+                    isOpen={isInterestsOpen}
+                    onToggle={() => setIsInterestsOpen(!isInterestsOpen)}
+                    currentStep={currentStep}
+                    onSubmenuClick={handleSubmenuClick}
+                  />
 
-                            return (
-                              <button
-                                key={submenu.id}
-                                onClick={() => handleSubmenuClick(submenu.id)}
-                                className={`w-full text-left p-3 rounded-lg ${
-                                  isActive
-                                    ? "bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] text-white shadow-lg"
-                                    : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"
-                                }`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="flex-shrink-0">
-                                    {isActive ? (
-                                      <Circle className="h-4 w-4 fill-white text-white" />
-                                    ) : (
-                                      <Circle className="h-4 w-4" />
-                                    )}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-sm">{submenu.title}</div>
-                                  </div>
-                                </div>
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <MenuSection
+                    title="Social Habits"
+                    submenus={socialHabitsSubmenus}
+                    isOpen={isSocialHabitsOpen}
+                    onToggle={() => setIsSocialHabitsOpen(!isSocialHabitsOpen)}
+                    currentStep={currentStep}
+                    onSubmenuClick={handleSubmenuClick}
+                  />
 
-                  {/* Professional Details Menu */}
-                  <div className="mt-2">
-                    <button
-                      onClick={() => setIsProfessionalDetailsOpen(!isProfessionalDetailsOpen)}
-                      className="w-full text-left p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-600"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0">
-                            {isProfessionalDetailsOpen ? (
-                              <ChevronDown className="h-5 w-5" />
-                            ) : (
-                              <ChevronRight className="h-5 w-5" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-sm">Professional Details</div>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-
-                    {/* Submenus */}
-                    {isProfessionalDetailsOpen && (
-                      <div>
-                        <div className="pl-4 pt-2 space-y-1">
-                          {professionalDetailsSubmenus.map((submenu) => {
-                            const isActive = currentStep === submenu.id
-
-                            return (
-                              <button
-                                key={submenu.id}
-                                onClick={() => handleSubmenuClick(submenu.id)}
-                                className={`w-full text-left p-3 rounded-lg ${
-                                  isActive
-                                    ? "bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] text-white shadow-lg"
-                                    : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"
-                                }`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="flex-shrink-0">
-                                    {isActive ? (
-                                      <Circle className="h-4 w-4 fill-white text-white" />
-                                    ) : (
-                                      <Circle className="h-4 w-4" />
-                                    )}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-sm">{submenu.title}</div>
-                                  </div>
-                                </div>
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Horoscope Details Menu */}
-                  <div className="mt-2">
-                    <button
-                      onClick={() => setIsHoroscopeDetailsOpen(!isHoroscopeDetailsOpen)}
-                      className="w-full text-left p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-600"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0">
-                            {isHoroscopeDetailsOpen ? (
-                              <ChevronDown className="h-5 w-5" />
-                            ) : (
-                              <ChevronRight className="h-5 w-5" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-sm">Horoscope Details</div>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-
-                    {/* Submenus */}
-                    {isHoroscopeDetailsOpen && (
-                      <div>
-                        <div className="pl-4 pt-2 space-y-1">
-                          {horoscopeDetailsSubmenus.map((submenu) => {
-                            const isActive = currentStep === submenu.id
-
-                            return (
-                              <button
-                                key={submenu.id}
-                                onClick={() => handleSubmenuClick(submenu.id)}
-                                className={`w-full text-left p-3 rounded-lg ${
-                                  isActive
-                                    ? "bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] text-white shadow-lg"
-                                    : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"
-                                }`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="flex-shrink-0">
-                                    {isActive ? (
-                                      <Circle className="h-4 w-4 fill-white text-white" />
-                                    ) : (
-                                      <Circle className="h-4 w-4" />
-                                    )}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-sm">{submenu.title}</div>
-                                  </div>
-                                </div>
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Interests Menu */}
-                  <div className="mt-2">
-                    <button
-                      onClick={() => setIsInterestsOpen(!isInterestsOpen)}
-                      className="w-full text-left p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-600"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0">
-                            {isInterestsOpen ? (
-                              <ChevronDown className="h-5 w-5" />
-                            ) : (
-                              <ChevronRight className="h-5 w-5" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-sm">Interests</div>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-
-                    {/* Submenus */}
-                    {isInterestsOpen && (
-                      <div>
-                        <div className="pl-4 pt-2 space-y-1">
-                          {interestsSubmenus.map((submenu) => {
-                            const isActive = currentStep === submenu.id
-
-                            return (
-                              <button
-                                key={submenu.id}
-                                onClick={() => handleSubmenuClick(submenu.id)}
-                                className={`w-full text-left p-3 rounded-lg ${
-                                  isActive
-                                    ? "bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] text-white shadow-lg"
-                                    : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"
-                                }`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="flex-shrink-0">
-                                    {isActive ? (
-                                      <Circle className="h-4 w-4 fill-white text-white" />
-                                    ) : (
-                                      <Circle className="h-4 w-4" />
-                                    )}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-sm">{submenu.title}</div>
-                                  </div>
-                                </div>
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Social Habits Menu */}
-                  <div className="mt-2">
-                    <button
-                      onClick={() => setIsSocialHabitsOpen(!isSocialHabitsOpen)}
-                      className="w-full text-left p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-600"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0">
-                            {isSocialHabitsOpen ? (
-                              <ChevronDown className="h-5 w-5" />
-                            ) : (
-                              <ChevronRight className="h-5 w-5" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-sm">Social Habits</div>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-
-                    {/* Submenus */}
-                    {isSocialHabitsOpen && (
-                      <div>
-                        <div className="pl-4 pt-2 space-y-1">
-                          {socialHabitsSubmenus.map((submenu) => {
-                            const isActive = currentStep === submenu.id
-
-                            return (
-                              <button
-                                key={submenu.id}
-                                onClick={() => handleSubmenuClick(submenu.id)}
-                                className={`w-full text-left p-3 rounded-lg ${
-                                  isActive
-                                    ? "bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] text-white shadow-lg"
-                                    : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"
-                                }`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="flex-shrink-0">
-                                    {isActive ? (
-                                      <Circle className="h-4 w-4 fill-white text-white" />
-                                    ) : (
-                                      <Circle className="h-4 w-4" />
-                                    )}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-sm">{submenu.title}</div>
-                                  </div>
-                                </div>
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Family Details Menu */}
-                  <div className="mt-2">
-                    <button
-                      onClick={() => setIsFamilyDetailsOpen(!isFamilyDetailsOpen)}
-                      className="w-full text-left p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-600"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0">
-                            {isFamilyDetailsOpen ? (
-                              <ChevronDown className="h-5 w-5" />
-                            ) : (
-                              <ChevronRight className="h-5 w-5" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-sm">Family Details</div>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-
-                    {/* Submenus */}
-                    {isFamilyDetailsOpen && (
-                      <div>
-                        <div className="pl-4 pt-2 space-y-1">
-                          {familyDetailsSubmenus.map((submenu) => {
-                            const isActive = currentStep === submenu.id
-
-                            return (
-                              <button
-                                key={submenu.id}
-                                onClick={() => handleSubmenuClick(submenu.id)}
-                                className={`w-full text-left p-3 rounded-lg ${
-                                  isActive
-                                    ? "bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] text-white shadow-lg"
-                                    : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"
-                                }`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="flex-shrink-0">
-                                    {isActive ? (
-                                      <Circle className="h-4 w-4 fill-white text-white" />
-                                    ) : (
-                                      <Circle className="h-4 w-4" />
-                                    )}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-sm">{submenu.title}</div>
-                                  </div>
-                                </div>
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <MenuSection
+                    title="Family Details"
+                    submenus={familyDetailsSubmenus}
+                    isOpen={isFamilyDetailsOpen}
+                    onToggle={() => setIsFamilyDetailsOpen(!isFamilyDetailsOpen)}
+                    currentStep={currentStep}
+                    onSubmenuClick={handleSubmenuClick}
+                  />
                 </div>
               </div>
             </div>
@@ -695,22 +312,15 @@ export default function AdminMasterDataPage() {
                     {/* Step Title */}
                     <div className="flex items-center justify-between mb-6">
                       <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                        {personalDetailsSubmenus.find((s) => s.id === currentStep)?.title ||
-                          educationalDetailsSubmenus.find((s) => s.id === currentStep)?.title ||
-                          professionalDetailsSubmenus.find((s) => s.id === currentStep)?.title ||
-                          familyDetailsSubmenus.find((s) => s.id === currentStep)?.title ||
-                          horoscopeDetailsSubmenus.find((s) => s.id === currentStep)?.title ||
-                          interestsSubmenus.find((s) => s.id === currentStep)?.title ||
-                          socialHabitsSubmenus.find((s) => s.id === currentStep)?.title ||
-                          "Master Data"}
+                        {getTitleForCurrentStep()}
                       </h2>
-                      {currentStep === "gender" && (
+                      {getCurrentStepConfig() && (
                         <Button
-                          onClick={handleAddGender}
+                          onClick={() => setIsAddDialogOpen(true)}
                           className="flex items-center gap-2 bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white"
                         >
                           <Plus className="h-4 w-4" />
-                          Add Gender
+                          {getCurrentStepConfig()?.addButtonText}
                         </Button>
                       )}
                     </div>
@@ -723,240 +333,18 @@ export default function AdminMasterDataPage() {
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.3 }}
                       >
-                    {currentStep === "gender" && (
-                      <div className="space-y-6">
-                        <div className="overflow-x-auto">
-                          <table className="w-full border-collapse">
-                            <thead>
-                              <tr className="bg-gray-50 dark:bg-gray-700/50 border-b-2 border-gray-200 dark:border-gray-600">
-                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                                  S.No
-                                </th>
-                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                                  Value
-                                </th>
-                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                                  Actions
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {genderValues.length === 0 ? (
-                                <tr>
-                                  <td colSpan={3} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                                    No gender values found. Click "Add Gender" to add one.
-                                  </td>
-                                </tr>
-                              ) : (
-                                genderValues.map((gender, index) => (
-                                  <tr
-                                    key={gender.id}
-                                    className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                                  >
-                                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                                      {index + 1}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                                      {gender.value}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm">
-                                      <div className="flex items-center gap-2">
-                                        <Button
-                                          onClick={() => handleEditGender(gender)}
-                                          variant="outline"
-                                          size="sm"
-                                          className="h-8 w-8 p-0"
-                                          title="Edit"
-                                        >
-                                          <Edit className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                          onClick={() => handleDeleteGender(gender)}
-                                          variant="outline"
-                                          size="sm"
-                                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                          title="Delete"
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ))
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
-                    {currentStep === "skin-colour" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Skin Colour management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "body-type" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Body Type management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "marital-status" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Marital Status management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "food-preferences" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Food Preferences management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "indian-languages" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Indian Languages management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "international-languages" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          International Languages management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "education-level" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Education Level management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "degree-qualification" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Degree/ Qualification management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "status" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Status management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "caste" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Caste management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "subcaste" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Subcaste management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "kulam" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Kulam management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "gotram" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Gotram management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "family-type" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Family Type management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "family-status" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Family Status management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "zodiac-moon-sign" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Zodiac or Moon Sign management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "star" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Star management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "lagnam" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Lagnam management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "hobbies" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Hobbies management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "interests" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Interests management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "smoking" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Smoking management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "drinking" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Drinking management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "parties" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Parties management content will go here...
-                        </p>
-                      </div>
-                    )}
-                    {currentStep === "pubs" && (
-                      <div className="space-y-6">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          Pubs management content will go here...
-                        </p>
-                      </div>
-                    )}
+                    {getCurrentStepConfig() ? (
+                      <MasterDataManager
+                        tableName={getCurrentStepConfig()!.tableName}
+                        title={getCurrentStepConfig()!.title}
+                        addButtonText={getCurrentStepConfig()!.addButtonText}
+                        dialogTitle={getCurrentStepConfig()!.dialogTitle}
+                        dialogDescription={getCurrentStepConfig()!.dialogDescription}
+                        inputPlaceholder={getCurrentStepConfig()!.inputPlaceholder}
+                        isAddDialogOpen={isAddDialogOpen}
+                        onAddDialogChange={setIsAddDialogOpen}
+                      />
+                    ) : null}
                       </motion.div>
                     </AnimatePresence>
                   </>
@@ -967,86 +355,6 @@ export default function AdminMasterDataPage() {
         </div>
       </div>
 
-      {/* Gender Dialog */}
-      <Dialog open={isGenderDialogOpen} onOpenChange={setIsGenderDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>{editingGenderId ? "Edit Gender" : "Add Gender"}</DialogTitle>
-            <DialogDescription>
-              {editingGenderId
-                ? "Update the gender value below."
-                : "Enter a new gender value to add to the list."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="gender-value">Gender Value</Label>
-              <Input
-                id="gender-value"
-                value={genderInputValue}
-                onChange={(e) => setGenderInputValue(e.target.value)}
-                placeholder="e.g., Male, Female, Other"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !isSavingGender) {
-                    handleSaveGender()
-                  }
-                }}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsGenderDialogOpen(false)
-                setGenderInputValue("")
-                setEditingGenderId(null)
-              }}
-              disabled={isSavingGender}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSaveGender}
-              disabled={isSavingGender || !genderInputValue.trim()}
-              className="bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white"
-            >
-              {isSavingGender ? "Saving..." : editingGenderId ? "Update" : "Save"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Delete Gender Value</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete "{genderToDelete?.value}"? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsDeleteDialogOpen(false)
-                setGenderToDelete(null)
-              }}
-              disabled={isDeletingGender}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={confirmDeleteGender}
-              disabled={isDeletingGender}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              {isDeletingGender ? "Deleting..." : "Delete"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
