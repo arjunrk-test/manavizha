@@ -82,10 +82,25 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         status: "",
       },
     ],
-    occupation: "",
+    employmentType: "",
+    sector: "",
+    sectorOther: "",
     company: "",
+    designation: "",
     salary: "₹",
     workLocation: "",
+    payslip: [],
+    businessName: "",
+    businessType: "",
+    businessTypeOther: "",
+    annualReturns: "₹",
+    businessLocation: "",
+    itrDocument: "",
+    institution: "",
+    course: "",
+    yearOfStudy: "",
+    expectedGraduationYear: "",
+    fieldOfStudy: "",
     fatherName: "",
     fatherOccupation: "",
     motherName: "",
@@ -144,6 +159,12 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const [originalHoroscopeDetails, setOriginalHoroscopeDetails] = useState<Partial<FormData> | null>(null)
   const [originalInterestsDetails, setOriginalInterestsDetails] = useState<Partial<FormData> | null>(null)
   const [originalSocialHabitsDetails, setOriginalSocialHabitsDetails] = useState<Partial<FormData> | null>(null)
+  const [originalPhotosDetails, setOriginalPhotosDetails] = useState<Partial<FormData> | null>(null)
+  const [originalReferralDetails, setOriginalReferralDetails] = useState<Partial<FormData> | null>(null)
+  const [originalProfessionalDetails, setOriginalProfessionalDetails] = useState<Partial<FormData> | null>(null)
+  const [professionalCompletionPercentage, setProfessionalCompletionPercentage] = useState<number | null>(null)
+  const [isReferralPartnerValid, setIsReferralPartnerValid] = useState(false)
+  const [referralPartnerName, setReferralPartnerName] = useState<string | null>(null)
 
   // Load personal details from database on mount
   useEffect(() => {
@@ -487,6 +508,298 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     loadSocialHabitsDetails()
   }, [userId])
 
+  // Load photos from database on mount
+  useEffect(() => {
+    const loadPhotosDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("photos")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error loading photos:", error)
+          return
+        }
+
+        if (data) {
+          // Helper function to get signed URL from file path or use existing URL
+          const getPhotoUrl = async (url: string | null, bucket: string, defaultFileName: string): Promise<string> => {
+            if (!url) return ""
+            
+            // If it's already a signed URL (starts with http), use it
+            if (url.startsWith("http")) {
+              return url
+            }
+            
+            // If it's a file path, create a signed URL
+            try {
+              const filePath = url.includes("/") ? url : `${userId}/${url}`
+              const { data: urlData, error: urlError } = await supabase.storage
+                .from(bucket)
+                .createSignedUrl(filePath, 31536000) // 1 year
+              
+              if (urlError) throw urlError
+              return urlData.signedUrl
+            } catch (error) {
+              console.error(`Error getting signed URL for ${defaultFileName}:`, error)
+              return url // Fallback to original
+            }
+          }
+
+          // Load user photos with signed URLs
+          const userPhotos = data.user_photos || []
+          const userPhotoUrls = await Promise.all(
+            userPhotos.map(async (photo: string, index: number) => {
+              if (photo.startsWith("http")) {
+                return photo
+              }
+              try {
+                const filePath = photo.includes("/") ? photo : `${userId}/photo_${index + 1}.jpg`
+                const { data: urlData, error: urlError } = await supabase.storage
+                  .from("user-photos")
+                  .createSignedUrl(filePath, 31536000)
+                
+                if (urlError) throw urlError
+                return urlData.signedUrl
+              } catch (error) {
+                console.error(`Error getting signed URL for user photo ${index + 1}:`, error)
+                return photo
+              }
+            })
+          )
+
+          // Load other photos with signed URLs
+          const familyPhotoUrl = await getPhotoUrl(data.family_photo, "family-photos", "family")
+          const aadharFrontUrl = await getPhotoUrl(data.aadhar_front, "aadhar-photos", "aadhar_front")
+          const aadharBackUrl = await getPhotoUrl(data.aadhar_back, "aadhar-photos", "aadhar_back")
+
+          // Map database column names (snake_case) to form field names (camelCase)
+          const loadedData = {
+            userPhotos: userPhotoUrls,
+            familyPhoto: familyPhotoUrl,
+            aadharFront: aadharFrontUrl,
+            aadharBack: aadharBackUrl,
+          }
+          
+          // Store original data for comparison
+          setOriginalPhotosDetails(loadedData)
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading photos:", error)
+      }
+    }
+
+    loadPhotosDetails()
+  }, [userId])
+
+  // Load referral details from database on mount
+  useEffect(() => {
+    const loadReferralDetails = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("referral_details")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error loading referral details:", error)
+          return
+        }
+
+        if (data) {
+          // Map database column names (snake_case) to form field names (camelCase)
+          const loadedData = {
+            referralPartnerId: data.referral_partner_id || "",
+          }
+          
+          // Store original data for comparison
+          setOriginalReferralDetails(loadedData)
+          
+          // Store partner name if available
+          if (data.referral_partner_name) {
+            setReferralPartnerName(data.referral_partner_name)
+          }
+          
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading referral details:", error)
+      }
+    }
+
+    loadReferralDetails()
+  }, [userId])
+
+  // Load professional details from database on mount
+  useEffect(() => {
+    const loadProfessionalDetails = async () => {
+      try {
+        // Check which employment type the user has
+        // First, try to load from employee table
+        const { data: employeeData, error: employeeError } = await supabase
+          .from("profession_employee")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (!employeeError && employeeData) {
+          // Store completion percentage from database
+          if (employeeData.completion_percentage === 100) {
+            setProfessionalCompletionPercentage(100)
+          } else {
+            setProfessionalCompletionPercentage(employeeData.completion_percentage || null)
+          }
+
+          // Load payslips with signed URLs
+          let payslipUrls: string[] = []
+          const payslips = Array.isArray(employeeData.payslip) ? employeeData.payslip : (employeeData.payslip ? [employeeData.payslip] : [])
+          
+          for (let i = 0; i < payslips.length; i++) {
+            const payslip = payslips[i]
+            if (!payslip) continue
+            
+            // If it's already a signed URL (starts with http), use it
+            if (payslip.startsWith("http")) {
+              payslipUrls.push(payslip)
+            } else {
+              // If it's a file path, create a signed URL
+              try {
+                const filePath = payslip.includes("/") ? payslip : `${userId}/payslip_${i + 1}.pdf`
+                const { data: urlData, error: urlError } = await supabase.storage
+                  .from("payslips")
+                  .createSignedUrl(filePath, 31536000) // 1 year
+                
+                if (urlError) throw urlError
+                payslipUrls.push(urlData.signedUrl)
+              } catch (error) {
+                console.error(`Error getting signed URL for payslip ${i + 1}:`, error)
+                // Continue with other payslips even if one fails
+              }
+            }
+          }
+
+          const loadedData = {
+            employmentType: "employee",
+            sector: employeeData.sector || "",
+            sectorOther: employeeData.sector_other || "",
+            company: employeeData.company || "",
+            designation: employeeData.designation || "",
+            salary: employeeData.salary || "₹",
+            workLocation: employeeData.work_location || "",
+            payslip: payslipUrls,
+          }
+          setOriginalProfessionalDetails(loadedData)
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+          return
+        }
+
+        // Try business table
+        const { data: businessData, error: businessError } = await supabase
+          .from("profession_business")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (!businessError && businessData) {
+          // Store completion percentage from database
+          if (businessData.completion_percentage === 100) {
+            setProfessionalCompletionPercentage(100)
+          } else {
+            setProfessionalCompletionPercentage(businessData.completion_percentage || null)
+          }
+
+          // Load ITR document with signed URL
+          let itrDocumentUrl = businessData.itr_document || ""
+          
+          if (itrDocumentUrl && !itrDocumentUrl.startsWith("http")) {
+            // If it's a file path, create a signed URL
+            try {
+              const filePath = itrDocumentUrl.includes("/") ? itrDocumentUrl : `${userId}/itr_document.pdf`
+              const { data: urlData, error: urlError } = await supabase.storage
+                .from("itr-documents")
+                .createSignedUrl(filePath, 31536000) // 1 year
+              
+              if (urlError) throw urlError
+              itrDocumentUrl = urlData.signedUrl
+            } catch (error) {
+              console.error("Error getting signed URL for ITR document:", error)
+              // Continue even if URL generation fails
+            }
+          }
+
+          const loadedData = {
+            employmentType: "business",
+            sector: businessData.sector || "",
+            sectorOther: businessData.sector_other || "",
+            businessName: businessData.business_name || "",
+            businessType: businessData.business_type || "",
+            businessTypeOther: businessData.business_type_other || "",
+            designation: businessData.designation || "",
+            annualReturns: businessData.annual_returns || "₹",
+            businessLocation: businessData.business_location || "",
+            itrDocument: itrDocumentUrl,
+          }
+          setOriginalProfessionalDetails(loadedData)
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+          return
+        }
+
+        // Try student table
+        const { data: studentData, error: studentError } = await supabase
+          .from("profession_student")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (!studentError && studentData) {
+          // Store completion percentage from database
+          if (studentData.completion_percentage === 100) {
+            setProfessionalCompletionPercentage(100)
+          } else {
+            setProfessionalCompletionPercentage(studentData.completion_percentage || null)
+          }
+
+          const loadedData = {
+            employmentType: "student",
+            institution: studentData.institution || "",
+            course: studentData.course || "",
+            fieldOfStudy: studentData.field_of_study || "",
+            yearOfStudy: studentData.year_of_study || "",
+            expectedGraduationYear: studentData.expected_graduation_year || "",
+          }
+          setOriginalProfessionalDetails(loadedData)
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Unexpected error loading professional details:", error)
+      }
+    }
+
+    loadProfessionalDetails()
+  }, [userId])
+
   // Calculate overall progress
   const calculateOverallProgress = () => {
     const totalFields = Object.keys(formData).length
@@ -549,13 +862,72 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         "currentCountry",
       ],
       education: ["educationDetails"],
-      professional: ["occupation", "company", "salary", "workLocation"],
+      professional: [], // Will be calculated dynamically based on employment type
       family: ["fatherName", "fatherOccupation", "motherName", "motherOccupation", "parentsAddressLine1", "parentsPincode", "parentsArea", "parentsTaluk", "parentsDistrict", "parentsDivision", "parentsRegion", "parentsState", "parentsCountry", "caste", "familyType", "familyStatus"],
       horoscope: ["jaadhagam", "timeOfBirth", "placeOfBirth", "zodiacSign", "star", "lagnam", "dhosham"],
       interests: ["hobbies", "interests"],
       social: ["smoking", "drinking", "parties", "pubs"],
       photos: ["userPhotos", "familyPhoto", "aadharFront", "aadharBack"],
       referral: ["referralPartnerId"],
+    }
+
+    // Special handling for professional details - calculate based on employment type
+    if (stepId === "professional") {
+      // If database has 100% completion, return 100%
+      if (professionalCompletionPercentage === 100) {
+        return 100
+      }
+
+      const employmentType = formData.employmentType || ""
+      
+      if (!employmentType || employmentType.trim() === "") {
+        return 0
+      }
+
+      let fields: (keyof FormData)[] = []
+      if (employmentType === "employee") {
+        // Exclude payslip as it's optional
+        fields = ["employmentType", "sector", "company", "designation", "salary", "workLocation"]
+      } else if (employmentType === "business") {
+        // Exclude itrDocument as it's optional
+        fields = ["employmentType", "sector", "businessName", "businessType", "designation", "annualReturns", "businessLocation"]
+      } else if (employmentType === "student") {
+        fields = ["employmentType", "institution", "course", "fieldOfStudy", "yearOfStudy", "expectedGraduationYear"]
+      }
+
+      const filled = fields.filter((field) => {
+        const value = formData[field]
+        
+        // Special handling for sector with "other" option
+        if (field === "sector") {
+          const sector = value as string || ""
+          if (sector === "other") {
+            return sector.trim() !== "" && formData.sectorOther && formData.sectorOther.trim() !== ""
+          }
+          return sector.trim() !== ""
+        }
+        
+        // Special handling for businessType with "other" option
+        if (field === "businessType") {
+          const businessType = value as string || ""
+          if (businessType === "other") {
+            return businessType.trim() !== "" && formData.businessTypeOther && formData.businessTypeOther.trim() !== ""
+          }
+          return businessType.trim() !== ""
+        }
+        
+        // Special handling for salary and annualReturns
+        if (field === "salary" || field === "annualReturns") {
+          return value && value !== "₹" && value !== "" && value !== null && value !== undefined
+        }
+        
+        if (Array.isArray(value)) {
+          return value.length > 0
+        }
+        return value !== "" && value !== null && value !== undefined
+      }).length
+      
+      return fields.length > 0 ? Math.round((filled / fields.length) * 100) : 0
     }
 
     const fields = stepFields[stepId] || []
@@ -894,6 +1266,297 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     return true
   }
 
+  const validatePhotosDetails = (): boolean => {
+    const errors: string[] = []
+
+    // Check user photos - minimum 3 required
+    if (!formData.userPhotos || formData.userPhotos.length < 3) {
+      errors.push("userPhotos")
+    }
+
+    // Check family photo
+    if (!formData.familyPhoto || formData.familyPhoto.trim() === "") {
+      errors.push("familyPhoto")
+    }
+
+    // Check Aadhar front
+    if (!formData.aadharFront || formData.aadharFront.trim() === "") {
+      errors.push("aadharFront")
+    }
+
+    // Check Aadhar back
+    if (!formData.aadharBack || formData.aadharBack.trim() === "") {
+      errors.push("aadharBack")
+    }
+
+    if (errors.length > 0) {
+      if (errors.length === 1) {
+        const fieldLabels: Record<string, string> = {
+          userPhotos: "User photos (minimum 3 required)",
+          familyPhoto: "Family photo",
+          aadharFront: "Aadhar card front",
+          aadharBack: "Aadhar card back",
+        }
+        toast.error(`${fieldLabels[errors[0]]} is required`, {
+          description: "Please fill out all required fields.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      } else {
+        toast.error("Please fill out all required fields", {
+          description: "All photo fields are mandatory.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      }
+      return false
+    }
+
+    return true
+  }
+
+  const validateProfessionalDetails = (): boolean => {
+    const employmentType = formData.employmentType || ""
+    
+    if (!employmentType || employmentType.trim() === "") {
+      toast.error("Please select employment type", {
+        description: "Employment type is required to save your professional details.",
+        style: {
+          background: "#fee2e2",
+          border: "1px solid #ef4444",
+          color: "#991b1b",
+        },
+      })
+      return false
+    }
+
+    const missingFields: string[] = []
+
+    if (employmentType === "employee") {
+      if (!formData.sector || formData.sector.trim() === "") {
+        missingFields.push("Sector")
+      } else if (formData.sector === "other" && (!formData.sectorOther || formData.sectorOther.trim() === "")) {
+        missingFields.push("Sector (Other)")
+      }
+      if (!formData.company || formData.company.trim() === "") {
+        missingFields.push("Company")
+      }
+      if (!formData.designation || formData.designation.trim() === "") {
+        missingFields.push("Designation")
+      }
+      if (!formData.salary || formData.salary === "₹" || formData.salary.trim() === "") {
+        missingFields.push("Annual Salary")
+      }
+      if (!formData.workLocation || formData.workLocation.trim() === "") {
+        missingFields.push("Work Location")
+      }
+      // Payslip is optional - removed from required fields
+    } else if (employmentType === "business") {
+      if (!formData.sector || formData.sector.trim() === "") {
+        missingFields.push("Sector")
+      } else if (formData.sector === "other" && (!formData.sectorOther || formData.sectorOther.trim() === "")) {
+        missingFields.push("Sector (Other)")
+      }
+      if (!formData.businessName || formData.businessName.trim() === "") {
+        missingFields.push("Business Name")
+      }
+      if (!formData.businessType || formData.businessType.trim() === "") {
+        missingFields.push("Type of Business")
+      } else if (formData.businessType === "other" && (!formData.businessTypeOther || formData.businessTypeOther.trim() === "")) {
+        missingFields.push("Type of Business (Other)")
+      }
+      if (!formData.designation || formData.designation.trim() === "") {
+        missingFields.push("Designation")
+      }
+      if (!formData.annualReturns || formData.annualReturns === "₹" || formData.annualReturns.trim() === "") {
+        missingFields.push("Annual Returns")
+      }
+      if (!formData.businessLocation || formData.businessLocation.trim() === "") {
+        missingFields.push("Business Location")
+      }
+      // ITR Document is optional - removed from required fields
+    } else if (employmentType === "student") {
+      if (!formData.institution || formData.institution.trim() === "") {
+        missingFields.push("Institution / University")
+      }
+      if (!formData.course || formData.course.trim() === "") {
+        missingFields.push("Course / Degree")
+      }
+      if (!formData.fieldOfStudy || formData.fieldOfStudy.trim() === "") {
+        missingFields.push("Field of Study / Major")
+      }
+      if (!formData.yearOfStudy || formData.yearOfStudy.trim() === "") {
+        missingFields.push("Year of Study")
+      }
+      if (!formData.expectedGraduationYear || formData.expectedGraduationYear.trim() === "") {
+        missingFields.push("Expected Graduation Year")
+      }
+    }
+
+    if (missingFields.length > 0) {
+      if (missingFields.length === 1) {
+        toast.error(`Please fill out ${missingFields[0]}`, {
+          description: "This field is required to save your professional details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      } else {
+        toast.error("Please fill out all fields", {
+          description: "All fields are required to save your professional details.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      }
+      return false
+    }
+
+    return true
+  }
+
+  // Check if all professional details fields are filled
+  const areAllProfessionalDetailsFilled = (): boolean => {
+    const employmentType = formData.employmentType || ""
+    
+    if (!employmentType || employmentType.trim() === "") {
+      return false
+    }
+
+    if (employmentType === "employee") {
+      const sector = formData.sector || ""
+      const sectorOther = formData.sectorOther || ""
+      const sectorValid = Boolean(sector.trim() !== "" && 
+                         (sector !== "other" || sectorOther.trim() !== ""))
+      const company = formData.company || ""
+      const designation = formData.designation || ""
+      const salary = formData.salary || ""
+      const workLocation = formData.workLocation || ""
+      const payslips = (formData.payslip as string[]) || []
+      
+      return sectorValid &&
+             company.trim() !== "" &&
+             designation.trim() !== "" &&
+             salary !== "₹" && salary.trim() !== "" &&
+             workLocation.trim() !== ""
+             // Payslip is optional - removed from validation
+    } else if (employmentType === "business") {
+      const sector = formData.sector || ""
+      const sectorOther = formData.sectorOther || ""
+      const sectorValid = Boolean(sector.trim() !== "" && 
+                         (sector !== "other" || sectorOther.trim() !== ""))
+      const businessType = formData.businessType || ""
+      const businessTypeOther = formData.businessTypeOther || ""
+      const businessTypeValid = Boolean(businessType.trim() !== "" && 
+                                (businessType !== "other" || businessTypeOther.trim() !== ""))
+      const businessName = formData.businessName || ""
+      const designation = formData.designation || ""
+      const annualReturns = formData.annualReturns || ""
+      const businessLocation = formData.businessLocation || ""
+      const itrDocument = formData.itrDocument || ""
+      
+      return sectorValid &&
+             businessName.trim() !== "" &&
+             businessTypeValid &&
+             designation.trim() !== "" &&
+             annualReturns !== "₹" && annualReturns.trim() !== "" &&
+             businessLocation.trim() !== ""
+             // ITR Document is optional - removed from validation
+    } else if (employmentType === "student") {
+      const institution = formData.institution || ""
+      const course = formData.course || ""
+      const fieldOfStudy = formData.fieldOfStudy || ""
+      const yearOfStudy = formData.yearOfStudy || ""
+      const expectedGraduationYear = formData.expectedGraduationYear || ""
+      
+      return institution.trim() !== "" &&
+             course.trim() !== "" &&
+             fieldOfStudy.trim() !== "" &&
+             yearOfStudy.trim() !== "" &&
+             expectedGraduationYear.trim() !== ""
+    }
+
+    return false
+  }
+
+  // Check if professional details have changed
+  const hasProfessionalDetailsChanged = (): boolean => {
+    if (!originalProfessionalDetails) {
+      // If no original data exists, check if all required fields are filled
+      return areAllProfessionalDetailsFilled()
+    }
+
+    const employmentType = formData.employmentType || ""
+    const originalEmploymentType = originalProfessionalDetails.employmentType || ""
+
+    // If employment type changed, consider it changed
+    if (employmentType !== originalEmploymentType) {
+      return true
+    }
+
+    // Compare fields based on employment type
+    if (employmentType === "employee") {
+      const fieldsToCompare: (keyof FormData)[] = ["sector", "sectorOther", "company", "designation", "salary", "workLocation", "payslip"]
+      for (const field of fieldsToCompare) {
+        const currentValue = formData[field]
+        const originalValue = originalProfessionalDetails[field]
+        
+        // Handle array comparison for payslip
+        if (field === "payslip") {
+          const currentArr = Array.isArray(currentValue) ? currentValue : []
+          const originalArr = Array.isArray(originalValue) ? originalValue : []
+          if (currentArr.length !== originalArr.length) {
+            return true
+          }
+          // Compare array contents
+          for (let i = 0; i < currentArr.length; i++) {
+            if (currentArr[i] !== originalArr[i]) {
+              return true
+            }
+          }
+          continue
+        }
+        
+        // Handle string comparison
+        const currentStr = currentValue?.toString().trim() || ""
+        const originalStr = originalValue?.toString().trim() || ""
+        if (currentStr !== originalStr) {
+          return true
+        }
+      }
+    } else if (employmentType === "business") {
+      const fieldsToCompare: (keyof FormData)[] = ["sector", "sectorOther", "businessName", "businessType", "businessTypeOther", "designation", "annualReturns", "businessLocation", "itrDocument"]
+      for (const field of fieldsToCompare) {
+        const currentValue = formData[field]?.toString().trim() || ""
+        const originalValue = originalProfessionalDetails[field]?.toString().trim() || ""
+        if (currentValue !== originalValue) {
+          return true
+        }
+      }
+    } else if (employmentType === "student") {
+      const fieldsToCompare: (keyof FormData)[] = ["institution", "course", "fieldOfStudy", "yearOfStudy", "expectedGraduationYear"]
+      for (const field of fieldsToCompare) {
+        const currentValue = formData[field]?.toString().trim() || ""
+        const originalValue = originalProfessionalDetails[field]?.toString().trim() || ""
+        if (currentValue !== originalValue) {
+          return true
+        }
+      }
+    }
+
+    return false
+  }
+
   const validateFamilyDetails = (): boolean => {
     const requiredFields = [
       { key: "fatherName", label: "Father Name" },
@@ -1144,6 +1807,114 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     return false
   }
 
+  // Check if all photos fields are filled (without showing toasts)
+  const areAllPhotosFieldsFilled = (): boolean => {
+    const userPhotos = formData.userPhotos || []
+    const familyPhoto = formData.familyPhoto || ""
+    const aadharFront = formData.aadharFront || ""
+    const aadharBack = formData.aadharBack || ""
+    return userPhotos.length >= 3 && 
+           familyPhoto.trim() !== "" &&
+           aadharFront.trim() !== "" &&
+           aadharBack.trim() !== ""
+  }
+
+  // Check if photos details have changed
+  const hasPhotosDetailsChanged = (): boolean => {
+    if (!originalPhotosDetails) {
+      // If no original data exists, check if all required fields are filled
+      return areAllPhotosFieldsFilled()
+    }
+
+    // Compare current form data with original saved data
+    const currentUserPhotos = formData.userPhotos || []
+    const originalUserPhotos = originalPhotosDetails.userPhotos || []
+    
+    // Check if user photos array is different
+    if (currentUserPhotos.length !== originalUserPhotos.length) {
+      return true
+    }
+    
+    // Check if user photos content is different
+    const userPhotosChanged = currentUserPhotos.some((photo, index) => photo !== originalUserPhotos[index]) ||
+                             originalUserPhotos.some((photo, index) => photo !== currentUserPhotos[index])
+    
+    // Compare other fields
+    const currentFamilyPhoto = formData.familyPhoto?.toString().trim() || ""
+    const originalFamilyPhoto = originalPhotosDetails.familyPhoto?.toString().trim() || ""
+    
+    const currentAadharFront = formData.aadharFront?.toString().trim() || ""
+    const originalAadharFront = originalPhotosDetails.aadharFront?.toString().trim() || ""
+    
+    const currentAadharBack = formData.aadharBack?.toString().trim() || ""
+    const originalAadharBack = originalPhotosDetails.aadharBack?.toString().trim() || ""
+    
+    return userPhotosChanged ||
+           currentFamilyPhoto !== originalFamilyPhoto ||
+           currentAadharFront !== originalAadharFront ||
+           currentAadharBack !== originalAadharBack
+  }
+
+  // Validate referral partner ID pattern
+  const validateReferralDetails = (): boolean => {
+    const partnerIdPattern = /^[A-Z]{2}\d{4}[A-Z]{2}\d{3}$/
+    const partnerId = formData.referralPartnerId || ""
+    
+    if (!partnerId) {
+      // Referral is optional, so empty is valid
+      return true
+    }
+
+    if (!partnerIdPattern.test(partnerId)) {
+      toast.error("Invalid partner ID format", {
+        description: "Format should be: 2 letters, 4 numbers, 2 letters, 3 numbers (e.g., AB1234CD567)",
+        style: {
+          background: "#fee2e2",
+          border: "1px solid #ef4444",
+          color: "#991b1b",
+        },
+      })
+      return false
+    }
+
+    return true
+  }
+
+  // Check if referral details have changed
+  const hasReferralDetailsChanged = (): boolean => {
+    const partnerIdPattern = /^[A-Z]{2}\d{4}[A-Z]{2}\d{3}$/
+    const currentPartnerId = formData.referralPartnerId || ""
+    
+    // If no original data exists, check if partner ID is valid and filled
+    if (!originalReferralDetails) {
+      return currentPartnerId !== "" && partnerIdPattern.test(currentPartnerId)
+    }
+
+    // Compare current form data with original saved data
+    const originalPartnerId = originalReferralDetails.referralPartnerId || ""
+    return currentPartnerId !== originalPartnerId
+  }
+
+  // Check if referral partner ID is valid (pattern matches and partner exists)
+  const isReferralPartnerIdValid = (): boolean => {
+    const partnerIdPattern = /^[A-Z]{2}\d{4}[A-Z]{2}\d{3}$/
+    const partnerId = formData.referralPartnerId || ""
+    
+    // If empty, it's valid (optional field)
+    if (partnerId === "") {
+      return true
+    }
+    
+    // Check pattern and if partner exists in database
+    return partnerIdPattern.test(partnerId) && isReferralPartnerValid
+  }
+
+  // Handle partner name change from ReferralStep component
+  const handlePartnerNameChange = (name: string | null, isValid: boolean) => {
+    setIsReferralPartnerValid(isValid)
+    setReferralPartnerName(name)
+  }
+
   const handleSave = async () => {
     setIsSaving(true)
     try {
@@ -1327,6 +2098,333 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         setOriginalEducationDetails(formData.educationDetails || [])
         
         toast.success("Education details saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
+      } else if (currentStep === 3) {
+        // Save professional details if we're on the professional details step
+        // Validate all fields
+        if (!validateProfessionalDetails()) {
+          setIsSaving(false)
+          return
+        }
+
+        // Calculate completion percentage for professional details
+        let professionalDetailsProgress = calculateStepProgress("professional")
+        
+        // Update the stored completion percentage after calculation
+        setProfessionalCompletionPercentage(professionalDetailsProgress)
+
+        const employmentType = formData.employmentType || ""
+        const originalEmploymentType = originalProfessionalDetails?.employmentType || ""
+
+        // If employment type changed, delete old files from storage
+        if (originalEmploymentType && originalEmploymentType !== employmentType) {
+          try {
+            // Delete old payslips if switching from employee
+            if (originalEmploymentType === "employee") {
+              const { data: files } = await supabase.storage
+                .from("payslips")
+                .list(userId)
+              
+              if (files && files.length > 0) {
+                const filePaths = files.map(file => `${userId}/${file.name}`)
+                await supabase.storage
+                  .from("payslips")
+                  .remove(filePaths)
+              }
+            }
+            
+            // Delete old ITR document if switching from business
+            if (originalEmploymentType === "business") {
+              const { data: files } = await supabase.storage
+                .from("itr-documents")
+                .list(userId)
+              
+              if (files && files.length > 0) {
+                const filePaths = files.map(file => `${userId}/${file.name}`)
+                await supabase.storage
+                  .from("itr-documents")
+                  .remove(filePaths)
+              }
+            }
+          } catch (error) {
+            console.warn("Error deleting old files from storage:", error)
+            // Continue even if deletion fails
+          }
+        }
+
+        // Delete from all tables first (to ensure clean state)
+        await supabase.from("profession_employee").delete().eq("user_id", userId)
+        await supabase.from("profession_business").delete().eq("user_id", userId)
+        await supabase.from("profession_student").delete().eq("user_id", userId)
+
+        if (employmentType === "employee") {
+          // Upload payslips to storage
+          const payslipUrls: string[] = []
+          const payslips = (formData.payslip as string[]) || []
+          
+          // Delete old payslips if they exist (in case of update)
+          if (originalProfessionalDetails?.payslip && Array.isArray(originalProfessionalDetails.payslip)) {
+            try {
+              const { data: files } = await supabase.storage
+                .from("payslips")
+                .list(userId)
+              
+              if (files && files.length > 0) {
+                const filePaths = files.map(file => `${userId}/${file.name}`)
+                await supabase.storage
+                  .from("payslips")
+                  .remove(filePaths)
+              }
+            } catch (error) {
+              console.warn("Error deleting old payslips:", error)
+            }
+          }
+
+          for (let i = 0; i < payslips.length; i++) {
+            const payslip = payslips[i]
+            
+            // If payslip is a base64 data URL (new upload), upload to Supabase storage
+            if (payslip && payslip.startsWith("data:image/") || payslip.startsWith("data:application/pdf")) {
+              try {
+                // Convert base64 to blob
+                const response = await fetch(payslip)
+                const blob = await response.blob()
+                
+                // Get file extension from data URL
+                const matches = payslip.match(/data:(image|application)\/(\w+);base64/)
+                const extension = matches ? matches[2] : "pdf"
+                
+                // Create file path: {user_id}/payslip_{index + 1}.{extension}
+                const filePath = `${userId}/payslip_${i + 1}.${extension}`
+                
+                // Upload to Supabase storage
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                  .from("payslips")
+                  .upload(filePath, blob, {
+                    upsert: true,
+                    contentType: blob.type,
+                  })
+
+                if (uploadError) throw uploadError
+
+                // Get signed URL (valid for 1 year) since bucket is private
+                const { data: urlData, error: urlError } = await supabase.storage
+                  .from("payslips")
+                  .createSignedUrl(filePath, 31536000) // 1 year in seconds
+
+                if (urlError) throw urlError
+                payslipUrls.push(urlData.signedUrl)
+              } catch (error) {
+                console.error(`Error uploading payslip ${i + 1}:`, error)
+                toast.error(`Error uploading payslip ${i + 1}`, {
+                  description: "Please try again.",
+                  style: {
+                    background: "#fee2e2",
+                    border: "1px solid #ef4444",
+                    color: "#991b1b",
+                  },
+                })
+                setIsSaving(false)
+                return
+              }
+            } else if (payslip && payslip.startsWith("http")) {
+              // Payslip is already a signed URL, use it directly
+              payslipUrls.push(payslip)
+            }
+          }
+
+          // Save to employee table
+          const employeeData = {
+            user_id: userId,
+            sector: formData.sector || null,
+            sector_other: formData.sector === "other" ? (formData.sectorOther || null) : null,
+            company: formData.company || null,
+            designation: formData.designation || null,
+            salary: formData.salary || null,
+            work_location: formData.workLocation || null,
+            payslip: payslipUrls.length > 0 ? payslipUrls : null,
+            completion_percentage: professionalDetailsProgress,
+          }
+
+          const { error } = await supabase
+            .from("profession_employee")
+            .upsert(employeeData, {
+              onConflict: "user_id",
+            })
+
+          if (error) throw error
+
+          // Update original data
+          setOriginalProfessionalDetails({
+            employmentType: "employee",
+            sector: formData.sector,
+            sectorOther: formData.sectorOther,
+            company: formData.company,
+            designation: formData.designation,
+            salary: formData.salary,
+            workLocation: formData.workLocation,
+            payslip: payslipUrls,
+          })
+
+          // Update form data with URLs if they were uploaded
+          if (payslipUrls.length > 0) {
+            setFormData((prev) => ({
+              ...prev,
+              payslip: payslipUrls,
+            }))
+          }
+        } else if (employmentType === "business") {
+          // Upload ITR document to storage
+          let itrDocumentUrl = formData.itrDocument || ""
+
+          // Delete old ITR document if it exists (in case of update)
+          if (originalProfessionalDetails?.itrDocument) {
+            try {
+              const { data: files } = await supabase.storage
+                .from("itr-documents")
+                .list(userId)
+              
+              if (files && files.length > 0) {
+                const filePaths = files.map(file => `${userId}/${file.name}`)
+                await supabase.storage
+                  .from("itr-documents")
+                  .remove(filePaths)
+              }
+            } catch (error) {
+              console.warn("Error deleting old ITR document:", error)
+            }
+          }
+
+          // If ITR document is a base64 data URL (new upload), upload to Supabase storage
+          if (formData.itrDocument && (formData.itrDocument.startsWith("data:image/") || formData.itrDocument.startsWith("data:application/pdf"))) {
+            try {
+              // Convert base64 to blob
+              const response = await fetch(formData.itrDocument)
+              const blob = await response.blob()
+              
+              // Get file extension from data URL
+              const matches = formData.itrDocument.match(/data:(image|application)\/(\w+);base64/)
+              const extension = matches ? matches[2] : "pdf"
+              
+              // Create file path: {user_id}/itr_document.{extension}
+              const filePath = `${userId}/itr_document.${extension}`
+              
+              // Upload to Supabase storage
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from("itr-documents")
+                .upload(filePath, blob, {
+                  upsert: true,
+                  contentType: blob.type,
+                })
+
+              if (uploadError) throw uploadError
+
+              // Get signed URL (valid for 1 year) since bucket is private
+              const { data: urlData, error: urlError } = await supabase.storage
+                .from("itr-documents")
+                .createSignedUrl(filePath, 31536000) // 1 year in seconds
+
+              if (urlError) throw urlError
+              itrDocumentUrl = urlData.signedUrl
+            } catch (error) {
+              console.error("Error uploading ITR document:", error)
+              toast.error("Error uploading ITR document", {
+                description: "Please try again.",
+                style: {
+                  background: "#fee2e2",
+                  border: "1px solid #ef4444",
+                  color: "#991b1b",
+                },
+              })
+              setIsSaving(false)
+              return
+            }
+          } else if (formData.itrDocument && formData.itrDocument.startsWith("http")) {
+            // Already a signed URL, use it
+            itrDocumentUrl = formData.itrDocument
+          }
+
+          // Save to business table
+          const businessData = {
+            user_id: userId,
+            sector: formData.sector || null,
+            sector_other: formData.sector === "other" ? (formData.sectorOther || null) : null,
+            business_name: formData.businessName || null,
+            business_type: formData.businessType || null,
+            business_type_other: formData.businessType === "other" ? (formData.businessTypeOther || null) : null,
+            designation: formData.designation || null,
+            annual_returns: formData.annualReturns || null,
+            business_location: formData.businessLocation || null,
+            itr_document: itrDocumentUrl || null,
+            completion_percentage: professionalDetailsProgress,
+          }
+
+          const { error } = await supabase
+            .from("profession_business")
+            .upsert(businessData, {
+              onConflict: "user_id",
+            })
+
+          if (error) throw error
+
+          // Update original data
+          setOriginalProfessionalDetails({
+            employmentType: "business",
+            sector: formData.sector,
+            sectorOther: formData.sectorOther,
+            businessName: formData.businessName,
+            businessType: formData.businessType,
+            businessTypeOther: formData.businessTypeOther,
+            designation: formData.designation,
+            annualReturns: formData.annualReturns,
+            businessLocation: formData.businessLocation,
+            itrDocument: itrDocumentUrl,
+          })
+
+          // Update form data with URL if it was uploaded
+          if (itrDocumentUrl !== formData.itrDocument) {
+            setFormData((prev) => ({
+              ...prev,
+              itrDocument: itrDocumentUrl,
+            }))
+          }
+        } else if (employmentType === "student") {
+          // Save to student table
+          const studentData = {
+            user_id: userId,
+            institution: formData.institution || null,
+            course: formData.course || null,
+            field_of_study: formData.fieldOfStudy || null,
+            year_of_study: formData.yearOfStudy || null,
+            expected_graduation_year: formData.expectedGraduationYear || null,
+            completion_percentage: professionalDetailsProgress,
+          }
+
+          const { error } = await supabase
+            .from("profession_student")
+            .upsert(studentData, {
+              onConflict: "user_id",
+            })
+
+          if (error) throw error
+
+          // Update original data
+          setOriginalProfessionalDetails({
+            employmentType: "student",
+            institution: formData.institution,
+            course: formData.course,
+            fieldOfStudy: formData.fieldOfStudy,
+            yearOfStudy: formData.yearOfStudy,
+            expectedGraduationYear: formData.expectedGraduationYear,
+          })
+        }
+
+        toast.success("Professional details saved successfully!", {
           style: {
             background: "#dcfce7",
             border: "1px solid #22c55e",
@@ -1602,14 +2700,437 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             color: "#166534",
           },
         })
-      } else {
-        // For other steps, use the existing save logic
+      } else if (currentStep === 8) {
+        // Save photos if we're on the photos step
+        // Validate all fields
+        if (!validatePhotosDetails()) {
+          setIsSaving(false)
+          return
+        }
+
+        // Calculate completion percentage for photos
+        const photosProgress = calculateStepProgress("photos")
+
+        // First, delete old user photos if the count has changed
+        const originalUserPhotos = originalPhotosDetails?.userPhotos || []
+        if (originalUserPhotos.length > 0) {
+          try {
+            // List all files in user-photos bucket for this user
+            const { data: files, error: listError } = await supabase.storage
+              .from("user-photos")
+              .list(userId)
+
+            if (!listError && files) {
+              // Delete all old photos
+              const filePaths = files.map(file => `${userId}/${file.name}`)
+              if (filePaths.length > 0) {
+                await supabase.storage
+                  .from("user-photos")
+                  .remove(filePaths)
+              }
+            }
+          } catch (error) {
+            console.warn("Error deleting old user photos:", error)
+            // Continue even if deletion fails
+          }
+        }
+
+        // Upload user photos to storage
+        const userPhotoUrls: string[] = []
+        const userPhotos = formData.userPhotos || []
+        
+        for (let i = 0; i < userPhotos.length; i++) {
+          const photo = userPhotos[i]
+          
+          // If photo is a base64 data URL (new upload), upload to Supabase storage
+          if (photo && photo.startsWith("data:image/")) {
+            try {
+              // Convert base64 to blob
+              const response = await fetch(photo)
+              const blob = await response.blob()
+              
+              // Get file extension from data URL
+              const matches = photo.match(/data:image\/(\w+);base64/)
+              const extension = matches ? matches[1] : "jpg"
+              
+              // Create file path: {user_id}/photo_{index + 1}.{extension}
+              const filePath = `${userId}/photo_${i + 1}.${extension}`
+              
+              // Upload to Supabase storage
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from("user-photos")
+                .upload(filePath, blob, {
+                  upsert: true,
+                  contentType: blob.type,
+                })
+
+              if (uploadError) throw uploadError
+
+              // Get signed URL (valid for 1 year) since bucket is private
+              const { data: urlData, error: urlError } = await supabase.storage
+                .from("user-photos")
+                .createSignedUrl(filePath, 31536000) // 1 year in seconds
+
+              if (urlError) throw urlError
+              userPhotoUrls.push(urlData.signedUrl)
+            } catch (error) {
+              console.error(`Error uploading user photo ${i + 1}:`, error)
+              toast.error(`Error uploading user photo ${i + 1}`, {
+                description: "Please try again.",
+                style: {
+                  background: "#fee2e2",
+                  border: "1px solid #ef4444",
+                  color: "#991b1b",
+                },
+              })
+              setIsSaving(false)
+              return
+            }
+          } else if (photo && photo.startsWith("http")) {
+            // Photo is already a signed URL, use it directly
+            userPhotoUrls.push(photo)
+          }
+        }
+
+        // Upload family photo to storage
+        let familyPhotoUrl = formData.familyPhoto || ""
+        if (formData.familyPhoto && formData.familyPhoto.startsWith("data:image/")) {
+          try {
+            // Delete old family photo if exists
+            if (originalPhotosDetails?.familyPhoto) {
+              try {
+                const { data: files } = await supabase.storage
+                  .from("family-photos")
+                  .list(userId)
+                
+                if (files && files.length > 0) {
+                  const filePaths = files.map(file => `${userId}/${file.name}`)
+                  await supabase.storage
+                    .from("family-photos")
+                    .remove(filePaths)
+                }
+              } catch (error) {
+                console.warn("Error deleting old family photo:", error)
+              }
+            }
+
+            const response = await fetch(formData.familyPhoto)
+            const blob = await response.blob()
+            
+            const matches = formData.familyPhoto.match(/data:image\/(\w+);base64/)
+            const extension = matches ? matches[1] : "jpg"
+            
+            const filePath = `${userId}/family.${extension}`
+            
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from("family-photos")
+              .upload(filePath, blob, {
+                upsert: true,
+                contentType: blob.type,
+              })
+
+            if (uploadError) throw uploadError
+
+            const { data: urlData, error: urlError } = await supabase.storage
+              .from("family-photos")
+              .createSignedUrl(filePath, 31536000)
+
+            if (urlError) throw urlError
+            familyPhotoUrl = urlData.signedUrl
+          } catch (error) {
+            console.error("Error uploading family photo:", error)
+            toast.error("Error uploading family photo", {
+              description: "Please try again.",
+              style: {
+                background: "#fee2e2",
+                border: "1px solid #ef4444",
+                color: "#991b1b",
+              },
+            })
+            setIsSaving(false)
+            return
+          }
+        } else if (formData.familyPhoto && formData.familyPhoto.startsWith("http")) {
+          // Already a signed URL, use it
+          familyPhotoUrl = formData.familyPhoto
+        }
+
+        // Upload Aadhar front to storage
+        let aadharFrontUrl = formData.aadharFront || ""
+        if (formData.aadharFront && formData.aadharFront.startsWith("data:image/")) {
+          try {
+            // Delete old Aadhar front if exists
+            if (originalPhotosDetails?.aadharFront) {
+              try {
+                const { data: files } = await supabase.storage
+                  .from("aadhar-photos")
+                  .list(userId)
+                
+                if (files && files.length > 0) {
+                  const frontFiles = files.filter(file => file.name.startsWith("front."))
+                  if (frontFiles.length > 0) {
+                    const filePaths = frontFiles.map(file => `${userId}/${file.name}`)
+                    await supabase.storage
+                      .from("aadhar-photos")
+                      .remove(filePaths)
+                  }
+                }
+              } catch (error) {
+                console.warn("Error deleting old Aadhar front:", error)
+              }
+            }
+
+            const response = await fetch(formData.aadharFront)
+            const blob = await response.blob()
+            
+            const matches = formData.aadharFront.match(/data:image\/(\w+);base64/)
+            const extension = matches ? matches[1] : "jpg"
+            
+            const filePath = `${userId}/front.${extension}`
+            
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from("aadhar-photos")
+              .upload(filePath, blob, {
+                upsert: true,
+                contentType: blob.type,
+              })
+
+            if (uploadError) throw uploadError
+
+            const { data: urlData, error: urlError } = await supabase.storage
+              .from("aadhar-photos")
+              .createSignedUrl(filePath, 31536000)
+
+            if (urlError) throw urlError
+            aadharFrontUrl = urlData.signedUrl
+          } catch (error) {
+            console.error("Error uploading Aadhar front:", error)
+            toast.error("Error uploading Aadhar card front", {
+              description: "Please try again.",
+              style: {
+                background: "#fee2e2",
+                border: "1px solid #ef4444",
+                color: "#991b1b",
+              },
+            })
+            setIsSaving(false)
+            return
+          }
+        } else if (formData.aadharFront && formData.aadharFront.startsWith("http")) {
+          // Already a signed URL, use it
+          aadharFrontUrl = formData.aadharFront
+        }
+
+        // Upload Aadhar back to storage
+        let aadharBackUrl = formData.aadharBack || ""
+        if (formData.aadharBack && formData.aadharBack.startsWith("data:image/")) {
+          try {
+            // Delete old Aadhar back if exists
+            if (originalPhotosDetails?.aadharBack) {
+              try {
+                const { data: files } = await supabase.storage
+                  .from("aadhar-photos")
+                  .list(userId)
+                
+                if (files && files.length > 0) {
+                  const backFiles = files.filter(file => file.name.startsWith("back."))
+                  if (backFiles.length > 0) {
+                    const filePaths = backFiles.map(file => `${userId}/${file.name}`)
+                    await supabase.storage
+                      .from("aadhar-photos")
+                      .remove(filePaths)
+                  }
+                }
+              } catch (error) {
+                console.warn("Error deleting old Aadhar back:", error)
+              }
+            }
+
+            const response = await fetch(formData.aadharBack)
+            const blob = await response.blob()
+            
+            const matches = formData.aadharBack.match(/data:image\/(\w+);base64/)
+            const extension = matches ? matches[1] : "jpg"
+            
+            const filePath = `${userId}/back.${extension}`
+            
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from("aadhar-photos")
+              .upload(filePath, blob, {
+                upsert: true,
+                contentType: blob.type,
+              })
+
+            if (uploadError) throw uploadError
+
+            const { data: urlData, error: urlError } = await supabase.storage
+              .from("aadhar-photos")
+              .createSignedUrl(filePath, 31536000)
+
+            if (urlError) throw urlError
+            aadharBackUrl = urlData.signedUrl
+          } catch (error) {
+            console.error("Error uploading Aadhar back:", error)
+            toast.error("Error uploading Aadhar card back", {
+              description: "Please try again.",
+              style: {
+                background: "#fee2e2",
+                border: "1px solid #ef4444",
+                color: "#991b1b",
+              },
+            })
+            setIsSaving(false)
+            return
+          }
+        } else if (formData.aadharBack && formData.aadharBack.startsWith("http")) {
+          // Already a signed URL, use it
+          aadharBackUrl = formData.aadharBack
+        }
+
+        const photosData = {
+          user_id: userId,
+          user_photos: userPhotoUrls,
+          family_photo: familyPhotoUrl || null,
+          aadhar_front: aadharFrontUrl || null,
+          aadhar_back: aadharBackUrl || null,
+          completion_percentage: photosProgress,
+        }
+
         const { error } = await supabase
-          .from("users")
-          .update(formData)
-          .eq("id", userId)
+          .from("photos")
+          .upsert(photosData, {
+            onConflict: "user_id",
+          })
 
         if (error) throw error
+        
+        // Update original data after successful save
+        setOriginalPhotosDetails({
+          userPhotos: userPhotoUrls,
+          familyPhoto: familyPhotoUrl,
+          aadharFront: aadharFrontUrl,
+          aadharBack: aadharBackUrl,
+        })
+        
+        // Update form data with the URLs if they were uploaded
+        if (userPhotoUrls.length > 0 || familyPhotoUrl !== formData.familyPhoto || 
+            aadharFrontUrl !== formData.aadharFront || aadharBackUrl !== formData.aadharBack) {
+          setFormData((prev) => ({
+            ...prev,
+            userPhotos: userPhotoUrls,
+            familyPhoto: familyPhotoUrl,
+            aadharFront: aadharFrontUrl,
+            aadharBack: aadharBackUrl,
+          }))
+        }
+        
+        toast.success("Photos saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
+      } else if (currentStep === 9) {
+        // Save referral if we're on the referral step
+        // Validate partner ID format
+        if (!validateReferralDetails()) {
+          setIsSaving(false)
+          return
+        }
+
+        const partnerId = formData.referralPartnerId || ""
+        
+        // If partner ID is provided, validate it exists in referral_partners table
+        if (partnerId) {
+          try {
+            const { data, error: checkError } = await supabase
+              .from("referral_partners")
+              .select("partner_id")
+              .eq("partner_id", partnerId)
+              .maybeSingle()
+
+            if (checkError) {
+              throw checkError
+            }
+
+            if (!data) {
+              toast.error("Invalid partner ID", {
+                description: "This partner id is not valid please get the proper id from the partner",
+                style: {
+                  background: "#fee2e2",
+                  border: "1px solid #ef4444",
+                  color: "#991b1b",
+                },
+              })
+              setIsSaving(false)
+              return
+            }
+          } catch (error) {
+            console.error("Error checking partner ID:", error)
+            toast.error("Error validating partner ID", {
+              description: "Please try again.",
+              style: {
+                background: "#fee2e2",
+                border: "1px solid #ef4444",
+                color: "#991b1b",
+              },
+            })
+            setIsSaving(false)
+            return
+          }
+        }
+
+        // Get partner name from state (set by ReferralStep component)
+        const partnerName = referralPartnerName || null
+
+        // Save referral details to referral_details table
+        const referralData = {
+          user_id: userId,
+          referral_partner_id: partnerId || null,
+          referral_partner_name: partnerName,
+        }
+
+        const { error } = await supabase
+          .from("referral_details")
+          .upsert(referralData, {
+            onConflict: "user_id",
+          })
+
+        if (error) {
+          console.error("Error saving referral details:", error)
+          toast.error("Error saving referral details", {
+            description: "Please try again.",
+            style: {
+              background: "#fee2e2",
+              border: "1px solid #ef4444",
+              color: "#991b1b",
+            },
+          })
+          setIsSaving(false)
+          return
+        }
+        
+        // Update original data after successful save
+        setOriginalReferralDetails({
+          referralPartnerId: partnerId,
+        })
+        
+        toast.success("Referral details saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
+      } else {
+        // For other steps, use the existing save logic
+      const { error } = await supabase
+        .from("users")
+        .update(formData)
+        .eq("id", userId)
+
+      if (error) throw error
         toast.success("Profile saved successfully!", {
           style: {
             background: "#dcfce7",
@@ -1705,33 +3226,6 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                   )
                 })}
               </div>
-
-              {/* Save Button */}
-              {currentStep === formSteps.length - 1 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-6"
-                >
-                  <Button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3"
-                  >
-                    {isSaving ? (
-                      <>
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Save Profile
-                      </>
-                    )}
-                  </Button>
-                </motion.div>
-              )}
             </div>
           </div>
 
@@ -1743,74 +3237,74 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
                   {formSteps[currentStep].title}
                 </h2>
-                <div className="relative">
+            <div className="relative">
                   <div className="h-12 w-12 rounded-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] p-0.5">
-                    <div className="h-full w-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center">
+                <div className="h-full w-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center">
                       <span className="text-sm font-bold text-gray-900 dark:text-white">
-                        {stepProgress}%
-                      </span>
-                    </div>
-                  </div>
-                  {/* Circular progress ring */}
+                    {stepProgress}%
+                  </span>
+                </div>
+              </div>
+              {/* Circular progress ring */}
                   <svg className="absolute inset-0 h-12 w-12 transform -rotate-90" viewBox="0 0 48 48">
-                    <circle
+                <circle
                       cx="24"
                       cy="24"
                       r="22"
-                      fill="none"
-                      stroke="currentColor"
+                  fill="none"
+                  stroke="currentColor"
                       strokeWidth="2"
-                      className="text-gray-200 dark:text-gray-700"
-                    />
-                    <circle
+                  className="text-gray-200 dark:text-gray-700"
+                />
+                <circle
                       cx="24"
                       cy="24"
                       r="22"
-                      fill="none"
-                      stroke="url(#step-progress-gradient)"
+                  fill="none"
+                  stroke="url(#step-progress-gradient)"
                       strokeWidth="2"
                       strokeDasharray={`${2 * Math.PI * 22}`}
                       strokeDashoffset={`${2 * Math.PI * 22 * (1 - stepProgress / 100)}`}
-                      strokeLinecap="round"
-                      className="transition-all duration-300"
-                    />
-                    <defs>
-                      <linearGradient id="step-progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#1F4068" />
-                        <stop offset="50%" stopColor="#4B0082" />
-                        <stop offset="100%" stopColor="#FF1493" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-              </div>
+                  strokeLinecap="round"
+                  className="transition-all duration-300"
+                />
+                <defs>
+                  <linearGradient id="step-progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#1F4068" />
+                    <stop offset="50%" stopColor="#4B0082" />
+                    <stop offset="100%" stopColor="#FF1493" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+          </div>
 
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentStep}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {currentStep === 0 && <PersonalDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 1 && <ContactDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 2 && <EducationalDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 3 && <ProfessionalDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 4 && <FamilyDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 5 && <HoroscopeDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 6 && <InterestsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 7 && <SocialHabitsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 8 && <PhotosStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 9 && <ReferralStep formData={formData} onChange={handleInputChange} />}
-                </motion.div>
-              </AnimatePresence>
+              transition={{ duration: 0.3 }}
+            >
+              {currentStep === 0 && <PersonalDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 1 && <ContactDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 2 && <EducationalDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 3 && <ProfessionalDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 4 && <FamilyDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 5 && <HoroscopeDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 6 && <InterestsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 7 && <SocialHabitsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 8 && <PhotosStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 9 && <ReferralStep formData={formData} onChange={handleInputChange} onPartnerNameChange={handlePartnerNameChange} />}
+            </motion.div>
+          </AnimatePresence>
 
               {/* Save Button for each form */}
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <Button
-                  onClick={handleSave}
-                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged()) || (currentStep === 6 && !hasInterestsDetailsChanged()) || (currentStep === 7 && !hasSocialHabitsDetailsChanged())}
+              <Button
+                onClick={handleSave}
+                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 3 && (!areAllProfessionalDetailsFilled() || !hasProfessionalDetailsChanged())) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged()) || (currentStep === 6 && !hasInterestsDetailsChanged()) || (currentStep === 7 && !hasSocialHabitsDetailsChanged()) || (currentStep === 8 && (!areAllPhotosFieldsFilled() || !hasPhotosDetailsChanged())) || (currentStep === 9 && (!isReferralPartnerIdValid() || !hasReferralDetailsChanged()))}
                   className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-3 disabled:opacity-50 disabled:pointer-events-auto disabled:cursor-not-allowed"
                 >
                   {isSaving ? (

@@ -168,17 +168,17 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
         <div className="space-y-4 md:col-span-2">
           <Label>Current Residence of Parents (Permanent/Temporary) *</Label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2 md:col-span-2">
+        <div className="space-y-2 md:col-span-2">
               <Label htmlFor="parentsAddressLine1">Address Line 1 *</Label>
-              <Input
+          <Input
                 id="parentsAddressLine1"
                 value={formData.parentsAddressLine1 || ""}
                 onChange={(e) => onChange("parentsAddressLine1", e.target.value)}
                 placeholder="Enter address line 1"
-                required
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
+            required
+          />
+        </div>
+        <div className="space-y-2 md:col-span-2">
               <Label htmlFor="parentsAddressLine2">Address Line 2</Label>
               <Input
                 id="parentsAddressLine2"

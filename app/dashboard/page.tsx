@@ -206,47 +206,6 @@ export default function DashboardPage() {
                 Back to Dashboard
               </Button>
             )}
-            {/* Profile Progress Icon */}
-            <div className="relative">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] p-0.5">
-                <div className="h-full w-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center">
-                  <span className="text-xs font-bold text-gray-900 dark:text-white">
-                    {profileProgress}%
-                  </span>
-                </div>
-              </div>
-              {/* Circular progress ring */}
-              <svg className="absolute inset-0 h-10 w-10 transform -rotate-90" viewBox="0 0 40 40">
-                <circle
-                  cx="20"
-                  cy="20"
-                  r="18"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  className="text-gray-200 dark:text-gray-700"
-                />
-                <circle
-                  cx="20"
-                  cy="20"
-                  r="18"
-                  fill="none"
-                  stroke="url(#progress-gradient)"
-                  strokeWidth="1.5"
-                  strokeDasharray={`${2 * Math.PI * 18}`}
-                  strokeDashoffset={`${2 * Math.PI * 18 * (1 - profileProgress / 100)}`}
-                  strokeLinecap="round"
-                  className="transition-all duration-300"
-                />
-                <defs>
-                  <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#1F4068" />
-                    <stop offset="50%" stopColor="#4B0082" />
-                    <stop offset="100%" stopColor="#FF1493" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
             <Button
               onClick={handleLogout}
               size="sm"
@@ -268,6 +227,7 @@ export default function DashboardPage() {
           ) : (
             <UserLandingPage 
               userEmail={user.email || ""}
+              userId={user.id}
               onNavigateToProfileSetup={() => setShowProfileSetup(true)}
             />
           )
