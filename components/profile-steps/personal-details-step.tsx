@@ -1,11 +1,13 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FormData } from "@/types/profile"
-import { ChevronDown } from "lucide-react"
 import { useMasterData } from "@/hooks/use-master-data"
+import { SelectDropdown } from "@/components/ui/select-dropdown"
+import { LanguageDropdown } from "@/components/ui/language-dropdown"
+import { SkinColorDropdown } from "@/components/ui/skin-color-dropdown"
 
 interface PersonalDetailsStepProps {
   formData: FormData
@@ -13,16 +15,14 @@ interface PersonalDetailsStepProps {
 }
 
 export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepProps) {
-  const [isIndianLangOpen, setIsIndianLangOpen] = useState(false)
-  const [isInternationalLangOpen, setIsInternationalLangOpen] = useState(false)
-  const indianLangRef = useRef<HTMLDivElement>(null)
-  const internationalLangRef = useRef<HTMLDivElement>(null)
-  
-  // Fetch gender options from master_gender table using the common hook
+  // Fetch all master data using the common hook
   const { data: genderOptions } = useMasterData({ tableName: "master_gender" })
-  
-  // Fetch skin color options from master_skin_colour table using the common hook
   const { data: skinColorData } = useMasterData({ tableName: "master_skin_colour" })
+  const { data: bodyTypeOptions } = useMasterData({ tableName: "master_body_type" })
+  const { data: maritalStatusOptions } = useMasterData({ tableName: "master_marital_status" })
+  const { data: foodPreferenceOptions } = useMasterData({ tableName: "master_food_preferences" })
+  const { data: indianLanguagesData } = useMasterData({ tableName: "master_indian_languages" })
+  const { data: internationalLanguagesData } = useMasterData({ tableName: "master_international_languages" })
   
   // Transform skin color data to match the expected structure
   const skinColorOptions = skinColorData.map((item) => ({
@@ -31,42 +31,11 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
     color: item.colour_code || "#000000", // Default to black if no colour_code
   }))
   
-  // Fetch body type options from master_body_type table using the common hook
-  const { data: bodyTypeOptions } = useMasterData({ tableName: "master_body_type" })
-  
-  // Fetch marital status options from master_marital_status table using the common hook
-  const { data: maritalStatusOptions } = useMasterData({ tableName: "master_marital_status" })
-  
-  // Fetch food preference options from master_food_preferences table using the common hook
-  const { data: foodPreferenceOptions } = useMasterData({ tableName: "master_food_preferences" })
-  
-  // Fetch Indian languages from master_indian_languages table using the common hook
-  const { data: indianLanguagesData } = useMasterData({ tableName: "master_indian_languages" })
-  
-  // Transform Indian languages data to array of language names
+  // Transform languages data to arrays of language names
   const indianLanguages = indianLanguagesData.map((item) => item.value)
-  
-  // Fetch International languages from master_international_languages table using the common hook
-  const { data: internationalLanguagesData } = useMasterData({ tableName: "master_international_languages" })
-  
-  // Transform International languages data to array of language names
   const internationalLanguages = internationalLanguagesData.map((item) => item.value)
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (indianLangRef.current && !indianLangRef.current.contains(event.target as Node)) {
-        setIsIndianLangOpen(false)
-      }
-      if (internationalLangRef.current && !internationalLangRef.current.contains(event.target as Node)) {
-        setIsInternationalLangOpen(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
-  const toggleLanguage = (lang: string, category: "indian" | "international") => {
+  const toggleLanguage = (lang: string) => {
     const currentLangs = formData.languages || []
     if (currentLangs.includes(lang)) {
       onChange("languages", currentLangs.filter((l) => l !== lang))
@@ -74,21 +43,6 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
       onChange("languages", [...currentLangs, lang])
     }
   }
-  const [isSkinColorOpen, setIsSkinColorOpen] = useState(false)
-  const skinColorRef = useRef<HTMLDivElement>(null)
-
-  const selectedSkinColor = skinColorOptions.find(opt => opt.value === formData.skinColor)
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (skinColorRef.current && !skinColorRef.current.contains(event.target as Node)) {
-        setIsSkinColorOpen(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
 
   return (
     <div className="space-y-6">
@@ -157,23 +111,14 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
             )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="sex">Gender *</Label>
-          <select
-            id="sex"
-            value={formData.sex}
-            onChange={(e) => onChange("sex", e.target.value)}
-            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-            required
-          >
-            <option value="" disabled>Select</option>
-            {genderOptions.map((option) => (
-              <option key={option.id} value={option.value}>
-                {option.value}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectDropdown
+          id="sex"
+          label="Gender *"
+          value={formData.sex}
+          onChange={(value) => onChange("sex", value)}
+          options={genderOptions}
+          required
+        />
 
         <div className="space-y-2">
           <Label htmlFor="height">Height (cm) *</Label>
@@ -222,202 +167,59 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="skinColor">Skin Color *</Label>
-          <div className="relative" ref={skinColorRef}>
-            <button
-              type="button"
-              onClick={() => setIsSkinColorOpen(!isSkinColorOpen)}
-              className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem]"
-            >
-              <div className="flex items-center gap-2">
-                {selectedSkinColor ? (
-                  <>
-                    <span>{selectedSkinColor.label}</span>
-                    <div
-                      className="w-5 h-5 rounded border border-gray-300"
-                      style={{ backgroundColor: selectedSkinColor.color }}
-                    />
-                  </>
-                ) : (
-                  <span className="text-gray-500">Select</span>
-                )}
-              </div>
-              <ChevronDown className={`h-4 w-4 transition-transform ${isSkinColorOpen ? "rotate-180" : ""}`} />
-            </button>
-            {isSkinColorOpen && (
-              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden">
-                {skinColorOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => {
-                      onChange("skinColor", option.value)
-                      setIsSkinColorOpen(false)
-                    }}
-                    className="w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-between text-left transition-colors"
-                  >
-                    <span>{option.label}</span>
-                    <div
-                      className="w-5 h-5 rounded border border-gray-300"
-                      style={{ backgroundColor: option.color }}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        <SkinColorDropdown
+          value={formData.skinColor}
+          onChange={(value) => onChange("skinColor", value)}
+          options={skinColorOptions}
+          required
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:col-span-2">
-          <div className="space-y-2">
-            <Label htmlFor="bodyType">Body Type *</Label>
-            <select
-              id="bodyType"
-              value={formData.bodyType}
-              onChange={(e) => onChange("bodyType", e.target.value)}
-              className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-              required
-            >
-              <option value="" disabled>Select</option>
-              {bodyTypeOptions.map((option) => (
-                <option key={option.id} value={option.value}>
-                  {option.value}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectDropdown
+            id="bodyType"
+            label="Body Type *"
+            value={formData.bodyType}
+            onChange={(value) => onChange("bodyType", value)}
+            options={bodyTypeOptions}
+            required
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="maritalStatus">Marital Status *</Label>
-            <select
-              id="maritalStatus"
-              value={formData.maritalStatus}
-              onChange={(e) => onChange("maritalStatus", e.target.value)}
-              className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-              required
-            >
-              <option value="" disabled>Select</option>
-              {maritalStatusOptions.map((option) => (
-                <option key={option.id} value={option.value}>
-                  {option.value}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectDropdown
+            id="maritalStatus"
+            label="Marital Status *"
+            value={formData.maritalStatus}
+            onChange={(value) => onChange("maritalStatus", value)}
+            options={maritalStatusOptions}
+            required
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="foodPreference">Food Preference *</Label>
-            <select
-              id="foodPreference"
-              value={formData.foodPreference}
-              onChange={(e) => onChange("foodPreference", e.target.value)}
-              className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-              required
-            >
-              <option value="" disabled>Select</option>
-              {foodPreferenceOptions.map((option) => (
-                <option key={option.id} value={option.value}>
-                  {option.value}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectDropdown
+            id="foodPreference"
+            label="Food Preference *"
+            value={formData.foodPreference}
+            onChange={(value) => onChange("foodPreference", value)}
+            options={foodPreferenceOptions}
+            required
+          />
         </div>
 
         <div className="space-y-2 md:col-span-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Indian Languages Dropdown */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Indian Languages *</Label>
-              <div className="relative" ref={indianLangRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsIndianLangOpen(!isIndianLangOpen)}
-                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem]"
-                >
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {formData.languages.filter((lang) => indianLanguages.includes(lang)).length > 0 ? (
-                      <span className="text-sm">
-                        {formData.languages.filter((lang) => indianLanguages.includes(lang)).length} selected
-                      </span>
-                    ) : (
-                      <span className="text-gray-500">Select Indian languages</span>
-                    )}
-                  </div>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${isIndianLangOpen ? "rotate-180" : ""}`} />
-                </button>
-                {isIndianLangOpen && (
-                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden max-h-60 overflow-y-auto language-dropdown-scroll">
-                    {indianLanguages.map((lang) => (
-                      <button
-                        key={lang}
-                        type="button"
-                        onClick={() => toggleLanguage(lang, "indian")}
-                        className={`w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 text-left transition-colors ${
-                          formData.languages.includes(lang) ? "bg-gray-100 dark:bg-gray-800" : ""
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={formData.languages.includes(lang)}
-                          onChange={() => {}}
-                          className="rounded border-gray-300"
-                          readOnly
-                        />
-                        <span>{lang}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <LanguageDropdown
+              label="Indian Languages *"
+              languages={indianLanguages}
+              selectedLanguages={formData.languages || []}
+              onToggle={toggleLanguage}
+              placeholder="Select Indian languages"
+            />
 
-            {/* International Languages Dropdown */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">International Languages *</Label>
-              <div className="relative" ref={internationalLangRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsInternationalLangOpen(!isInternationalLangOpen)}
-                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem]"
-                >
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {formData.languages.filter((lang) => internationalLanguages.includes(lang)).length > 0 ? (
-                      <span className="text-sm">
-                        {formData.languages.filter((lang) => internationalLanguages.includes(lang)).length} selected
-                      </span>
-                    ) : (
-                      <span className="text-gray-500">Select International languages</span>
-                    )}
-                  </div>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${isInternationalLangOpen ? "rotate-180" : ""}`} />
-                </button>
-                {isInternationalLangOpen && (
-                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden max-h-60 overflow-y-auto language-dropdown-scroll">
-                    {internationalLanguages.map((lang) => (
-                      <button
-                        key={lang}
-                        type="button"
-                        onClick={() => toggleLanguage(lang, "international")}
-                        className={`w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 text-left transition-colors ${
-                          formData.languages.includes(lang) ? "bg-gray-100 dark:bg-gray-800" : ""
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={formData.languages.includes(lang)}
-                          onChange={() => {}}
-                          className="rounded border-gray-300"
-                          readOnly
-                        />
-                        <span>{lang}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <LanguageDropdown
+              label="International Languages *"
+              languages={internationalLanguages}
+              selectedLanguages={formData.languages || []}
+              onToggle={toggleLanguage}
+              placeholder="Select International languages"
+            />
           </div>
         </div>
 
