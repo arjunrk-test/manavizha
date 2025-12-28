@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FormData } from "@/types/profile"
 import { ChevronDown } from "lucide-react"
+import { useMasterData } from "@/hooks/use-master-data"
 
 interface PersonalDetailsStepProps {
   formData: FormData
@@ -12,13 +13,44 @@ interface PersonalDetailsStepProps {
 }
 
 export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepProps) {
-  const indianLanguages = ["Hindi", "Tamil", "Telugu", "Malayalam", "Kannada", "Bengali", "Gujarati", "Marathi", "Punjabi", "Urdu", "Odia", "Assamese", "Sanskrit"]
-  const internationalLanguages = ["English", "French", "Spanish", "German", "Italian", "Portuguese", "Chinese", "Japanese", "Korean", "Arabic", "Russian"]
-  
   const [isIndianLangOpen, setIsIndianLangOpen] = useState(false)
   const [isInternationalLangOpen, setIsInternationalLangOpen] = useState(false)
   const indianLangRef = useRef<HTMLDivElement>(null)
   const internationalLangRef = useRef<HTMLDivElement>(null)
+  
+  // Fetch gender options from master_gender table using the common hook
+  const { data: genderOptions } = useMasterData({ tableName: "master_gender" })
+  
+  // Fetch skin color options from master_skin_colour table using the common hook
+  const { data: skinColorData } = useMasterData({ tableName: "master_skin_colour" })
+  
+  // Transform skin color data to match the expected structure
+  const skinColorOptions = skinColorData.map((item) => ({
+    value: item.value,
+    label: item.value,
+    color: item.colour_code || "#000000", // Default to black if no colour_code
+  }))
+  
+  // Fetch body type options from master_body_type table using the common hook
+  const { data: bodyTypeOptions } = useMasterData({ tableName: "master_body_type" })
+  
+  // Fetch marital status options from master_marital_status table using the common hook
+  const { data: maritalStatusOptions } = useMasterData({ tableName: "master_marital_status" })
+  
+  // Fetch food preference options from master_food_preferences table using the common hook
+  const { data: foodPreferenceOptions } = useMasterData({ tableName: "master_food_preferences" })
+  
+  // Fetch Indian languages from master_indian_languages table using the common hook
+  const { data: indianLanguagesData } = useMasterData({ tableName: "master_indian_languages" })
+  
+  // Transform Indian languages data to array of language names
+  const indianLanguages = indianLanguagesData.map((item) => item.value)
+  
+  // Fetch International languages from master_international_languages table using the common hook
+  const { data: internationalLanguagesData } = useMasterData({ tableName: "master_international_languages" })
+  
+  // Transform International languages data to array of language names
+  const internationalLanguages = internationalLanguagesData.map((item) => item.value)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -44,16 +76,6 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
   }
   const [isSkinColorOpen, setIsSkinColorOpen] = useState(false)
   const skinColorRef = useRef<HTMLDivElement>(null)
-
-  const skinColorOptions = [
-    { value: "very-fair", label: "Very Fair", color: "#FBE8D3" },
-    { value: "fair-wheatish", label: "Fair / Wheatish", color: "#F0C8A0" },
-    { value: "light-brown", label: "Light Brown", color: "#D2A679" },
-    { value: "medium-brown", label: "Medium Brown", color: "#B7834B" },
-    { value: "deep-brown", label: "Deep Brown", color: "#7A4B2A" },
-    { value: "dark-brown", label: "Dark Brown", color: "#4A2A18" },
-    { value: "very-dark", label: "Very Dark", color: "#2C1A12" },
-  ]
 
   const selectedSkinColor = skinColorOptions.find(opt => opt.value === formData.skinColor)
 
@@ -145,8 +167,11 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
             required
           >
             <option value="" disabled>Select</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
+            {genderOptions.map((option) => (
+              <option key={option.id} value={option.value}>
+                {option.value}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -255,12 +280,11 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
               required
             >
               <option value="" disabled>Select</option>
-              <option value="slim">Slim</option>
-              <option value="average-medium">Average / Medium Build</option>
-              <option value="athletic-fit">Athletic / Fit</option>
-              <option value="muscular">Muscular</option>
-              <option value="few-extra-kilos">Few Extra Kilos</option>
-              <option value="plus-size">Plus Size</option>
+              {bodyTypeOptions.map((option) => (
+                <option key={option.id} value={option.value}>
+                  {option.value}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -274,10 +298,11 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
               required
             >
               <option value="" disabled>Select</option>
-              <option value="never-married">Never Married</option>
-              <option value="divorced">Divorced</option>
-              <option value="separated">Separated</option>
-              <option value="widowed">Widowed</option>
+              {maritalStatusOptions.map((option) => (
+                <option key={option.id} value={option.value}>
+                  {option.value}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -291,12 +316,11 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
               required
             >
               <option value="" disabled>Select</option>
-              <option value="vegetarian">Vegetarian</option>
-              <option value="eggetarian">Eggetarian</option>
-              <option value="non-vegetarian">Non-Vegetarian</option>
-              <option value="vegan">Vegan</option>
-              <option value="jain-vegetarian">Jain Vegetarian</option>
-              <option value="no-preference">No preference</option>
+              {foodPreferenceOptions.map((option) => (
+                <option key={option.id} value={option.value}>
+                  {option.value}
+                </option>
+              ))}
             </select>
           </div>
         </div>
