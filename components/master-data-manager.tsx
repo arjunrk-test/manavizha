@@ -28,6 +28,7 @@ interface MasterDataManagerProps {
   onAddDialogChange?: (open: boolean) => void
   showColourCode?: boolean
   showCategory?: boolean
+  refreshKey?: number // Key to trigger refresh
 }
 
 export function MasterDataManager({
@@ -41,6 +42,7 @@ export function MasterDataManager({
   onAddDialogChange: externalOnDialogChange,
   showColourCode = false,
   showCategory = false,
+  refreshKey = 0,
 }: MasterDataManagerProps) {
   const [values, setValues] = useState<MasterDataValue[]>([])
   const [internalIsDialogOpen, setInternalIsDialogOpen] = useState(false)
@@ -61,7 +63,7 @@ export function MasterDataManager({
 
   useEffect(() => {
     fetchValues()
-  }, [tableName])
+  }, [tableName, refreshKey])
 
   const fetchValues = async () => {
     try {
