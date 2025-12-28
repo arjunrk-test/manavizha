@@ -6,6 +6,9 @@ import { Label } from "@/components/ui/label"
 import { FormData } from "@/types/profile"
 import { Textarea } from "@/components/ui/textarea"
 import { ChevronDown } from "lucide-react"
+import { useMasterData } from "@/hooks/use-master-data"
+import { SelectDropdown } from "@/components/ui/select-dropdown"
+import { useClickOutside } from "@/hooks/use-click-outside"
 
 interface FamilyDetailsStepProps {
   formData: FormData
@@ -30,6 +33,14 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
   const [parentsAreas, setParentsAreas] = useState<PostOffice[]>([])
   const [isParentsAreaOpen, setIsParentsAreaOpen] = useState(false)
   const parentsAreaRef = useRef<HTMLDivElement>(null)
+
+  // Fetch family master data using the common hook
+  const { data: casteOptions } = useMasterData({ tableName: "master_caste" })
+  const { data: subcasteOptions } = useMasterData({ tableName: "master_subcaste" })
+  const { data: kulamOptions } = useMasterData({ tableName: "master_kulam" })
+  const { data: gotramOptions } = useMasterData({ tableName: "master_gotram" })
+  const { data: familyTypeOptions } = useMasterData({ tableName: "master_family_type" })
+  const { data: familyStatusOptions } = useMasterData({ tableName: "master_family_status" })
 
   // Function to fetch areas from pincode
   const fetchAreasFromPincode = async (pincode: string) => {
@@ -112,16 +123,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
   }, [formData.parentsPincode])
 
   // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (parentsAreaRef.current && !parentsAreaRef.current.contains(event.target as Node)) {
-        setIsParentsAreaOpen(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+  useClickOutside<HTMLDivElement>(parentsAreaRef, () => setIsParentsAreaOpen(false))
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -398,80 +400,59 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
             required
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="caste">Caste *</Label>
-          <Input
-            id="caste"
-            value={formData.caste || ""}
-            onChange={(e) => onChange("caste", e.target.value)}
-            placeholder="Enter caste"
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="subcaste">Subcaste *</Label>
-          <Input
-            id="subcaste"
-            value={formData.subcaste || ""}
-            onChange={(e) => onChange("subcaste", e.target.value)}
-            placeholder="Enter subcaste"
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="kulam">Kulam *</Label>
-          <Input
-            id="kulam"
-            value={formData.kulam || ""}
-            onChange={(e) => onChange("kulam", e.target.value)}
-            placeholder="Enter kulam"
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="gotram">Gotram *</Label>
-          <Input
-            id="gotram"
-            value={formData.gotram || ""}
-            onChange={(e) => onChange("gotram", e.target.value)}
-            placeholder="Enter gotram"
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="familyType">Family Type *</Label>
-          <select
-            id="familyType"
-            value={formData.familyType || ""}
-            onChange={(e) => onChange("familyType", e.target.value)}
-            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-            required
-          >
-            <option value="">Select</option>
-            <option value="nuclear">Nuclear Family</option>
-            <option value="joint">Joint Family</option>
-            <option value="extended">Extended Family</option>
-            <option value="single-parent">Single Parent Family</option>
-            <option value="separated">Separated Family</option>
-          </select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="familyStatus">Family Status *</Label>
-          <select
-            id="familyStatus"
-            value={formData.familyStatus || ""}
-            onChange={(e) => onChange("familyStatus", e.target.value)}
-            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-            required
-          >
-            <option value="">Select</option>
-            <option value="lower-middle-class">Lower Middle Class</option>
-            <option value="middle-class">Middle Class</option>
-            <option value="upper-middle-class">Upper Middle Class</option>
-            <option value="rich">Rich</option>
-            <option value="affluent">Affluent</option>
-          </select>
-        </div>
+        <SelectDropdown
+          id="caste"
+          label="Caste *"
+          value={formData.caste || ""}
+          onChange={(value) => onChange("caste", value)}
+          options={casteOptions}
+          required
+        />
+
+        <SelectDropdown
+          id="subcaste"
+          label="Subcaste *"
+          value={formData.subcaste || ""}
+          onChange={(value) => onChange("subcaste", value)}
+          options={subcasteOptions}
+          required
+        />
+
+        <SelectDropdown
+          id="kulam"
+          label="Kulam *"
+          value={formData.kulam || ""}
+          onChange={(value) => onChange("kulam", value)}
+          options={kulamOptions}
+          required
+        />
+
+        <SelectDropdown
+          id="gotram"
+          label="Gotram *"
+          value={formData.gotram || ""}
+          onChange={(value) => onChange("gotram", value)}
+          options={gotramOptions}
+          required
+        />
+
+        <SelectDropdown
+          id="familyType"
+          label="Family Type *"
+          value={formData.familyType || ""}
+          onChange={(value) => onChange("familyType", value)}
+          options={familyTypeOptions}
+          required
+        />
+
+        <SelectDropdown
+          id="familyStatus"
+          label="Family Status *"
+          value={formData.familyStatus || ""}
+          onChange={(value) => onChange("familyStatus", value)}
+          options={familyStatusOptions}
+          required
+        />
       </div>
     </div>
   )
