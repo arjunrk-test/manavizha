@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Upload, X } from "lucide-react"
 import { FormData } from "@/types/profile"
+import { useMasterData } from "@/hooks/use-master-data"
+import { CustomSelectDropdown } from "@/components/ui/custom-select-dropdown"
 
 interface ProfessionalDetailsStepProps {
   formData: FormData
@@ -15,6 +17,25 @@ interface ProfessionalDetailsStepProps {
 export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDetailsStepProps) {
   const [payslipError, setPayslipError] = useState<string>("")
   const [itrError, setItrError] = useState<string>("")
+
+  // Fetch employment type from master_employment_type table using the common hook
+  const { data: employmentTypeOptions } = useMasterData({ tableName: "master_employment_type" })
+  
+  // Fetch sector, business type, and year of study from master tables
+  const { data: sectorOptions } = useMasterData({ tableName: "master_sector" })
+  const { data: businessTypeOptions } = useMasterData({ tableName: "master_type_of_business" })
+  const { data: yearOfStudyOptions } = useMasterData({ tableName: "master_year_of_study" })
+  
+  // Fetch education level data to get unique categories for course dropdown
+  const { data: educationLevelData } = useMasterData({ tableName: "master_education_level" })
+  
+  // Extract unique categories from education level data
+  const courseOptions = Array.from(
+    new Set(educationLevelData.map(item => item.category).filter(Boolean))
+  ).map(category => ({
+    id: category || "",
+    value: category || ""
+  }))
 
   const validateFile = (file: File): string | null => {
     if (file.size > 5 * 1024 * 1024) {
@@ -108,81 +129,45 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
     setItrError("")
   }
 
-  const isEmployee = formData.employmentType === "employee"
-  const isBusiness = formData.employmentType === "business"
-  const isStudent = formData.employmentType === "student"
+  // Check employment type (case-insensitive comparison)
+  const employmentTypeValue = (formData.employmentType || "").toLowerCase()
+  
+  // Find the selected option to check its value
+  const selectedOption = employmentTypeOptions.find(opt => opt.value.toLowerCase() === employmentTypeValue)
+  const selectedValue = selectedOption?.value.toLowerCase() || employmentTypeValue
+  
+  const isEmployee = selectedValue === "employee"
+  const isBusiness = selectedValue === "business" || selectedValue.includes("business") || selectedValue.includes("self-employed")
+  const isStudent = selectedValue === "student"
 
   return (
     <div className="space-y-6">
       {/* Employment Type Selection */}
-      <div className="space-y-2">
-        <Label htmlFor="employmentType">Employment Type *</Label>
-        <select
-          id="employmentType"
-          value={formData.employmentType || ""}
-          onChange={(e) => onChange("employmentType", e.target.value)}
-          className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-          required
-        >
-          <option value="">Select</option>
-          <option value="employee">Employee</option>
-          <option value="business">Business / Self-Employed</option>
-          <option value="student">Student</option>
-        </select>
-      </div>
+      <CustomSelectDropdown
+        id="employmentType"
+        label="Employment Type *"
+        value={formData.employmentType || ""}
+        onChange={(value) => onChange("employmentType", value)}
+        options={employmentTypeOptions}
+        required
+      />
 
       {/* Employee-specific fields */}
       {isEmployee && (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-              <Label htmlFor="sector">Sector *</Label>
-              <select
-                id="sector"
-                value={formData.sector || ""}
-                onChange={(e) => {
-                  onChange("sector", e.target.value)
-                  if (e.target.value !== "other") {
-                    onChange("sectorOther", "")
-                  }
-                }}
-                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-                required
-              >
-                <option value="">Select</option>
-                <option value="it-software">IT / Software</option>
-                <option value="healthcare">Healthcare</option>
-                <option value="finance-banking">Finance / Banking</option>
-                <option value="education">Education</option>
-                <option value="manufacturing">Manufacturing</option>
-                <option value="retail">Retail</option>
-                <option value="hospitality">Hospitality</option>
-                <option value="real-estate">Real Estate</option>
-                <option value="consulting">Consulting</option>
-                <option value="media-entertainment">Media / Entertainment</option>
-                <option value="telecommunications">Telecommunications</option>
-                <option value="automotive">Automotive</option>
-                <option value="pharmaceuticals">Pharmaceuticals</option>
-                <option value="energy">Energy</option>
-                <option value="government">Government</option>
-                <option value="non-profit">Non-Profit</option>
-                <option value="legal">Legal</option>
-                <option value="engineering">Engineering</option>
-                <option value="logistics">Logistics</option>
-                <option value="agriculture">Agriculture</option>
-                <option value="other">Other</option>
-              </select>
-              {formData.sector === "other" && (
-          <Input
-                  id="sectorOther"
-                  value={formData.sectorOther || ""}
-                  onChange={(e) => onChange("sectorOther", e.target.value)}
-                  placeholder="Please specify sector"
-                  className="mt-2"
-            required
-          />
-              )}
-        </div>
+        <CustomSelectDropdown
+          id="sector"
+          label="Sector *"
+          value={formData.sector || ""}
+          onChange={(value) => onChange("sector", value)}
+          options={sectorOptions}
+          required
+          showOtherInput={sectorOptions.some(opt => opt.value.toLowerCase() === "other")}
+          otherValue={formData.sectorOther || ""}
+          onOtherChange={(value) => onChange("sectorOther", value)}
+          otherPlaceholder="Please specify sector"
+        />
         <div className="space-y-2">
               <Label htmlFor="company">Company *</Label>
           <Input
@@ -206,7 +191,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
         <div className="space-y-2">
           <Label htmlFor="salary">Annual Salary *</Label>
           <div className="relative">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none z-10">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none z-0">
               ₹
             </div>
             <Input
@@ -330,54 +315,18 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
       {isBusiness && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="sector">Sector *</Label>
-              <select
-                id="sector"
-                value={formData.sector || ""}
-                onChange={(e) => {
-                  onChange("sector", e.target.value)
-                  if (e.target.value !== "other") {
-                    onChange("sectorOther", "")
-                  }
-                }}
-                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-                required
-              >
-                <option value="">Select</option>
-                <option value="it-software">IT / Software</option>
-                <option value="healthcare">Healthcare</option>
-                <option value="finance-banking">Finance / Banking</option>
-                <option value="education">Education</option>
-                <option value="manufacturing">Manufacturing</option>
-                <option value="retail">Retail</option>
-                <option value="hospitality">Hospitality</option>
-                <option value="real-estate">Real Estate</option>
-                <option value="consulting">Consulting</option>
-                <option value="media-entertainment">Media / Entertainment</option>
-                <option value="telecommunications">Telecommunications</option>
-                <option value="automotive">Automotive</option>
-                <option value="pharmaceuticals">Pharmaceuticals</option>
-                <option value="energy">Energy</option>
-                <option value="government">Government</option>
-                <option value="non-profit">Non-Profit</option>
-                <option value="legal">Legal</option>
-                <option value="engineering">Engineering</option>
-                <option value="logistics">Logistics</option>
-                <option value="agriculture">Agriculture</option>
-                <option value="other">Other</option>
-              </select>
-              {formData.sector === "other" && (
-                <Input
-                  id="sectorOther"
-                  value={formData.sectorOther || ""}
-                  onChange={(e) => onChange("sectorOther", e.target.value)}
-                  placeholder="Please specify sector"
-                  className="mt-2"
-                  required
-                />
-              )}
-            </div>
+            <CustomSelectDropdown
+              id="sector"
+              label="Sector *"
+              value={formData.sector || ""}
+              onChange={(value) => onChange("sector", value)}
+              options={sectorOptions}
+              required
+              showOtherInput={sectorOptions.some(opt => opt.value.toLowerCase() === "other")}
+              otherValue={formData.sectorOther || ""}
+              onOtherChange={(value) => onChange("sectorOther", value)}
+              otherPlaceholder="Please specify sector"
+            />
             <div className="space-y-2">
               <Label htmlFor="businessName">Business Name *</Label>
               <Input
@@ -388,43 +337,18 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="businessType">What Type of Business *</Label>
-              <select
-                id="businessType"
-                value={formData.businessType || ""}
-                onChange={(e) => {
-                  onChange("businessType", e.target.value)
-                  if (e.target.value !== "other") {
-                    onChange("businessTypeOther", "")
-                  }
-                }}
-                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-                required
-              >
-                <option value="">Select</option>
-                <option value="sole-proprietorship">Sole Proprietorship</option>
-                <option value="partnership">Partnership</option>
-                <option value="llp">LLP (Limited Liability Partnership)</option>
-                <option value="private-limited">Private Limited Company</option>
-                <option value="public-limited">Public Limited Company</option>
-                <option value="one-person-company">One Person Company (OPC)</option>
-                <option value="huf">HUF (Hindu Undivided Family)</option>
-                <option value="freelancer">Freelancer / Independent Contractor</option>
-                <option value="consultant">Consultant</option>
-                <option value="other">Other</option>
-              </select>
-              {formData.businessType === "other" && (
-                <Input
-                  id="businessTypeOther"
-                  value={formData.businessTypeOther || ""}
-                  onChange={(e) => onChange("businessTypeOther", e.target.value)}
-                  placeholder="Please specify business type"
-                  className="mt-2"
-                  required
-                />
-              )}
-            </div>
+            <CustomSelectDropdown
+              id="businessType"
+              label="What Type of Business *"
+              value={formData.businessType || ""}
+              onChange={(value) => onChange("businessType", value)}
+              options={businessTypeOptions}
+              required
+              showOtherInput={businessTypeOptions.some(opt => opt.value.toLowerCase() === "other")}
+              otherValue={formData.businessTypeOther || ""}
+              onOtherChange={(value) => onChange("businessTypeOther", value)}
+              otherPlaceholder="Please specify business type"
+            />
             <div className="space-y-2">
               <Label htmlFor="designation">Designation *</Label>
               <Input
@@ -438,7 +362,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
             <div className="space-y-2">
               <Label htmlFor="annualReturns">Annual Returns *</Label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none z-10">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none z-0">
                   ₹
                 </div>
                 <Input
@@ -542,24 +466,14 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="course">Course / Degree *</Label>
-              <select
-                id="course"
-                value={formData.course || ""}
-                onChange={(e) => onChange("course", e.target.value)}
-                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-                required
-              >
-                <option value="">Select</option>
-                <option value="bachelor">Bachelor's Degree</option>
-                <option value="master">Master's Degree</option>
-                <option value="phd">PhD / Doctorate</option>
-                <option value="diploma">Diploma</option>
-                <option value="certification">Professional Certification</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
+            <CustomSelectDropdown
+              id="course"
+              label="Course / Degree *"
+              value={formData.course || ""}
+              onChange={(value) => onChange("course", value)}
+              options={courseOptions}
+              required
+            />
             <div className="space-y-2">
               <Label htmlFor="fieldOfStudy">Field of Study / Major *</Label>
               <Input
@@ -570,25 +484,14 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="yearOfStudy">Year of Study *</Label>
-              <select
-                id="yearOfStudy"
-                value={formData.yearOfStudy || ""}
-                onChange={(e) => onChange("yearOfStudy", e.target.value)}
-                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-                required
-              >
-                <option value="">Select</option>
-                <option value="1st-year">1st Year</option>
-                <option value="2nd-year">2nd Year</option>
-                <option value="3rd-year">3rd Year</option>
-                <option value="4th-year">4th Year</option>
-                <option value="5th-year">5th Year</option>
-                <option value="final-year">Final Year</option>
-                <option value="post-graduate">Post Graduate</option>
-              </select>
-            </div>
+            <CustomSelectDropdown
+              id="yearOfStudy"
+              label="Year of Study *"
+              value={formData.yearOfStudy || ""}
+              onChange={(value) => onChange("yearOfStudy", value)}
+              options={yearOfStudyOptions}
+              required
+            />
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="expectedGraduationYear">Expected Graduation Year *</Label>
               <Input

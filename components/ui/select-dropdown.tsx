@@ -28,12 +28,27 @@ export function SelectDropdown({
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`${SELECT_BASE_CLASSES} ${className}`}
+        className={`${SELECT_BASE_CLASSES} whitespace-normal break-words max-w-full ${className}`}
         required={required}
+        style={{ 
+          wordWrap: "break-word", 
+          overflowWrap: "break-word",
+          maxWidth: "100%",
+          width: "100%"
+        }}
       >
         <option value="" disabled>Select</option>
         {options.map((option) => (
-          <option key={option.id} value={option.value}>
+          <option 
+            key={option.id} 
+            value={option.value} 
+            style={{ 
+              whiteSpace: "normal", 
+              wordWrap: "break-word",
+              maxWidth: "100%",
+              overflowWrap: "break-word"
+            }}
+          >
             {option.value}
           </option>
         ))}
