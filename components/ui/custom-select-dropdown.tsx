@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useMemo, useEffect } from "react"
 import { Label } from "@/components/ui/label"
 import { ChevronDown } from "lucide-react"
 import { useClickOutside } from "@/hooks/use-click-outside"
@@ -35,12 +35,22 @@ export function CustomSelectDropdown({
 
   useClickOutside<HTMLDivElement>(dropdownRef, () => setIsOpen(false))
 
-  const selectedOption = options.find((opt) => opt.value === value)
+  const selectedOption = useMemo(() => {
+    if (!value || !options.length) return undefined
+    const trimmedValue = (value || "").trim()
+    if (!trimmedValue) return undefined
+    const found = options.find((opt) => {
+      const optValue = (opt.value || "").trim()
+      return optValue === trimmedValue
+    })
+    return found
+  }, [value, options])
 
   const handleSelect = (optionValue: string) => {
+    // Pass the exact value from the option (don't trim here to preserve exact match)
     onChange(optionValue)
     setIsOpen(false)
-    if (showOtherInput && optionValue.toLowerCase() !== "other") {
+    if (showOtherInput && optionValue.toLowerCase().trim() !== "other") {
       onOtherChange?.("")
     }
   }
@@ -71,18 +81,23 @@ export function CustomSelectDropdown({
         </button>
         {isOpen && (
           <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
-            {options.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => handleSelect(option.value)}
-                className={`w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-left transition-colors ${
-                  value === option.value ? "bg-gray-100 dark:bg-gray-800" : ""
-                }`}
-              >
-                <span className="break-words whitespace-normal text-sm">{option.value}</span>
-              </button>
-            ))}
+            {options.map((option) => {
+              const optionValue = (option.value || "").trim()
+              const currentValue = (value || "").trim()
+              const isSelected = optionValue === currentValue
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => handleSelect(option.value)}
+                  className={`w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-left transition-colors ${
+                    isSelected ? "bg-gray-100 dark:bg-gray-800" : ""
+                  }`}
+                >
+                  <span className="break-words whitespace-normal text-sm">{option.value}</span>
+                </button>
+              )
+            })}
           </div>
         )}
       </div>
