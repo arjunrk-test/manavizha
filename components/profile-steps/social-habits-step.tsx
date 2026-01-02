@@ -1,7 +1,8 @@
 "use client"
 
-import { Label } from "@/components/ui/label"
 import { FormData } from "@/types/profile"
+import { useMasterData } from "@/hooks/use-master-data"
+import { SelectDropdown } from "@/components/ui/select-dropdown"
 
 interface SocialHabitsStepProps {
   formData: FormData
@@ -9,69 +10,50 @@ interface SocialHabitsStepProps {
 }
 
 export function SocialHabitsStep({ formData, onChange }: SocialHabitsStepProps) {
+  // Fetch all social habits master data using the common hook
+  const { data: smokingOptions } = useMasterData({ tableName: "master_smoking" })
+  const { data: drinkingOptions } = useMasterData({ tableName: "master_drinking" })
+  const { data: partiesOptions } = useMasterData({ tableName: "master_parties" })
+  const { data: pubsOptions } = useMasterData({ tableName: "master_pubs" })
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="smoking">Smoking *</Label>
-          <select
-            id="smoking"
-            value={formData.smoking || ""}
-            onChange={(e) => onChange("smoking", e.target.value)}
-            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-            required
-          >
-            <option value="">Select</option>
-            <option value="never">Never</option>
-            <option value="occasionally">Occasionally</option>
-            <option value="regularly">Regularly</option>
-          </select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="drinking">Drinking *</Label>
-          <select
-            id="drinking"
-            value={formData.drinking || ""}
-            onChange={(e) => onChange("drinking", e.target.value)}
-            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-            required
-          >
-            <option value="">Select</option>
-            <option value="never">Never</option>
-            <option value="occasionally">Occasionally</option>
-            <option value="regularly">Regularly</option>
-          </select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="parties">Parties *</Label>
-          <select
-            id="parties"
-            value={formData.parties || ""}
-            onChange={(e) => onChange("parties", e.target.value)}
-            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-            required
-          >
-            <option value="">Select</option>
-            <option value="never">Never</option>
-            <option value="occasionally">Occasionally</option>
-            <option value="regularly">Regularly</option>
-          </select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="pubs">Pubs *</Label>
-          <select
-            id="pubs"
-            value={formData.pubs || ""}
-            onChange={(e) => onChange("pubs", e.target.value)}
-            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-            required
-          >
-            <option value="">Select</option>
-            <option value="never">Never</option>
-            <option value="occasionally">Occasionally</option>
-            <option value="regularly">Regularly</option>
-          </select>
-        </div>
+        <SelectDropdown
+          id="smoking"
+          label="Smoking *"
+          value={formData.smoking || ""}
+          onChange={(value) => onChange("smoking", value)}
+          options={smokingOptions}
+          required
+        />
+
+        <SelectDropdown
+          id="drinking"
+          label="Drinking *"
+          value={formData.drinking || ""}
+          onChange={(value) => onChange("drinking", value)}
+          options={drinkingOptions}
+          required
+        />
+
+        <SelectDropdown
+          id="parties"
+          label="Parties *"
+          value={formData.parties || ""}
+          onChange={(value) => onChange("parties", value)}
+          options={partiesOptions}
+          required
+        />
+
+        <SelectDropdown
+          id="pubs"
+          label="Pubs *"
+          value={formData.pubs || ""}
+          onChange={(value) => onChange("pubs", value)}
+          options={pubsOptions}
+          required
+        />
       </div>
     </div>
   )

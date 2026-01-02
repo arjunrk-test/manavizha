@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { FormData } from "@/types/profile"
 import { Upload, X } from "lucide-react"
+import { useMasterData } from "@/hooks/use-master-data"
+import { SelectDropdown } from "@/components/ui/select-dropdown"
 
 interface HoroscopeDetailsStepProps {
   formData: FormData
@@ -15,6 +17,11 @@ interface HoroscopeDetailsStepProps {
 export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsStepProps) {
   const [preview, setPreview] = useState<string | null>(formData.jaadhagam || null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Fetch horoscope master data using the common hook
+  const { data: zodiacSignOptions } = useMasterData({ tableName: "master_zodiac_moon_sign" })
+  const { data: starOptions } = useMasterData({ tableName: "master_star" })
+  const { data: lagnamOptions } = useMasterData({ tableName: "master_lagnam" })
 
   // Update preview when formData.jaadhagam changes (e.g., when loading from database)
   useEffect(() => {
@@ -129,52 +136,32 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="zodiacSign">Zodiac or Moon Sign *</Label>
-          <select
-            id="zodiacSign"
-            value={formData.zodiacSign || ""}
-            onChange={(e) => onChange("zodiacSign", e.target.value)}
-            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-            required
-          >
-            <option value="">Select</option>
-            <option value="aries">Aries</option>
-            <option value="taurus">Taurus</option>
-            <option value="gemini">Gemini</option>
-            <option value="cancer">Cancer</option>
-            <option value="leo">Leo</option>
-            <option value="virgo">Virgo</option>
-            <option value="libra">Libra</option>
-            <option value="scorpio">Scorpio</option>
-            <option value="sagittarius">Sagittarius</option>
-            <option value="capricorn">Capricorn</option>
-            <option value="aquarius">Aquarius</option>
-            <option value="pisces">Pisces</option>
-          </select>
-        </div>
+        <SelectDropdown
+          id="zodiacSign"
+          label="Zodiac or Moon Sign *"
+          value={formData.zodiacSign || ""}
+          onChange={(value) => onChange("zodiacSign", value)}
+          options={zodiacSignOptions}
+          required
+        />
 
-        <div className="space-y-2">
-          <Label htmlFor="star">Star *</Label>
-          <Input
-            id="star"
-            value={formData.star || ""}
-            onChange={(e) => onChange("star", e.target.value)}
-            placeholder="Enter Star"
-            required
-          />
-        </div>
+        <SelectDropdown
+          id="star"
+          label="Star *"
+          value={formData.star || ""}
+          onChange={(value) => onChange("star", value)}
+          options={starOptions}
+          required
+        />
 
-        <div className="space-y-2">
-          <Label htmlFor="lagnam">Lagnam *</Label>
-          <Input
-            id="lagnam"
-            value={formData.lagnam || ""}
-            onChange={(e) => onChange("lagnam", e.target.value)}
-            placeholder="Enter Lagnam"
-            required
-          />
-        </div>
+        <SelectDropdown
+          id="lagnam"
+          label="Lagnam *"
+          value={formData.lagnam || ""}
+          onChange={(value) => onChange("lagnam", value)}
+          options={lagnamOptions}
+          required
+        />
 
         <div className="space-y-2">
           <Label htmlFor="dhosham">Dhosham *</Label>

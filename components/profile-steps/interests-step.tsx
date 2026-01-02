@@ -2,6 +2,7 @@
 
 import { Label } from "@/components/ui/label"
 import { FormData } from "@/types/profile"
+import { useMasterData } from "@/hooks/use-master-data"
 
 interface InterestsStepProps {
   formData: FormData
@@ -9,8 +10,29 @@ interface InterestsStepProps {
 }
 
 export function InterestsStep({ formData, onChange }: InterestsStepProps) {
-  const hobbiesList = ["Reading", "Writing", "Music", "Dancing", "Sports", "Traveling", "Cooking", "Photography", "Art", "Gaming", "Movies", "Fitness"]
-  const interestsList = ["Technology", "Business", "Science", "Arts", "Literature", "History", "Politics", "Sports", "Entertainment", "Food", "Fashion", "Nature"]
+  // Fetch hobbies and interests from master tables using the common hook
+  const { data: hobbiesData } = useMasterData({ tableName: "master_hobbies" })
+  const { data: interestsData } = useMasterData({ tableName: "master_interests" })
+
+  // Transform data to arrays of values
+  const hobbiesList = hobbiesData.map((item) => item.value)
+  const interestsList = interestsData.map((item) => item.value)
+
+  const handleHobbyToggle = (hobby: string, checked: boolean) => {
+    if (checked) {
+      onChange("hobbies", [...formData.hobbies, hobby])
+    } else {
+      onChange("hobbies", formData.hobbies.filter((h) => h !== hobby))
+    }
+  }
+
+  const handleInterestToggle = (interest: string, checked: boolean) => {
+    if (checked) {
+      onChange("interests", [...formData.interests, interest])
+    } else {
+      onChange("interests", formData.interests.filter((i) => i !== interest))
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -23,13 +45,7 @@ export function InterestsStep({ formData, onChange }: InterestsStepProps) {
                 <input
                   type="checkbox"
                   checked={formData.hobbies.includes(hobby)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      onChange("hobbies", [...formData.hobbies, hobby])
-                    } else {
-                      onChange("hobbies", formData.hobbies.filter((h) => h !== hobby))
-                    }
-                  }}
+                  onChange={(e) => handleHobbyToggle(hobby, e.target.checked)}
                   className="rounded border-gray-300"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">{hobby}</span>
@@ -45,13 +61,7 @@ export function InterestsStep({ formData, onChange }: InterestsStepProps) {
                 <input
                   type="checkbox"
                   checked={formData.interests.includes(interest)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      onChange("interests", [...formData.interests, interest])
-                    } else {
-                      onChange("interests", formData.interests.filter((i) => i !== interest))
-                    }
-                  }}
+                  onChange={(e) => handleInterestToggle(interest, e.target.checked)}
                   className="rounded border-gray-300"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">{interest}</span>
