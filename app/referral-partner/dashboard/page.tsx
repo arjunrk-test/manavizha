@@ -4,7 +4,7 @@ import { ReferralPartnerNavbar } from "@/components/referral-partner-navbar"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { LogOut, User, Settings } from "lucide-react"
+import { LogOut, User, Settings, Users, IndianRupee } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 
@@ -12,6 +12,12 @@ export default function ReferralPartnerDashboardPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const [stats, setStats] = useState({
+    total: 0,
+    men: 0,
+    women: 0,
+    earnings: 0
+  })
 
   useEffect(() => {
     // Check if user is authenticated and is a referral partner
@@ -41,11 +47,34 @@ export default function ReferralPartnerDashboardPage() {
         ...user,
         partner_id: partnerData.partner_id
       })
+      await fetchStats(partnerData.partner_id)
       setIsLoading(false)
     }
 
     checkUser()
   }, [router])
+
+  const fetchStats = async (partnerId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("personal_details")
+        .select("sex")
+        .eq("referralPartnerId", partnerId)
+
+      if (data && !error) {
+        const menCount = data.filter((p: any) => p.sex === "Male").length
+        const womenCount = data.filter((p: any) => p.sex === "Female").length
+        setStats({
+          total: data.length,
+          men: menCount,
+          women: womenCount,
+          earnings: 0 // Placeholder: update based on actual earnings logic when defined
+        })
+      }
+    } catch (err) {
+      console.error("Error fetching stats:", err)
+    }
+  }
 
   const handleLogout = async () => {
     setIsLoading(true)
@@ -72,16 +101,16 @@ export default function ReferralPartnerDashboardPage() {
     <div className="min-h-screen relative">
       {/* Animated gradient background */}
       <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
-      
+
       {/* White overlay to lighten the gradient */}
       <div className="fixed inset-0 bg-white/40 dark:bg-[#181818]/40" />
-      
+
       {/* Overlay pattern */}
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
-      
+
       {/* Modern grid overlay */}
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px] opacity-30" />
-      
+
       {/* Decorative elements */}
       <div className="fixed inset-0">
         <motion.div
@@ -128,7 +157,7 @@ export default function ReferralPartnerDashboardPage() {
           const fadeDuration = 8 + Math.random() * 4
           const rotateDuration = 60 + i * 8
           const moveDuration = 12 + Math.random() * 6
-          
+
           return (
             <motion.div
               key={`bg-image-${i}`}
@@ -226,32 +255,79 @@ export default function ReferralPartnerDashboardPage() {
       {/* Content */}
       <div className="relative z-10">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-sm p-8">
-            <p className="text-gray-600 dark:text-gray-400">Dashboard content will go here...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Total Profiles Card */}
+            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-sm p-6 border border-gray-200/60 dark:border-gray-700/60 transition-transform hover:scale-105 duration-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-gray-600 dark:text-gray-400 font-medium">Total Profiles</h3>
+                <div className="bg-[#4B0082]/10 p-3 rounded-full">
+                  <Users className="h-6 w-6 text-[#4B0082]" />
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
+            </div>
+
+            {/* Men Count Card */}
+            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-sm p-6 border border-gray-200/60 dark:border-gray-700/60 transition-transform hover:scale-105 duration-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-gray-600 dark:text-gray-400 font-medium">Men</h3>
+                <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full">
+                  <User className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.men}</p>
+            </div>
+
+            {/* Women Count Card */}
+            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-sm p-6 border border-gray-200/60 dark:border-gray-700/60 transition-transform hover:scale-105 duration-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-gray-600 dark:text-gray-400 font-medium">Women</h3>
+                <div className="bg-pink-100 dark:bg-pink-900/30 p-3 rounded-full">
+                  <User className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.women}</p>
+            </div>
+
+            {/* Earnings Card */}
+            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-sm p-6 border border-gray-200/60 dark:border-gray-700/60 transition-transform hover:scale-105 duration-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-gray-600 dark:text-gray-400 font-medium">Earnings</h3>
+                <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full">
+                  <IndianRupee className="h-6 w-6 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">₹{stats.earnings}</p>
+            </div>
+          </div>
+
+          <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-sm p-8 border border-gray-200/60 dark:border-gray-700/60">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Recent Activity</h2>
+            <p className="text-gray-600 dark:text-gray-400">Your recent referrals and network updates will appear here.</p>
           </div>
         </div>
 
         {/* Footer - Fixed at bottom */}
-      <footer className="fixed bottom-0 left-0 right-0 z-10 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-t border-gray-200/60 dark:border-gray-700/60">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-600 dark:text-gray-400">
-            <div className="flex items-center gap-2">
-              <span>© 2024 Manavizha. All rights reserved.</span>
-            </div>
-            <div className="flex items-center gap-6">
-              <a href="/privacy-policy" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
-                Privacy Policy
-              </a>
-              <a href="/terms-of-service" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
-                Terms of Service
-              </a>
-              <a href="/contact" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
-                Contact Us
-              </a>
+        <footer className="fixed bottom-0 left-0 right-0 z-10 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-t border-gray-200/60 dark:border-gray-700/60">
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-2">
+                <span>© 2024 Manavizha. All rights reserved.</span>
+              </div>
+              <div className="flex items-center gap-6">
+                <a href="/privacy-policy" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                  Privacy Policy
+                </a>
+                <a href="/terms-of-service" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                  Terms of Service
+                </a>
+                <a href="/contact" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                  Contact Us
+                </a>
+              </div>
             </div>
           </div>
-        </div>
-      </footer>
+        </footer>
       </div>
     </div>
   )
