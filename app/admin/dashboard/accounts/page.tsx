@@ -2,12 +2,15 @@
 
 import { AdminNavbar } from "@/components/admin-navbar"
 import { AnimatedBackground } from "@/components/animated-background"
+import { ReferralPartnerProfileForm } from "@/components/referral-partner-profile-form"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { ArrowLeft, Users, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import { toast } from "react-hot-toast"
 import {
   Table,
   TableBody,
@@ -92,18 +95,27 @@ export default function AdminAccountsPage() {
             .eq("user_id", partner.user_id)
             .single()
 
-          // Get referral stats if available (mocking for now as table structure is unknown)
-          const { count } = await supabase
+          // Get referral stats for Men, Women, and Total
+          const { data: profiles } = await supabase
             .from("personal_details")
-            .select("*", { count: 'exact', head: true })
+            .select("sex")
             .eq("referralPartnerId", partner.partner_id)
+
+          const total = profiles ? profiles.length : 0
+          const men = profiles ? profiles.filter(p => p.sex === "Male").length : 0
+          const women = profiles ? profiles.filter(p => p.sex === "Female").length : 0
 
           return {
             ...partner,
             name: partner.name || profile?.name || "Unknown",
             email: partner.email || "N/A",
+            phone: partner.phone || "N/A",
+            area: partner.area || "N/A",
             referralCode: partner.partner_id,
-            totalReferrals: count || 0,
+            totalReferrals: total,
+            menReferrals: men,
+            womenReferrals: women,
+            referralPercentage: partner.referral_percentage || 10,
             status: partner.is_active !== false ? "Active" : "Inactive"
           }
         }))
@@ -111,6 +123,35 @@ export default function AdminAccountsPage() {
       }
     } catch (error) {
       console.error("Error fetching data:", error)
+    }
+  }
+
+  const handleUpdatePartnerPercentage = async (id: string, value: string) => {
+    try {
+      const parsedValue = parseFloat(value)
+      if (isNaN(parsedValue)) return
+
+      // Optimistically update the UI
+      setPartners(prev => prev.map(p =>
+        p.id === id
+          ? { ...p, referralPercentage: parsedValue }
+          : p
+      ))
+
+      const { error } = await supabase
+        .from("referral_partners")
+        .update({ referral_percentage: parsedValue })
+        .eq("id", id)
+
+      if (error) {
+        toast.error("Failed to update partner percentage")
+        fetchData() // Re-fetch to revert to actual db state on error
+      } else {
+        toast.success("Partner percentage updated")
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error("An error occurred")
     }
   }
 
@@ -206,15 +247,20 @@ export default function AdminAccountsPage() {
               <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200/60 dark:border-gray-700/60">
                 <div className="p-6 border-b border-gray-200/60 dark:border-gray-700/60">
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Referral Partners</h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Manage referral partner accounts and details.</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Manage referral partner accounts and their custom percentages.</p>
                 </div>
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Partner Name</TableHead>
                       <TableHead>Email</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Area</TableHead>
                       <TableHead>Referral Code</TableHead>
-                      <TableHead>Total Referrals</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Men</TableHead>
+                      <TableHead>Women</TableHead>
+                      <TableHead>Share %</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -222,7 +268,7 @@ export default function AdminAccountsPage() {
                   <TableBody>
                     {partners.length === 0 ? (
                       <TableRow>
-                        <TableCell className="text-center py-8 text-gray-500" colSpan={6}>
+                        <TableCell className="text-center py-8 text-gray-500" colSpan={9}>
                           No referral partners found
                         </TableCell>
                       </TableRow>
@@ -231,8 +277,32 @@ export default function AdminAccountsPage() {
                         <TableRow key={partner.id || partner.partner_id}>
                           <TableCell className="font-medium">{partner.name}</TableCell>
                           <TableCell>{partner.email || "N/A"}</TableCell>
+                          <TableCell>{partner.phone}</TableCell>
+                          <TableCell>{partner.area}</TableCell>
                           <TableCell>{partner.referralCode}</TableCell>
                           <TableCell>{partner.totalReferrals}</TableCell>
+                          <TableCell className="text-blue-600 dark:text-blue-400 font-medium">{partner.menReferrals}</TableCell>
+                          <TableCell className="text-pink-600 dark:text-pink-400 font-medium">{partner.womenReferrals}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus-within:ring-2 focus-within:ring-[#4B0082] overflow-hidden w-20">
+                              <input
+                                type="number"
+                                className="w-full bg-transparent px-2 py-1 text-sm outline-none text-right"
+                                value={partner.referralPercentage}
+                                onBlur={(e) => handleUpdatePartnerPercentage(partner.id, e.target.value)}
+                                onChange={(e) => {
+                                  // Update instantly in local state to allow typing
+                                  setPartners(prev => prev.map(p =>
+                                    p.id === partner.id ? { ...p, referralPercentage: e.target.value } : p
+                                  ))
+                                }}
+                                step="0.5"
+                                min="0"
+                                max="100"
+                              />
+                              <span className="pr-2 text-gray-500 text-xs font-semibold select-none">%</span>
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${partner.status === "Active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
                               {partner.status || "Unknown"}
@@ -283,14 +353,17 @@ export default function AdminAccountsPage() {
         </footer>
 
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Edit Referral Partner</DialogTitle>
+              <DialogTitle>Edit Profile: {selectedPartner?.name}</DialogTitle>
             </DialogHeader>
-            <div className="py-6">
-              <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-                Edit options for {selectedPartner?.name} will appear here.
-              </p>
+            <div className="py-2">
+              {selectedPartner && (
+                <ReferralPartnerProfileForm
+                  userId={selectedPartner.user_id}
+                  userEmail={selectedPartner.email}
+                />
+              )}
             </div>
           </DialogContent>
         </Dialog>

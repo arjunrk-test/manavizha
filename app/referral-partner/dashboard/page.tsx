@@ -56,19 +56,51 @@ export default function ReferralPartnerDashboardPage() {
 
   const fetchStats = async (partnerId: string) => {
     try {
-      const { data, error } = await supabase
+      // 1. Fetch Referral Partner Settings for referral percentage
+      let referralPercentage = 10
+      const { data: partnerSettingsData } = await supabase
+        .from("referral_partners")
+        .select("referral_percentage")
+        .eq("partner_id", partnerId)
+        .single()
+
+      if (partnerSettingsData && partnerSettingsData.referral_percentage !== null) {
+        referralPercentage = Number(partnerSettingsData.referral_percentage)
+      }
+
+      // 2. Fetch all profiles referred by this partner
+      const { data: profiles, error: profilesError } = await supabase
         .from("personal_details")
-        .select("sex")
+        .select("user_id, sex")
         .eq("referralPartnerId", partnerId)
 
-      if (data && !error) {
-        const menCount = data.filter((p: any) => p.sex === "Male").length
-        const womenCount = data.filter((p: any) => p.sex === "Female").length
+      if (profiles && !profilesError) {
+        const menCount = profiles.filter((p: any) => p.sex === "Male").length
+        const womenCount = profiles.filter((p: any) => p.sex === "Female").length
+
+        let totalEarnings = 0
+
+        // 3. Fetch subscriptions for standard tracking of earnings 
+        // We only fetch for users that were referred by this partner
+        const userIds = profiles.map(p => p.user_id).filter(id => id)
+
+        if (userIds.length > 0) {
+          const { data: subscriptions } = await supabase
+            .from("subscriptions")
+            .select("amount")
+            .in("user_id", userIds)
+
+          if (subscriptions) {
+            const totalSubscriptionAmount = subscriptions.reduce((sum, sub) => sum + (Number(sub.amount) || 0), 0)
+            totalEarnings = totalSubscriptionAmount * (referralPercentage / 100)
+          }
+        }
+
         setStats({
-          total: data.length,
+          total: profiles.length,
           men: menCount,
           women: womenCount,
-          earnings: 0 // Placeholder: update based on actual earnings logic when defined
+          earnings: totalEarnings
         })
       }
     } catch (err) {
