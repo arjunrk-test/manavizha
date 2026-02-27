@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useMemo } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -46,18 +46,21 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
   }, [statusData])
 
   // Get degree/qualification options for a selected education level (category)
-  const getQualificationsForLevel = (educationLevel: string) => {
-    if (!educationLevel) return []
-    
-    // Filter education level data by the selected category (trim for comparison)
-    const filteredData = educationLevelData.filter(item => item.category?.trim() === educationLevel.trim())
-    
-    // Return options with id and value
-    return filteredData.map(item => ({
-      id: item.id,
-      value: item.value
-    }))
-  }
+  const getQualificationsForLevel = useMemo(() => {
+    return (educationLevel: string) => {
+      if (!educationLevel) return []
+      
+      // Filter education level data by the selected category (trim for comparison)
+      const trimmedLevel = educationLevel.trim()
+      const filteredData = educationLevelData.filter(item => item.category?.trim() === trimmedLevel)
+      
+      // Return options with id and value
+      return filteredData.map(item => ({
+        id: item.id,
+        value: item.value
+      }))
+    }
+  }, [educationLevelData])
 
   const addEducation = () => {
     const newEducation = {
@@ -93,35 +96,41 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
         status: "",
       }
     }
-    // Ensure value is a string and trim it
-    const trimmedValue = (value || "").trim()
+    
+    // For dropdown fields, use the exact value from the option to ensure perfect matching
+    // The CustomSelectDropdown passes option.value directly, so we should store it as-is
+    // Only trim text input fields
+    const isDropdownField = field === "education" || field === "degree" || field === "status"
+    const processedValue = isDropdownField ? (value || "") : (value || "").trim()
     
     // If education level changes, reset the degree field and educationOther
     if (field === "education") {
       updated[index] = { 
         ...updated[index], 
-        [field]: trimmedValue, 
+        [field]: processedValue, 
         degree: "",
         degreeOther: "",
-        educationOther: trimmedValue.toLowerCase() === "other" ? updated[index].educationOther || "" : ""
+        educationOther: processedValue.toLowerCase().trim() === "other" ? updated[index].educationOther || "" : ""
       }
     } else if (field === "degree") {
       // If degree changes, reset degreeOther
       updated[index] = { 
         ...updated[index], 
-        [field]: trimmedValue,
-        degreeOther: trimmedValue.toLowerCase() === "other" ? updated[index].degreeOther || "" : ""
+        [field]: processedValue,
+        degreeOther: processedValue.toLowerCase().trim() === "other" ? updated[index].degreeOther || "" : ""
       }
     } else {
-      updated[index] = { ...updated[index], [field]: trimmedValue }
+      updated[index] = { ...updated[index], [field]: processedValue }
     }
+    
+    // Call onChange to update parent state
     onChange("educationDetails", updated)
   }
 
   return (
     <div className="space-y-6">
       {educationDetails.map((edu, index) => (
-        <div key={`education-${index}-${edu.education || index}`} className="border border-gray-200 dark:border-gray-700 rounded-2xl p-6 space-y-6">
+        <div key={`education-${index}`} className="border border-gray-200 dark:border-gray-700 rounded-2xl p-6 space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               Education {index + 1}
