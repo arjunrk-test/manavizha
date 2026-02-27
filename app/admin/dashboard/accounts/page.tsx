@@ -16,6 +16,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function AdminAccountsPage() {
   const router = useRouter()
@@ -23,6 +29,8 @@ export default function AdminAccountsPage() {
   const [user, setUser] = useState<any>(null)
   const [admins, setAdmins] = useState<any[]>([])
   const [partners, setPartners] = useState<any[]>([])
+  const [selectedPartner, setSelectedPartner] = useState<any>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   useEffect(() => {
     // Check if user is authenticated and is an admin
@@ -231,7 +239,14 @@ export default function AdminAccountsPage() {
                             </span>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="icon">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setSelectedPartner(partner)
+                                setIsEditDialogOpen(true)
+                              }}
+                            >
                               <Pencil className="h-4 w-4" />
                             </Button>
                           </TableCell>
@@ -266,6 +281,19 @@ export default function AdminAccountsPage() {
             </div>
           </div>
         </footer>
+
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Referral Partner</DialogTitle>
+            </DialogHeader>
+            <div className="py-6">
+              <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                Edit options for {selectedPartner?.name} will appear here.
+              </p>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
