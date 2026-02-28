@@ -6,7 +6,7 @@ import { ReferralPartnerProfileForm } from "@/components/referral-partner-profil
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useEffect, useState, useMemo } from "react"
-import { ArrowLeft, Users, Pencil, Search, X } from "lucide-react"
+import { ArrowLeft, Users, Pencil, Search, X, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
@@ -74,6 +74,7 @@ export default function AdminAccountsPage() {
     role: "editor" as AdminRole,
     password: ""
   })
+  const [showPassword, setShowPassword] = useState(false)
 
   const setFilter = (key: keyof PartnerFilters, value: string) => setFilters(prev => ({ ...prev, [key]: value }))
   const hasFilters = Object.values(filters).some(v => v !== "")
@@ -601,7 +602,23 @@ export default function AdminAccountsPage() {
                     </div>
                     <div className="grid gap-2">
                       <label className="text-sm font-medium">Password <span className="text-red-500">*</span></label>
-                      <Input type="password" value={adminFormData.password} onChange={e => setAdminFormData(prev => ({ ...prev, password: e.target.value }))} placeholder="Secure password" />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          value={adminFormData.password}
+                          onChange={e => setAdminFormData(prev => ({ ...prev, password: e.target.value }))}
+                          placeholder="Secure password"
+                          className="pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(v => !v)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                          tabIndex={-1}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </div>
                   </>
                 )}
