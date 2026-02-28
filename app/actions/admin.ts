@@ -1,42 +1,46 @@
 "use server"
 
-import { createClient } from "@supabase/supabase-js"
-import fetch from "cross-fetch"
 import axios from "axios"
 import * as https from "https"
 import * as fs from 'fs'
+import * as dns from 'dns'
 
-// Force IPv4 using a custom HTTPS Agent (fixes Node 18+ undici timeout on Windows to Supabase)
-const ipv4Agent = new https.Agent({ family: 4 })
+// Force Node to prefer IPv4 DNS resolution
+dns.setDefaultResultOrder('ipv4first')
 
-const customFetch = (url: RequestInfo | URL, options?: RequestInit) => {
-    return fetch(url.toString(), {
-        ...options,
-        agent: ipv4Agent
-    } as any)
-}
-
-// Override Next.js undici fetch globally for this action file
-if (typeof globalThis !== 'undefined') {
-    globalThis.fetch = customFetch as any;
-}
-
-// We use the Service Role Key here to bypass RLS and perform administrative auth actions.
-// WARNING: NEVER expose this key to the client.
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const supabaseHost = new URL(supabaseUrl).hostname
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-    },
-    global: {
-        fetch: fetch
-    }
-})
+export type AdminRole = "super_admin" | "admin" | "editor" | "viewer"
 
-export type AdminRole = "super_admin" | "editor" | "viewer"
+// Resolve Supabase hostname fresh each time to avoid stale DNS cache
+async function resolveHost(): Promise<string> {
+    return new Promise((resolve, reject) => {
+        dns.resolve4(supabaseHost, (err, addresses) => {
+            if (err) reject(err)
+            else resolve(addresses[0])
+        })
+    })
+}
+
+// Build an axios instance that connects directly to the resolved IP
+// with the correct Host header — bypasses ISP DNS issues entirely
+async function getAxios() {
+    const ip = await resolveHost()
+    const instance = axios.create({
+        baseURL: `https://${ip}`,
+        timeout: 15000,
+        httpsAgent: new https.Agent({ family: 4 }),
+        headers: {
+            'Host': supabaseHost,
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+            'apikey': supabaseServiceKey,
+            'Content-Type': 'application/json',
+        },
+    })
+    return instance
+}
 
 export async function createAdminAccount(data: {
     name: string
@@ -45,121 +49,100 @@ export async function createAdminAccount(data: {
     role: AdminRole
     password?: string
 }) {
-    fs.appendFileSync('debug.txt', `[${new Date().toISOString()}] createAdminAccount called with email: ${data.email}\n`)
+    const logFile = 'debug.txt'
+    fs.appendFileSync(logFile, `[${new Date().toISOString()}] createAdminAccount: ${data.email}\n`)
+
     try {
-        fs.appendFileSync('debug.txt', `\n[${new Date().toISOString()}] Attempting to fetch Auth user creation via Axios...\n`)
+        const ax = await getAxios()
 
-        // 1. Create the user in Supabase Auth using native Axios to bypass Next.js unresolvable DNS looping
-        const { data: authData } = await axios.post(
-            `${supabaseUrl}/auth/v1/admin/users`,
+        // Step 1: Create user in Supabase Auth
+        const { data: authData } = await ax.post('/auth/v1/admin/users', {
+            email: data.email,
+            password: data.password || "TempAdmin!23",
+            email_confirm: true,
+            user_metadata: { role: data.role, name: data.name },
+        })
+
+        if (!authData?.id) throw new Error("No user ID returned from auth")
+        const userId = authData.id
+        fs.appendFileSync(logFile, `[${new Date().toISOString()}] Auth user created: ${userId}\n`)
+
+        // Step 2: Insert into admins table via REST API
+        const { data: adminRow, status: adminStatus } = await ax.post(
+            '/rest/v1/admins',
             {
+                user_id: userId,
                 email: data.email,
-                password: data.password || "TempAdmin!23",
-                email_confirm: true,
-                user_metadata: {
-                    role: data.role,
-                    name: data.name,
-                },
+                name: data.name,
+                phone: data.phone || null,
+                role: data.role,
             },
-            {
-                headers: {
-                    'Authorization': `Bearer ${supabaseServiceKey}`,
-                    'apikey': supabaseServiceKey,
-                    'Content-Type': 'application/json'
-                },
-                httpsAgent: ipv4Agent
-            }
+            { headers: { 'Prefer': 'return=representation' } }
         )
+        fs.appendFileSync(logFile, `[${new Date().toISOString()}] Admins table insert status: ${adminStatus}\n`)
 
-        if (!authData || !authData.id) {
-            throw new Error("Failed to create user account (No ID returned)")
+        // Step 3: Insert into personal_details (best-effort)
+        try {
+            await ax.post('/rest/v1/personal_details', { user_id: userId, name: data.name })
+        } catch (e: any) {
+            fs.appendFileSync(logFile, `[${new Date().toISOString()}] personal_details insert failed (non-fatal): ${e.message}\n`)
         }
 
-        const userId = authData.id
+        // Step 4: Insert into contact_details (best-effort)
+        try {
+            await ax.post('/rest/v1/contact_details', { user_id: userId, phone: data.phone, email: data.email })
+        } catch (e: any) {
+            fs.appendFileSync(logFile, `[${new Date().toISOString()}] contact_details insert failed (non-fatal): ${e.message}\n`)
+        }
 
-        // 2. Insert into admins table
-        const { error: adminError } = await supabaseAdmin
-            .from("admins")
-            .insert({
-                user_id: userId,
-                role: data.role,
-            })
-
-        if (adminError) throw adminError
-
-        // 3. Insert basic data into personal_details so they have a profile
-        const { error: profileError } = await supabaseAdmin
-            .from("personal_details")
-            .insert({
-                user_id: userId,
-                name: data.name,
-            })
-
-        if (profileError) console.error("Could not insert personal details for Admin:", profileError)
-
-        // 4. Insert basic contact details
-        const { error: contactError } = await supabaseAdmin
-            .from("contact_details")
-            .insert({
-                user_id: userId,
-                phone: data.phone,
-                email: data.email,
-            })
-
-        if (contactError) console.error("Could not insert contact details for Admin:", contactError)
-
-        fs.appendFileSync('debug.txt', `[${new Date().toISOString()}] Successfully completed createAdminAccount\n`)
+        fs.appendFileSync(logFile, `[${new Date().toISOString()}] createAdminAccount SUCCESS\n`)
         return { success: true, user: authData }
     } catch (error: any) {
-        const errorMsg = error?.response?.data?.message || error?.message || "Unknown error occurred"
-        fs.appendFileSync('debug.txt', `[${new Date().toISOString()}] ERROR: ${errorMsg}\nCAUSE: ${error?.cause ? JSON.stringify(error.cause) : 'none'}\nSTACK: ${error?.stack}\n`)
-        console.error("Error creating admin:", error)
-        return { success: false, error: errorMsg }
+        const errorMsg = error?.response?.data?.message || error?.response?.data || error?.message || "Unknown error"
+        fs.appendFileSync(logFile, `[${new Date().toISOString()}] ERROR: ${JSON.stringify(errorMsg)}\nSTACK: ${error?.stack}\n`)
+        console.error("Error creating admin:", errorMsg)
+        return { success: false, error: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg) }
     }
 }
 
 export async function updateAdminRole(userId: string, newRole: AdminRole) {
     try {
-        // Update the admins table
-        const { error: dbError } = await supabaseAdmin
-            .from("admins")
-            .update({ role: newRole })
-            .eq("user_id", userId)
+        const ax = await getAxios()
 
-        if (dbError) throw dbError
+        // Update admins table
+        await ax.patch(
+            `/rest/v1/admins?user_id=eq.${userId}`,
+            { role: newRole },
+            { headers: { 'Prefer': 'return=minimal' } }
+        )
 
-        // Optionally update user_metadata in Auth if keeping it synced
-        await supabaseAdmin.auth.admin.updateUserById(userId, {
+        // Update auth user metadata
+        await ax.put(`/auth/v1/admin/users/${userId}`, {
             user_metadata: { role: newRole }
         })
 
         return { success: true }
     } catch (error: any) {
-        console.error("Error updating admin role:", error)
-        return { success: false, error: error.message }
+        const errorMsg = error?.response?.data?.message || error?.message
+        console.error("Error updating admin role:", errorMsg)
+        return { success: false, error: errorMsg }
     }
 }
 
 export async function revokeAdminAccess(userId: string) {
     try {
-        // Delete the admin role entirely to revoke access
-        // Depending on DB rules this could also cascade or be a soft delete. We'll do a hard delete from `admins`
-        const { error: dbError } = await supabaseAdmin
-            .from("admins")
-            .delete()
-            .eq("user_id", userId)
+        const ax = await getAxios()
 
-        if (dbError) throw dbError
+        // Delete from admins table
+        await ax.delete(`/rest/v1/admins?user_id=eq.${userId}`)
 
-        // Disable their auth account or delete them from the system completely
-        // We'll delete them from Auth to fully clean up
-        const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId)
-
-        if (authError) throw authError
+        // Delete auth user
+        await ax.delete(`/auth/v1/admin/users/${userId}`)
 
         return { success: true }
     } catch (error: any) {
-        console.error("Error revoking admin access:", error)
-        return { success: false, error: error.message }
+        const errorMsg = error?.response?.data?.message || error?.message
+        console.error("Error revoking admin access:", errorMsg)
+        return { success: false, error: errorMsg }
     }
 }
