@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { supabase } from "@/lib/supabase"
 import { useEffect, useState } from "react"
-import { ArrowLeft, MapPin, Briefcase, User, GraduationCap, Calendar, Heart } from "lucide-react"
+import { ArrowLeft, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Star, Coffee } from "lucide-react"
 import { motion } from "framer-motion"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
@@ -18,6 +18,120 @@ export function BrowseProfiles({ userId, onBack }: BrowseProfilesProps) {
     const [profiles, setProfiles] = useState<any[]>([])
     const [selectedProfile, setSelectedProfile] = useState<any | null>(null)
     const [targetGender, setTargetGender] = useState<string>("")
+
+    // State to track the currently viewed photo index for the modal
+    const [modalPhotoIndex, setModalPhotoIndex] = useState(0)
+
+    // Function to handle opening modal and resetting the index
+    const handleOpenProfile = (profile: any) => {
+        setModalPhotoIndex(0)
+        setSelectedProfile(profile)
+    }
+
+    // Handlers for modal photo navigation
+    const nextModalPhoto = (e: React.MouseEvent, maxPhotos: number) => {
+        e.stopPropagation()
+        setModalPhotoIndex(prev => (prev + 1) % maxPhotos)
+    }
+
+    const prevModalPhoto = (e: React.MouseEvent, maxPhotos: number) => {
+        e.stopPropagation()
+        setModalPhotoIndex(prev => (prev - 1 + maxPhotos) % maxPhotos)
+    }
+
+    // Component for a Profile Card with its own local photo index state
+    const ProfileCardWrapper = ({ profile, index }: { profile: any, index: number }) => {
+        const [cardPhotoIndex, setCardPhotoIndex] = useState(0)
+        const hasMultiplePhotos = profile.photos && profile.photos.length > 1
+
+        const nextCardPhoto = (e: React.MouseEvent) => {
+            e.stopPropagation()
+            setCardPhotoIndex(prev => (prev + 1) % profile.photos.length)
+        }
+
+        const prevCardPhoto = (e: React.MouseEvent) => {
+            e.stopPropagation()
+            setCardPhotoIndex(prev => (prev - 1 + profile.photos.length) % profile.photos.length)
+        }
+
+        return (
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+            >
+                <Card
+                    className="overflow-hidden hover:shadow-xl transition-all cursor-pointer group border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm relative"
+                    onClick={() => handleOpenProfile(profile)}
+                >
+                    <div className="aspect-[4/5] relative overflow-hidden bg-gray-100 dark:bg-gray-700">
+                        {profile.photos && profile.photos.length > 0 ? (
+                            <>
+                                <img
+                                    src={profile.photos[cardPhotoIndex]}
+                                    alt={profile.name}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(profile.name || 'User') + '&size=400&background=random'
+                                    }}
+                                />
+                                {hasMultiplePhotos && (
+                                    <>
+                                        <div className="absolute top-1/2 left-2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={prevCardPhoto}
+                                                className="bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 backdrop-blur-sm transition-colors"
+                                            >
+                                                <ChevronLeft className="h-5 w-5" />
+                                            </button>
+                                        </div>
+                                        <div className="absolute top-1/2 right-2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={nextCardPhoto}
+                                                className="bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 backdrop-blur-sm transition-colors"
+                                            >
+                                                <ChevronRight className="h-5 w-5" />
+                                            </button>
+                                        </div>
+                                        <div className="absolute top-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm z-10">
+                                            {cardPhotoIndex + 1} / {profile.photos.length}
+                                        </div>
+                                    </>
+                                )}
+                            </>
+                        ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                                <User className="h-16 w-16 mb-2 opacity-50" />
+                                <span className="text-sm">No Photo</span>
+                            </div>
+                        )}
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-12 pb-4 px-4">
+                            <h3 className="text-white font-semibold text-lg drop-shadow-md">
+                                {profile.name || "Unknown"}
+                                {profile.age && `, ${profile.age}`}
+                            </h3>
+                            <div className="flex items-center text-white/90 text-sm mt-1">
+                                <MapPin className="h-3 w-3 mr-1" />
+                                {profile.location}
+                            </div>
+                        </div>
+                    </div>
+                    <CardContent className="p-4">
+                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-1">
+                            <Briefcase className="h-4 w-4 mr-2 shrink-0" />
+                            <span className="truncate">{profile.profession}</span>
+                        </div>
+                        {profile.education && profile.education.length > 0 && (
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
+                                <GraduationCap className="h-4 w-4 mr-2 shrink-0" />
+                                <span className="truncate">{profile.education[0]?.education || "Not specified"}</span>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </motion.div>
+        )
+    }
 
     useEffect(() => {
         const fetchProfiles = async () => {
@@ -66,12 +180,16 @@ export function BrowseProfiles({ userId, onBack }: BrowseProfilesProps) {
                     { data: empData },
                     { data: busData },
                     { data: eduData },
+                    { data: interestsData },
+                    { data: socialHabitsData },
                 ] = await Promise.all([
                     supabase.from("photos").select("user_id, user_photos").in("user_id", targetUserIds),
                     supabase.from("contact_details").select("user_id, current_city, current_state").in("user_id", targetUserIds),
                     supabase.from("profession_employee").select("user_id, designation, company").in("user_id", targetUserIds),
                     supabase.from("profession_business").select("user_id, designation, business_name").in("user_id", targetUserIds),
                     supabase.from("education_details").select("user_id, education, institution").in("user_id", targetUserIds),
+                    supabase.from("interests").select("*").in("user_id", targetUserIds),
+                    supabase.from("social_habits").select("*").in("user_id", targetUserIds),
                 ])
 
                 const combined = unmarriedProfiles.map(p => {
@@ -80,6 +198,8 @@ export function BrowseProfiles({ userId, onBack }: BrowseProfilesProps) {
                     const myEmp = empData?.find(x => x.user_id === p.user_id)
                     const myBus = busData?.find(x => x.user_id === p.user_id)
                     const myEdu = eduData?.filter(x => x.user_id === p.user_id)
+                    const myInterests = interestsData?.find(x => x.user_id === p.user_id)
+                    const mySocial = socialHabitsData?.find(x => x.user_id === p.user_id)
 
                     let profession = "Not specified"
                     if (myEmp && myEmp.designation && myEmp.company) profession = `${myEmp.designation} at ${myEmp.company}`
@@ -97,6 +217,8 @@ export function BrowseProfiles({ userId, onBack }: BrowseProfilesProps) {
                         location,
                         profession,
                         education: myEdu || [],
+                        interests: myInterests || null,
+                        socialHabits: mySocial || null,
                     }
                 })
 
@@ -147,57 +269,7 @@ export function BrowseProfiles({ userId, onBack }: BrowseProfilesProps) {
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {profiles.map((profile, index) => (
-                        <motion.div
-                            key={profile.user_id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                        >
-                            <Card
-                                className="overflow-hidden hover:shadow-xl transition-all cursor-pointer group border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
-                                onClick={() => setSelectedProfile(profile)}
-                            >
-                                <div className="aspect-[4/5] relative overflow-hidden bg-gray-100 dark:bg-gray-700">
-                                    {profile.photos && profile.photos.length > 0 ? (
-                                        <img
-                                            src={profile.photos[0]}
-                                            alt={profile.name}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                            onError={(e) => {
-                                                (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(profile.name || 'User') + '&size=400&background=random'
-                                            }}
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                                            <User className="h-16 w-16 mb-2 opacity-50" />
-                                            <span className="text-sm">No Photo</span>
-                                        </div>
-                                    )}
-                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-12 pb-4 px-4">
-                                        <h3 className="text-white font-semibold text-lg drop-shadow-md">
-                                            {profile.name || "Unknown"}
-                                            {profile.age && `, ${profile.age}`}
-                                        </h3>
-                                        <div className="flex items-center text-white/90 text-sm mt-1">
-                                            <MapPin className="h-3 w-3 mr-1" />
-                                            {profile.location}
-                                        </div>
-                                    </div>
-                                </div>
-                                <CardContent className="p-4">
-                                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-1">
-                                        <Briefcase className="h-4 w-4 mr-2 shrink-0" />
-                                        <span className="truncate">{profile.profession}</span>
-                                    </div>
-                                    {profile.education && profile.education.length > 0 && (
-                                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
-                                            <GraduationCap className="h-4 w-4 mr-2 shrink-0" />
-                                            <span className="truncate">{profile.education[0]?.education || "Not specified"}</span>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </motion.div>
+                        <ProfileCardWrapper key={profile.user_id} profile={profile} index={index} />
                     ))}
                 </div>
             )}
@@ -209,16 +281,51 @@ export function BrowseProfiles({ userId, onBack }: BrowseProfilesProps) {
                     {selectedProfile && (
                         <div className="flex flex-col md:flex-row h-[85vh] md:h-[600px]">
                             {/* Left side: Photo Gallery */}
-                            <div className="md:w-2/5 bg-gray-100 dark:bg-gray-800 relative">
+                            <div className="md:w-2/5 bg-gray-100 dark:bg-gray-800 relative group">
                                 {selectedProfile.photos && selectedProfile.photos.length > 0 ? (
-                                    <img
-                                        src={selectedProfile.photos[0]}
-                                        alt={selectedProfile.name}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedProfile.name || 'User') + '&size=400&background=random'
-                                        }}
-                                    />
+                                    <>
+                                        <img
+                                            src={selectedProfile.photos[modalPhotoIndex]}
+                                            alt={selectedProfile.name}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedProfile.name || 'User') + '&size=400&background=random'
+                                            }}
+                                        />
+                                        {selectedProfile.photos.length > 1 && (
+                                            <>
+                                                <div className="absolute top-1/2 left-4 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={(e) => prevModalPhoto(e, selectedProfile.photos.length)}
+                                                        className="bg-black/50 hover:bg-black/70 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
+                                                    >
+                                                        <ChevronLeft className="h-6 w-6" />
+                                                    </button>
+                                                </div>
+                                                <div className="absolute top-1/2 right-4 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={(e) => nextModalPhoto(e, selectedProfile.photos.length)}
+                                                        className="bg-black/50 hover:bg-black/70 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
+                                                    >
+                                                        <ChevronRight className="h-6 w-6" />
+                                                    </button>
+                                                </div>
+                                                <div className="absolute top-4 right-4 bg-black/50 text-white text-sm px-3 py-1.5 rounded-full backdrop-blur-sm z-10 shadow-sm">
+                                                    {modalPhotoIndex + 1} / {selectedProfile.photos.length}
+                                                </div>
+
+                                                {/* Dots indicator at bottom */}
+                                                <div className="absolute bottom-20 md:bottom-6 left-0 right-0 flex justify-center gap-1.5 z-10">
+                                                    {selectedProfile.photos.map((_: any, idx: number) => (
+                                                        <div
+                                                            key={idx}
+                                                            className={`w-2 h-2 rounded-full transition-all ${idx === modalPhotoIndex ? 'bg-white scale-110' : 'bg-white/40'}`}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </>
+                                        )}
+                                    </>
                                 ) : (
                                     <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
                                         <User className="h-24 w-24 mb-4 opacity-50" />
@@ -311,6 +418,88 @@ export function BrowseProfiles({ userId, onBack }: BrowseProfilesProps) {
                                             ))}
                                         </div>
                                     </section>
+
+                                    {/* Interests & Hobbies */}
+                                    {selectedProfile.interests && (selectedProfile.interests.hobbies?.length > 0 || selectedProfile.interests.sports?.length > 0 || selectedProfile.interests.music?.length > 0) && (
+                                        <section>
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                                                <Star className="h-5 w-5 mr-2 text-yellow-500" /> Interests & Hobbies
+                                            </h3>
+                                            <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl space-y-4">
+                                                {selectedProfile.interests.hobbies && selectedProfile.interests.hobbies.length > 0 && (
+                                                    <div>
+                                                        <span className="block text-sm text-gray-500 mb-1.5">Hobbies</span>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {selectedProfile.interests.hobbies.map((hobby: string, i: number) => (
+                                                                <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                                                                    {hobby}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {selectedProfile.interests.sports && selectedProfile.interests.sports.length > 0 && (
+                                                    <div>
+                                                        <span className="block text-sm text-gray-500 mb-1.5">Sports & Fitness</span>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {selectedProfile.interests.sports.map((sport: string, i: number) => (
+                                                                <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                                                    {sport}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {selectedProfile.interests.music && selectedProfile.interests.music.length > 0 && (
+                                                    <div>
+                                                        <span className="block text-sm text-gray-500 mb-1.5">Music Preferences</span>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {selectedProfile.interests.music.map((music: string, i: number) => (
+                                                                <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300">
+                                                                    {music}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </section>
+                                    )}
+
+                                    {/* Social Habits */}
+                                    {selectedProfile.socialHabits && (selectedProfile.socialHabits.smoking || selectedProfile.socialHabits.drinking || selectedProfile.socialHabits.parties) && (
+                                        <section>
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                                                <Coffee className="h-5 w-5 mr-2 text-orange-500" /> Social Habits
+                                            </h3>
+                                            <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
+                                                {selectedProfile.socialHabits.smoking && (
+                                                    <div>
+                                                        <span className="block text-gray-500 mb-1">Smoking</span>
+                                                        <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.socialHabits.smoking}</span>
+                                                    </div>
+                                                )}
+                                                {selectedProfile.socialHabits.drinking && (
+                                                    <div>
+                                                        <span className="block text-gray-500 mb-1">Drinking</span>
+                                                        <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.socialHabits.drinking}</span>
+                                                    </div>
+                                                )}
+                                                {selectedProfile.socialHabits.parties && (
+                                                    <div>
+                                                        <span className="block text-gray-500 mb-1">Parties</span>
+                                                        <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.socialHabits.parties}</span>
+                                                    </div>
+                                                )}
+                                                {selectedProfile.socialHabits.pubs && (
+                                                    <div>
+                                                        <span className="block text-gray-500 mb-1">Pubs / Clubs</span>
+                                                        <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.socialHabits.pubs}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </section>
+                                    )}
                                 </div>
                             </div>
                         </div>
