@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { FormData } from "@/types/profile"
 import { Plus, Trash2 } from "lucide-react"
 import { useMasterData } from "@/hooks/use-master-data"
-import { CustomSelectDropdown } from "@/components/ui/custom-select-dropdown"
+import { SelectDropdown } from "@/components/ui/select-dropdown"
 
 interface EducationalDetailsStepProps {
   formData: FormData
@@ -19,10 +19,10 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
 
   // Fetch education level data from master_education_level table
   const { data: educationLevelData } = useMasterData({ tableName: "master_education_level" })
-  
+
   // Fetch status options from master_status table
   const { data: statusData } = useMasterData({ tableName: "master_status" })
-  
+
   // Extract unique categories for Education Level dropdown
   const educationLevelOptions = useMemo(() => {
     return Array.from(
@@ -36,7 +36,7 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
       value: category
     }))
   }, [educationLevelData])
-  
+
   // Transform status data to match CustomSelectDropdown format
   const statusOptions = useMemo(() => {
     return statusData.map(item => ({
@@ -49,11 +49,11 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
   const getQualificationsForLevel = useMemo(() => {
     return (educationLevel: string) => {
       if (!educationLevel) return []
-      
+
       // Filter education level data by the selected category (trim for comparison)
       const trimmedLevel = educationLevel.trim()
       const filteredData = educationLevelData.filter(item => item.category?.trim() === trimmedLevel)
-      
+
       // Return options with id and value
       return filteredData.map(item => ({
         id: item.id,
@@ -96,33 +96,33 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
         status: "",
       }
     }
-    
+
     // For dropdown fields, use the exact value from the option to ensure perfect matching
     // The CustomSelectDropdown passes option.value directly, so we should store it as-is
     // Only trim text input fields
     const isDropdownField = field === "education" || field === "degree" || field === "status"
     const processedValue = isDropdownField ? (value || "") : (value || "").trim()
-    
+
     // If education level changes, reset the degree field and educationOther
     if (field === "education") {
-      updated[index] = { 
-        ...updated[index], 
-        [field]: processedValue, 
+      updated[index] = {
+        ...updated[index],
+        [field]: processedValue,
         degree: "",
         degreeOther: "",
         educationOther: processedValue.toLowerCase().trim() === "other" ? updated[index].educationOther || "" : ""
       }
     } else if (field === "degree") {
       // If degree changes, reset degreeOther
-      updated[index] = { 
-        ...updated[index], 
+      updated[index] = {
+        ...updated[index],
         [field]: processedValue,
         degreeOther: processedValue.toLowerCase().trim() === "other" ? updated[index].degreeOther || "" : ""
       }
     } else {
       updated[index] = { ...updated[index], [field]: processedValue }
     }
-    
+
     // Call onChange to update parent state
     onChange("educationDetails", updated)
   }
@@ -149,7 +149,7 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <CustomSelectDropdown
+            <SelectDropdown
               id={`education-${index}`}
               label="Education Level *"
               value={edu.education || ""}
@@ -158,23 +158,40 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
               }}
               options={educationLevelOptions}
               required
-              showOtherInput={educationLevelOptions.some(opt => opt.value.toLowerCase() === "other")}
-              otherValue={edu.educationOther || ""}
-              onOtherChange={(value) => updateEducation(index, "educationOther", value)}
-              otherPlaceholder="Please specify education level"
             />
-            <CustomSelectDropdown
+            {educationLevelOptions.some(opt => opt.value.toLowerCase() === "other") && edu.education?.toLowerCase() === "other" && (
+              <div className="space-y-2">
+                <Label htmlFor={`educationOther-${index}`}>Please specify education level</Label>
+                <Input
+                  id={`educationOther-${index}`}
+                  value={edu.educationOther || ""}
+                  onChange={(e) => updateEducation(index, "educationOther", e.target.value)}
+                  placeholder="Please specify education level"
+                  required
+                />
+              </div>
+            )}
+            <SelectDropdown
               id={`degree-${index}`}
-              label="Degree/Qualification"
+              label="Degree/Qualification *"
               value={edu.degree || ""}
               onChange={(value) => updateEducation(index, "degree", value)}
               options={getQualificationsForLevel(edu.education || "")}
-              showOtherInput={getQualificationsForLevel(edu.education || "").some(opt => opt.value.toLowerCase() === "other")}
-              otherValue={edu.degreeOther || ""}
-              onOtherChange={(value) => updateEducation(index, "degreeOther", value)}
-              otherPlaceholder="Please specify degree/qualification"
               className={!edu.education ? "opacity-50 pointer-events-none" : ""}
+              required
             />
+            {getQualificationsForLevel(edu.education || "").some(opt => opt.value.toLowerCase() === "other") && edu.degree?.toLowerCase() === "other" && (
+              <div className="space-y-2">
+                <Label htmlFor={`degreeOther-${index}`}>Please specify degree/qualification</Label>
+                <Input
+                  id={`degreeOther-${index}`}
+                  value={edu.degreeOther || ""}
+                  onChange={(e) => updateEducation(index, "degreeOther", e.target.value)}
+                  placeholder="Please specify degree/qualification"
+                  required
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor={`branch-${index}`}>Branch/Specialization</Label>
               <Input
@@ -213,7 +230,7 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
                 disabled={edu.status === "ongoing" || edu.status === "pursuing"}
               />
             </div>
-            <CustomSelectDropdown
+            <SelectDropdown
               id={`status-${index}`}
               label="Status *"
               value={edu.status || ""}
