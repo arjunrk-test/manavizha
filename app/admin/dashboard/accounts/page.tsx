@@ -99,7 +99,7 @@ export default function AdminAccountsPage() {
           const { data: profiles } = await supabase
             .from("personal_details")
             .select("sex")
-            .eq("referralPartnerId", partner.partner_id)
+            .eq("referral_partner_id", partner.partner_id)
 
           const total = profiles ? profiles.length : 0
           const men = profiles ? profiles.filter(p => p.sex === "Male").length : 0

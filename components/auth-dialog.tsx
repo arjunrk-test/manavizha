@@ -42,10 +42,34 @@ const coupleStories = [
   },
 ]
 
+const COUNTRY_CODES = [
+  { code: "+91", flag: "🇮🇳", country: "India" },
+  { code: "+1", flag: "🇺🇸", country: "USA" },
+  { code: "+44", flag: "🇬🇧", country: "UK" },
+  { code: "+61", flag: "🇦🇺", country: "Australia" },
+  { code: "+971", flag: "🇦🇪", country: "UAE" },
+  { code: "+65", flag: "🇸🇬", country: "Singapore" },
+  { code: "+60", flag: "🇲🇾", country: "Malaysia" },
+  { code: "+94", flag: "🇱🇰", country: "Sri Lanka" },
+  { code: "+49", flag: "🇩🇪", country: "Germany" },
+  { code: "+33", flag: "🇫🇷", country: "France" },
+  { code: "+81", flag: "🇯🇵", country: "Japan" },
+  { code: "+86", flag: "🇨🇳", country: "China" },
+  { code: "+966", flag: "🇸🇦", country: "Saudi Arabia" },
+  { code: "+974", flag: "🇶🇦", country: "Qatar" },
+  { code: "+968", flag: "🇴🇲", country: "Oman" },
+  { code: "+973", flag: "🇧🇭", country: "Bahrain" },
+  { code: "+64", flag: "🇳🇿", country: "New Zealand" },
+  { code: "+27", flag: "🇿🇦", country: "South Africa" },
+]
+
 export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const router = useRouter()
   const [authMode, setAuthMode] = useState<"login" | "signup">("login")
   const [email, setEmail] = useState("")
+  const [name, setName] = useState("")
+  const [phone, setPhone] = useState("")
+  const [countryCode, setCountryCode] = useState("+91")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -58,6 +82,9 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   useEffect(() => {
     if (!open) {
       setEmail("")
+      setName("")
+      setPhone("")
+      setCountryCode("+91")
       setPassword("")
       setConfirmPassword("")
       setShowPassword(false)
@@ -94,7 +121,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const handleAuthSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
-    
+
     if (authMode === "signup") {
       if (!passwordsMatch || !passwordStrength.isValid) {
         setError("Please ensure your password meets all requirements and matches the confirmation.")
@@ -125,6 +152,8 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               {
                 id: authData.user.id,
                 email: authData.user.email,
+                name: name.trim() || null,
+                phone: phone.trim() ? `${countryCode} ${phone.trim()}` : null,
               },
               {
                 onConflict: "id",
@@ -136,7 +165,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             // Only log meaningful errors (not empty objects or duplicate key errors)
             const hasErrorDetails = insertError.message || insertError.code || insertError.details || insertError.hint
             const isDuplicateError = insertError.code === "23505" || insertError.message?.includes("duplicate")
-            
+
             if (hasErrorDetails && !isDuplicateError) {
               console.error("Error adding user to users table:", {
                 message: insertError.message,
@@ -153,6 +182,9 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
           // Switch to login mode with prefilled email
           setAuthMode("login")
+          setName("")
+          setPhone("")
+          setCountryCode("+91")
           setPassword("")
           setConfirmPassword("")
           setSuccessMessage("Account created successfully! Please sign in to continue.")
@@ -201,13 +233,13 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
           <div className="relative flex flex-col gap-6 p-8 sm:p-10 overflow-hidden">
             {/* Animated gradient background */}
             <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
-            
+
             {/* Overlay pattern */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
-            
+
             {/* Modern grid overlay */}
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px] opacity-30" />
-            
+
             {/* Decorative elements */}
             <div className="absolute inset-0">
               <motion.div
@@ -236,7 +268,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                 className="absolute bottom-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl"
               />
             </div>
-            
+
             <div className="relative z-10 space-y-4">
               <p className="text-xs uppercase tracking-[0.4em] text-white/90">Welcome back</p>
               <h3 className="text-3xl sm:text-4xl font-semibold leading-tight text-white">
@@ -301,11 +333,10 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                className={`flex-1 rounded-full transition-all ${
-                  authMode === "login"
-                    ? "bg-gray-900 text-white dark:bg-white dark:text-black"
-                    : "text-gray-500 dark:text-gray-300"
-                }`}
+                className={`flex-1 rounded-full transition-all ${authMode === "login"
+                  ? "bg-gray-900 text-white dark:bg-white dark:text-black"
+                  : "text-gray-500 dark:text-gray-300"
+                  }`}
                 onClick={() => {
                   setAuthMode("login")
                   setPassword("")
@@ -320,13 +351,15 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                className={`flex-1 rounded-full transition-all ${
-                  authMode === "signup"
-                    ? "bg-gray-900 text-white dark:bg-white dark:text-black"
-                    : "text-gray-500 dark:text-gray-300"
-                }`}
+                className={`flex-1 rounded-full transition-all ${authMode === "signup"
+                  ? "bg-gray-900 text-white dark:bg-white dark:text-black"
+                  : "text-gray-500 dark:text-gray-300"
+                  }`}
                 onClick={() => {
                   setAuthMode("signup")
+                  setName("")
+                  setPhone("")
+                  setCountryCode("+91")
                   setPassword("")
                   setConfirmPassword("")
                   setError(null)
@@ -371,6 +404,53 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   className="rounded-2xl border-gray-200 bg-gray-50 focus-visible:ring-gray-900 dark:bg-gray-900 dark:border-gray-800"
                 />
               </div>
+
+              {authMode === "signup" && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="auth-name">Full Name</Label>
+                    <Input
+                      id="auth-name"
+                      type="text"
+                      placeholder="Your full name"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      autoComplete="off"
+                      data-1p-ignore
+                      data-lpignore="true"
+                      className="rounded-2xl border-gray-200 bg-gray-50 focus-visible:ring-gray-900 dark:bg-gray-900 dark:border-gray-800"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="auth-phone">Phone Number</Label>
+                    <div className="flex gap-2">
+                      <select
+                        value={countryCode}
+                        onChange={(e) => setCountryCode(e.target.value)}
+                        className="shrink-0 w-28 rounded-2xl border border-gray-200 bg-gray-50 px-2 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:bg-gray-900 dark:border-gray-800 dark:text-gray-100"
+                      >
+                        {COUNTRY_CODES.map(c => (
+                          <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+                        ))}
+                      </select>
+                      <Input
+                        id="auth-phone"
+                        type="tel"
+                        placeholder="98765 43210"
+                        required
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                        autoComplete="off"
+                        data-1p-ignore
+                        data-lpignore="true"
+                        className="flex-1 rounded-2xl border-gray-200 bg-gray-50 focus-visible:ring-gray-900 dark:bg-gray-900 dark:border-gray-800"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
               <div className="space-y-3">
                 <div className="space-y-2">
                   <Label htmlFor="auth-password">Password</Label>
