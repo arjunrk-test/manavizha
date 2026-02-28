@@ -34,8 +34,8 @@ export function BrowseProfiles({ userId, onBack }: BrowseProfilesProps) {
                     return
                 }
 
-                const myGender = userData.sex
-                const tg = myGender === "Male" ? "Female" : "Male"
+                const myGender = userData.sex?.toLowerCase() || ""
+                const tg = myGender === "male" ? "Female" : "Male"
                 setTargetGender(tg)
 
                 // 2. Fetch target profiles
@@ -43,6 +43,7 @@ export function BrowseProfiles({ userId, onBack }: BrowseProfilesProps) {
                     .from("personal_details")
                     .select("*")
                     .ilike("sex", tg)
+                    .neq("user_id", userId)
 
                 if (!targetProfiles || targetProfiles.length === 0) {
                     setIsLoading(false)
@@ -204,6 +205,7 @@ export function BrowseProfiles({ userId, onBack }: BrowseProfilesProps) {
             {/* Profile Detail Dialog */}
             <Dialog open={!!selectedProfile} onOpenChange={(open) => !open && setSelectedProfile(null)}>
                 <DialogContent className="max-w-3xl p-0 overflow-hidden bg-white dark:bg-gray-900 border-none rounded-2xl">
+                    <DialogTitle className="sr-only">Profile Details</DialogTitle>
                     {selectedProfile && (
                         <div className="flex flex-col md:flex-row h-[85vh] md:h-[600px]">
                             {/* Left side: Photo Gallery */}
