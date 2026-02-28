@@ -266,12 +266,12 @@ export default function ReferralPartnerDashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             <Button
-              onClick={() => router.push("/referral-partner/my-profile")}
+              onClick={() => router.push("/referral-partner/profile")}
               variant="outline"
               className="flex items-center gap-2"
             >
               <User className="h-4 w-4" />
-              Profile
+              Account
             </Button>
             <Button
               onClick={() => router.push("/referral-partner/settings")}

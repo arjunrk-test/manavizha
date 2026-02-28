@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "react-hot-toast"
-import { createAdminAccount, updateAdminRole, revokeAdminAccess, AdminRole } from "@/app/actions/admin"
+import { createAdminAccount, updateAdminRole, revokeAdminAccess, AdminRole, createReferralPartnerAccount } from "@/app/actions/admin"
 import {
   Table,
   TableBody,
@@ -53,6 +53,15 @@ export default function AdminAccountsPage() {
     password: ""
   })
   const [showPassword, setShowPassword] = useState(false)
+  const [isPartnerDialogOpen, setIsPartnerDialogOpen] = useState(false)
+  const [isSubmittingPartner, setIsSubmittingPartner] = useState(false)
+  const [partnerFormData, setPartnerFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: ""
+  })
+  const [showPartnerPassword, setShowPartnerPassword] = useState(false)
 
   const q = searchQuery.toLowerCase()
   const filteredAdmins = useMemo(() => {
@@ -274,6 +283,26 @@ export default function AdminAccountsPage() {
     }
   }
 
+  const handlePartnerSubmit = async () => {
+    setIsSubmittingPartner(true)
+    try {
+      if (!partnerFormData.name || !partnerFormData.email || !partnerFormData.password) {
+        toast.error("Name, email, and password are required")
+        return
+      }
+      const res = await createReferralPartnerAccount(partnerFormData)
+      if (!res.success) throw new Error(res.error)
+      toast.success("Referral partner account created successfully")
+      setIsPartnerDialogOpen(false)
+      setPartnerFormData({ name: "", email: "", phone: "", password: "" })
+      fetchData() // Refresh list
+    } catch (err: any) {
+      toast.error(err.message || "An error occurred")
+    } finally {
+      setIsSubmittingPartner(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -394,9 +423,14 @@ export default function AdminAccountsPage() {
             <TabsContent value="partner" className="mt-6">
               {/* Table */}
               <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200/60 dark:border-gray-700/60">
-                <div className="p-6 border-b border-gray-200/60 dark:border-gray-700/60">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Referral Partners</h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Manage referral partner accounts and their custom percentages.</p>
+                <div className="p-6 border-b border-gray-200/60 dark:border-gray-700/60 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Referral Partners</h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Manage referral partner accounts and their custom percentages.</p>
+                  </div>
+                  <Button onClick={() => setIsPartnerDialogOpen(true)} className="bg-[#4B0082] hover:bg-[#4B0082]/90">
+                    <Users className="h-4 w-4 mr-2" /> Add Referral Partner
+                  </Button>
                 </div>
                 <div className="overflow-x-auto">
                   <Table>
@@ -625,6 +659,61 @@ export default function AdminAccountsPage() {
                 className={adminDialogMode === "revoke" ? "bg-red-600 hover:bg-red-700 text-white" : "bg-[#4B0082] hover:bg-[#4B0082]/90"}
               >
                 {isSubmittingAdmin ? "Saving..." : (adminDialogMode === "revoke" ? "Revoke Access" : "Save Admin")}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Referral Partner Dialog */}
+        <Dialog open={isPartnerDialogOpen} onOpenChange={setIsPartnerDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add New Referral Partner</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Name <span className="text-red-500">*</span></label>
+                <Input value={partnerFormData.name} onChange={e => setPartnerFormData(prev => ({ ...prev, name: e.target.value }))} placeholder="Partner Name" />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Email <span className="text-red-500">*</span></label>
+                <Input type="email" value={partnerFormData.email} onChange={e => setPartnerFormData(prev => ({ ...prev, email: e.target.value }))} placeholder="partner@example.com" />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Phone</label>
+                <Input value={partnerFormData.phone} onChange={e => setPartnerFormData(prev => ({ ...prev, phone: e.target.value }))} placeholder="+91 9876543210" />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Password <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <Input
+                    type={showPartnerPassword ? "text" : "password"}
+                    value={partnerFormData.password}
+                    onChange={e => setPartnerFormData(prev => ({ ...prev, password: e.target.value }))}
+                    placeholder="Secure password"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPartnerPassword(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    tabIndex={-1}
+                  >
+                    {showPartnerPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-4">
+              <Button variant="outline" onClick={() => setIsPartnerDialogOpen(false)} disabled={isSubmittingPartner}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handlePartnerSubmit}
+                className="bg-[#4B0082] hover:bg-[#4B0082]/90"
+                disabled={isSubmittingPartner}
+              >
+                {isSubmittingPartner ? "Saving..." : "Save Partner"}
               </Button>
             </div>
           </DialogContent>

@@ -157,7 +157,7 @@ export default function ReferralPartnerProfileDetailPage() {
                 supabase.from("horoscope_details").select("*").eq("user_id", profileUserId).single(),
                 supabase.from("interests").select("*").eq("user_id", profileUserId).single(),
                 supabase.from("social_habits").select("*").eq("user_id", profileUserId).single(),
-                supabase.from("photos").select("*").eq("user_id", profileUserId),
+                supabase.from("photos").select("*").eq("user_id", profileUserId).maybeSingle(),
                 supabase.from("referral_details").select("*, referral_partners(name)").eq("user_id", profileUserId).single(),
                 supabase.from("profession_employee").select("*").eq("user_id", profileUserId).single(),
                 supabase.from("profession_business").select("*").eq("user_id", profileUserId).single(),
@@ -165,7 +165,39 @@ export default function ReferralPartnerProfileDetailPage() {
                 supabase.from("users").select("email, name, phone").eq("id", profileUserId).single(),
             ])
 
-            setRaw({ edu, photos, ref, emp, bus, stu })
+            let processedPhotos: any = null
+            if (photos) {
+                const getPhotoUrl = async (url: string | null, bucket: string): Promise<string> => {
+                    if (!url) return ""
+                    if (url.startsWith("http")) return url
+                    try {
+                        const filePath = url.includes("/") ? url : `${profileUserId}/${url}`
+                        const { data: urlData } = await supabase.storage.from(bucket).createSignedUrl(filePath, 31536000)
+                        return urlData?.signedUrl || url
+                    } catch { return url }
+                }
+
+                const userPhotos = photos.user_photos || []
+                const userPhotoUrls = await Promise.all(
+                    userPhotos.map(async (photo: string, index: number) => {
+                        if (photo.startsWith("http")) return photo
+                        try {
+                            const filePath = photo.includes("/") ? photo : `${profileUserId}/photo_${index + 1}.jpg`
+                            const { data: urlData } = await supabase.storage.from("user-photos").createSignedUrl(filePath, 31536000)
+                            return urlData?.signedUrl || photo
+                        } catch { return photo }
+                    })
+                )
+
+                processedPhotos = {
+                    userPhotos: userPhotoUrls,
+                    familyPhoto: await getPhotoUrl(photos.family_photo, "family-photos"),
+                    aadharFront: await getPhotoUrl(photos.aadhar_front, "aadhar-photos"),
+                    aadharBack: await getPhotoUrl(photos.aadhar_back, "aadhar-photos"),
+                }
+            }
+
+            setRaw({ edu, photos: processedPhotos, ref, emp, bus, stu })
             setPersonal(p || {}); setContact(c || {}); setFamily(fam || {})
             setHoroscope(horo || {}); setInterests(int || {}); setSocial(soc || {})
             setUserRow(ur || {})
@@ -260,15 +292,16 @@ export default function ReferralPartnerProfileDetailPage() {
                         onEdit={() => startEdit("personal")} onCancel={() => cancelEdit("personal")}
                         onSave={() => saveSection("personal", "personal_details", personal)}>
                         <F label="Full Name" value={personal.name} editing={canEdit && ed("personal")} fieldKey="name" onChange={(k, v) => setPersonal((p: any) => ({ ...p, [k]: v }))} />
-                        <F label="Date of Birth" value={personal.dob} type="date" editing={canEdit && ed("personal")} fieldKey="dob" onChange={(k, v) => setPersonal((p: any) => ({ ...p, [k]: v }))} />
+                        <F label="Date of Birth" value={personal.date_of_birth} type="date" editing={canEdit && ed("personal")} fieldKey="date_of_birth" onChange={(k, v) => setPersonal((p: any) => ({ ...p, [k]: v }))} />
                         <F label="Age" value={personal.age} />
                         <D label="Gender" id="sex" value={personal.sex} options={genderOpts} editing={canEdit && ed("personal")} fieldKey="sex" onChange={(k, v) => setPersonal((p: any) => ({ ...p, [k]: v }))} />
                         <F label="Height (cm)" value={personal.height} type="number" editing={canEdit && ed("personal")} fieldKey="height" onChange={(k, v) => setPersonal((p: any) => ({ ...p, [k]: v }))} />
                         <F label="Weight (kg)" value={personal.weight} type="number" editing={canEdit && ed("personal")} fieldKey="weight" onChange={(k, v) => setPersonal((p: any) => ({ ...p, [k]: v }))} />
-                        <F label="Complexion" value={personal.complexion} editing={canEdit && ed("personal")} fieldKey="complexion" onChange={(k, v) => setPersonal((p: any) => ({ ...p, [k]: v }))} />
+                        <F label="Skin Color" value={personal.skin_color} editing={canEdit && ed("personal")} fieldKey="skin_color" onChange={(k, v) => setPersonal((p: any) => ({ ...p, [k]: v }))} />
                         <D label="Body Type" id="bodyType" value={personal.body_type} options={bodyTypeOpts} editing={canEdit && ed("personal")} fieldKey="body_type" onChange={(k, v) => setPersonal((p: any) => ({ ...p, [k]: v }))} />
                         <D label="Marital Status" id="marital" value={personal.marital_status} options={maritalOpts} editing={canEdit && ed("personal")} fieldKey="marital_status" onChange={(k, v) => setPersonal((p: any) => ({ ...p, [k]: v }))} />
                         <D label="Food Preference" id="food" value={personal.food_preference} options={foodOpts} editing={canEdit && ed("personal")} fieldKey="food_preference" onChange={(k, v) => setPersonal((p: any) => ({ ...p, [k]: v }))} />
+                        <F label="Languages" value={Array.isArray(personal.languages) ? personal.languages.join(", ") : personal.languages} />
                         <F label="About" value={personal.about} editing={canEdit && ed("personal")} fieldKey="about" onChange={(k, v) => setPersonal((p: any) => ({ ...p, [k]: v }))} />
                     </Section>
 
@@ -276,10 +309,15 @@ export default function ReferralPartnerProfileDetailPage() {
                     <Section title="Contact Details" canEdit={canEdit} editing={ed("contact")} saving={sv("contact")}
                         onEdit={() => startEdit("contact")} onCancel={() => cancelEdit("contact")}
                         onSave={() => saveSection("contact", "contact_details", contact)}>
-                        {(["phone", "address", "city", "state", "country", "pincode"] as const).map(k => (
-                            <F key={k} label={k.charAt(0).toUpperCase() + k.slice(1)} value={contact[k]}
-                                editing={canEdit && ed("contact")} fieldKey={k} onChange={(fk, v) => setContact((p: any) => ({ ...p, [fk]: v }))} />
-                        ))}
+                        <F label="Phone" value={contact.phone} editing={canEdit && ed("contact")} fieldKey="phone" onChange={(k, v) => setContact((p: any) => ({ ...p, [k]: v }))} />
+                        <F label="WhatsApp" value={contact.whatsapp_number} editing={canEdit && ed("contact")} fieldKey="whatsapp_number" onChange={(k, v) => setContact((p: any) => ({ ...p, [k]: v }))} />
+                        <F label="Address Line 1" value={contact.permanent_address_line1} editing={canEdit && ed("contact")} fieldKey="permanent_address_line1" onChange={(k, v) => setContact((p: any) => ({ ...p, [k]: v }))} />
+                        <F label="Address Line 2" value={contact.permanent_address_line2} editing={canEdit && ed("contact")} fieldKey="permanent_address_line2" onChange={(k, v) => setContact((p: any) => ({ ...p, [k]: v }))} />
+                        <F label="Area" value={contact.permanent_area} editing={canEdit && ed("contact")} fieldKey="permanent_area" onChange={(k, v) => setContact((p: any) => ({ ...p, [k]: v }))} />
+                        <F label="District" value={contact.permanent_district} editing={canEdit && ed("contact")} fieldKey="permanent_district" onChange={(k, v) => setContact((p: any) => ({ ...p, [k]: v }))} />
+                        <F label="State" value={contact.permanent_state} editing={canEdit && ed("contact")} fieldKey="permanent_state" onChange={(k, v) => setContact((p: any) => ({ ...p, [k]: v }))} />
+                        <F label="Country" value={contact.permanent_country} editing={canEdit && ed("contact")} fieldKey="permanent_country" onChange={(k, v) => setContact((p: any) => ({ ...p, [k]: v }))} />
+                        <F label="Pincode" value={contact.permanent_pincode} editing={canEdit && ed("contact")} fieldKey="permanent_pincode" onChange={(k, v) => setContact((p: any) => ({ ...p, [k]: v }))} />
                     </Section>
 
                     {/* Education (read-only) */}
@@ -288,12 +326,54 @@ export default function ReferralPartnerProfileDetailPage() {
                             <h2 className="text-lg font-semibold text-[#4B0082] dark:text-purple-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Educational Details</h2>
                             {raw.edu.map((edu: any, i: number) => (
                                 <div key={i} className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-100 last:border-0">
-                                    <F label="Degree" value={edu.degree} />
+                                    <F label="Education" value={edu.education === "Other" ? edu.education_other : edu.education} />
+                                    <F label="Degree" value={edu.degree === "Other" ? edu.degree_other : edu.degree} />
+                                    <F label="Branch/Specialization" value={edu.branch} />
                                     <F label="Institution" value={edu.institution} />
-                                    <F label="Year of Passing" value={edu.year_of_passing} />
-                                    <F label="Specialization" value={edu.specialization} />
+                                    <F label="Year of Graduation" value={edu.year_of_graduation} />
+                                    <F label="Status" value={edu.status} />
                                 </div>
                             ))}
+                        </div>
+                    )}
+
+                    {/* Professional Details (read-only) */}
+                    {(raw.emp || raw.bus || raw.stu) && (
+                        <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/60 dark:border-gray-700/60 p-6 mb-6">
+                            <h2 className="text-lg font-semibold text-[#4B0082] dark:text-purple-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Professional Details</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {raw.emp && (
+                                    <>
+                                        <F label="Employment Type" value="Employee" />
+                                        <F label="Sector" value={raw.emp.sector === "Other" ? raw.emp.sector_other : raw.emp.sector} />
+                                        <F label="Company" value={raw.emp.company} />
+                                        <F label="Designation" value={raw.emp.designation} />
+                                        <F label="Salary" value={raw.emp.salary} />
+                                        <F label="Work Location" value={raw.emp.work_location} />
+                                    </>
+                                )}
+                                {raw.bus && (
+                                    <>
+                                        <F label="Employment Type" value="Business" />
+                                        <F label="Sector" value={raw.bus.sector === "Other" ? raw.bus.sector_other : raw.bus.sector} />
+                                        <F label="Business Type" value={raw.bus.business_type === "Other" ? raw.bus.business_type_other : raw.bus.business_type} />
+                                        <F label="Business Name" value={raw.bus.business_name} />
+                                        <F label="Designation" value={raw.bus.designation} />
+                                        <F label="Annual Returns" value={raw.bus.annual_returns} />
+                                        <F label="Business Location" value={raw.bus.business_location} />
+                                    </>
+                                )}
+                                {raw.stu && (
+                                    <>
+                                        <F label="Employment Type" value="Student" />
+                                        <F label="Institution" value={raw.stu.institution} />
+                                        <F label="Course" value={raw.stu.course} />
+                                        <F label="Field of Study" value={raw.stu.field_of_study} />
+                                        <F label="Year of Study" value={raw.stu.year_of_study} />
+                                        <F label="Expected Graduation Year" value={raw.stu.expected_graduation_year} />
+                                    </>
+                                )}
+                            </div>
                         </div>
                     )}
 
@@ -330,10 +410,8 @@ export default function ReferralPartnerProfileDetailPage() {
                     <Section title="Interests" canEdit={canEdit} editing={ed("interests")} saving={sv("interests")}
                         onEdit={() => startEdit("interests")} onCancel={() => cancelEdit("interests")}
                         onSave={() => saveSection("interests", "interests", interests)}>
-                        {(["hobbies", "sports", "music", "preferred_partner"] as const).map(k => (
-                            <F key={k} label={k.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())} value={interests[k]}
-                                editing={canEdit && ed("interests")} fieldKey={k} onChange={(fk, v) => setInterests((p: any) => ({ ...p, [fk]: v }))} />
-                        ))}
+                        <F label="Hobbies" value={Array.isArray(interests.hobbies) ? interests.hobbies.join(", ") : interests.hobbies} />
+                        <F label="Interests" value={Array.isArray(interests.interests) ? interests.interests.join(", ") : interests.interests} />
                     </Section>
 
                     {/* Social Habits */}
@@ -347,13 +425,40 @@ export default function ReferralPartnerProfileDetailPage() {
                     </Section>
 
                     {/* Photos */}
-                    {raw.photos && raw.photos.length > 0 && (
+                    {raw.photos && (raw.photos.userPhotos?.length > 0 || raw.photos.familyPhoto || raw.photos.aadharFront || raw.photos.aadharBack) && (
                         <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/60 dark:border-gray-700/60 p-6 mb-6">
                             <h2 className="text-lg font-semibold text-[#4B0082] dark:text-purple-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Photos</h2>
-                            <div className="flex flex-wrap gap-3">
-                                {raw.photos.map((p: any, i: number) => (
-                                    <img key={i} src={p.url || p.photo_url} alt={`Photo ${i + 1}`} className="h-32 w-32 object-cover rounded-xl border border-gray-200" />
-                                ))}
+
+                            {raw.photos.userPhotos?.length > 0 && (
+                                <div className="mb-4">
+                                    <h3 className="text-sm font-medium text-gray-700 mb-2">User Photos</h3>
+                                    <div className="flex flex-wrap gap-3">
+                                        {raw.photos.userPhotos.map((url: string, i: number) => (
+                                            <img key={i} src={url} alt={`User Photo ${i + 1}`} className="h-32 w-32 object-cover rounded-xl border border-gray-200" />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex flex-wrap gap-6">
+                                {raw.photos.familyPhoto && (
+                                    <div>
+                                        <h3 className="text-sm font-medium text-gray-700 mb-2">Family Photo</h3>
+                                        <img src={raw.photos.familyPhoto} alt="Family Photo" className="h-40 w-40 object-cover rounded-xl border border-gray-200" />
+                                    </div>
+                                )}
+                                {raw.photos.aadharFront && (
+                                    <div>
+                                        <h3 className="text-sm font-medium text-gray-700 mb-2">Aadhar Front</h3>
+                                        <img src={raw.photos.aadharFront} alt="Aadhar Front" className="h-40 w-60 object-cover rounded-xl border border-gray-200" />
+                                    </div>
+                                )}
+                                {raw.photos.aadharBack && (
+                                    <div>
+                                        <h3 className="text-sm font-medium text-gray-700 mb-2">Aadhar Back</h3>
+                                        <img src={raw.photos.aadharBack} alt="Aadhar Back" className="h-40 w-60 object-cover rounded-xl border border-gray-200" />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}

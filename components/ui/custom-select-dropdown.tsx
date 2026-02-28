@@ -89,10 +89,15 @@ export function CustomSelectDropdown({
                 <button
                   key={option.id}
                   type="button"
-                  onClick={() => handleSelect(option.value)}
-                  className={`w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-left transition-colors ${
-                    isSelected ? "bg-gray-100 dark:bg-gray-800" : ""
-                  }`}
+                  onMouseDown={(e) => {
+                    // Prevent focus loss on the container which might trigger useClickOutside
+                    e.preventDefault()
+                  }}
+                  onClick={() => {
+                    handleSelect(option.value)
+                  }}
+                  className={`w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-left transition-colors ${isSelected ? "bg-gray-100 dark:bg-gray-800" : ""
+                    }`}
                 >
                   <span className="break-words whitespace-normal text-sm">{option.value}</span>
                 </button>

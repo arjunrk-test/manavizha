@@ -198,10 +198,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             foodPreference: data.food_preference || "",
             languages: data.languages || [],
           }
-          
+
           // Store original data for comparison
           setOriginalPersonalDetails(loadedData)
-          
+
           // Update form data
           setFormData((prev) => ({
             ...prev,
@@ -261,10 +261,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             currentCountry: data.current_country || "",
             currentLandmark: data.current_landmark || "",
           }
-          
+
           // Store original data for comparison
           setOriginalContactDetails(loadedData)
-          
+
           // Update form data
           setFormData((prev) => ({
             ...prev,
@@ -306,10 +306,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             yearOfGraduation: edu.year_of_graduation ? edu.year_of_graduation.toString() : "",
             status: edu.status || "",
           }))
-          
+
           // Store original data for comparison
           setOriginalEducationDetails(loadedData)
-          
+
           // Update form data
           setFormData((prev) => ({
             ...prev,
@@ -366,10 +366,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             familyType: data.family_type || "",
             familyStatus: data.family_status || "",
           }
-          
+
           // Store original data for comparison
           setOriginalFamilyDetails(loadedData)
-          
+
           // Update form data
           setFormData((prev) => ({
             ...prev,
@@ -410,10 +410,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             lagnam: data.lagnam || "",
             dhosham: data.dhosham || "",
           }
-          
+
           // Store original data for comparison
           setOriginalHoroscopeDetails(loadedData)
-          
+
           // Update form data
           setFormData((prev) => ({
             ...prev,
@@ -449,10 +449,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             hobbies: data.hobbies || [],
             interests: data.interests || [],
           }
-          
+
           // Store original data for comparison
           setOriginalInterestsDetails(loadedData)
-          
+
           // Update form data
           setFormData((prev) => ({
             ...prev,
@@ -490,10 +490,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             parties: data.parties || "",
             pubs: data.pubs || "",
           }
-          
+
           // Store original data for comparison
           setOriginalSocialHabitsDetails(loadedData)
-          
+
           // Update form data
           setFormData((prev) => ({
             ...prev,
@@ -527,19 +527,19 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           // Helper function to get signed URL from file path or use existing URL
           const getPhotoUrl = async (url: string | null, bucket: string, defaultFileName: string): Promise<string> => {
             if (!url) return ""
-            
+
             // If it's already a signed URL (starts with http), use it
             if (url.startsWith("http")) {
               return url
             }
-            
+
             // If it's a file path, create a signed URL
             try {
               const filePath = url.includes("/") ? url : `${userId}/${url}`
               const { data: urlData, error: urlError } = await supabase.storage
                 .from(bucket)
                 .createSignedUrl(filePath, 31536000) // 1 year
-              
+
               if (urlError) throw urlError
               return urlData.signedUrl
             } catch (error) {
@@ -560,7 +560,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                 const { data: urlData, error: urlError } = await supabase.storage
                   .from("user-photos")
                   .createSignedUrl(filePath, 31536000)
-                
+
                 if (urlError) throw urlError
                 return urlData.signedUrl
               } catch (error) {
@@ -582,10 +582,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             aadharFront: aadharFrontUrl,
             aadharBack: aadharBackUrl,
           }
-          
+
           // Store original data for comparison
           setOriginalPhotosDetails(loadedData)
-          
+
           // Update form data
           setFormData((prev) => ({
             ...prev,
@@ -620,15 +620,15 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           const loadedData = {
             referralPartnerId: data.referral_partner_id || "",
           }
-          
+
           // Store original data for comparison
           setOriginalReferralDetails(loadedData)
-          
+
           // Store partner name if available
           if (data.referral_partner_name) {
             setReferralPartnerName(data.referral_partner_name)
           }
-          
+
           // Update form data
           setFormData((prev) => ({
             ...prev,
@@ -666,11 +666,11 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           // Load payslips with signed URLs
           let payslipUrls: string[] = []
           const payslips = Array.isArray(employeeData.payslip) ? employeeData.payslip : (employeeData.payslip ? [employeeData.payslip] : [])
-          
+
           for (let i = 0; i < payslips.length; i++) {
             const payslip = payslips[i]
             if (!payslip) continue
-            
+
             // If it's already a signed URL (starts with http), use it
             if (payslip.startsWith("http")) {
               payslipUrls.push(payslip)
@@ -681,7 +681,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                 const { data: urlData, error: urlError } = await supabase.storage
                   .from("payslips")
                   .createSignedUrl(filePath, 31536000) // 1 year
-                
+
                 if (urlError) throw urlError
                 payslipUrls.push(urlData.signedUrl)
               } catch (error) {
@@ -726,7 +726,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
           // Load ITR document with signed URL
           let itrDocumentUrl = businessData.itr_document || ""
-          
+
           if (itrDocumentUrl && !itrDocumentUrl.startsWith("http")) {
             // If it's a file path, create a signed URL
             try {
@@ -734,7 +734,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               const { data: urlData, error: urlError } = await supabase.storage
                 .from("itr-documents")
                 .createSignedUrl(filePath, 31536000) // 1 year
-              
+
               if (urlError) throw urlError
               itrDocumentUrl = urlData.signedUrl
             } catch (error) {
@@ -808,17 +808,17 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       if (key === "salary") {
         return value !== "₹" && value !== "" && value !== null && value !== undefined
       }
-      
+
       // Special handling for educationDetails - check if at least one entry has actual data
       if (key === "educationDetails") {
         if (Array.isArray(value) && value.length > 0) {
-          return value.some((edu: any) => 
+          return value.some((edu: any) =>
             edu && (edu.education || edu.degree || edu.institution || edu.yearOfGraduation)
           )
         }
         return false
       }
-      
+
       // For arrays, check if they have meaningful content
       if (Array.isArray(value)) {
         // For userPhotos, require at least 3 photos
@@ -828,7 +828,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         // For other arrays, check if they have any items
         return value.length > 0
       }
-      
+
       // For regular fields, check if they're not empty
       return value !== "" && value !== null && value !== undefined
     }).length
@@ -879,7 +879,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       }
 
       const employmentType = formData.employmentType || ""
-      
+
       if (!employmentType || employmentType.trim() === "") {
         return 0
       }
@@ -897,7 +897,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
       const filled = fields.filter((field) => {
         const value = formData[field]
-        
+
         // Special handling for sector with "other" option
         if (field === "sector") {
           const sector = value as string || ""
@@ -906,7 +906,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           }
           return sector.trim() !== ""
         }
-        
+
         // Special handling for businessType with "other" option
         if (field === "businessType") {
           const businessType = value as string || ""
@@ -915,18 +915,18 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           }
           return businessType.trim() !== ""
         }
-        
+
         // Special handling for salary and annualReturns
         if (field === "salary" || field === "annualReturns") {
           return value && value !== "₹" && value !== "" && value !== null && value !== undefined
         }
-        
+
         if (Array.isArray(value)) {
           return value.length > 0
         }
         return value !== "" && value !== null && value !== undefined
       }).length
-      
+
       return fields.length > 0 ? Math.round((filled / fields.length) * 100) : 0
     }
 
@@ -934,12 +934,30 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     const filled = fields.filter((field) => {
       const value = formData[field]
       if (field === "educationDetails") {
-        // For education details, check if at least one entry has education level filled
-        const educationDetails = value as FormData["educationDetails"]
-        if (Array.isArray(educationDetails) && educationDetails.length > 0) {
-          return educationDetails.some((edu) => edu && edu.education && edu.education !== "")
+        // For education details, check if all entries have required fields filled
+        const educationArray = value as FormData["educationDetails"]
+        if (!educationArray || educationArray.length === 0) {
+          return false
         }
-        return false
+
+        return educationArray.every((edu) => {
+          if (!edu) return false
+
+          const hasEdu = edu.education && edu.education.trim() !== ""
+          const hasEduOther = edu.education === "other" ? (edu.educationOther && edu.educationOther.trim() !== "") : true
+
+          const hasDegree = edu.degree && edu.degree.trim() !== ""
+          const hasDegreeOther = edu.degree === "other" ? (edu.degreeOther && edu.degreeOther.trim() !== "") : true
+
+          const hasInst = edu.institution && edu.institution.trim() !== ""
+          const hasStatus = edu.status && edu.status.trim() !== ""
+
+          const hasYear = (edu.status === "completed" || edu.status === "discontinued")
+            ? (edu.yearOfGraduation && edu.yearOfGraduation.trim() !== "")
+            : true
+
+          return hasEdu && hasEduOther && hasDegree && hasDegreeOther && hasInst && hasStatus && hasYear
+        })
       }
       if (field === "userPhotos") {
         // User photos: minimum 3 required
@@ -1042,11 +1060,11 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
     // Compare current form data with original saved data
     const fieldsToCompare: (keyof FormData)[] = ["name", "dateOfBirth", "age", "sex", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"]
-    
+
     for (const field of fieldsToCompare) {
       const currentValue = formData[field]
       const originalValue = originalPersonalDetails[field]
-      
+
       // Handle array comparison (languages)
       if (Array.isArray(currentValue) || Array.isArray(originalValue)) {
         const currentArr = Array.isArray(currentValue) ? currentValue : []
@@ -1063,7 +1081,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         }
       }
     }
-    
+
     return false
   }
 
@@ -1084,30 +1102,30 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
     formData.educationDetails.forEach((edu, index) => {
       const entryNum = index + 1
-      
+
       if (!edu.education || edu.education.trim() === "") {
         missingFields.push(`Education ${entryNum}: Education Level`)
       } else if (edu.education === "other" && (!edu.educationOther || edu.educationOther.trim() === "")) {
         missingFields.push(`Education ${entryNum}: Education Level (Other)`)
       }
-      
+
       if (!edu.degree || edu.degree.trim() === "") {
         missingFields.push(`Education ${entryNum}: Degree/Qualification`)
       } else if (edu.degree === "other" && (!edu.degreeOther || edu.degreeOther.trim() === "")) {
         missingFields.push(`Education ${entryNum}: Degree/Qualification (Other)`)
       }
-      
+
       if (!edu.institution || edu.institution.trim() === "") {
         missingFields.push(`Education ${entryNum}: Institution/University`)
       }
-      
+
       if (!edu.status || edu.status.trim() === "") {
         missingFields.push(`Education ${entryNum}: Status`)
       }
-      
+
       // Year of graduation is required only if status is completed or discontinued
-      if ((edu.status === "completed" || edu.status === "discontinued") && 
-          (!edu.yearOfGraduation || edu.yearOfGraduation.trim() === "")) {
+      if ((edu.status === "completed" || edu.status === "discontinued") &&
+        (!edu.yearOfGraduation || edu.yearOfGraduation.trim() === "")) {
         missingFields.push(`Education ${entryNum}: Year of Graduation`)
       }
     })
@@ -1323,7 +1341,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
   const validateProfessionalDetails = (): boolean => {
     const employmentType = formData.employmentType || ""
-    
+
     if (!employmentType || employmentType.trim() === "") {
       toast.error("Please select employment type", {
         description: "Employment type is required to save your professional details.",
@@ -1428,7 +1446,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   // Check if all professional details fields are filled
   const areAllProfessionalDetailsFilled = (): boolean => {
     const employmentType = formData.employmentType || ""
-    
+
     if (!employmentType || employmentType.trim() === "") {
       return false
     }
@@ -1436,54 +1454,54 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     if (employmentType === "employee") {
       const sector = formData.sector || ""
       const sectorOther = formData.sectorOther || ""
-      const sectorValid = Boolean(sector.trim() !== "" && 
-                         (sector !== "other" || sectorOther.trim() !== ""))
+      const sectorValid = Boolean(sector.trim() !== "" &&
+        (sector !== "other" || sectorOther.trim() !== ""))
       const company = formData.company || ""
       const designation = formData.designation || ""
       const salary = formData.salary || ""
       const workLocation = formData.workLocation || ""
       const payslips = (formData.payslip as string[]) || []
-      
+
       return sectorValid &&
-             company.trim() !== "" &&
-             designation.trim() !== "" &&
-             salary !== "₹" && salary.trim() !== "" &&
-             workLocation.trim() !== ""
-             // Payslip is optional - removed from validation
+        company.trim() !== "" &&
+        designation.trim() !== "" &&
+        salary !== "₹" && salary.trim() !== "" &&
+        workLocation.trim() !== ""
+      // Payslip is optional - removed from validation
     } else if (employmentType === "business") {
       const sector = formData.sector || ""
       const sectorOther = formData.sectorOther || ""
-      const sectorValid = Boolean(sector.trim() !== "" && 
-                         (sector !== "other" || sectorOther.trim() !== ""))
+      const sectorValid = Boolean(sector.trim() !== "" &&
+        (sector !== "other" || sectorOther.trim() !== ""))
       const businessType = formData.businessType || ""
       const businessTypeOther = formData.businessTypeOther || ""
-      const businessTypeValid = Boolean(businessType.trim() !== "" && 
-                                (businessType !== "other" || businessTypeOther.trim() !== ""))
+      const businessTypeValid = Boolean(businessType.trim() !== "" &&
+        (businessType !== "other" || businessTypeOther.trim() !== ""))
       const businessName = formData.businessName || ""
       const designation = formData.designation || ""
       const annualReturns = formData.annualReturns || ""
       const businessLocation = formData.businessLocation || ""
       const itrDocument = formData.itrDocument || ""
-      
+
       return sectorValid &&
-             businessName.trim() !== "" &&
-             businessTypeValid &&
-             designation.trim() !== "" &&
-             annualReturns !== "₹" && annualReturns.trim() !== "" &&
-             businessLocation.trim() !== ""
-             // ITR Document is optional - removed from validation
+        businessName.trim() !== "" &&
+        businessTypeValid &&
+        designation.trim() !== "" &&
+        annualReturns !== "₹" && annualReturns.trim() !== "" &&
+        businessLocation.trim() !== ""
+      // ITR Document is optional - removed from validation
     } else if (employmentType === "student") {
       const institution = formData.institution || ""
       const course = formData.course || ""
       const fieldOfStudy = formData.fieldOfStudy || ""
       const yearOfStudy = formData.yearOfStudy || ""
       const expectedGraduationYear = formData.expectedGraduationYear || ""
-      
+
       return institution.trim() !== "" &&
-             course.trim() !== "" &&
-             fieldOfStudy.trim() !== "" &&
-             yearOfStudy.trim() !== "" &&
-             expectedGraduationYear.trim() !== ""
+        course.trim() !== "" &&
+        fieldOfStudy.trim() !== "" &&
+        yearOfStudy.trim() !== "" &&
+        expectedGraduationYear.trim() !== ""
     }
 
     return false
@@ -1510,7 +1528,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       for (const field of fieldsToCompare) {
         const currentValue = formData[field]
         const originalValue = originalProfessionalDetails[field]
-        
+
         // Handle array comparison for payslip
         if (field === "payslip") {
           const currentArr = Array.isArray(currentValue) ? currentValue : []
@@ -1526,7 +1544,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           }
           continue
         }
-        
+
         // Handle string comparison
         const currentStr = currentValue?.toString().trim() || ""
         const originalStr = originalValue?.toString().trim() || ""
@@ -1630,11 +1648,11 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
     // Compare current form data with original saved data
     const fieldsToCompare: (keyof FormData)[] = ["phone", "whatsappNumber", "permanentAddressLine1", "permanentAddressLine2", "permanentPincode", "permanentArea", "permanentTaluk", "permanentDistrict", "permanentDivision", "permanentRegion", "permanentState", "permanentCountry", "permanentLandmark", "currentAddressLine1", "currentAddressLine2", "currentPincode", "currentArea", "currentTaluk", "currentDistrict", "currentDivision", "currentRegion", "currentState", "currentCountry", "currentLandmark"]
-    
+
     for (const field of fieldsToCompare) {
       const currentValue = formData[field]
       const originalValue = originalContactDetails[field]
-      
+
       // Handle string comparison
       const currentStr = currentValue?.toString().trim() || ""
       const originalStr = originalValue?.toString().trim() || ""
@@ -1642,7 +1660,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         return true
       }
     }
-    
+
     return false
   }
 
@@ -1653,7 +1671,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       if (!formData.educationDetails || formData.educationDetails.length === 0) {
         return false
       }
-      return formData.educationDetails.some((edu) => 
+      return formData.educationDetails.some((edu) =>
         edu.education || edu.degree || edu.institution || edu.status
       )
     }
@@ -1673,17 +1691,17 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       const orig = original[i] || {}
 
       const fieldsToCompare = ["education", "educationOther", "degree", "degreeOther", "branch", "institution", "yearOfGraduation", "status"]
-      
+
       for (const field of fieldsToCompare) {
         const currValue = curr[field as keyof typeof curr]?.toString().trim() || ""
         const origValue = orig[field as keyof typeof orig]?.toString().trim() || ""
-        
+
         if (currValue !== origValue) {
           return true
         }
       }
     }
-    
+
     return false
   }
 
@@ -1700,11 +1718,11 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
     // Compare current form data with original saved data
     const fieldsToCompare: (keyof FormData)[] = ["fatherName", "fatherOccupation", "motherName", "motherOccupation", "parentsAddressLine1", "parentsAddressLine2", "parentsPincode", "parentsArea", "parentsTaluk", "parentsDistrict", "parentsDivision", "parentsRegion", "parentsState", "parentsCountry", "parentsLandmark", "siblings", "familyDescription", "caste", "subcaste", "kulam", "gotram", "familyType", "familyStatus"]
-    
+
     for (const field of fieldsToCompare) {
       const currentValue = formData[field]
       const originalValue = originalFamilyDetails[field]
-      
+
       // Handle string comparison
       const currentStr = currentValue?.toString().trim() || ""
       const originalStr = originalValue?.toString().trim() || ""
@@ -1729,11 +1747,11 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
     // Compare current form data with original saved data
     const fieldsToCompare: (keyof FormData)[] = ["jaadhagam", "timeOfBirth", "placeOfBirth", "zodiacSign", "star", "lagnam", "dhosham"]
-    
+
     for (const field of fieldsToCompare) {
       const currentValue = formData[field]
       const originalValue = originalHoroscopeDetails[field]
-      
+
       // Handle string comparison
       const currentStr = currentValue?.toString().trim() || ""
       const originalStr = originalValue?.toString().trim() || ""
@@ -1749,8 +1767,8 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const hasInterestsDetailsChanged = (): boolean => {
     if (!originalInterestsDetails) {
       // If no original data exists, check if any field has selections
-      return (formData.hobbies && formData.hobbies.length > 0) || 
-             (formData.interests && formData.interests.length > 0)
+      return (formData.hobbies && formData.hobbies.length > 0) ||
+        (formData.interests && formData.interests.length > 0)
     }
 
     // Compare current form data with original saved data
@@ -1769,11 +1787,11 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
     // Check if hobbies content is different
     const hobbiesChanged = currentHobbies.some((hobby) => !originalHobbies.includes(hobby)) ||
-                          originalHobbies.some((hobby) => !currentHobbies.includes(hobby))
+      originalHobbies.some((hobby) => !currentHobbies.includes(hobby))
 
     // Check if interests content is different
     const interestsChanged = currentInterests.some((interest) => !originalInterests.includes(interest)) ||
-                            originalInterests.some((interest) => !currentInterests.includes(interest))
+      originalInterests.some((interest) => !currentInterests.includes(interest))
 
     return hobbiesChanged || interestsChanged
   }
@@ -1791,11 +1809,11 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
     // Compare current form data with original saved data
     const fieldsToCompare: (keyof FormData)[] = ["smoking", "drinking", "parties", "pubs"]
-    
+
     for (const field of fieldsToCompare) {
       const currentValue = formData[field]
       const originalValue = originalSocialHabitsDetails[field]
-      
+
       // Handle string comparison
       const currentStr = currentValue?.toString().trim() || ""
       const originalStr = originalValue?.toString().trim() || ""
@@ -1813,10 +1831,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     const familyPhoto = formData.familyPhoto || ""
     const aadharFront = formData.aadharFront || ""
     const aadharBack = formData.aadharBack || ""
-    return userPhotos.length >= 3 && 
-           familyPhoto.trim() !== "" &&
-           aadharFront.trim() !== "" &&
-           aadharBack.trim() !== ""
+    return userPhotos.length >= 3 &&
+      familyPhoto.trim() !== "" &&
+      aadharFront.trim() !== "" &&
+      aadharBack.trim() !== ""
   }
 
   // Check if photos details have changed
@@ -1829,37 +1847,37 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     // Compare current form data with original saved data
     const currentUserPhotos = formData.userPhotos || []
     const originalUserPhotos = originalPhotosDetails.userPhotos || []
-    
+
     // Check if user photos array is different
     if (currentUserPhotos.length !== originalUserPhotos.length) {
       return true
     }
-    
+
     // Check if user photos content is different
     const userPhotosChanged = currentUserPhotos.some((photo, index) => photo !== originalUserPhotos[index]) ||
-                             originalUserPhotos.some((photo, index) => photo !== currentUserPhotos[index])
-    
+      originalUserPhotos.some((photo, index) => photo !== currentUserPhotos[index])
+
     // Compare other fields
     const currentFamilyPhoto = formData.familyPhoto?.toString().trim() || ""
     const originalFamilyPhoto = originalPhotosDetails.familyPhoto?.toString().trim() || ""
-    
+
     const currentAadharFront = formData.aadharFront?.toString().trim() || ""
     const originalAadharFront = originalPhotosDetails.aadharFront?.toString().trim() || ""
-    
+
     const currentAadharBack = formData.aadharBack?.toString().trim() || ""
     const originalAadharBack = originalPhotosDetails.aadharBack?.toString().trim() || ""
-    
+
     return userPhotosChanged ||
-           currentFamilyPhoto !== originalFamilyPhoto ||
-           currentAadharFront !== originalAadharFront ||
-           currentAadharBack !== originalAadharBack
+      currentFamilyPhoto !== originalFamilyPhoto ||
+      currentAadharFront !== originalAadharFront ||
+      currentAadharBack !== originalAadharBack
   }
 
   // Validate referral partner ID pattern
   const validateReferralDetails = (): boolean => {
     const partnerIdPattern = /^[A-Z]{2}\d{4}[A-Z]{2}\d{3}$/
     const partnerId = formData.referralPartnerId || ""
-    
+
     if (!partnerId) {
       // Referral is optional, so empty is valid
       return true
@@ -1884,7 +1902,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const hasReferralDetailsChanged = (): boolean => {
     const partnerIdPattern = /^[A-Z]{2}\d{4}[A-Z]{2}\d{3}$/
     const currentPartnerId = formData.referralPartnerId || ""
-    
+
     // If no original data exists, check if partner ID is valid and filled
     if (!originalReferralDetails) {
       return currentPartnerId !== "" && partnerIdPattern.test(currentPartnerId)
@@ -1899,12 +1917,12 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const isReferralPartnerIdValid = (): boolean => {
     const partnerIdPattern = /^[A-Z]{2}\d{4}[A-Z]{2}\d{3}$/
     const partnerId = formData.referralPartnerId || ""
-    
+
     // If empty, it's valid (optional field)
     if (partnerId === "") {
       return true
     }
-    
+
     // Check pattern and if partner exists in database
     return partnerIdPattern.test(partnerId) && isReferralPartnerValid
   }
@@ -1953,7 +1971,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           })
 
         if (error) throw error
-        
+
         // Update original data after successful save
         setOriginalPersonalDetails({
           name: formData.name,
@@ -1969,7 +1987,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           foodPreference: formData.foodPreference,
           languages: formData.languages,
         })
-        
+
         toast.success("Personal details saved successfully!", {
           style: {
             background: "#dcfce7",
@@ -2018,7 +2036,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           })
 
         if (error) throw error
-        
+
         // Update original data after successful save
         setOriginalContactDetails({
           phone: formData.phone,
@@ -2046,7 +2064,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           currentCountry: formData.currentCountry,
           currentLandmark: formData.currentLandmark,
         })
-        
+
         toast.success("Contact details saved successfully!", {
           style: {
             background: "#dcfce7",
@@ -2093,10 +2111,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
           if (insertError) throw insertError
         }
-        
+
         // Update original data after successful save
         setOriginalEducationDetails(formData.educationDetails || [])
-        
+
         toast.success("Education details saved successfully!", {
           style: {
             background: "#dcfce7",
@@ -2114,7 +2132,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
         // Calculate completion percentage for professional details
         let professionalDetailsProgress = calculateStepProgress("professional")
-        
+
         // Update the stored completion percentage after calculation
         setProfessionalCompletionPercentage(professionalDetailsProgress)
 
@@ -2129,7 +2147,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               const { data: files } = await supabase.storage
                 .from("payslips")
                 .list(userId)
-              
+
               if (files && files.length > 0) {
                 const filePaths = files.map(file => `${userId}/${file.name}`)
                 await supabase.storage
@@ -2137,13 +2155,13 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                   .remove(filePaths)
               }
             }
-            
+
             // Delete old ITR document if switching from business
             if (originalEmploymentType === "business") {
               const { data: files } = await supabase.storage
                 .from("itr-documents")
                 .list(userId)
-              
+
               if (files && files.length > 0) {
                 const filePaths = files.map(file => `${userId}/${file.name}`)
                 await supabase.storage
@@ -2166,14 +2184,14 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           // Upload payslips to storage
           const payslipUrls: string[] = []
           const payslips = (formData.payslip as string[]) || []
-          
+
           // Delete old payslips if they exist (in case of update)
           if (originalProfessionalDetails?.payslip && Array.isArray(originalProfessionalDetails.payslip)) {
             try {
               const { data: files } = await supabase.storage
                 .from("payslips")
                 .list(userId)
-              
+
               if (files && files.length > 0) {
                 const filePaths = files.map(file => `${userId}/${file.name}`)
                 await supabase.storage
@@ -2187,21 +2205,21 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
           for (let i = 0; i < payslips.length; i++) {
             const payslip = payslips[i]
-            
+
             // If payslip is a base64 data URL (new upload), upload to Supabase storage
             if (payslip && payslip.startsWith("data:image/") || payslip.startsWith("data:application/pdf")) {
               try {
                 // Convert base64 to blob
                 const response = await fetch(payslip)
                 const blob = await response.blob()
-                
+
                 // Get file extension from data URL
                 const matches = payslip.match(/data:(image|application)\/(\w+);base64/)
                 const extension = matches ? matches[2] : "pdf"
-                
+
                 // Create file path: {user_id}/payslip_{index + 1}.{extension}
                 const filePath = `${userId}/payslip_${i + 1}.${extension}`
-                
+
                 // Upload to Supabase storage
                 const { data: uploadData, error: uploadError } = await supabase.storage
                   .from("payslips")
@@ -2288,7 +2306,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               const { data: files } = await supabase.storage
                 .from("itr-documents")
                 .list(userId)
-              
+
               if (files && files.length > 0) {
                 const filePaths = files.map(file => `${userId}/${file.name}`)
                 await supabase.storage
@@ -2306,14 +2324,14 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               // Convert base64 to blob
               const response = await fetch(formData.itrDocument)
               const blob = await response.blob()
-              
+
               // Get file extension from data URL
               const matches = formData.itrDocument.match(/data:(image|application)\/(\w+);base64/)
               const extension = matches ? matches[2] : "pdf"
-              
+
               // Create file path: {user_id}/itr_document.{extension}
               const filePath = `${userId}/itr_document.${extension}`
-              
+
               // Upload to Supabase storage
               const { data: uploadData, error: uploadError } = await supabase.storage
                 .from("itr-documents")
@@ -2477,7 +2495,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           })
 
         if (error) throw error
-        
+
         // Update original data after successful save
         setOriginalFamilyDetails({
           fatherName: formData.fatherName,
@@ -2504,7 +2522,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           familyType: formData.familyType,
           familyStatus: formData.familyStatus,
         })
-        
+
         toast.success("Family details saved successfully!", {
           style: {
             background: "#dcfce7",
@@ -2532,14 +2550,14 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             // Convert base64 to blob
             const response = await fetch(formData.jaadhagam)
             const blob = await response.blob()
-            
+
             // Get file extension from data URL
             const matches = formData.jaadhagam.match(/data:image\/(\w+);base64/)
             const extension = matches ? matches[1] : "jpg"
-            
+
             // Create file path: {user_id}/jaadhagam.{extension}
             const filePath = `${userId}/jaadhagam.${extension}`
-            
+
             // Upload to Supabase storage
             const { data: uploadData, error: uploadError } = await supabase.storage
               .from("jaadhagam")
@@ -2591,7 +2609,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           })
 
         if (error) throw error
-        
+
         // Update original data after successful save
         setOriginalHoroscopeDetails({
           jaadhagam: jaadhagamUrl,
@@ -2602,7 +2620,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           lagnam: formData.lagnam,
           dhosham: formData.dhosham,
         })
-        
+
         // Update form data with the URL if it was uploaded
         if (jaadhagamUrl !== formData.jaadhagam) {
           setFormData((prev) => ({
@@ -2610,7 +2628,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             jaadhagam: jaadhagamUrl,
           }))
         }
-        
+
         toast.success("Horoscope details saved successfully!", {
           style: {
             background: "#dcfce7",
@@ -2643,13 +2661,13 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           })
 
         if (error) throw error
-        
+
         // Update original data after successful save
         setOriginalInterestsDetails({
           hobbies: formData.hobbies,
           interests: formData.interests,
         })
-        
+
         toast.success("Interests saved successfully!", {
           style: {
             background: "#dcfce7",
@@ -2684,7 +2702,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           })
 
         if (error) throw error
-        
+
         // Update original data after successful save
         setOriginalSocialHabitsDetails({
           smoking: formData.smoking,
@@ -2692,7 +2710,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           parties: formData.parties,
           pubs: formData.pubs,
         })
-        
+
         toast.success("Social habits saved successfully!", {
           style: {
             background: "#dcfce7",
@@ -2738,24 +2756,24 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         // Upload user photos to storage
         const userPhotoUrls: string[] = []
         const userPhotos = formData.userPhotos || []
-        
+
         for (let i = 0; i < userPhotos.length; i++) {
           const photo = userPhotos[i]
-          
+
           // If photo is a base64 data URL (new upload), upload to Supabase storage
           if (photo && photo.startsWith("data:image/")) {
             try {
               // Convert base64 to blob
               const response = await fetch(photo)
               const blob = await response.blob()
-              
+
               // Get file extension from data URL
               const matches = photo.match(/data:image\/(\w+);base64/)
               const extension = matches ? matches[1] : "jpg"
-              
+
               // Create file path: {user_id}/photo_{index + 1}.{extension}
               const filePath = `${userId}/photo_${i + 1}.${extension}`
-              
+
               // Upload to Supabase storage
               const { data: uploadData, error: uploadError } = await supabase.storage
                 .from("user-photos")
@@ -2802,7 +2820,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                 const { data: files } = await supabase.storage
                   .from("family-photos")
                   .list(userId)
-                
+
                 if (files && files.length > 0) {
                   const filePaths = files.map(file => `${userId}/${file.name}`)
                   await supabase.storage
@@ -2816,12 +2834,12 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
             const response = await fetch(formData.familyPhoto)
             const blob = await response.blob()
-            
+
             const matches = formData.familyPhoto.match(/data:image\/(\w+);base64/)
             const extension = matches ? matches[1] : "jpg"
-            
+
             const filePath = `${userId}/family.${extension}`
-            
+
             const { data: uploadData, error: uploadError } = await supabase.storage
               .from("family-photos")
               .upload(filePath, blob, {
@@ -2865,7 +2883,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                 const { data: files } = await supabase.storage
                   .from("aadhar-photos")
                   .list(userId)
-                
+
                 if (files && files.length > 0) {
                   const frontFiles = files.filter(file => file.name.startsWith("front."))
                   if (frontFiles.length > 0) {
@@ -2882,12 +2900,12 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
             const response = await fetch(formData.aadharFront)
             const blob = await response.blob()
-            
+
             const matches = formData.aadharFront.match(/data:image\/(\w+);base64/)
             const extension = matches ? matches[1] : "jpg"
-            
+
             const filePath = `${userId}/front.${extension}`
-            
+
             const { data: uploadData, error: uploadError } = await supabase.storage
               .from("aadhar-photos")
               .upload(filePath, blob, {
@@ -2931,7 +2949,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                 const { data: files } = await supabase.storage
                   .from("aadhar-photos")
                   .list(userId)
-                
+
                 if (files && files.length > 0) {
                   const backFiles = files.filter(file => file.name.startsWith("back."))
                   if (backFiles.length > 0) {
@@ -2948,12 +2966,12 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
             const response = await fetch(formData.aadharBack)
             const blob = await response.blob()
-            
+
             const matches = formData.aadharBack.match(/data:image\/(\w+);base64/)
             const extension = matches ? matches[1] : "jpg"
-            
+
             const filePath = `${userId}/back.${extension}`
-            
+
             const { data: uploadData, error: uploadError } = await supabase.storage
               .from("aadhar-photos")
               .upload(filePath, blob, {
@@ -3003,7 +3021,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           })
 
         if (error) throw error
-        
+
         // Update original data after successful save
         setOriginalPhotosDetails({
           userPhotos: userPhotoUrls,
@@ -3011,10 +3029,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           aadharFront: aadharFrontUrl,
           aadharBack: aadharBackUrl,
         })
-        
+
         // Update form data with the URLs if they were uploaded
-        if (userPhotoUrls.length > 0 || familyPhotoUrl !== formData.familyPhoto || 
-            aadharFrontUrl !== formData.aadharFront || aadharBackUrl !== formData.aadharBack) {
+        if (userPhotoUrls.length > 0 || familyPhotoUrl !== formData.familyPhoto ||
+          aadharFrontUrl !== formData.aadharFront || aadharBackUrl !== formData.aadharBack) {
           setFormData((prev) => ({
             ...prev,
             userPhotos: userPhotoUrls,
@@ -3023,7 +3041,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             aadharBack: aadharBackUrl,
           }))
         }
-        
+
         toast.success("Photos saved successfully!", {
           style: {
             background: "#dcfce7",
@@ -3040,7 +3058,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         }
 
         const partnerId = formData.referralPartnerId || ""
-        
+
         // If partner ID is provided, validate it exists in referral_partners table
         if (partnerId) {
           try {
@@ -3110,12 +3128,12 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           setIsSaving(false)
           return
         }
-        
+
         // Update original data after successful save
         setOriginalReferralDetails({
           referralPartnerId: partnerId,
         })
-        
+
         toast.success("Referral details saved successfully!", {
           style: {
             background: "#dcfce7",
@@ -3125,12 +3143,12 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         })
       } else {
         // For other steps, use the existing save logic
-      const { error } = await supabase
-        .from("users")
-        .update(formData)
-        .eq("id", userId)
+        const { error } = await supabase
+          .from("users")
+          .update(formData)
+          .eq("id", userId)
 
-      if (error) throw error
+        if (error) throw error
         toast.success("Profile saved successfully!", {
           style: {
             background: "#dcfce7",
@@ -3198,13 +3216,12 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                     <motion.button
                       key={step.id}
                       onClick={() => handleStepClick(index)}
-                      className={`w-full text-left p-4 rounded-lg transition-all ${
-                        isActive
+                      className={`w-full text-left p-4 rounded-lg transition-all ${isActive
                           ? "bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] text-white shadow-lg scale-105"
                           : isCompleted
-                          ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-2 border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30"
-                          : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-600"
-                      }`}
+                            ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-2 border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30"
+                            : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-600"
+                        }`}
                       whileHover={!isActive ? { scale: 1.02 } : {}}
                       whileTap={!isActive ? { scale: 0.98 } : {}}
                     >
@@ -3237,73 +3254,73 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
                   {formSteps[currentStep].title}
                 </h2>
-            <div className="relative">
+                <div className="relative">
                   <div className="h-12 w-12 rounded-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] p-0.5">
-                <div className="h-full w-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center">
+                    <div className="h-full w-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center">
                       <span className="text-sm font-bold text-gray-900 dark:text-white">
-                    {stepProgress}%
-                  </span>
-                </div>
-              </div>
-              {/* Circular progress ring */}
+                        {stepProgress}%
+                      </span>
+                    </div>
+                  </div>
+                  {/* Circular progress ring */}
                   <svg className="absolute inset-0 h-12 w-12 transform -rotate-90" viewBox="0 0 48 48">
-                <circle
+                    <circle
                       cx="24"
                       cy="24"
                       r="22"
-                  fill="none"
-                  stroke="currentColor"
+                      fill="none"
+                      stroke="currentColor"
                       strokeWidth="2"
-                  className="text-gray-200 dark:text-gray-700"
-                />
-                <circle
+                      className="text-gray-200 dark:text-gray-700"
+                    />
+                    <circle
                       cx="24"
                       cy="24"
                       r="22"
-                  fill="none"
-                  stroke="url(#step-progress-gradient)"
+                      fill="none"
+                      stroke="url(#step-progress-gradient)"
                       strokeWidth="2"
                       strokeDasharray={`${2 * Math.PI * 22}`}
                       strokeDashoffset={`${2 * Math.PI * 22 * (1 - stepProgress / 100)}`}
-                  strokeLinecap="round"
-                  className="transition-all duration-300"
-                />
-                <defs>
-                  <linearGradient id="step-progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#1F4068" />
-                    <stop offset="50%" stopColor="#4B0082" />
-                    <stop offset="100%" stopColor="#FF1493" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-          </div>
+                      strokeLinecap="round"
+                      className="transition-all duration-300"
+                    />
+                    <defs>
+                      <linearGradient id="step-progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#1F4068" />
+                        <stop offset="50%" stopColor="#4B0082" />
+                        <stop offset="100%" stopColor="#FF1493" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+              </div>
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentStep}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {currentStep === 0 && <PersonalDetailsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 1 && <ContactDetailsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 2 && <EducationalDetailsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 3 && <ProfessionalDetailsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 4 && <FamilyDetailsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 5 && <HoroscopeDetailsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 6 && <InterestsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 7 && <SocialHabitsStep formData={formData} onChange={handleInputChange} />}
-              {currentStep === 8 && <PhotosStep formData={formData} onChange={handleInputChange} />}
+                  transition={{ duration: 0.3 }}
+                >
+                  {currentStep === 0 && <PersonalDetailsStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 1 && <ContactDetailsStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 2 && <EducationalDetailsStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 3 && <ProfessionalDetailsStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 4 && <FamilyDetailsStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 5 && <HoroscopeDetailsStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 6 && <InterestsStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 7 && <SocialHabitsStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 8 && <PhotosStep formData={formData} onChange={handleInputChange} />}
                   {currentStep === 9 && <ReferralStep formData={formData} onChange={handleInputChange} onPartnerNameChange={handlePartnerNameChange} />}
-            </motion.div>
-          </AnimatePresence>
+                </motion.div>
+              </AnimatePresence>
 
               {/* Save Button for each form */}
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <Button
-                onClick={handleSave}
+                <Button
+                  onClick={handleSave}
                   disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 3 && (!areAllProfessionalDetailsFilled() || !hasProfessionalDetailsChanged())) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged()) || (currentStep === 6 && !hasInterestsDetailsChanged()) || (currentStep === 7 && !hasSocialHabitsDetailsChanged()) || (currentStep === 8 && (!areAllPhotosFieldsFilled() || !hasPhotosDetailsChanged())) || (currentStep === 9 && (!isReferralPartnerIdValid() || !hasReferralDetailsChanged()))}
                   className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-3 disabled:opacity-50 disabled:pointer-events-auto disabled:cursor-not-allowed"
                 >

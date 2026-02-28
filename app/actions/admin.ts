@@ -105,6 +105,68 @@ export async function createAdminAccount(data: {
     }
 }
 
+export async function createReferralPartnerAccount(data: {
+    name: string
+    email: string
+    phone: string
+    password?: string
+}) {
+    const logFile = 'debug.txt'
+    fs.appendFileSync(logFile, `[${new Date().toISOString()}] createReferralPartnerAccount: ${data.email}\n`)
+
+    try {
+        const ax = await getAxios()
+
+        // Step 1: Create user in Supabase Auth
+        const { data: authData } = await ax.post('/auth/v1/admin/users', {
+            email: data.email,
+            password: data.password || "Partner!23", // Default partner password
+            email_confirm: true,
+            user_metadata: { role: "referral_partner", name: data.name },
+        })
+
+        if (!authData?.id) throw new Error("No user ID returned from auth")
+        const userId = authData.id
+        fs.appendFileSync(logFile, `[${new Date().toISOString()}] Auth user created (Partner): ${userId}\n`)
+
+        // Step 2: Insert into referral_partners table
+        const { data: partnerRow, status: partnerStatus } = await ax.post(
+            '/rest/v1/referral_partners',
+            {
+                user_id: userId,
+                name: data.name,
+                email: data.email,
+                phone: data.phone,
+                referral_percentage: 10 // Default percentage
+            },
+            { headers: { 'Prefer': 'return=representation' } }
+        )
+        fs.appendFileSync(logFile, `[${new Date().toISOString()}] referral_partners insert status: ${partnerStatus}\n`)
+
+        // Step 3: Insert into personal_details
+        try {
+            await ax.post('/rest/v1/personal_details', { user_id: userId, name: data.name })
+        } catch (e: any) {
+            fs.appendFileSync(logFile, `[${new Date().toISOString()}] personal_details insert failed (Partner): ${e.message}\n`)
+        }
+
+        // Step 4: Insert into contact_details
+        try {
+            await ax.post('/rest/v1/contact_details', { user_id: userId, phone: data.phone, email: data.email })
+        } catch (e: any) {
+            fs.appendFileSync(logFile, `[${new Date().toISOString()}] contact_details insert failed (Partner): ${e.message}\n`)
+        }
+
+        fs.appendFileSync(logFile, `[${new Date().toISOString()}] createReferralPartnerAccount SUCCESS\n`)
+        return { success: true, user: authData }
+    } catch (error: any) {
+        const errorMsg = error?.response?.data?.message || error?.response?.data || error?.message || "Unknown error"
+        fs.appendFileSync(logFile, `[${new Date().toISOString()}] ERROR (Partner): ${JSON.stringify(errorMsg)}\nSTACK: ${error?.stack}\n`)
+        console.error("Error creating partner:", errorMsg)
+        return { success: false, error: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg) }
+    }
+}
+
 export async function updateAdminRole(userId: string, newRole: AdminRole) {
     try {
         const ax = await getAxios()
