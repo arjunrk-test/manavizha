@@ -28,29 +28,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-type PartnerFilters = {
-  name: string
-  phone: string
-  area: string
-  referralCode: string
-  status: string
-}
-
-const EMPTY_FILTERS: PartnerFilters = { name: "", phone: "", area: "", referralCode: "", status: "" }
-
-function FilterInput({ value, onChange, placeholder, icon: Icon = Search }: { value: string; onChange: (v: string) => void; placeholder?: string; icon?: any }) {
-  return (
-    <div className="relative">
-      <Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-      <input
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder || "Search..."}
-        className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4B0082]/20 focus:border-[#4B0082] transition-all"
-      />
-    </div>
-  )
-}
 
 export default function AdminAccountsPage() {
   const router = useRouter()
@@ -60,7 +37,8 @@ export default function AdminAccountsPage() {
   const [partners, setPartners] = useState<any[]>([])
   const [selectedPartner, setSelectedPartner] = useState<any>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [filters, setFilters] = useState<PartnerFilters>(EMPTY_FILTERS)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [activeTab, setActiveTab] = useState("admin")
 
   // Admin Management State
   const [isAdminDialogOpen, setIsAdminDialogOpen] = useState(false)
@@ -76,18 +54,27 @@ export default function AdminAccountsPage() {
   })
   const [showPassword, setShowPassword] = useState(false)
 
-  const setFilter = (key: keyof PartnerFilters, value: string) => setFilters(prev => ({ ...prev, [key]: value }))
-  const hasFilters = Object.values(filters).some(v => v !== "")
+  const q = searchQuery.toLowerCase()
+  const filteredAdmins = useMemo(() => {
+    if (!q) return admins
+    return admins.filter((a: any) =>
+      (a.name || "").toLowerCase().includes(q) ||
+      (a.email || "").toLowerCase().includes(q) ||
+      (a.phone || "").toLowerCase().includes(q) ||
+      (a.role || "").toLowerCase().includes(q)
+    )
+  }, [admins, q])
 
   const filteredPartners = useMemo(() => {
-    return partners.filter((p: any) => (
-      (!filters.name || (p.name || "").toLowerCase().includes(filters.name.toLowerCase())) &&
-      (!filters.phone || (p.phone || "").toLowerCase().includes(filters.phone.toLowerCase())) &&
-      (!filters.area || (p.area || "").toLowerCase().includes(filters.area.toLowerCase())) &&
-      (!filters.referralCode || (p.referralCode || "").toLowerCase().includes(filters.referralCode.toLowerCase())) &&
-      (!filters.status || (p.status || "").toLowerCase().includes(filters.status.toLowerCase()))
-    ))
-  }, [partners, filters])
+    if (!q) return partners
+    return partners.filter((p: any) =>
+      (p.name || "").toLowerCase().includes(q) ||
+      (p.email || "").toLowerCase().includes(q) ||
+      (p.phone || "").toLowerCase().includes(q) ||
+      (p.area || "").toLowerCase().includes(q) ||
+      (p.referralCode || "").toLowerCase().includes(q)
+    )
+  }, [partners, q])
 
   useEffect(() => {
     // Check if user is authenticated and is an admin
@@ -323,12 +310,29 @@ export default function AdminAccountsPage() {
 
       {/* Content */}
       <div className="relative z-10">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <Tabs defaultValue="admin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
-              <TabsTrigger value="admin">Admin</TabsTrigger>
-              <TabsTrigger value="partner">Referral Partners</TabsTrigger>
-            </TabsList>
+        <div className="max-w-7xl mx-auto px-4 py-8 pb-32">
+          <Tabs defaultValue="admin" className="w-full" onValueChange={(v) => { setActiveTab(v); setSearchQuery("") }}>
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <TabsList className="grid grid-cols-2 max-w-[400px]">
+                <TabsTrigger value="admin">Admin</TabsTrigger>
+                <TabsTrigger value="partner">Referral Partners</TabsTrigger>
+              </TabsList>
+              {/* Global Search */}
+              <div className="relative w-full max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder={activeTab === "admin" ? "Search admins..." : "Search partners..."}
+                  className="w-full pl-9 pr-9 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4B0082]/20 focus:border-[#4B0082] transition-all"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
 
             <TabsContent value="admin" className="mt-6">
               <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200/60 dark:border-gray-700/60">
@@ -353,14 +357,14 @@ export default function AdminAccountsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {admins.length === 0 ? (
+                    {filteredAdmins.length === 0 ? (
                       <TableRow>
                         <TableCell className="text-center py-8 text-gray-500" colSpan={5}>
-                          No admin accounts found
+                          {searchQuery ? "No admins match your search" : "No admin accounts found"}
                         </TableCell>
                       </TableRow>
                     ) : (
-                      admins.map((admin) => (
+                      filteredAdmins.map((admin) => (
                         <TableRow key={admin.id || admin.user_id}>
                           <TableCell className="font-medium">{admin.name}</TableCell>
                           <TableCell>{admin.email || "N/A"}</TableCell>
@@ -387,142 +391,104 @@ export default function AdminAccountsPage() {
               </div>
             </TabsContent>
 
-            <TabsContent value="partner" className="mt-6 space-y-6">
-              {/* Filter Bar */}
-              <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/60 dark:border-gray-700/60 p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <Search className="h-5 w-5 text-[#4B0082]" />
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Filter Partners</h2>
-                  {hasFilters && (
-                    <span className="ml-auto text-sm text-gray-500 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full">
-                      {filteredPartners.length} results
-                    </span>
-                  )}
-                  {hasFilters && (
-                    <Button variant="ghost" size="sm" onClick={() => setFilters(EMPTY_FILTERS)} className="h-8 ml-2 text-red-500 hover:text-red-600 hover:bg-red-50">
-                      <X className="h-4 w-4 mr-1" /> Clear
-                    </Button>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Partner Name</label>
-                    <FilterInput value={filters.name} onChange={v => setFilter("name", v)} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Phone</label>
-                    <FilterInput value={filters.phone} onChange={v => setFilter("phone", v)} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Area</label>
-                    <FilterInput value={filters.area} onChange={v => setFilter("area", v)} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Referral Code</label>
-                    <FilterInput value={filters.referralCode} onChange={v => setFilter("referralCode", v)} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Status</label>
-                    <FilterInput value={filters.status} onChange={v => setFilter("status", v)} placeholder="Active / Inactive" />
-                  </div>
-                </div>
-              </div>
-
+            <TabsContent value="partner" className="mt-6">
               {/* Table */}
               <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200/60 dark:border-gray-700/60">
                 <div className="p-6 border-b border-gray-200/60 dark:border-gray-700/60">
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Referral Partners</h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Manage referral partner accounts and their custom percentages.</p>
                 </div>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Partner Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Area</TableHead>
-                      <TableHead>Referral Code</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Men</TableHead>
-                      <TableHead>Women</TableHead>
-                      <TableHead>Share %</TableHead>
-                      <TableHead>Can Edit Profile</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredPartners.length === 0 ? (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell className="text-center py-8 text-gray-500" colSpan={12}>
-                          {hasFilters ? "No partners match your filters" : "No referral partners found"}
-                        </TableCell>
+                        <TableHead>Partner Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>Area</TableHead>
+                        <TableHead>Referral Code</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Men</TableHead>
+                        <TableHead>Women</TableHead>
+                        <TableHead>Share %</TableHead>
+                        <TableHead>Can Edit Profile</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
-                    ) : (
-                      filteredPartners.map((partner: any) => (
-                        <TableRow key={partner.id || partner.partner_id}>
-                          <TableCell className="font-medium">{partner.name}</TableCell>
-                          <TableCell>{partner.email || "N/A"}</TableCell>
-                          <TableCell>{partner.phone}</TableCell>
-                          <TableCell>{partner.area}</TableCell>
-                          <TableCell>{partner.referralCode}</TableCell>
-                          <TableCell>{partner.totalReferrals}</TableCell>
-                          <TableCell className="text-blue-600 dark:text-blue-400 font-medium">{partner.menReferrals}</TableCell>
-                          <TableCell className="text-pink-600 dark:text-pink-400 font-medium">{partner.womenReferrals}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus-within:ring-2 focus-within:ring-[#4B0082] overflow-hidden w-20">
-                              <input
-                                type="number"
-                                className="w-full bg-transparent px-2 py-1 text-sm outline-none text-right"
-                                value={partner.referralPercentage}
-                                onBlur={(e) => handleUpdatePartnerPercentage(partner.id, e.target.value)}
-                                onChange={(e) => {
-                                  // Update instantly in local state to allow typing
-                                  setPartners(prev => prev.map(p =>
-                                    p.id === partner.id ? { ...p, referralPercentage: e.target.value } : p
-                                  ))
-                                }}
-                                step="0.5"
-                                min="0"
-                                max="100"
-                              />
-                              <span className="pr-2 text-gray-500 text-xs font-semibold select-none">%</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Switch
-                                id={`edit-profile-${partner.id}`}
-                                checked={!!partner.canEditProfile}
-                                onCheckedChange={() => handleToggleEditProfile(partner.id, !!partner.canEditProfile)}
-                              />
-                              <span className={`text-xs font-medium ${partner.canEditProfile ? "text-green-600 dark:text-green-400" : "text-gray-400"}`}>
-                                {partner.canEditProfile ? "Yes" : "No"}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${partner.status === "Active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
-                              {partner.status || "Unknown"}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setSelectedPartner(partner)
-                                setIsEditDialogOpen(true)
-                              }}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredPartners.length === 0 ? (
+                        <TableRow>
+                          <TableCell className="text-center py-8 text-gray-500" colSpan={12}>
+                            {searchQuery ? "No partners match your search" : "No referral partners found"}
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+                      ) : (
+                        filteredPartners.map((partner: any) => (
+                          <TableRow key={partner.id || partner.partner_id}>
+                            <TableCell className="font-medium">{partner.name}</TableCell>
+                            <TableCell>{partner.email || "N/A"}</TableCell>
+                            <TableCell>{partner.phone}</TableCell>
+                            <TableCell>{partner.area}</TableCell>
+                            <TableCell>{partner.referralCode}</TableCell>
+                            <TableCell>{partner.totalReferrals}</TableCell>
+                            <TableCell className="text-blue-600 dark:text-blue-400 font-medium">{partner.menReferrals}</TableCell>
+                            <TableCell className="text-pink-600 dark:text-pink-400 font-medium">{partner.womenReferrals}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus-within:ring-2 focus-within:ring-[#4B0082] overflow-hidden w-20">
+                                <input
+                                  type="number"
+                                  className="w-full bg-transparent px-2 py-1 text-sm outline-none text-right"
+                                  value={partner.referralPercentage}
+                                  onBlur={(e) => handleUpdatePartnerPercentage(partner.id, e.target.value)}
+                                  onChange={(e) => {
+                                    // Update instantly in local state to allow typing
+                                    setPartners(prev => prev.map(p =>
+                                      p.id === partner.id ? { ...p, referralPercentage: e.target.value } : p
+                                    ))
+                                  }}
+                                  step="0.5"
+                                  min="0"
+                                  max="100"
+                                />
+                                <span className="pr-2 text-gray-500 text-xs font-semibold select-none">%</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Switch
+                                  id={`edit-profile-${partner.id}`}
+                                  checked={!!partner.canEditProfile}
+                                  onCheckedChange={() => handleToggleEditProfile(partner.id, !!partner.canEditProfile)}
+                                />
+                                <span className={`text-xs font-medium ${partner.canEditProfile ? "text-green-600 dark:text-green-400" : "text-gray-400"}`}>
+                                  {partner.canEditProfile ? "Yes" : "No"}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${partner.status === "Active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                                {partner.status || "Unknown"}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedPartner(partner)
+                                  setIsEditDialogOpen(true)
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
@@ -664,6 +630,6 @@ export default function AdminAccountsPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </div>
+    </div >
   )
 }
