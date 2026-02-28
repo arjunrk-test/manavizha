@@ -31,6 +31,7 @@ interface UserLandingPageProps {
   userEmail: string
   userId: string
   onNavigateToProfileSetup: () => void
+  onNavigateToBrowse: () => void
 }
 
 interface ProfileData {
@@ -40,7 +41,7 @@ interface ProfileData {
   maritalStatus?: string
 }
 
-export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }: UserLandingPageProps) {
+export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, onNavigateToBrowse }: UserLandingPageProps) {
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [completionPercentage, setCompletionPercentage] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
@@ -479,12 +480,12 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }:
                 <Button
                   variant="outline"
                   className="w-full justify-start h-auto py-3 hover:bg-[#4B0082]/10 hover:border-[#4B0082]"
-                  disabled
+                  onClick={onNavigateToBrowse}
                 >
                   <Users className="h-4 w-4 mr-2" />
                   <div className="text-left">
                     <div className="font-semibold">Browse Profiles</div>
-                    <div className="text-xs text-gray-500">Coming soon</div>
+                    <div className="text-xs text-gray-500">Find your perfect match</div>
                   </div>
                 </Button>
               </CardContent>

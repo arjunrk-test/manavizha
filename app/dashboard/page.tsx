@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { ProfileSetupForm } from "@/components/profile-setup-form"
 import { UserLandingPage } from "@/components/user-landing-page"
+import { BrowseProfiles } from "@/components/browse-profiles"
 import { LogOut, ArrowLeft } from "lucide-react"
 import { motion } from "framer-motion"
 
@@ -14,7 +15,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const [profileProgress, setProfileProgress] = useState(0)
-  const [showProfileSetup, setShowProfileSetup] = useState(false)
+  const [currentView, setCurrentView] = useState<"landing" | "setup" | "browse">("landing")
 
   useEffect(() => {
     // Check if user is authenticated and is NOT a referral partner
@@ -71,16 +72,16 @@ export default function DashboardPage() {
     <div className="min-h-screen relative">
       {/* Animated gradient background */}
       <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
-      
+
       {/* White overlay to lighten the gradient */}
       <div className="fixed inset-0 bg-white/40 dark:bg-[#181818]/40" />
-      
+
       {/* Overlay pattern */}
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
-      
+
       {/* Modern grid overlay */}
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px] opacity-30" />
-      
+
       {/* Decorative elements */}
       <div className="fixed inset-0">
         <motion.div
@@ -127,7 +128,7 @@ export default function DashboardPage() {
           const fadeDuration = 8 + Math.random() * 4
           const rotateDuration = 60 + i * 8
           const moveDuration = 12 + Math.random() * 6
-          
+
           return (
             <motion.div
               key={`bg-image-${i}`}
@@ -187,17 +188,17 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-              {showProfileSetup ? "Profile Setup" : "Dashboard"}
+              {currentView === "setup" ? "Profile Setup" : currentView === "browse" ? "Browse Profiles" : "Dashboard"}
             </h1>
             {user?.email && (
               <p className="text-xs text-gray-600 dark:text-gray-400">{user.email}</p>
             )}
           </div>
           <div className="flex items-center gap-3">
-            {/* Back Button - Only show when in profile setup */}
-            {showProfileSetup && (
+            {/* Back Button - Only show when NOT in landing view */}
+            {currentView !== "landing" && (
               <Button
-                onClick={() => setShowProfileSetup(false)}
+                onClick={() => setCurrentView("landing")}
                 variant="outline"
                 size="sm"
                 className="flex items-center gap-2"
@@ -220,15 +221,21 @@ export default function DashboardPage() {
 
       {/* Content */}
       <div className="relative z-10">
-        {/* Show Landing Page or Profile Setup Form */}
+        {/* Show Landing Page, Profile Setup Form, or Browse Profiles */}
         {user && (
-          showProfileSetup ? (
+          currentView === "setup" ? (
             <ProfileSetupForm userId={user.id} onProgressChange={setProfileProgress} />
+          ) : currentView === "browse" ? (
+            <BrowseProfiles
+              userId={user.id}
+              onBack={() => setCurrentView("landing")}
+            />
           ) : (
-            <UserLandingPage 
+            <UserLandingPage
               userEmail={user.email || ""}
               userId={user.id}
-              onNavigateToProfileSetup={() => setShowProfileSetup(true)}
+              onNavigateToProfileSetup={() => setCurrentView("setup")}
+              onNavigateToBrowse={() => setCurrentView("browse")}
             />
           )
         )}
