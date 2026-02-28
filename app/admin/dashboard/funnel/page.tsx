@@ -2,7 +2,7 @@
 
 import { supabase } from "@/lib/supabase"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { ArrowLeft, Users } from "lucide-react"
 import { AnimatedBackground } from "@/components/animated-background"
 import { Button } from "@/components/ui/button"
@@ -23,7 +23,7 @@ const STAGES = [
     { key: "referral", label: "Photos (Referral Yet to be Given)", presentTable: "photos", absentTable: "referral_details", idCol: "user_id" },
 ]
 
-export default function AdminFunnelSegmentPage() {
+function FunnelContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const stage = searchParams.get("stage") || "personal"
@@ -181,5 +181,17 @@ export default function AdminFunnelSegmentPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function AdminFunnelSegmentPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 mx-auto" />
+            </div>
+        }>
+            <FunnelContent />
+        </Suspense>
     )
 }

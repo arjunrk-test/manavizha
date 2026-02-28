@@ -49,13 +49,15 @@ export default function AdminDashboardPage() {
     const fetchStats = async () => {
       const { data: profiles, error } = await supabase
         .from("personal_details")
-        .select("sex")
+        .select("sex, marital_status")
 
       if (!error && profiles) {
-        const men = profiles.filter(p => p.sex && p.sex.toLowerCase().includes("male") && !p.sex.toLowerCase().includes("female")).length
-        const women = profiles.filter(p => p.sex && p.sex.toLowerCase().includes("female")).length
+        const activeProfiles = profiles.filter(p => (p.marital_status || "").toLowerCase() !== "married")
+
+        const men = activeProfiles.filter(p => p.sex && p.sex.toLowerCase().includes("male") && !p.sex.toLowerCase().includes("female")).length
+        const women = activeProfiles.filter(p => p.sex && p.sex.toLowerCase().includes("female")).length
         setStats({
-          total: profiles.length,
+          total: activeProfiles.length,
           men,
           women
         })

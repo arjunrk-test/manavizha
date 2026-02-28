@@ -1,11 +1,9 @@
 "use client"
 
-import { AdminNavbar } from "@/components/admin-navbar"
-import { AnimatedBackground } from "@/components/animated-background"
 import { supabase } from "@/lib/supabase"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState, useMemo } from "react"
-import { ArrowLeft, Users, User, UserCheck, Search, X, HeartHandshake, AlertTriangle } from "lucide-react"
+import { ArrowLeft, Users, User, Search, X, HeartHandshake, AlertTriangle } from "lucide-react"
 import { Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -20,18 +18,20 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { motion } from "framer-motion"
 
 type Filters = {
     name: string
     phone: string
     ageOp: string
     ageValue: string
+    sex: string
     profession: string
-    partnerName: string
-    referralPartnerId: string
+    zodiac: string
+    star: string
 }
 
-const EMPTY_FILTERS: Filters = { name: "", phone: "", ageOp: "=", ageValue: "", profession: "", partnerName: "", referralPartnerId: "" }
+const EMPTY_FILTERS: Filters = { name: "", phone: "", ageOp: "=", ageValue: "", sex: "", profession: "", zodiac: "", star: "" }
 
 function FilterInput({ value, onChange, placeholder, icon: Icon = Search, type = "text", className = "" }: { value: string; onChange: (v: string) => void; placeholder?: string; icon?: any; type?: string; className?: string }) {
     return (
@@ -62,7 +62,7 @@ function FilterSelect({ value, onChange, options, placeholder }: { value: string
     )
 }
 
-function AdminProfilesContent() {
+function ReferralPartnerProfilesListContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const genderFilter = searchParams.get("gender")
@@ -73,66 +73,77 @@ function AdminProfilesContent() {
     const [selectedProfileForMarriage, setSelectedProfileForMarriage] = useState<string | null>(null)
 
     useEffect(() => {
-        const fetchData = async () => {
-            // 1. Auth check
+        const init = async () => {
             const { data: { user } } = await supabase.auth.getUser()
-            if (!user) { router.push("/admin"); return }
+            if (!user) { router.push("/referral-partner"); return }
 
-            // 2. Fetch personal_details
-            let query = supabase.from("personal_details").select("user_id, name, age, sex, marital_status")
-            if (genderFilter) { query = query.ilike("sex", genderFilter) }
-            const { data: personalData, error: personalError } = await query
-            if (personalError || !personalData) { setIsLoading(false); return }
+            const { data: partnerData, error } = await supabase
+                .from("referral_partners")
+                .select("partner_id, can_edit_profile")
+                .eq("user_id", user.id)
+                .single()
 
-            const userIds = personalData.map(p => p.user_id)
-            if (userIds.length === 0) { setAllProfiles([]); setIsLoading(false); return }
+            if (error || !partnerData) {
+                await supabase.auth.signOut()
+                router.push("/referral-partner")
+                return
+            }
 
-            // 3. Contact, referral, profession — parallel
-            const [
-                { data: contactData },
-                { data: referralData },
-                { data: partnersData },
-                empRes, busRes, stuRes,
-            ] = await Promise.all([
-                supabase.from("contact_details").select("user_id, phone").in("user_id", userIds),
-                supabase.from("referral_details").select("user_id, referral_partner_id").in("user_id", userIds),
-                supabase.from("referral_partners").select("partner_id, name"),
-                supabase.from("profession_employee").select("user_id, sector, company, designation").in("user_id", userIds),
-                supabase.from("profession_business").select("user_id, business_name").in("user_id", userIds),
-                supabase.from("profession_student").select("user_id, course").in("user_id", userIds),
-            ])
-
-            const contactMap: Record<string, string> = {}
-            if (contactData) contactData.forEach(c => { contactMap[c.user_id] = c.phone || "" })
-
-            const referralMap: Record<string, string> = {}
-            if (referralData) referralData.forEach(r => { if (r.referral_partner_id) referralMap[r.user_id] = r.referral_partner_id })
-
-            const partnerNameMap: Record<string, string> = {}
-            if (partnersData) partnersData.forEach(p => { if (p.partner_id) partnerNameMap[p.partner_id] = p.name })
-
-            const profMap: Record<string, string> = {}
-            if (empRes.data) empRes.data.forEach((e: any) => { profMap[e.user_id] = e.designation || e.company || e.sector || "Employee" })
-            if (busRes.data) busRes.data.forEach((b: any) => { profMap[b.user_id] = b.business_name || "Business" })
-            if (stuRes.data) stuRes.data.forEach((s: any) => { profMap[s.user_id] = s.course || "Student" })
-
-            const combined = personalData.map(p => {
-                const partnerId = referralMap[p.user_id] || null
-                return {
-                    ...p,
-                    phone: contactMap[p.user_id] || "N/A",
-                    profession: profMap[p.user_id] || "Not Specified",
-                    referralPartnerId: partnerId,
-                    partnerName: partnerId ? (partnerNameMap[partnerId] || "Unknown Partner") : "None",
-                }
-            })
-
-            setAllProfiles(combined)
+            await fetchProfiles(partnerData.partner_id)
             setIsLoading(false)
         }
-
-        fetchData()
+        init()
     }, [router, genderFilter])
+
+    const fetchProfiles = async (pid: string) => {
+        const { data: referralData } = await supabase
+            .from("referral_details")
+            .select("user_id")
+            .eq("referral_partner_id", pid)
+
+        if (!referralData || referralData.length === 0) { setAllProfiles([]); return }
+
+        const userIds = referralData.map((r: any) => r.user_id).filter(Boolean)
+
+        let query = supabase.from("personal_details").select("user_id, name, age, sex, marital_status").in("user_id", userIds)
+        if (genderFilter) { query = query.ilike("sex", genderFilter) }
+
+        const { data: personalData } = await query
+        if (!personalData || personalData.length === 0) { setAllProfiles([]); return }
+
+        const filteredIds = personalData.map((p: any) => p.user_id)
+
+        const [
+            { data: contactData },
+            { data: horoData },
+            empRes, busRes, stuRes,
+        ] = await Promise.all([
+            supabase.from("contact_details").select("user_id, phone").in("user_id", filteredIds),
+            supabase.from("horoscope_details").select("user_id, zodiac_sign, star").in("user_id", filteredIds),
+            supabase.from("profession_employee").select("user_id, sector, company, designation").in("user_id", filteredIds),
+            supabase.from("profession_business").select("user_id, business_name").in("user_id", filteredIds),
+            supabase.from("profession_student").select("user_id, course").in("user_id", filteredIds),
+        ])
+
+        const contactMap: Record<string, string> = {}
+        if (contactData) contactData.forEach((c: any) => { contactMap[c.user_id] = c.phone || "" })
+
+        const horoMap: Record<string, { zodiac: string; star: string }> = {}
+        if (horoData) horoData.forEach((h: any) => { horoMap[h.user_id] = { zodiac: h.zodiac_sign || "—", star: h.star || "—" } })
+
+        const profMap: Record<string, string> = {}
+        if (empRes.data) empRes.data.forEach((e: any) => { profMap[e.user_id] = e.designation || e.company || e.sector || "Employee" })
+        if (busRes.data) busRes.data.forEach((b: any) => { profMap[b.user_id] = b.business_name || "Business" })
+        if (stuRes.data) stuRes.data.forEach((s: any) => { profMap[s.user_id] = s.course || "Student" })
+
+        setAllProfiles(personalData.map((p: any) => ({
+            ...p,
+            phone: contactMap[p.user_id] || "N/A",
+            profession: profMap[p.user_id] || "—",
+            zodiac: horoMap[p.user_id]?.zodiac || "—",
+            star: horoMap[p.user_id]?.star || "—",
+        })))
+    }
 
     const setFilter = (key: keyof Filters, value: string) => setFilters(prev => ({ ...prev, [key]: value }))
     const hasFilters = Object.values(filters).some(v => v !== "")
@@ -154,9 +165,10 @@ function AdminProfilesContent() {
                 (!filters.name || (p.name || "").toLowerCase().includes(filters.name.toLowerCase())) &&
                 (!filters.phone || (p.phone || "").toLowerCase().includes(filters.phone.toLowerCase())) &&
                 ageMatches &&
-                (!filters.profession || (p.profession || "") === filters.profession) &&
-                (!filters.partnerName || (p.partnerName || "").toLowerCase().includes(filters.partnerName.toLowerCase())) &&
-                (!filters.referralPartnerId || (p.referralPartnerId || "").toLowerCase().includes(filters.referralPartnerId.toLowerCase()))
+                (!filters.sex || (p.sex || "").toLowerCase() === filters.sex.toLowerCase()) &&
+                (!filters.profession || (p.profession || "").toLowerCase().includes(filters.profession.toLowerCase())) &&
+                (!filters.zodiac || (p.zodiac || "") === filters.zodiac) &&
+                (!filters.star || (p.star || "") === filters.star)
             )
         })
     }, [allProfiles, filters])
@@ -164,7 +176,12 @@ function AdminProfilesContent() {
     const activeProfiles = filteredProfiles.filter(p => (p.marital_status || "").toLowerCase() !== "married")
     const marriedProfiles = filteredProfiles.filter(p => (p.marital_status || "").toLowerCase() === "married")
 
-    const uniqueProfessions = Array.from(new Set(allProfiles.map(p => p.profession).filter(p => p && p !== "Not Specified"))).sort() as string[]
+    // Extract unique options derived from loaded data
+    const uniqueZodiacs = Array.from(new Set(allProfiles.map(p => p.zodiac).filter(z => z && z !== "—"))).sort() as string[]
+    const uniqueStars = Array.from(new Set(allProfiles.map(p => p.star).filter(s => s && s !== "—"))).sort() as string[]
+    const uniqueProfessions = Array.from(new Set(allProfiles.map(p => p.profession).filter(p => p && p !== "—"))).sort() as string[]
+
+    const title = genderFilter === "Male" ? "Men Profiles" : genderFilter === "Female" ? "Women Profiles" : "All Referred Profiles"
 
     const handleMarkAsMarriedClick = (e: React.MouseEvent, userId: string) => {
         e.stopPropagation()
@@ -189,15 +206,20 @@ function AdminProfilesContent() {
 
     if (isLoading) return (
         <div className="min-h-screen flex items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#4B0082]" />
         </div>
     )
 
-    const title = genderFilter === "Male" ? "Men Profiles" : genderFilter === "Female" ? "Women Profiles" : "All Profiles"
-
     return (
         <div className="min-h-screen relative">
-            <AnimatedBackground />
+            <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+            <div className="fixed inset-0 bg-white/40 dark:bg-[#181818]/40" />
+            <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
+            <div className="fixed inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px] opacity-30" />
+            <div className="fixed inset-0 pointer-events-none">
+                <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }} className="absolute top-0 left-0 w-96 h-96 bg-white/20 rounded-full blur-3xl" />
+                <motion.div animate={{ scale: [1.2, 1, 1.2], opacity: [0.5, 0.3, 0.5] }} transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }} className="absolute bottom-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl" />
+            </div>
 
             {/* Header */}
             <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
@@ -205,9 +227,9 @@ function AdminProfilesContent() {
                     <div className="flex items-center gap-3">
                         {genderFilter === "Male" ? <User className="h-6 w-6 text-blue-600" /> : genderFilter === "Female" ? <User className="h-6 w-6 text-pink-600" /> : <Users className="h-6 w-6 text-[#4B0082]" />}
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
-                            <p className="text-sm text-gray-500">
-                                {filteredProfiles.length} of {allProfiles.length} profiles
+                            <h1 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h1>
+                            <p className="text-xs text-gray-500">
+                                {filteredProfiles.length} of {allProfiles.length} profile{allProfiles.length !== 1 ? "s" : ""}
                                 {hasFilters && <span className="ml-1 text-[#4B0082]">(filtered)</span>}
                             </p>
                         </div>
@@ -218,15 +240,15 @@ function AdminProfilesContent() {
                                 <X className="h-3 w-3" /> Clear Filters
                             </Button>
                         )}
-                        <Button onClick={() => router.push("/admin/dashboard")} variant="outline" size="sm" className="flex items-center gap-2">
-                            <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+                        <Button onClick={() => router.push("/referral-partner/dashboard")} variant="outline" size="sm" className="flex items-center gap-2">
+                            <ArrowLeft className="h-4 w-4" /> Back
                         </Button>
                     </div>
                 </div>
             </div>
 
             {/* Content */}
-            <div className="relative z-10 py-8">
+            <div className="relative z-10 py-8 pb-8">
                 <div className="max-w-7xl mx-auto px-4 space-y-6">
                     {/* Filter Bar */}
                     <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/60 dark:border-gray-700/60 p-5">
@@ -239,7 +261,7 @@ function AdminProfilesContent() {
                                 </span>
                             )}
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
                             <div className="space-y-1.5">
                                 <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Name</label>
                                 <FilterInput value={filters.name} onChange={v => setFilter("name", v)} />
@@ -273,16 +295,20 @@ function AdminProfilesContent() {
                                 </div>
                             </div>
                             <div className="space-y-1.5">
+                                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Gender</label>
+                                <FilterSelect value={filters.sex} onChange={v => setFilter("sex", v)} options={["Male", "Female"]} placeholder="All Genders" />
+                            </div>
+                            <div className="space-y-1.5">
                                 <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Profession</label>
                                 <FilterSelect value={filters.profession} onChange={v => setFilter("profession", v)} options={uniqueProfessions} placeholder="All Professions" />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Partner Name</label>
-                                <FilterInput value={filters.partnerName} onChange={v => setFilter("partnerName", v)} />
+                                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Zodiac Sign</label>
+                                <FilterSelect value={filters.zodiac} onChange={v => setFilter("zodiac", v)} options={uniqueZodiacs} placeholder="All Zodiacs" />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Referral Code</label>
-                                <FilterInput value={filters.referralPartnerId} onChange={v => setFilter("referralPartnerId", v)} />
+                                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Star</label>
+                                <FilterSelect value={filters.star} onChange={v => setFilter("star", v)} options={uniqueStars} placeholder="All Stars" />
                             </div>
                         </div>
                     </div>
@@ -290,7 +316,7 @@ function AdminProfilesContent() {
                     {/* Table with Tabs */}
                     <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/60 dark:border-gray-700/60 p-6">
                         <Tabs defaultValue="active" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2 max-w-[400px] mb-6">
+                            <TabsList className="grid w-full grid-cols-2 max-w-[400px] mb-6 relative z-20">
                                 <TabsTrigger value="active">
                                     Active Profiles ({activeProfiles.length})
                                 </TabsTrigger>
@@ -300,7 +326,7 @@ function AdminProfilesContent() {
                                 </TabsTrigger>
                             </TabsList>
 
-                            <TabsContent value="active">
+                            <TabsContent value="active" className="relative z-10">
                                 <div className="overflow-x-auto">
                                     <Table>
                                         <TableHeader>
@@ -308,16 +334,17 @@ function AdminProfilesContent() {
                                                 <TableHead>Name</TableHead>
                                                 <TableHead>Phone</TableHead>
                                                 <TableHead>Age</TableHead>
+                                                <TableHead>Gender</TableHead>
                                                 <TableHead>Profession</TableHead>
-                                                <TableHead>Referral Partner</TableHead>
-                                                <TableHead>Referral Code</TableHead>
+                                                <TableHead>Zodiac / Moon Sign</TableHead>
+                                                <TableHead>Star</TableHead>
                                                 <TableHead className="text-right">Actions</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {activeProfiles.length === 0 ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                                                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                                                         {hasFilters ? "No active profiles match your filters." : "No active profiles found."}
                                                     </TableCell>
                                                 </TableRow>
@@ -326,14 +353,20 @@ function AdminProfilesContent() {
                                                     <TableRow
                                                         key={profile.user_id}
                                                         className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
-                                                        onClick={() => router.push(`/admin/dashboard/profiles/${profile.user_id}`)}
+                                                        onClick={() => router.push(`/referral-partner/profiles/${profile.user_id}`)}
                                                     >
                                                         <TableCell className="font-medium text-[#4B0082] dark:text-purple-400">{profile.name || "Unknown"}</TableCell>
                                                         <TableCell>{profile.phone}</TableCell>
                                                         <TableCell>{profile.age || "N/A"}</TableCell>
+                                                        <TableCell>
+                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${profile.sex?.toLowerCase().includes("female") ? "bg-pink-100 text-pink-700" : "bg-blue-100 text-blue-700"
+                                                                }`}>
+                                                                {profile.sex || "N/A"}
+                                                            </span>
+                                                        </TableCell>
                                                         <TableCell>{profile.profession}</TableCell>
-                                                        <TableCell>{profile.partnerName}</TableCell>
-                                                        <TableCell className="text-gray-500 font-mono text-sm">{profile.referralPartnerId || "N/A"}</TableCell>
+                                                        <TableCell>{profile.zodiac}</TableCell>
+                                                        <TableCell>{profile.star}</TableCell>
                                                         <TableCell className="text-right">
                                                             <button
                                                                 onClick={(e) => handleMarkAsMarriedClick(e, profile.user_id)}
@@ -351,7 +384,7 @@ function AdminProfilesContent() {
                                 </div>
                             </TabsContent>
 
-                            <TabsContent value="married">
+                            <TabsContent value="married" className="relative z-10">
                                 <div className="overflow-x-auto">
                                     <Table>
                                         <TableHeader>
@@ -359,15 +392,16 @@ function AdminProfilesContent() {
                                                 <TableHead>Name</TableHead>
                                                 <TableHead>Phone</TableHead>
                                                 <TableHead>Age</TableHead>
+                                                <TableHead>Gender</TableHead>
                                                 <TableHead>Profession</TableHead>
-                                                <TableHead>Referral Partner</TableHead>
-                                                <TableHead>Referral Code</TableHead>
+                                                <TableHead>Zodiac / Moon Sign</TableHead>
+                                                <TableHead>Star</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {marriedProfiles.length === 0 ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                                                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                                                         {hasFilters ? "No married profiles match your filters." : "No married profiles found."}
                                                     </TableCell>
                                                 </TableRow>
@@ -376,7 +410,7 @@ function AdminProfilesContent() {
                                                     <TableRow
                                                         key={profile.user_id}
                                                         className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                                                        onClick={() => router.push(`/admin/dashboard/profiles/${profile.user_id}`)}
+                                                        onClick={() => router.push(`/referral-partner/profiles/${profile.user_id}`)}
                                                     >
                                                         <TableCell className="font-medium text-[#4B0082] dark:text-purple-400 flex items-center gap-2">
                                                             {profile.name || "Unknown"}
@@ -384,9 +418,15 @@ function AdminProfilesContent() {
                                                         </TableCell>
                                                         <TableCell>{profile.phone}</TableCell>
                                                         <TableCell>{profile.age || "N/A"}</TableCell>
+                                                        <TableCell>
+                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${profile.sex?.toLowerCase().includes("female") ? "bg-pink-100 text-pink-700" : "bg-blue-100 text-blue-700"
+                                                                }`}>
+                                                                {profile.sex || "N/A"}
+                                                            </span>
+                                                        </TableCell>
                                                         <TableCell>{profile.profession}</TableCell>
-                                                        <TableCell>{profile.partnerName}</TableCell>
-                                                        <TableCell className="text-gray-500 font-mono text-sm">{profile.referralPartnerId || "N/A"}</TableCell>
+                                                        <TableCell>{profile.zodiac}</TableCell>
+                                                        <TableCell>{profile.star}</TableCell>
                                                     </TableRow>
                                                 ))
                                             )}
@@ -434,14 +474,14 @@ function AdminProfilesContent() {
     )
 }
 
-export default function AdminProfilesPage() {
+export default function ReferralPartnerProfilesListPage() {
     return (
         <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#4B0082]" />
             </div>
         }>
-            <AdminProfilesContent />
+            <ReferralPartnerProfilesListContent />
         </Suspense>
     )
 }
