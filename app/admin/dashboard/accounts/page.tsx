@@ -5,12 +5,14 @@ import { AnimatedBackground } from "@/components/animated-background"
 import { ReferralPartnerProfileForm } from "@/components/referral-partner-profile-form"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { ArrowLeft, Users, Pencil } from "lucide-react"
+import { useEffect, useState, useMemo } from "react"
+import { ArrowLeft, Users, Pencil, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
 import { toast } from "react-hot-toast"
+import { createAdminAccount, updateAdminRole, revokeAdminAccess, AdminRole } from "@/app/actions/admin"
 import {
   Table,
   TableBody,
@@ -26,6 +28,30 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
+type PartnerFilters = {
+  name: string
+  phone: string
+  area: string
+  referralCode: string
+  status: string
+}
+
+const EMPTY_FILTERS: PartnerFilters = { name: "", phone: "", area: "", referralCode: "", status: "" }
+
+function FilterInput({ value, onChange, placeholder, icon: Icon = Search }: { value: string; onChange: (v: string) => void; placeholder?: string; icon?: any }) {
+  return (
+    <div className="relative">
+      <Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <input
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder || "Search..."}
+        className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4B0082]/20 focus:border-[#4B0082] transition-all"
+      />
+    </div>
+  )
+}
+
 export default function AdminAccountsPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
@@ -34,6 +60,33 @@ export default function AdminAccountsPage() {
   const [partners, setPartners] = useState<any[]>([])
   const [selectedPartner, setSelectedPartner] = useState<any>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [filters, setFilters] = useState<PartnerFilters>(EMPTY_FILTERS)
+
+  // Admin Management State
+  const [isAdminDialogOpen, setIsAdminDialogOpen] = useState(false)
+  const [adminDialogMode, setAdminDialogMode] = useState<"add" | "edit" | "revoke">("add")
+  const [selectedAdmin, setSelectedAdmin] = useState<any>(null)
+  const [isSubmittingAdmin, setIsSubmittingAdmin] = useState(false)
+  const [adminFormData, setAdminFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    role: "editor" as AdminRole,
+    password: ""
+  })
+
+  const setFilter = (key: keyof PartnerFilters, value: string) => setFilters(prev => ({ ...prev, [key]: value }))
+  const hasFilters = Object.values(filters).some(v => v !== "")
+
+  const filteredPartners = useMemo(() => {
+    return partners.filter((p: any) => (
+      (!filters.name || (p.name || "").toLowerCase().includes(filters.name.toLowerCase())) &&
+      (!filters.phone || (p.phone || "").toLowerCase().includes(filters.phone.toLowerCase())) &&
+      (!filters.area || (p.area || "").toLowerCase().includes(filters.area.toLowerCase())) &&
+      (!filters.referralCode || (p.referralCode || "").toLowerCase().includes(filters.referralCode.toLowerCase())) &&
+      (!filters.status || (p.status || "").toLowerCase().includes(filters.status.toLowerCase()))
+    ))
+  }, [partners, filters])
 
   useEffect(() => {
     // Check if user is authenticated and is an admin
@@ -68,7 +121,7 @@ export default function AdminAccountsPage() {
             .from("personal_details")
             .select("name")
             .eq("user_id", admin.user_id)
-            .single()
+            .maybeSingle()
           const formattedRole = admin.role
             ? admin.role
               .split("_")
@@ -93,13 +146,27 @@ export default function AdminAccountsPage() {
             .from("personal_details")
             .select("name")
             .eq("user_id", partner.user_id)
-            .single()
+            .maybeSingle()
 
           // Get referral stats for Men, Women, and Total
-          const { data: profiles } = await supabase
-            .from("personal_details")
-            .select("sex")
-            .eq("referralPartnerId", partner.partner_id)
+          let profiles: any[] | null = null;
+          if (partner.partner_id) {
+            const { data: refData } = await supabase
+              .from("referral_details")
+              .select("user_id")
+              .eq("referral_partner_id", partner.partner_id)
+
+            if (refData && refData.length > 0) {
+              const uids = refData.map((r: any) => r.user_id)
+              const { data } = await supabase
+                .from("personal_details")
+                .select("sex")
+                .in("user_id", uids)
+              profiles = data;
+            } else {
+              profiles = []
+            }
+          }
 
           const total = profiles ? profiles.length : 0
           const men = profiles ? profiles.filter(p => p.sex === "Male").length : 0
@@ -116,6 +183,7 @@ export default function AdminAccountsPage() {
             menReferrals: men,
             womenReferrals: women,
             referralPercentage: partner.referral_percentage || 10,
+            canEditProfile: !!partner.can_edit_profile,
             status: partner.is_active !== false ? "Active" : "Inactive"
           }
         }))
@@ -152,6 +220,76 @@ export default function AdminAccountsPage() {
     } catch (err) {
       console.error(err)
       toast.error("An error occurred")
+    }
+  }
+
+  const handleToggleEditProfile = async (id: string, currentValue: boolean) => {
+    const newValue = !currentValue
+    // Optimistically update UI
+    setPartners(prev => prev.map(p =>
+      p.id === id ? { ...p, canEditProfile: newValue } : p
+    ))
+    const { error } = await supabase
+      .from("referral_partners")
+      .update({ can_edit_profile: newValue })
+      .eq("id", id)
+    if (error) {
+      toast.error("Failed to update edit permission")
+      setPartners(prev => prev.map(p =>
+        p.id === id ? { ...p, canEditProfile: currentValue } : p
+      ))
+    } else {
+      toast.success(newValue ? "Edit access granted" : "Edit access revoked")
+    }
+  }
+
+  // --- Admin Handlers ---
+  const handleOpenAdminDialog = (mode: "add" | "edit" | "revoke", admin: any = null) => {
+    setAdminDialogMode(mode)
+    setSelectedAdmin(admin)
+    if (admin && mode === "edit") {
+      setAdminFormData({
+        name: admin.name || "",
+        email: admin.email || "",
+        phone: admin.phone || "",
+        role: (admin.rawRole as AdminRole) || "editor",
+        password: ""
+      })
+    } else {
+      setAdminFormData({ name: "", email: "", phone: "", role: "editor", password: "" })
+    }
+    setIsAdminDialogOpen(true)
+  }
+
+  const handleAdminSubmit = async () => {
+    setIsSubmittingAdmin(true)
+    try {
+      if (adminDialogMode === "add") {
+        if (!adminFormData.name || !adminFormData.email || !adminFormData.password) {
+          toast.error("Name, email, and password are required")
+          return
+        }
+        const res = await createAdminAccount(adminFormData)
+        if (!res.success) throw new Error(res.error)
+        toast.success("Admin account created successfully")
+
+      } else if (adminDialogMode === "edit" && selectedAdmin) {
+        const res = await updateAdminRole(selectedAdmin.user_id, adminFormData.role)
+        if (!res.success) throw new Error(res.error)
+        toast.success("Admin role updated successfully")
+
+      } else if (adminDialogMode === "revoke" && selectedAdmin) {
+        const res = await revokeAdminAccess(selectedAdmin.user_id)
+        if (!res.success) throw new Error(res.error)
+        toast.success("Admin access revoked successfully")
+      }
+
+      setIsAdminDialogOpen(false)
+      fetchData() // Refresh list
+    } catch (err: any) {
+      toast.error(err.message || "An error occurred")
+    } finally {
+      setIsSubmittingAdmin(false)
     }
   }
 
@@ -200,9 +338,14 @@ export default function AdminAccountsPage() {
 
             <TabsContent value="admin" className="mt-6">
               <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200/60 dark:border-gray-700/60">
-                <div className="p-6 border-b border-gray-200/60 dark:border-gray-700/60">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Admin Accounts</h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Manage administrator access and permissions.</p>
+                <div className="p-6 border-b border-gray-200/60 dark:border-gray-700/60 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Admin Accounts</h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Manage administrator access and permissions.</p>
+                  </div>
+                  <Button onClick={() => handleOpenAdminDialog("add")} className="bg-[#4B0082] hover:bg-[#4B0082]/90">
+                    <Users className="h-4 w-4 mr-2" /> Add Admin
+                  </Button>
                 </div>
                 <Table>
                   <TableHeader>
@@ -230,9 +373,14 @@ export default function AdminAccountsPage() {
                           <TableCell><span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">{admin.status}</span></TableCell>
                           <TableCell className="text-right">
                             {admin.rawRole !== "super_admin" && (
-                              <Button variant="ghost" size="icon">
-                                <Pencil className="h-4 w-4" />
-                              </Button>
+                              <div className="flex items-center justify-end gap-2">
+                                <Button variant="ghost" size="sm" onClick={() => handleOpenAdminDialog("edit", admin)} className="h-8 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                                  Edit Role
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => handleOpenAdminDialog("revoke", admin)} className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50">
+                                  Revoke
+                                </Button>
+                              </div>
                             )}
                           </TableCell>
                         </TableRow>
@@ -243,7 +391,48 @@ export default function AdminAccountsPage() {
               </div>
             </TabsContent>
 
-            <TabsContent value="partner" className="mt-6">
+            <TabsContent value="partner" className="mt-6 space-y-6">
+              {/* Filter Bar */}
+              <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/60 dark:border-gray-700/60 p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Search className="h-5 w-5 text-[#4B0082]" />
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Filter Partners</h2>
+                  {hasFilters && (
+                    <span className="ml-auto text-sm text-gray-500 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full">
+                      {filteredPartners.length} results
+                    </span>
+                  )}
+                  {hasFilters && (
+                    <Button variant="ghost" size="sm" onClick={() => setFilters(EMPTY_FILTERS)} className="h-8 ml-2 text-red-500 hover:text-red-600 hover:bg-red-50">
+                      <X className="h-4 w-4 mr-1" /> Clear
+                    </Button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Partner Name</label>
+                    <FilterInput value={filters.name} onChange={v => setFilter("name", v)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Phone</label>
+                    <FilterInput value={filters.phone} onChange={v => setFilter("phone", v)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Area</label>
+                    <FilterInput value={filters.area} onChange={v => setFilter("area", v)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Referral Code</label>
+                    <FilterInput value={filters.referralCode} onChange={v => setFilter("referralCode", v)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Status</label>
+                    <FilterInput value={filters.status} onChange={v => setFilter("status", v)} placeholder="Active / Inactive" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Table */}
               <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200/60 dark:border-gray-700/60">
                 <div className="p-6 border-b border-gray-200/60 dark:border-gray-700/60">
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Referral Partners</h2>
@@ -261,19 +450,20 @@ export default function AdminAccountsPage() {
                       <TableHead>Men</TableHead>
                       <TableHead>Women</TableHead>
                       <TableHead>Share %</TableHead>
+                      <TableHead>Can Edit Profile</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {partners.length === 0 ? (
+                    {filteredPartners.length === 0 ? (
                       <TableRow>
-                        <TableCell className="text-center py-8 text-gray-500" colSpan={9}>
-                          No referral partners found
+                        <TableCell className="text-center py-8 text-gray-500" colSpan={12}>
+                          {hasFilters ? "No partners match your filters" : "No referral partners found"}
                         </TableCell>
                       </TableRow>
                     ) : (
-                      partners.map((partner) => (
+                      filteredPartners.map((partner: any) => (
                         <TableRow key={partner.id || partner.partner_id}>
                           <TableCell className="font-medium">{partner.name}</TableCell>
                           <TableCell>{partner.email || "N/A"}</TableCell>
@@ -301,6 +491,18 @@ export default function AdminAccountsPage() {
                                 max="100"
                               />
                               <span className="pr-2 text-gray-500 text-xs font-semibold select-none">%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                id={`edit-profile-${partner.id}`}
+                                checked={!!partner.canEditProfile}
+                                onCheckedChange={() => handleToggleEditProfile(partner.id, !!partner.canEditProfile)}
+                              />
+                              <span className={`text-xs font-medium ${partner.canEditProfile ? "text-green-600 dark:text-green-400" : "text-gray-400"}`}>
+                                {partner.canEditProfile ? "Yes" : "No"}
+                              </span>
                             </div>
                           </TableCell>
                           <TableCell>
@@ -364,6 +566,88 @@ export default function AdminAccountsPage() {
                   userEmail={selectedPartner.email}
                 />
               )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Admin Management Dialog */}
+        <Dialog open={isAdminDialogOpen} onOpenChange={setIsAdminDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>
+                {adminDialogMode === "add" && "Add New Admin"}
+                {adminDialogMode === "edit" && "Edit Admin Role"}
+                {adminDialogMode === "revoke" && "Revoke Admin Access"}
+              </DialogTitle>
+            </DialogHeader>
+
+            {adminDialogMode === "revoke" ? (
+              <div className="py-4">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Are you sure you want to revoke access for <strong>{selectedAdmin?.name} ({selectedAdmin?.email})</strong>?
+                </p>
+                <p className="text-sm text-red-500 mt-2 font-medium">This action cannot be undone.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 py-4">
+                {adminDialogMode === "add" && (
+                  <>
+                    <div className="grid gap-2">
+                      <label className="text-sm font-medium">Name <span className="text-red-500">*</span></label>
+                      <Input value={adminFormData.name} onChange={e => setAdminFormData(prev => ({ ...prev, name: e.target.value }))} placeholder="Admin Name" />
+                    </div>
+                    <div className="grid gap-2">
+                      <label className="text-sm font-medium">Email <span className="text-red-500">*</span></label>
+                      <Input type="email" value={adminFormData.email} onChange={e => setAdminFormData(prev => ({ ...prev, email: e.target.value }))} placeholder="admin@example.com" />
+                    </div>
+                    <div className="grid gap-2">
+                      <label className="text-sm font-medium">Phone</label>
+                      <Input value={adminFormData.phone} onChange={e => setAdminFormData(prev => ({ ...prev, phone: e.target.value }))} placeholder="+91 9876543210" />
+                    </div>
+                    <div className="grid gap-2">
+                      <label className="text-sm font-medium">Password <span className="text-red-500">*</span></label>
+                      <Input type="password" value={adminFormData.password} onChange={e => setAdminFormData(prev => ({ ...prev, password: e.target.value }))} placeholder="Secure password" />
+                    </div>
+                  </>
+                )}
+
+                {adminDialogMode === "edit" && (
+                  <div className="mb-2">
+                    <p className="text-sm text-gray-500">Editing role for <strong>{selectedAdmin?.name}</strong></p>
+                  </div>
+                )}
+
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">Role</label>
+                  <select
+                    value={adminFormData.role}
+                    onChange={e => setAdminFormData(prev => ({ ...prev, role: e.target.value as AdminRole }))}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4B0082]/20 focus:border-[#4B0082]"
+                  >
+                    <option value="super_admin">Super Admin (Full Access)</option>
+                    <option value="editor">Editor (Can edit and manage users)</option>
+                    <option value="viewer">Viewer (Read-only access)</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {adminFormData.role === "super_admin" && "Can do everything, including creating and revoking other admins."}
+                    {adminFormData.role === "editor" && "Can edit profiles and standard settings, but cannot manage other admins."}
+                    {adminFormData.role === "viewer" && "Can only view data. Edit buttons will be hidden."}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 mt-4">
+              <Button variant="outline" onClick={() => setIsAdminDialogOpen(false)} disabled={isSubmittingAdmin}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleAdminSubmit}
+                disabled={isSubmittingAdmin}
+                className={adminDialogMode === "revoke" ? "bg-red-600 hover:bg-red-700 text-white" : "bg-[#4B0082] hover:bg-[#4B0082]/90"}
+              >
+                {isSubmittingAdmin ? "Saving..." : (adminDialogMode === "revoke" ? "Revoke Access" : "Save Admin")}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

@@ -56,7 +56,7 @@ export default function ReferralPartnerDashboardPage() {
 
   const fetchStats = async (partnerId: string) => {
     try {
-      // 1. Fetch Referral Partner Settings for referral percentage
+      // 1. Fetch referral percentage for this partner
       let referralPercentage = 10
       const { data: partnerSettingsData } = await supabase
         .from("referral_partners")
@@ -68,41 +68,50 @@ export default function ReferralPartnerDashboardPage() {
         referralPercentage = Number(partnerSettingsData.referral_percentage)
       }
 
-      // 2. Fetch all profiles referred by this partner
-      const { data: profiles, error: profilesError } = await supabase
-        .from("personal_details")
-        .select("user_id, sex")
-        .eq("referralPartnerId", partnerId)
+      // 2. Fetch all user_ids referred by this partner from referral_details table
+      const { data: referralData, error: referralError } = await supabase
+        .from("referral_details")
+        .select("user_id")
+        .eq("referral_partner_id", partnerId)
 
-      if (profiles && !profilesError) {
-        const menCount = profiles.filter((p: any) => p.sex === "Male").length
-        const womenCount = profiles.filter((p: any) => p.sex === "Female").length
-
-        let totalEarnings = 0
-
-        // 3. Fetch subscriptions for standard tracking of earnings 
-        // We only fetch for users that were referred by this partner
-        const userIds = profiles.map(p => p.user_id).filter(id => id)
-
-        if (userIds.length > 0) {
-          const { data: subscriptions } = await supabase
-            .from("subscriptions")
-            .select("amount")
-            .in("user_id", userIds)
-
-          if (subscriptions) {
-            const totalSubscriptionAmount = subscriptions.reduce((sum, sub) => sum + (Number(sub.amount) || 0), 0)
-            totalEarnings = totalSubscriptionAmount * (referralPercentage / 100)
-          }
-        }
-
-        setStats({
-          total: profiles.length,
-          men: menCount,
-          women: womenCount,
-          earnings: totalEarnings
-        })
+      if (referralError || !referralData || referralData.length === 0) {
+        setStats({ total: 0, men: 0, women: 0, earnings: 0 })
+        return
       }
+
+      const userIds = referralData.map((r: any) => r.user_id).filter(Boolean)
+
+      // 3. Fetch sex info from personal_details for those users
+      const { data: profiles } = await supabase
+        .from("personal_details")
+        .select("user_id, sex, marital_status")
+        .in("user_id", userIds)
+
+      const activeProfiles = (profiles || []).filter(p => (p.marital_status || "").toLowerCase() !== "married")
+
+      const menCount = activeProfiles.filter((p: any) => p.sex && p.sex.toLowerCase().includes("male") && !p.sex.toLowerCase().includes("female")).length
+      const womenCount = activeProfiles.filter((p: any) => p.sex && p.sex.toLowerCase().includes("female")).length
+
+      // 4. Fetch earnings from subscriptions
+      let totalEarnings = 0
+      if (userIds.length > 0) {
+        const { data: subscriptions } = await supabase
+          .from("subscriptions")
+          .select("amount")
+          .in("user_id", userIds)
+
+        if (subscriptions) {
+          const totalSubscriptionAmount = subscriptions.reduce((sum, sub) => sum + (Number(sub.amount) || 0), 0)
+          totalEarnings = totalSubscriptionAmount * (referralPercentage / 100)
+        }
+      }
+
+      setStats({
+        total: activeProfiles.length,
+        men: menCount,
+        women: womenCount,
+        earnings: totalEarnings
+      })
     } catch (err) {
       console.error("Error fetching stats:", err)
     }
@@ -257,7 +266,7 @@ export default function ReferralPartnerDashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             <Button
-              onClick={() => router.push("/referral-partner/profile")}
+              onClick={() => router.push("/referral-partner/my-profile")}
               variant="outline"
               className="flex items-center gap-2"
             >
@@ -289,7 +298,10 @@ export default function ReferralPartnerDashboardPage() {
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {/* Total Profiles Card */}
-            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-sm p-6 border border-gray-200/60 dark:border-gray-700/60 transition-transform hover:scale-105 duration-200">
+            <div
+              className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-sm p-6 border border-gray-200/60 dark:border-gray-700/60 transition-transform hover:scale-105 duration-200 cursor-pointer"
+              onClick={() => router.push("/referral-partner/profiles")}
+            >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-gray-600 dark:text-gray-400 font-medium">Total Profiles</h3>
                 <div className="bg-[#4B0082]/10 p-3 rounded-full">
@@ -300,7 +312,10 @@ export default function ReferralPartnerDashboardPage() {
             </div>
 
             {/* Men Count Card */}
-            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-sm p-6 border border-gray-200/60 dark:border-gray-700/60 transition-transform hover:scale-105 duration-200">
+            <div
+              className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-sm p-6 border border-gray-200/60 dark:border-gray-700/60 transition-transform hover:scale-105 duration-200 cursor-pointer"
+              onClick={() => router.push("/referral-partner/profiles?gender=Male")}
+            >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-gray-600 dark:text-gray-400 font-medium">Men</h3>
                 <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full">
@@ -311,7 +326,10 @@ export default function ReferralPartnerDashboardPage() {
             </div>
 
             {/* Women Count Card */}
-            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-sm p-6 border border-gray-200/60 dark:border-gray-700/60 transition-transform hover:scale-105 duration-200">
+            <div
+              className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-sm p-6 border border-gray-200/60 dark:border-gray-700/60 transition-transform hover:scale-105 duration-200 cursor-pointer"
+              onClick={() => router.push("/referral-partner/profiles?gender=Female")}
+            >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-gray-600 dark:text-gray-400 font-medium">Women</h3>
                 <div className="bg-pink-100 dark:bg-pink-900/30 p-3 rounded-full">

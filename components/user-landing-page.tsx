@@ -3,15 +3,27 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { motion } from "framer-motion"
-import { 
-  User, 
-  CheckCircle2, 
-  Edit, 
-  ArrowRight, 
-  Heart, 
-  Users, 
-  Sparkles
+import {
+  User,
+  CheckCircle2,
+  Edit,
+  ArrowRight,
+  Heart,
+  Users,
+  Sparkles,
+  HeartHandshake,
+  AlertTriangle
 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { supabase } from "@/lib/supabase"
 import { useEffect, useState } from "react"
 
@@ -32,6 +44,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }:
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [completionPercentage, setCompletionPercentage] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const [showMarriedConfirmDialog, setShowMarriedConfirmDialog] = useState(false)
   const userName = userEmail.split("@")[0]
   const isProfileComplete = completionPercentage === 100
 
@@ -50,7 +63,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }:
               .select("*")
               .eq("user_id", userId)
               .maybeSingle()
-            
+
             if (data) {
               const fields = ["name", "date_of_birth", "age", "sex", "height", "weight", "skin_color", "body_type", "marital_status", "about", "food_preference", "languages"]
               const filled = fields.filter(field => {
@@ -68,7 +81,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }:
               .select("*")
               .eq("user_id", userId)
               .maybeSingle()
-            
+
             if (data) {
               const fields = ["phone", "whatsapp_number", "permanent_address_line1", "permanent_pincode", "permanent_area", "permanent_taluk", "permanent_district", "permanent_division", "permanent_region", "permanent_state", "permanent_country", "current_address_line1", "current_pincode", "current_area", "current_taluk", "current_district", "current_division", "current_region", "current_state", "current_country"]
               const filled = fields.filter(field => {
@@ -82,7 +95,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }:
               .from("education_details")
               .select("*")
               .eq("user_id", userId)
-            
+
             if (data && data.length > 0) {
               const hasData = data.some(edu => edu.education && edu.education !== "")
               progress = hasData ? 100 : 0
@@ -93,23 +106,23 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }:
               .select("completion_percentage")
               .eq("user_id", userId)
               .maybeSingle()
-            
+
             const { data: businessData } = await supabase
               .from("profession_business")
               .select("completion_percentage")
               .eq("user_id", userId)
               .maybeSingle()
-            
+
             const { data: studentData } = await supabase
               .from("profession_student")
               .select("completion_percentage")
               .eq("user_id", userId)
               .maybeSingle()
-            
+
             // If any table has 100%, use 100%
-            if (employeeData?.completion_percentage === 100 || 
-                businessData?.completion_percentage === 100 || 
-                studentData?.completion_percentage === 100) {
+            if (employeeData?.completion_percentage === 100 ||
+              businessData?.completion_percentage === 100 ||
+              studentData?.completion_percentage === 100) {
               progress = 100
             } else if (employeeData?.completion_percentage !== null && employeeData?.completion_percentage !== undefined) {
               progress = employeeData.completion_percentage
@@ -124,7 +137,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }:
               .select("*")
               .eq("user_id", userId)
               .maybeSingle()
-            
+
             if (data) {
               const fields = ["father_name", "father_occupation", "mother_name", "mother_occupation", "parents_address_line1", "parents_pincode", "parents_area", "parents_taluk", "parents_district", "parents_division", "parents_region", "parents_state", "parents_country", "caste", "family_type", "family_status"]
               const filled = fields.filter(field => {
@@ -139,7 +152,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }:
               .select("*")
               .eq("user_id", userId)
               .maybeSingle()
-            
+
             if (data) {
               const fields = ["jaadhagam_url", "time_of_birth", "place_of_birth", "zodiac_sign", "star", "lagnam", "dhosham"]
               const filled = fields.filter(field => {
@@ -154,7 +167,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }:
               .select("*")
               .eq("user_id", userId)
               .maybeSingle()
-            
+
             if (data) {
               const hobbies = data.hobbies || []
               const interests = data.interests || []
@@ -170,7 +183,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }:
               .select("*")
               .eq("user_id", userId)
               .maybeSingle()
-            
+
             if (data) {
               const fields = ["smoking", "drinking", "parties", "pubs"]
               const filled = fields.filter(field => {
@@ -185,7 +198,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }:
               .select("*")
               .eq("user_id", userId)
               .maybeSingle()
-            
+
             if (data) {
               const userPhotos = data.user_photos || []
               if (userPhotos.length >= 3 && data.family_photo && data.aadhar_front && data.aadhar_back) {
@@ -292,6 +305,25 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }:
 
     calculateProgress()
   }, [userId])
+
+  const handleMarkAsMarried = async () => {
+    try {
+      const { error } = await supabase
+        .from("personal_details")
+        .update({ marital_status: "Married" })
+        .eq("user_id", userId)
+
+      if (error) throw error
+
+      setProfile(prev => prev ? { ...prev, maritalStatus: "Married" } : { maritalStatus: "Married" })
+      setShowMarriedConfirmDialog(false)
+    } catch (error) {
+      console.error("Error updating marital status:", error)
+      alert("Failed to update profile. Please try again.")
+    }
+  }
+
+  const isMarried = profile?.maritalStatus === "Married"
 
   return (
     <div className="min-h-screen py-8">
@@ -460,8 +492,91 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup }:
           </motion.div>
 
         </div>
+
+        {/* Marriage Status Action Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mt-8"
+        >
+          {isMarried ? (
+            <Card className="bg-gradient-to-br from-pink-500/10 via-purple-500/10 to-[#4B0082]/10 border-2 border-pink-200/60 dark:border-pink-900/60 shadow-xl overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl -mr-32 -mt-32"></div>
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl -ml-32 -mb-32"></div>
+              <CardContent className="p-8 md:p-12 text-center relative z-10">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                  className="mx-auto w-20 h-20 bg-gradient-to-br from-pink-400 to-purple-600 rounded-full flex items-center justify-center mb-6 shadow-lg"
+                >
+                  <HeartHandshake className="h-10 w-10 text-white" />
+                </motion.div>
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                  Congratulations on finding your match! 🎉
+                </h2>
+                <p className="text-lg text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
+                  We are thrilled that you found your life partner. Your profile is now marked as Married and has been respectfully hidden from public matching. Wishing you a lifetime of joy and happiness!
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-2 border-gray-200/60 dark:border-gray-700/60 shadow-xl">
+              <CardContent className="p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-2">
+                    <HeartHandshake className="h-5 w-5 text-pink-500" />
+                    Found your match here?
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 max-w-xl">
+                    Once you've found your life partner, letting us know ensures you won't be disturbed by new matches or calls. Your profile will be moved securely into our successfully matched section.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowMarriedConfirmDialog(true)}
+                  className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white shadow-lg transition-all cursor-pointer whitespace-nowrap"
+                >
+                  <HeartHandshake className="h-5 w-5" />
+                  Mark Profile as Married
+                </button>
+              </CardContent>
+            </Card>
+          )}
+        </motion.div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showMarriedConfirmDialog} onOpenChange={setShowMarriedConfirmDialog}>
+        <AlertDialogContent className="bg-white dark:bg-gray-900 border-2 border-pink-300 dark:border-pink-700 shadow-2xl">
+          <AlertDialogHeader>
+            <div className="mx-auto w-12 h-12 bg-pink-100 dark:bg-pink-900/30 rounded-full flex items-center justify-center mb-4">
+              <AlertTriangle className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+            </div>
+            <AlertDialogTitle className="text-center text-xl text-gray-900 dark:text-white">
+              Confirm Marriage Status
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-gray-600 dark:text-gray-400 mt-2">
+              Are you sure you want to mark your profile as Married? <br /><br />
+              <strong className="text-gray-900 dark:text-gray-200">This action will:</strong>
+              <ul className="list-disc text-left pl-6 mt-2 space-y-1">
+                <li>Remove your profile from the public matching pool.</li>
+                <li>Stop you from receiving new match suggestions.</li>
+                <li>Hide your profile from new searches.</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-center mt-6 gap-3">
+            <AlertDialogCancel className="w-full sm:w-auto mt-0 border-2 border-gray-400 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleMarkAsMarried}
+              className="w-full sm:w-auto bg-gradient-to-r from-pink-500 to-purple-700 hover:from-pink-600 hover:to-purple-800 text-white border-0 font-semibold shadow-lg shadow-pink-200"
+            >
+              Yes, Mark as Married
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
-
