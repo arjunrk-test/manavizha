@@ -253,11 +253,6 @@ export function BrowseProfiles({ userId, onBack }: BrowseProfilesProps) {
                         Here are some {targetGender.toLowerCase()} profiles tailored for you
                     </p>
                 </div>
-                {onBack && (
-                    <Button onClick={onBack} variant="outline" className="hidden sm:flex">
-                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
-                    </Button>
-                )}
             </div>
 
             {profiles.length === 0 ? (
