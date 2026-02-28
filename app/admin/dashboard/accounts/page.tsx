@@ -59,8 +59,6 @@ export default function AdminAccountsPage() {
     name: "",
     email: "",
     phone: "",
-    area: "",
-    partner_id: "",
     password: ""
   })
   const [showPartnerPassword, setShowPartnerPassword] = useState(false)
@@ -288,15 +286,15 @@ export default function AdminAccountsPage() {
   const handlePartnerSubmit = async () => {
     setIsSubmittingPartner(true)
     try {
-      if (!partnerFormData.name || !partnerFormData.email || !partnerFormData.partner_id || !partnerFormData.password) {
-        toast.error("Name, email, partner ID, and password are required")
+      if (!partnerFormData.name || !partnerFormData.email || !partnerFormData.password) {
+        toast.error("Name, email, and password are required")
         return
       }
       const res = await createReferralPartnerAccount(partnerFormData)
       if (!res.success) throw new Error(res.error)
       toast.success("Referral partner account created successfully")
       setIsPartnerDialogOpen(false)
-      setPartnerFormData({ name: "", email: "", phone: "", area: "", partner_id: "", password: "" })
+      setPartnerFormData({ name: "", email: "", phone: "", password: "" })
       fetchData() // Refresh list
     } catch (err: any) {
       toast.error(err.message || "An error occurred")
@@ -684,14 +682,6 @@ export default function AdminAccountsPage() {
               <div className="grid gap-2">
                 <label className="text-sm font-medium">Phone</label>
                 <Input value={partnerFormData.phone} onChange={e => setPartnerFormData(prev => ({ ...prev, phone: e.target.value }))} placeholder="+91 9876543210" />
-              </div>
-              <div className="grid gap-2">
-                <label className="text-sm font-medium">Area / Location</label>
-                <Input value={partnerFormData.area} onChange={e => setPartnerFormData(prev => ({ ...prev, area: e.target.value }))} placeholder="e.g. Chennai, TN" />
-              </div>
-              <div className="grid gap-2">
-                <label className="text-sm font-medium">Partner ID / Referral Code <span className="text-red-500">*</span></label>
-                <Input value={partnerFormData.partner_id} onChange={e => setPartnerFormData(prev => ({ ...prev, partner_id: e.target.value }))} placeholder="e.g. PARTNER001" />
               </div>
               <div className="grid gap-2">
                 <label className="text-sm font-medium">Password <span className="text-red-500">*</span></label>

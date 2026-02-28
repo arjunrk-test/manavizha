@@ -109,8 +109,6 @@ export async function createReferralPartnerAccount(data: {
     name: string
     email: string
     phone: string
-    area: string
-    partner_id: string
     password?: string
 }) {
     const logFile = 'debug.txt'
@@ -139,8 +137,6 @@ export async function createReferralPartnerAccount(data: {
                 name: data.name,
                 email: data.email,
                 phone: data.phone,
-                area: data.area,
-                partner_id: data.partner_id,
                 referral_percentage: 10 // Default percentage
             },
             { headers: { 'Prefer': 'return=representation' } }
