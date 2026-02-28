@@ -115,22 +115,15 @@ export default function AdminAccountsPage() {
         .select("*")
 
       if (adminData) {
-        // Fetch names for admins
-        const adminsWithDetails = await Promise.all(adminData.map(async (admin: any) => {
-          const { data: profile } = await supabase
-            .from("personal_details")
-            .select("name")
-            .eq("user_id", admin.user_id)
-            .maybeSingle()
+        const adminsWithDetails = adminData.map((admin: any) => {
           const formattedRole = admin.role
             ? admin.role
               .split("_")
               .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
               .join(" ")
             : "Admin"
-
-          return { ...admin, name: profile?.name || "Unknown", role: formattedRole, rawRole: admin.role, status: "Active" }
-        }))
+          return { ...admin, name: admin.name || "Unknown", phone: admin.phone || "N/A", role: formattedRole, rawRole: admin.role, status: "Active" }
+        })
         setAdmins(adminsWithDetails)
       }
 
@@ -350,8 +343,9 @@ export default function AdminAccountsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>User ID</TableHead>
+                      <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
+                      <TableHead>Phone</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -367,8 +361,9 @@ export default function AdminAccountsPage() {
                     ) : (
                       admins.map((admin) => (
                         <TableRow key={admin.id || admin.user_id}>
-                          <TableCell className="font-medium text-xs font-mono">{admin.user_id}</TableCell>
+                          <TableCell className="font-medium">{admin.name}</TableCell>
                           <TableCell>{admin.email || "N/A"}</TableCell>
+                          <TableCell>{admin.phone || "N/A"}</TableCell>
                           <TableCell>{admin.role}</TableCell>
                           <TableCell><span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">{admin.status}</span></TableCell>
                           <TableCell className="text-right">
