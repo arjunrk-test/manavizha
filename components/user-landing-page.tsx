@@ -502,15 +502,15 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           className="mt-8"
         >
           {isMarried ? (
-            <Card className="bg-gradient-to-br from-pink-500/10 via-purple-500/10 to-[#4B0082]/10 border-2 border-pink-200/60 dark:border-pink-900/60 shadow-xl overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl -mr-32 -mt-32"></div>
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl -ml-32 -mb-32"></div>
+            <Card className="bg-gradient-to-br from-[#FF1493]/10 via-[#4B0082]/10 to-[#4B0082]/10 border-2 border-[#FF1493]/30 dark:border-[#FF1493]/60 shadow-xl overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF1493]/20 rounded-full blur-3xl -mr-32 -mt-32"></div>
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#4B0082]/20 rounded-full blur-3xl -ml-32 -mb-32"></div>
               <CardContent className="p-8 md:p-12 text-center relative z-10">
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                  className="mx-auto w-20 h-20 bg-gradient-to-br from-pink-400 to-purple-600 rounded-full flex items-center justify-center mb-6 shadow-lg"
+                  className="mx-auto w-20 h-20 bg-gradient-to-br from-[#FF1493] to-[#4B0082] rounded-full flex items-center justify-center mb-6 shadow-lg"
                 >
                   <HeartHandshake className="h-10 w-10 text-white" />
                 </motion.div>
@@ -527,7 +527,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               <CardContent className="p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-2">
-                    <HeartHandshake className="h-5 w-5 text-pink-500" />
+                    <HeartHandshake className="h-5 w-5 text-[#FF1493]" />
                     Found your match here?
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400 max-w-xl">
@@ -536,7 +536,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 </div>
                 <button
                   onClick={() => setShowMarriedConfirmDialog(true)}
-                  className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white shadow-lg transition-all cursor-pointer whitespace-nowrap"
+                  className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold rounded-lg bg-gradient-to-r from-[#FF1493] to-[#4B0082] hover:opacity-90 text-white shadow-lg transition-all cursor-pointer whitespace-nowrap"
                 >
                   <HeartHandshake className="h-5 w-5" />
                   Mark Profile as Married
@@ -549,10 +549,10 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
       {/* Confirmation Dialog */}
       <AlertDialog open={showMarriedConfirmDialog} onOpenChange={setShowMarriedConfirmDialog}>
-        <AlertDialogContent className="bg-white dark:bg-gray-900 border-2 border-pink-300 dark:border-pink-700 shadow-2xl">
+        <AlertDialogContent className="bg-white dark:bg-gray-900 border-2 border-[#FF1493]/30 dark:border-[#FF1493]/60 shadow-2xl">
           <AlertDialogHeader>
-            <div className="mx-auto w-12 h-12 bg-pink-100 dark:bg-pink-900/30 rounded-full flex items-center justify-center mb-4">
-              <AlertTriangle className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+            <div className="mx-auto w-12 h-12 bg-[#FF1493]/10 dark:bg-[#FF1493]/20 rounded-full flex items-center justify-center mb-4">
+              <AlertTriangle className="h-6 w-6 text-[#FF1493]" />
             </div>
             <AlertDialogTitle className="text-center text-xl text-gray-900 dark:text-white">
               Confirm Marriage Status
@@ -571,7 +571,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             <AlertDialogCancel className="w-full sm:w-auto mt-0 border-2 border-gray-400 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleMarkAsMarried}
-              className="w-full sm:w-auto bg-gradient-to-r from-pink-500 to-purple-700 hover:from-pink-600 hover:to-purple-800 text-white border-0 font-semibold shadow-lg shadow-pink-200"
+              className="w-full sm:w-auto bg-gradient-to-r from-[#FF1493] to-[#4B0082] hover:opacity-90 text-white border-0 font-semibold shadow-lg shadow-[#FF1493]/20"
             >
               Yes, Mark as Married
             </AlertDialogAction>

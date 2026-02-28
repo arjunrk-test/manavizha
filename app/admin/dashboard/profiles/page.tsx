@@ -337,7 +337,7 @@ function AdminProfilesContent() {
                                                         <TableCell className="text-right">
                                                             <button
                                                                 onClick={(e) => handleMarkAsMarriedClick(e, profile.user_id)}
-                                                                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md border-2 border-pink-400 text-pink-700 bg-pink-100 hover:bg-pink-200 hover:border-pink-500 transition-colors cursor-pointer"
+                                                                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md border-2 border-[#FF1493]/40 text-[#FF1493] bg-[#FF1493]/10 hover:bg-[#FF1493]/20 hover:border-[#FF1493]/60 transition-colors cursor-pointer"
                                                             >
                                                                 <HeartHandshake className="h-4 w-4" />
                                                                 Mark as Married
@@ -380,7 +380,7 @@ function AdminProfilesContent() {
                                                     >
                                                         <TableCell className="font-medium text-[#4B0082] dark:text-purple-400 flex items-center gap-2">
                                                             {profile.name || "Unknown"}
-                                                            <span className="bg-pink-100 text-pink-700 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded">Married</span>
+                                                            <span className="bg-[#FF1493]/10 text-[#FF1493] text-[10px] uppercase font-bold px-1.5 py-0.5 rounded">Married</span>
                                                         </TableCell>
                                                         <TableCell>{profile.phone}</TableCell>
                                                         <TableCell>{profile.age || "N/A"}</TableCell>
@@ -401,10 +401,10 @@ function AdminProfilesContent() {
 
             {/* Confirmation Dialog */}
             <AlertDialog open={!!selectedProfileForMarriage} onOpenChange={(open) => !open && setSelectedProfileForMarriage(null)}>
-                <AlertDialogContent className="bg-white dark:bg-gray-900 border-2 border-pink-300 dark:border-pink-700 shadow-2xl">
+                <AlertDialogContent className="bg-white dark:bg-gray-900 border-2 border-[#FF1493]/30 dark:border-[#FF1493]/60 shadow-2xl">
                     <AlertDialogHeader>
-                        <div className="mx-auto w-12 h-12 bg-pink-100 dark:bg-pink-900/30 rounded-full flex items-center justify-center mb-4">
-                            <AlertTriangle className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+                        <div className="mx-auto w-12 h-12 bg-[#FF1493]/10 dark:bg-[#FF1493]/20 rounded-full flex items-center justify-center mb-4">
+                            <AlertTriangle className="h-6 w-6 text-[#FF1493]" />
                         </div>
                         <AlertDialogTitle className="text-center text-xl text-gray-900 dark:text-white">
                             Confirm Marriage Status
@@ -423,7 +423,7 @@ function AdminProfilesContent() {
                         <AlertDialogCancel className="w-full sm:w-auto mt-0 border-2 border-gray-400 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold">Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={confirmMarkAsMarried}
-                            className="w-full sm:w-auto bg-gradient-to-r from-pink-500 to-purple-700 hover:from-pink-600 hover:to-purple-800 text-white border-0 font-semibold shadow-lg shadow-pink-200"
+                            className="w-full sm:w-auto bg-gradient-to-r from-[#FF1493] to-[#4B0082] hover:opacity-90 text-white border-0 font-semibold shadow-lg shadow-[#FF1493]/20"
                         >
                             Yes, Mark as Married
                         </AlertDialogAction>
