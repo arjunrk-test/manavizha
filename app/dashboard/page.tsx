@@ -7,6 +7,8 @@ import { useEffect, useState } from "react"
 import { ProfileSetupForm } from "@/components/profile-setup-form"
 import { UserLandingPage } from "@/components/user-landing-page"
 import { BrowseProfiles } from "@/components/browse-profiles"
+import { ManageParents } from "@/components/manage-parents"
+import { ParentSelectionsView } from "@/components/parent-selections-view"
 import { LogOut, ArrowLeft } from "lucide-react"
 import { motion } from "framer-motion"
 
@@ -15,7 +17,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const [profileProgress, setProfileProgress] = useState(0)
-  const [currentView, setCurrentView] = useState<"landing" | "setup" | "browse">("landing")
+  const [currentView, setCurrentView] = useState<"landing" | "setup" | "browse" | "parents" | "selections">("landing")
 
   useEffect(() => {
     // Check if user is authenticated and is NOT a referral partner
@@ -188,7 +190,11 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-              {currentView === "setup" ? "Profile Setup" : currentView === "browse" ? "Browse Profiles" : "Dashboard"}
+              {currentView === "setup" ? "Profile Setup" :
+                currentView === "browse" ? "Browse Profiles" :
+                  currentView === "parents" ? "Manage Parents" :
+                    currentView === "selections" ? "Parent Selections" :
+                      "Dashboard"}
             </h1>
             {user?.email && (
               <p className="text-xs text-gray-600 dark:text-gray-400">{user.email}</p>
@@ -230,12 +236,24 @@ export default function DashboardPage() {
               userId={user.id}
               onBack={() => setCurrentView("landing")}
             />
+          ) : currentView === "parents" ? (
+            <ManageParents
+              userId={user.id}
+              onBack={() => setCurrentView("landing")}
+            />
+          ) : currentView === "selections" ? (
+            <ParentSelectionsView
+              userId={user.id}
+              onBack={() => setCurrentView("landing")}
+            />
           ) : (
             <UserLandingPage
               userEmail={user.email || ""}
               userId={user.id}
               onNavigateToProfileSetup={() => setCurrentView("setup")}
               onNavigateToBrowse={() => setCurrentView("browse")}
+              onNavigateToParents={() => setCurrentView("parents")}
+              onNavigateToSelections={() => setCurrentView("selections")}
             />
           )
         )}

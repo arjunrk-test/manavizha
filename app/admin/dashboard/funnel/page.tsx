@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState, Suspense } from "react"
 import { ArrowLeft, Users } from "lucide-react"
+import { getAllParentIds } from "@/app/actions/admin"
 import { AnimatedBackground } from "@/components/animated-background"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -63,8 +64,16 @@ function FunnelContent() {
                 if (data) data.forEach(r => absentIds.add(r.user_id))
             }
 
+            // --- Exclude Parents ---
+            // Parents exist in the users table but don't participate in the funnel
+            const parentDataRes = await getAllParentIds()
+            if (parentDataRes.success && parentDataRes.ids) {
+                parentDataRes.ids.forEach((id: string) => absentIds.add(id))
+            }
+
             // Users in present stage but NOT in the next stage
             const stoppedIds = [...presentIds].filter(id => !absentIds.has(id))
+            console.log("STOPPED IDS:", stoppedIds, "PARENT RES:", parentDataRes.ids)
 
             if (stoppedIds.length === 0) {
                 setUsers([])

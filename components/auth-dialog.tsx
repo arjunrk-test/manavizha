@@ -212,9 +212,24 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             await supabase.auth.signOut()
             throw new Error("Access denied. This account is registered as a referral partner. Please use the referral partner login.")
           }
+
+          // Check if the user is a Parent
+          const { data: parentData, error: parentErrorObj } = await supabase
+            .from("parents")
+            .select("id")
+            .eq("id", signInData.user.id)
+            .single()
+
+          if (!parentErrorObj && parentData) {
+            // User is a parent
+            setSuccessMessage(null)
+            onOpenChange(false)
+            router.push("/parent-dashboard")
+            return
+          }
         }
 
-        // Clear success message, close dialog, and navigate to dashboard
+        // Clear success message, close dialog, and navigate to customer dashboard
         setSuccessMessage(null)
         onOpenChange(false)
         router.push("/dashboard")

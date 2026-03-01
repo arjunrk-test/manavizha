@@ -1,0 +1,37 @@
+[2026-02-28T23:57:58.441Z] getAllParentIds called
+[2026-02-28T23:57:58.760Z] getAllParentIds SUCCESS: 1 parents
+[2026-02-28T23:59:52.103Z] getAllParentIds called
+[2026-02-28T23:59:52.608Z] USERS DUMP: [{"id":"6b6fa088-9502-4996-b8f4-f3046abf3766","email":"arjun@example.com","name":null},{"id":"888335fb-e0d8-4e14-b840-40c7227f4f24","email":"ashok@akmofilings.in","name":null},{"id":"55189eac-4b2e-459b-ac0e-67596e377d5e","email":"arjunrk.dev@gmail.com","name":"arjun"},{"id":"a3ea316e-af71-4326-b946-99ee4ee0b88a","email":"kaviya@gmail.com","name":"Kaviya Krishnan"},{"id":"a26227be-712c-4e77-b5d6-1ef38ab1e396","email":"a@gmail.com","name":"a"},{"id":"77aa57b9-1e48-49fd-8bab-77743207adf3","email":"tls-test2@test.com","name":"Father"},{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e","email":"saravanan@test.com","name":"Saravanan"}]
+PARENT DUMP: [{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e"}]
+[2026-02-28T23:59:52.614Z] getAllParentIds SUCCESS: 1 parents
+[2026-03-01T00:02:04.862Z] getAllParentIds called
+[2026-03-01T00:02:05.378Z] USERS DUMP: [{"id":"6b6fa088-9502-4996-b8f4-f3046abf3766","email":"arjun@example.com","name":null},{"id":"888335fb-e0d8-4e14-b840-40c7227f4f24","email":"ashok@akmofilings.in","name":null},{"id":"55189eac-4b2e-459b-ac0e-67596e377d5e","email":"arjunrk.dev@gmail.com","name":"arjun"},{"id":"a3ea316e-af71-4326-b946-99ee4ee0b88a","email":"kaviya@gmail.com","name":"Kaviya Krishnan"},{"id":"a26227be-712c-4e77-b5d6-1ef38ab1e396","email":"a@gmail.com","name":"a"},{"id":"77aa57b9-1e48-49fd-8bab-77743207adf3","email":"tls-test2@test.com","name":"Father"},{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e","email":"saravanan@test.com","name":"Saravanan"}]
+PARENT DUMP: [{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e"}]
+[2026-03-01T00:02:05.380Z] getAllParentIds SUCCESS: 1 parents
+[2026-03-01T00:02:58.002Z] getAllParentIds called
+[2026-03-01T00:02:58.482Z] USERS DUMP: [{"id":"6b6fa088-9502-4996-b8f4-f3046abf3766","email":"arjun@example.com","name":null},{"id":"888335fb-e0d8-4e14-b840-40c7227f4f24","email":"ashok@akmofilings.in","name":null},{"id":"55189eac-4b2e-459b-ac0e-67596e377d5e","email":"arjunrk.dev@gmail.com","name":"arjun"},{"id":"a3ea316e-af71-4326-b946-99ee4ee0b88a","email":"kaviya@gmail.com","name":"Kaviya Krishnan"},{"id":"a26227be-712c-4e77-b5d6-1ef38ab1e396","email":"a@gmail.com","name":"a"},{"id":"77aa57b9-1e48-49fd-8bab-77743207adf3","email":"tls-test2@test.com","name":"Father"},{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e","email":"saravanan@test.com","name":"Saravanan"}]
+PARENT DUMP: [{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e"}]
+[2026-03-01T00:02:58.484Z] getAllParentIds SUCCESS: 1 parents
+[2026-03-01T00:04:56.947Z] getAllParentIds called
+[2026-03-01T00:04:57.500Z] USERS DUMP: [{"id":"6b6fa088-9502-4996-b8f4-f3046abf3766","email":"arjun@example.com","name":null},{"id":"888335fb-e0d8-4e14-b840-40c7227f4f24","email":"ashok@akmofilings.in","name":null},{"id":"55189eac-4b2e-459b-ac0e-67596e377d5e","email":"arjunrk.dev@gmail.com","name":"arjun"},{"id":"a3ea316e-af71-4326-b946-99ee4ee0b88a","email":"kaviya@gmail.com","name":"Kaviya Krishnan"},{"id":"a26227be-712c-4e77-b5d6-1ef38ab1e396","email":"a@gmail.com","name":"a"},{"id":"77aa57b9-1e48-49fd-8bab-77743207adf3","email":"tls-test2@test.com","name":"Father"},{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e","email":"saravanan@test.com","name":"Saravanan"}]
+PARENT DUMP: [{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e"}]
+[2026-03-01T00:04:57.501Z] getAllParentIds SUCCESS: 1 parents
+[2026-03-01T00:05:51.776Z] getAllParentIds called
+[2026-03-01T00:05:52.505Z] USERS DUMP: [{"id":"6b6fa088-9502-4996-b8f4-f3046abf3766","email":"arjun@example.com","name":null},{"id":"888335fb-e0d8-4e14-b840-40c7227f4f24","email":"ashok@akmofilings.in","name":null},{"id":"55189eac-4b2e-459b-ac0e-67596e377d5e","email":"arjunrk.dev@gmail.com","name":"arjun"},{"id":"a3ea316e-af71-4326-b946-99ee4ee0b88a","email":"kaviya@gmail.com","name":"Kaviya Krishnan"},{"id":"a26227be-712c-4e77-b5d6-1ef38ab1e396","email":"a@gmail.com","name":"a"},{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e","email":"saravanan@test.com","name":"Saravanan"}]
+PARENT DUMP: [{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e"}]
+[2026-03-01T00:05:52.506Z] getAllParentIds SUCCESS: 1 parents
+[2026-03-01T00:06:11.684Z] CLEANUP: Found 1 users to delete
+[2026-03-01T00:06:12.025Z] CLEANUP: Deleted tls-test2@test.com (77aa57b9-1e48-49fd-8bab-77743207adf3)
+[2026-03-01T00:07:23.301Z] getAllParentIds called
+[2026-03-01T00:07:23.980Z] USERS DUMP: [{"id":"6b6fa088-9502-4996-b8f4-f3046abf3766","email":"arjun@example.com","name":null},{"id":"888335fb-e0d8-4e14-b840-40c7227f4f24","email":"ashok@akmofilings.in","name":null},{"id":"55189eac-4b2e-459b-ac0e-67596e377d5e","email":"arjunrk.dev@gmail.com","name":"arjun"},{"id":"a3ea316e-af71-4326-b946-99ee4ee0b88a","email":"kaviya@gmail.com","name":"Kaviya Krishnan"},{"id":"a26227be-712c-4e77-b5d6-1ef38ab1e396","email":"a@gmail.com","name":"a"},{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e","email":"saravanan@test.com","name":"Saravanan"}]
+PARENT DUMP: [{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e"}]
+[2026-03-01T00:07:23.982Z] getAllParentIds SUCCESS: 1 parents
+[2026-03-01T00:07:24.027Z] getAllParentIds called
+[2026-03-01T00:07:24.491Z] USERS DUMP: [{"id":"6b6fa088-9502-4996-b8f4-f3046abf3766","email":"arjun@example.com","name":null},{"id":"888335fb-e0d8-4e14-b840-40c7227f4f24","email":"ashok@akmofilings.in","name":null},{"id":"55189eac-4b2e-459b-ac0e-67596e377d5e","email":"arjunrk.dev@gmail.com","name":"arjun"},{"id":"a3ea316e-af71-4326-b946-99ee4ee0b88a","email":"kaviya@gmail.com","name":"Kaviya Krishnan"},{"id":"a26227be-712c-4e77-b5d6-1ef38ab1e396","email":"a@gmail.com","name":"a"},{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e","email":"saravanan@test.com","name":"Saravanan"}]
+PARENT DUMP: [{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e"}]
+[2026-03-01T00:07:24.494Z] getAllParentIds SUCCESS: 1 parents
+[2026-03-01T00:08:37.281Z] createAdminAccount: r1a7h9ul@gmail.com
+[2026-03-01T00:08:37.715Z] Auth user created: 52f22698-dc41-4837-a6f4-f0f56df4bdaf
+[2026-03-01T00:08:38.224Z] Admins table insert status: 201
+[2026-03-01T00:08:38.949Z] contact_details insert failed (non-fatal): Request failed with status code 400
+[2026-03-01T00:08:38.953Z] createAdminAccount SUCCESS
