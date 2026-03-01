@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { supabase } from "@/lib/supabase"
 import { useEffect, useState } from "react"
-import { ArrowLeft, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Star, Coffee } from "lucide-react"
+import { ArrowLeft, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Star, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle } from "lucide-react"
 import { motion } from "framer-motion"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { toast } from "sonner"
@@ -25,6 +25,11 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
     const [selectedProfile, setSelectedProfile] = useState<any | null>(null)
     const [targetGender, setTargetGender] = useState<string>("")
     const [actionLoadingId, setActionLoadingId] = useState<string>("")
+    const [hasPreferences, setHasPreferences] = useState(false)
+    const [applyPreferences, setApplyPreferences] = useState(true)
+    const [selectedProfileIds, setSelectedProfileIds] = useState<Set<string>>(new Set())
+    const [mutualFullData, setMutualFullData] = useState<any>(null)
+    const [isFetchingFull, setIsFetchingFull] = useState(false)
 
     // State to track the currently viewed photo index for the modal
     const [modalPhotoIndex, setModalPhotoIndex] = useState(0)
@@ -34,6 +39,34 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
         setModalPhotoIndex(0)
         setSelectedProfile(profile)
     }
+
+    // Fetch full profile data when a mutual match modal opens
+    useEffect(() => {
+        const isMutual = selectedProfile?.isSelected && selectedProfile?.childLiked && selectedProfile?.profileLikedChild
+        if (!isMutual) { setMutualFullData(null); return }
+        const uid = selectedProfile.user_id
+        setIsFetchingFull(true)
+        const fetchFull = async () => {
+            const [
+                { data: family },
+                { data: fullContact },
+                { data: fullEdu },
+                { data: fullEmp },
+                { data: fullBus },
+                { data: fullStu },
+            ] = await Promise.all([
+                supabase.from("family_details").select("*").eq("user_id", uid).maybeSingle(),
+                supabase.from("contact_details").select("*").eq("user_id", uid).maybeSingle(),
+                supabase.from("education_details").select("*").eq("user_id", uid),
+                supabase.from("profession_employee").select("*").eq("user_id", uid).maybeSingle(),
+                supabase.from("profession_business").select("*").eq("user_id", uid).maybeSingle(),
+                supabase.from("profession_student").select("*").eq("user_id", uid).maybeSingle(),
+            ])
+            setMutualFullData({ family, fullContact, fullEdu, fullEmp, fullBus, fullStu })
+            setIsFetchingFull(false)
+        }
+        fetchFull()
+    }, [selectedProfile?.user_id, selectedProfile?.childLiked, selectedProfile?.profileLikedChild])
 
     // Handlers for modal photo navigation
     const nextModalPhoto = (e: React.MouseEvent, maxPhotos: number) => {
@@ -112,6 +145,11 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                 <span className="text-sm">No Photo</span>
                             </div>
                         )}
+                        {profile.isSelected && (
+                            <div className="absolute top-3 left-3 z-20 bg-green-500 text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow">
+                                <CheckCircle2 className="h-3 w-3" /> Selected
+                            </div>
+                        )}
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-12 pb-4 px-4">
                             <h3 className="text-white font-semibold text-lg drop-shadow-md">
                                 {profile.name || "Unknown"}
@@ -162,6 +200,11 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
             }
         } else {
             toast.success(`Profile selected! Your child will be able to review it.`)
+            setSelectedProfileIds(prev => new Set([...prev, profileId]))
+            setProfiles(prev => prev.map(p => p.user_id === profileId ? { ...p, isSelected: true } : p))
+            if (selectedProfile?.user_id === profileId) {
+                setSelectedProfile((prev: any) => prev ? { ...prev, isSelected: true } : prev)
+            }
         }
 
         setActionLoadingId("")
@@ -173,18 +216,18 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
 
         setActionLoadingId(profileId)
 
-        const { error } = await supabase
-            .from("likes")
-            .insert({
-                user_id: userId,
-                liked_user_id: profileId
-            })
+        const res = await fetch("/api/likes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, likedUserId: profileId }),
+        })
+        const data = await res.json()
 
-        if (error) {
-            if (error.code === '23505') {
+        if (!res.ok) {
+            if (data.error === "already_liked") {
                 toast.error(`You have already liked this profile.`)
             } else {
-                toast.error(`Failed to like profile: ${error.message}`)
+                toast.error(`Failed to like profile: ${data.error}`)
             }
         } else {
             toast.success(`Profile liked! We'll notify them.`)
@@ -192,6 +235,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
 
         setActionLoadingId("")
     }
+
 
     useEffect(() => {
         const fetchProfiles = async () => {
@@ -212,12 +256,25 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 const tg = myGender === "male" ? "Female" : "Male"
                 setTargetGender(tg)
 
+                // Fetch partner_preferences
+                const { data: preferences } = await supabase
+                    .from("partner_preferences")
+                    .select("*")
+                    .eq("user_id", userId)
+                    .maybeSingle()
+
+                if (preferences) {
+                    setHasPreferences(true)
+                }
+
                 // 2. Fetch target profiles
-                const { data: targetProfiles } = await supabase
+                let query = supabase
                     .from("personal_details")
                     .select("*")
                     .ilike("sex", tg)
                     .neq("user_id", userId)
+
+                const { data: targetProfiles } = await query
 
                 if (!targetProfiles || targetProfiles.length === 0) {
                     setIsLoading(false)
@@ -233,19 +290,28 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     return
                 }
 
-                // 3. Fetch auxiliary data & check likes if parent is viewer
-                let childLikesData: any[] = []
-                let childLikedByData: any[] = []
+                // 3. Fetch auxiliary data & check likes/selections if parent is viewer
+                let childLikedIds: string[] = []  // profiles child has liked
+                let likedChildIds: string[] = []  // profiles that liked the child
+                let selectedIds = new Set<string>()
 
                 if (parentViewer?.isParent) {
-                    const [{ data: clData }, { data: clbData }] = await Promise.all([
-                        supabase.from("likes").select("liked_user_id").eq("user_id", userId),
-                        supabase.from("likes").select("user_id").in("liked_user_id", targetUserIds) // Note: user_id is target, liked_user_id is child? Wait. likes: user_id = liker, liked_user_id = liked
-                    ])
-                    childLikesData = clData || []
+                    try {
+                        const likeRes = await fetch(`/api/likes?userId=${userId}`)
+                        if (likeRes.ok) {
+                            const likeData = await likeRes.json()
+                            childLikedIds = likeData.iLikedIds || []
+                            likedChildIds = likeData.likedMeIds || []
+                        }
+                    } catch { }
 
-                    const { data: clbCorrectData } = await supabase.from("likes").select("user_id").eq("liked_user_id", userId).in("user_id", targetUserIds)
-                    childLikedByData = clbCorrectData || []
+                    const { data: selectionsData } = await supabase
+                        .from("parent_selections")
+                        .select("selected_profile_id")
+                        .eq("parent_id", parentViewer.parentId)
+                        .eq("child_user_id", userId)
+                    selectedIds = new Set((selectionsData || []).map((s: any) => s.selected_profile_id))
+                    setSelectedProfileIds(selectedIds)
                 }
 
                 const [
@@ -259,7 +325,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     { data: horoscopeData },
                 ] = await Promise.all([
                     supabase.from("photos").select("user_id, user_photos").in("user_id", targetUserIds),
-                    supabase.from("contact_details").select("user_id, current_city, current_state").in("user_id", targetUserIds),
+                    supabase.from("contact_details").select("user_id, current_district, current_state, phone, whatsapp_number").in("user_id", targetUserIds),
                     supabase.from("profession_employee").select("user_id, designation, company, sector, employment_type, annual_income").in("user_id", targetUserIds),
                     supabase.from("profession_business").select("user_id, designation, business_name, business_type, annual_income").in("user_id", targetUserIds),
                     supabase.from("education_details").select("user_id, education, institution").in("user_id", targetUserIds),
@@ -284,14 +350,14 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     else if (myBus && myBus.designation && myBus.business_name) profession = `${myBus.designation} at ${myBus.business_name}`
 
                     let location = "Location not specified"
-                    if (myContact && myContact.current_city) {
-                        location = `${myContact.current_city}${myContact.current_state ? `, ${myContact.current_state}` : ''}`
+                    if (myContact && myContact.current_district) {
+                        location = `${myContact.current_district}${myContact.current_state ? `, ${myContact.current_state}` : ''}`
                     }
 
                     // Mask location based on mutual like for Parents
                     if (parentViewer?.isParent) {
-                        const childLikedThisProfile = childLikesData.some(l => l.liked_user_id === p.user_id)
-                        const thisProfileLikedChild = childLikedByData.some(l => l.user_id === p.user_id)
+                        const childLikedThisProfile = childLikedIds.includes(p.user_id)
+                        const thisProfileLikedChild = likedChildIds.includes(p.user_id)
                         const isMutual = childLikedThisProfile && thisProfileLikedChild
 
                         if (!isMutual) {
@@ -310,10 +376,99 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         interests: myInterests || null,
                         socialHabits: mySocial || null,
                         horoscope: myHoro || null,
+                        isSelected: selectedIds.has(p.user_id),
+                        childLiked: childLikedIds.includes(p.user_id),
+                        profileLikedChild: likedChildIds.includes(p.user_id),
+                        phone: myContact?.phone || null,
+                        whatsapp: myContact?.whatsapp_number || null,
                     }
                 })
 
-                setProfiles(combined)
+                let finalProfiles = combined
+
+                if (preferences && applyPreferences) {
+                    finalProfiles = combined.filter((profile: any) => {
+                        // Age filtering
+                        if (preferences.min_age != null || preferences.max_age != null) {
+                            const profileAge = profile.age ? parseInt(profile.age.toString()) : null
+                            if (profileAge === null) return false
+                            if (preferences.min_age != null && profileAge < preferences.min_age) return false
+                            if (preferences.max_age != null && profileAge > preferences.max_age) return false
+                        }
+
+                        // Height filtering
+                        if (preferences.min_height != null || preferences.max_height != null) {
+                            const profileHeight = profile.height ? parseInt(profile.height.toString()) : null
+                            if (profileHeight === null) return false
+                            if (preferences.min_height != null && profileHeight < preferences.min_height) return false
+                            if (preferences.max_height != null && profileHeight > preferences.max_height) return false
+                        }
+
+                        if (preferences.marital_status && preferences.marital_status.length > 0) {
+                            const isMatch = preferences.marital_status.some((m: string) =>
+                                (profile.marital_status?.toLowerCase() || "").includes(m.toLowerCase())
+                            )
+                            if (!isMatch) return false
+                        }
+
+                        if (preferences.diet && preferences.diet.length > 0) {
+                            const isMatch = preferences.diet.some((d: string) =>
+                                (profile.food_preference?.toLowerCase() || "").includes(d.toLowerCase())
+                            )
+                            if (!isMatch) return false
+                        }
+
+                        if (preferences.location && preferences.location.length > 0) {
+                            if (!profile.location) return false
+                            const locMatches = preferences.location.some((loc: string) =>
+                                profile.location.toLowerCase().includes(loc.toLowerCase())
+                            )
+                            if (!locMatches) return false
+                        }
+
+                        if (preferences.education && preferences.education.length > 0) {
+                            if (!profile.education || profile.education.length === 0) return false
+                            const eduMatches = profile.education.some((edu: any) =>
+                                preferences.education.some((prefEdu: string) => (edu.education?.toLowerCase() || "").includes(prefEdu.toLowerCase()))
+                            )
+                            if (!eduMatches) return false
+                        }
+
+                        if (preferences.employment_type && preferences.employment_type.length > 0) {
+                            if (!profile.professionType) return false
+                            const empMatches = preferences.employment_type.some((emp: string) =>
+                                profile.professionType.toLowerCase().includes(emp.toLowerCase())
+                            )
+                            if (!empMatches) return false
+                        }
+
+                        if (preferences.sector && preferences.sector.length > 0) {
+                            if (!profile.professionDetails?.sector) return false
+                            const sectorMatches = preferences.sector.some((sec: string) =>
+                                (profile.professionDetails.sector.toLowerCase() || "").includes(sec.toLowerCase())
+                            )
+                            if (!sectorMatches) return false
+                        }
+
+                        if (preferences.smoking && preferences.smoking.length > 0) {
+                            const isMatch = preferences.smoking.some((s: string) =>
+                                (profile.socialHabits?.smoking?.toLowerCase() || "").includes(s.toLowerCase())
+                            )
+                            if (!isMatch) return false
+                        }
+
+                        if (preferences.drinking && preferences.drinking.length > 0) {
+                            const isMatch = preferences.drinking.some((d: string) =>
+                                (profile.socialHabits?.drinking?.toLowerCase() || "").includes(d.toLowerCase())
+                            )
+                            if (!isMatch) return false
+                        }
+
+                        return true
+                    })
+                }
+
+                setProfiles(finalProfiles)
             } catch (error) {
                 console.error("Error fetching profiles:", error)
             } finally {
@@ -322,7 +477,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
         }
 
         fetchProfiles()
-    }, [userId])
+    }, [userId, applyPreferences])
 
     if (isLoading) {
         return (
@@ -343,22 +498,239 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
                         Here are some {targetGender.toLowerCase()} profiles tailored for {parentViewer?.isParent ? "your child" : "you"}
                     </p>
+                    {hasPreferences && (
+                        <p className="text-sm font-medium text-[#4B0082] mt-1 bg-[#4B0082]/10 inline-block px-3 py-1 rounded-full">
+                            {applyPreferences ? "✨ Showing filtered matches based on your Partner Preferences" : "⚠️ Preferences are currently disabled"}
+                        </p>
+                    )}
                 </div>
+
+                {hasPreferences && (
+                    <Button
+                        variant={applyPreferences ? "destructive" : "default"}
+                        onClick={() => setApplyPreferences(!applyPreferences)}
+                        className={`flex items-center gap-2 ${!applyPreferences ? "bg-[#4B0082] hover:bg-[#3b0066]" : ""}`}
+                    >
+                        {applyPreferences ? (
+                            <>
+                                <SlidersHorizontal className="h-4 w-4" />
+                                Remove Preferences
+                            </>
+                        ) : (
+                            <>
+                                <Filter className="h-4 w-4" />
+                                Apply Preferences
+                            </>
+                        )}
+                    </Button>
+                )}
             </div>
 
-            {profiles.length === 0 ? (
-                <div className="text-center py-20 bg-white/50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700">
-                    <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">No Profiles Found</h3>
-                    <p className="text-gray-500 mt-2">Check back later for new matches!</p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {profiles.map((profile, index) => (
-                        <ProfileCardWrapper key={profile.user_id} profile={profile} index={index} />
-                    ))}
-                </div>
+            {/* Non-parent: all profiles in one grid */}
+            {!parentViewer?.isParent && (
+                profiles.length === 0 ? (
+                    <div className="text-center py-20 bg-white/50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700">
+                        <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">No Profiles Found</h3>
+                        <p className="text-gray-500 mt-2">Check back later for new matches!</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {profiles.map((profile, index) => (
+                            <ProfileCardWrapper key={profile.user_id} profile={profile} index={index} />
+                        ))}
+                    </div>
+                )
             )}
+
+            {/* Parent view: sectioned layout */}
+            {parentViewer?.isParent && (() => {
+                const unselected = profiles.filter(p => !p.isSelected)
+                // Selected but child hasn't liked yet
+                const onlySelected = profiles.filter(p => p.isSelected && !p.childLiked)
+                // Child liked but NOT mutual yet
+                const childLikedOnly = profiles.filter(p => p.isSelected && p.childLiked && !p.profileLikedChild)
+                // Both liked each other
+                const mutualSection = profiles.filter(p => p.isSelected && p.childLiked && p.profileLikedChild)
+
+                const ContactRow = ({ profile }: { profile: any }) => (
+                    <div className="flex flex-wrap gap-4 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                        {profile.phone ? (
+                            <a href={`tel:${profile.phone}`} onClick={e => e.stopPropagation()} className="flex items-center gap-1.5 text-sm text-[#4B0082] font-semibold hover:underline">
+                                <Phone className="h-4 w-4" />{profile.phone}
+                            </a>
+                        ) : <span className="text-xs text-gray-400">No phone on file</span>}
+                        {profile.whatsapp && (
+                            <a href={`https://wa.me/${profile.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-1.5 text-sm text-green-600 font-semibold hover:underline">
+                                <MessageCircle className="h-4 w-4" />WhatsApp
+                            </a>
+                        )}
+                    </div>
+                )
+
+                const FullProfileCard = ({ profile }: { profile: any }) => (
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-amber-300 dark:border-amber-600 overflow-hidden shadow-md">
+                        {/* Mutual badge */}
+                        <div className="bg-amber-50 dark:bg-amber-900/20 px-4 py-2 flex items-center gap-2">
+                            <Star className="h-4 w-4 text-amber-500" />
+                            <span className="text-xs font-bold text-amber-700 dark:text-amber-400">Mutual Match — Your child and this profile liked each other!</span>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row">
+                            {/* Photo */}
+                            <div className="md:w-48 h-56 md:h-auto bg-gray-100 dark:bg-gray-700 shrink-0 relative">
+                                {profile.photos?.[0] ? (
+                                    <img src={profile.photos[0]} alt={profile.name} className="w-full h-full object-cover"
+                                        onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&size=400&background=random` }} />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center"><User className="h-16 w-16 text-gray-400" /></div>
+                                )}
+                            </div>
+
+                            {/* Details */}
+                            <div className="flex-1 p-5 space-y-4 overflow-y-auto max-h-[500px]">
+                                {/* Name */}
+                                <div>
+                                    <h4 className="text-xl font-bold text-gray-900 dark:text-white">{profile.name}{profile.age && `, ${profile.age}`}</h4>
+                                    {profile.marital_status && <span className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 px-2 py-0.5 rounded-full">{profile.marital_status}</span>}
+                                </div>
+
+                                {/* Basic info grid */}
+                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                    {profile.profession !== "Not specified" && <div><span className="text-gray-500">Profession</span><p className="font-medium text-gray-900 dark:text-white truncate">{profile.profession}</p></div>}
+                                    {profile.location && <div><span className="text-gray-500">Location</span><p className="font-medium text-gray-900 dark:text-white">{profile.location}</p></div>}
+                                    {profile.religion && <div><span className="text-gray-500">Religion</span><p className="font-medium text-gray-900 dark:text-white">{profile.religion}</p></div>}
+                                    {profile.caste && <div><span className="text-gray-500">Caste</span><p className="font-medium text-gray-900 dark:text-white">{profile.caste}</p></div>}
+                                    {profile.height && <div><span className="text-gray-500">Height</span><p className="font-medium text-gray-900 dark:text-white">{profile.height}</p></div>}
+                                </div>
+
+
+                                {/* Education */}
+                                {profile.education?.length > 0 && (
+                                    <div>
+                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1"><GraduationCap className="h-3.5 w-3.5" />Education</p>
+                                        {profile.education.map((edu: any, i: number) => (
+                                            <p key={i} className="text-sm text-gray-800 dark:text-gray-200">{edu.education}{edu.institution && ` — ${edu.institution}`}</p>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Profession Details */}
+                                {profile.professionDetails && (
+                                    <div>
+                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1"><Briefcase className="h-3.5 w-3.5" />Professional</p>
+                                        <div className="grid grid-cols-2 gap-1 text-sm">
+                                            {profile.professionDetails.designation && <div><span className="text-gray-400">Role</span><p className="font-medium text-gray-900 dark:text-white">{profile.professionDetails.designation}</p></div>}
+                                            {(profile.professionDetails.company || profile.professionDetails.business_name) && <div><span className="text-gray-400">Company</span><p className="font-medium text-gray-900 dark:text-white">{profile.professionDetails.company || profile.professionDetails.business_name}</p></div>}
+                                            {profile.professionDetails.annual_income && <div><span className="text-gray-400">Income</span><p className="font-medium text-gray-900 dark:text-white">{profile.professionDetails.annual_income}</p></div>}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Horoscope */}
+                                {profile.horoscope && (
+                                    <div>
+                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Horoscope</p>
+                                        <div className="grid grid-cols-2 gap-1 text-sm">
+                                            {profile.horoscope.zodiac_sign && <div><span className="text-gray-400">Zodiac</span><p className="font-medium text-gray-900 dark:text-white">{profile.horoscope.zodiac_sign}</p></div>}
+                                            {profile.horoscope.star && <div><span className="text-gray-400">Star</span><p className="font-medium text-gray-900 dark:text-white">{profile.horoscope.star}</p></div>}
+                                            {profile.horoscope.dhosham && <div><span className="text-gray-400">Dhosham</span><p className="font-medium text-gray-900 dark:text-white">{profile.horoscope.dhosham}</p></div>}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Interests */}
+                                {profile.interests?.hobbies?.length > 0 && (
+                                    <div>
+                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Interests</p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {profile.interests.hobbies.map((h: string, i: number) => <span key={i} className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 px-2 py-0.5 rounded-full">{h}</span>)}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Contact */}
+                                <ContactRow profile={profile} />
+
+                                {/* View Full Modal button */}
+                                <button onClick={() => setSelectedProfile(profile)} className="w-full mt-2 text-sm font-semibold text-[#4B0082] border border-[#4B0082]/30 rounded-xl py-2 hover:bg-[#4B0082]/10 transition">
+                                    View Full Profile →
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+
+                return (
+                    <div className="space-y-12">
+                        {/* Section 1: Find Matches (unselected only) */}
+                        <div>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                <Heart className="h-5 w-5 text-[#FF1493]" /> Find Matches
+                                <span className="text-sm font-normal text-gray-500">({unselected.length})</span>
+                            </h3>
+                            {unselected.length === 0 ? (
+                                <div className="text-center py-10 bg-white/50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-300 dark:border-gray-600">
+                                    <p className="text-gray-500 text-sm">All available profiles have been selected for your child.</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                    {unselected.map((profile, index) => <ProfileCardWrapper key={profile.user_id} profile={profile} index={index} />)}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Section 2: Selected Profiles (child hasn't liked yet) */}
+                        {onlySelected.length > 0 && (
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <CheckCircle2 className="h-5 w-5 text-green-500" /> Selected Profiles
+                                    <span className="text-sm font-normal text-gray-500">({onlySelected.length})</span>
+                                </h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                    {onlySelected.map((profile, index) => <ProfileCardWrapper key={profile.user_id} profile={profile} index={index} />)}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Section 3: Child Showed Interest (selected + child liked, not mutual) — show full card + contact */}
+                        {childLikedOnly.length > 0 && (
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <Heart className="h-5 w-5 text-rose-500" /> Your Child Showed Interest
+                                    <span className="text-sm font-normal text-gray-500">({childLikedOnly.length})</span>
+                                </h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {childLikedOnly.map((profile, index) => (
+                                        <div key={profile.user_id} className="flex flex-col rounded-2xl overflow-hidden border border-rose-200 dark:border-rose-800 shadow-sm bg-white dark:bg-gray-800">
+                                            <div className="relative">
+                                                <ProfileCardWrapper profile={profile} index={index} />
+                                            </div>
+                                            <div className="px-4 pb-4">
+                                                <ContactRow profile={profile} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Section 4: Mutual Matches — full profile details + contact */}
+                        {mutualSection.length > 0 && (
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <Star className="h-5 w-5 text-amber-500" /> Mutual Matches 🎉
+                                    <span className="text-sm font-normal text-gray-500">({mutualSection.length})</span>
+                                </h3>
+                                <div className="space-y-6">
+                                    {mutualSection.map(profile => <FullProfileCard key={profile.user_id} profile={profile} />)}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )
+            })()}
+
 
             {/* Profile Detail Dialog */}
             <Dialog open={!!selectedProfile} onOpenChange={(open) => !open && setSelectedProfile(null)}>
@@ -434,8 +806,8 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                     </div>
 
                                     <div className="space-y-8">
-                                        {/* About */}
-                                        {selectedProfile.about && (
+                                        {/* About - Hidden if Mutual Match (Full version in Personal Details) */}
+                                        {!(selectedProfile.isSelected && selectedProfile.childLiked && selectedProfile.profileLikedChild) && selectedProfile.about && (
                                             <section>
                                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
                                                     <User className="h-5 w-5 mr-2 text-pink-500" /> About Me
@@ -481,48 +853,51 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                         </section>
 
                                         {/* Professional Details */}
-                                        <section>
-                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                                <Briefcase className="h-5 w-5 mr-2 text-blue-500" /> Professional Details
-                                            </h3>
-                                            <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
-                                                <div>
-                                                    <span className="block text-gray-500 mb-1">Designation</span>
-                                                    <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.professionDetails?.designation || "Not specified"}</span>
+                                        {!(selectedProfile.isSelected && selectedProfile.childLiked && selectedProfile.profileLikedChild) && (
+                                            <section>
+                                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                                                    <Briefcase className="h-5 w-5 mr-2 text-blue-500" /> Professional Details
+                                                </h3>
+                                                <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
+                                                    <div>
+                                                        <span className="block text-gray-500 mb-1">Designation</span>
+                                                        <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.professionDetails?.designation || "Not specified"}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-gray-500 mb-1">{selectedProfile.professionType === "business" ? "Business" : "Company"}</span>
+                                                        <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.professionDetails?.company || selectedProfile.professionDetails?.business_name || "Not specified"}</span>
+                                                    </div>
+                                                    {selectedProfile.professionType === "employee" && selectedProfile.professionDetails?.sector && (
+                                                        <div>
+                                                            <span className="block text-gray-500 mb-1">Sector</span>
+                                                            <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.professionDetails.sector}</span>
+                                                        </div>
+                                                    )}
+                                                    {selectedProfile.professionType === "employee" && selectedProfile.professionDetails?.employment_type && (
+                                                        <div>
+                                                            <span className="block text-gray-500 mb-1">Employment Type</span>
+                                                            <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.professionDetails.employment_type}</span>
+                                                        </div>
+                                                    )}
+                                                    {selectedProfile.professionType === "business" && selectedProfile.professionDetails?.business_type && (
+                                                        <div>
+                                                            <span className="block text-gray-500 mb-1">Business Type</span>
+                                                            <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.professionDetails.business_type}</span>
+                                                        </div>
+                                                    )}
+                                                    {selectedProfile.professionDetails?.annual_income && (
+                                                        <div>
+                                                            <span className="block text-gray-500 mb-1">Annual Income</span>
+                                                            <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.professionDetails.annual_income}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <div>
-                                                    <span className="block text-gray-500 mb-1">{selectedProfile.professionType === "business" ? "Business" : "Company"}</span>
-                                                    <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.professionDetails?.company || selectedProfile.professionDetails?.business_name || "Not specified"}</span>
-                                                </div>
-                                                {selectedProfile.professionType === "employee" && selectedProfile.professionDetails?.sector && (
-                                                    <div>
-                                                        <span className="block text-gray-500 mb-1">Sector</span>
-                                                        <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.professionDetails.sector}</span>
-                                                    </div>
-                                                )}
-                                                {selectedProfile.professionType === "employee" && selectedProfile.professionDetails?.employment_type && (
-                                                    <div>
-                                                        <span className="block text-gray-500 mb-1">Employment Type</span>
-                                                        <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.professionDetails.employment_type}</span>
-                                                    </div>
-                                                )}
-                                                {selectedProfile.professionType === "business" && selectedProfile.professionDetails?.business_type && (
-                                                    <div>
-                                                        <span className="block text-gray-500 mb-1">Business Type</span>
-                                                        <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.professionDetails.business_type}</span>
-                                                    </div>
-                                                )}
-                                                {selectedProfile.professionDetails?.annual_income && (
-                                                    <div>
-                                                        <span className="block text-gray-500 mb-1">Annual Income</span>
-                                                        <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.professionDetails.annual_income}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </section>
+                                            </section>
+
+                                        )}
 
                                         {/* Education */}
-                                        {selectedProfile.education && selectedProfile.education.length > 0 && (
+                                        {!(selectedProfile.isSelected && selectedProfile.childLiked && selectedProfile.profileLikedChild) && selectedProfile.education && selectedProfile.education.length > 0 && (
                                             <section>
                                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
                                                     <GraduationCap className="h-5 w-5 mr-2 text-indigo-500" /> Education
@@ -669,20 +1044,164 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                                 </div>
                                             </section>
                                         )}
+
+                                        {/* ── MUTUAL MATCH: Full Detail Sections ── */}
+                                        {selectedProfile.isSelected && selectedProfile.childLiked && selectedProfile.profileLikedChild && (
+                                            isFetchingFull ? (
+                                                <div className="flex items-center justify-center py-6 gap-3 text-gray-400">
+                                                    <div className="animate-spin h-5 w-5 border-2 border-amber-400 border-t-transparent rounded-full" />
+                                                    <span className="text-sm">Loading full profile details…</span>
+                                                </div>
+                                            ) : mutualFullData && (
+                                                <>
+                                                    {/* Personal Details (Full) */}
+                                                    <section>
+                                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                                                            <Heart className="h-5 w-5 mr-2 text-pink-500" /> Personal Details
+                                                        </h3>
+                                                        <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm bg-pink-50 dark:bg-pink-900/10 p-4 rounded-xl">
+                                                            {selectedProfile.date_of_birth && <div><span className="block text-gray-500 mb-1">Date of Birth</span><span className="font-medium text-gray-900 dark:text-white">{selectedProfile.date_of_birth}</span></div>}
+                                                            {selectedProfile.sex && <div><span className="block text-gray-500 mb-1">Gender</span><span className="font-medium text-gray-900 dark:text-white">{selectedProfile.sex}</span></div>}
+                                                            {selectedProfile.height && <div><span className="block text-gray-500 mb-1">Height (cm)</span><span className="font-medium text-gray-900 dark:text-white">{selectedProfile.height}</span></div>}
+                                                            {selectedProfile.weight && <div><span className="block text-gray-500 mb-1">Weight (kg)</span><span className="font-medium text-gray-900 dark:text-white">{selectedProfile.weight}</span></div>}
+                                                            {selectedProfile.skin_color && <div><span className="block text-gray-500 mb-1">Skin Color</span><span className="font-medium text-gray-900 dark:text-white">{selectedProfile.skin_color}</span></div>}
+                                                            {selectedProfile.body_type && <div><span className="block text-gray-500 mb-1">Body Type</span><span className="font-medium text-gray-900 dark:text-white">{selectedProfile.body_type}</span></div>}
+                                                            {selectedProfile.marital_status && <div><span className="block text-gray-500 mb-1">Marital Status</span><span className="font-medium text-gray-900 dark:text-white">{selectedProfile.marital_status}</span></div>}
+                                                            {selectedProfile.food_preference && <div><span className="block text-gray-500 mb-1">Food Preference</span><span className="font-medium text-gray-900 dark:text-white">{selectedProfile.food_preference}</span></div>}
+                                                            {selectedProfile.languages && Array.isArray(selectedProfile.languages) && selectedProfile.languages.length > 0 && <div className="col-span-2"><span className="block text-gray-500 mb-1">Languages</span><span className="font-medium text-gray-900 dark:text-white">{selectedProfile.languages.join(', ')}</span></div>}
+                                                            {selectedProfile.about && <div className="col-span-2"><span className="block text-gray-500 mb-1">About</span><p className="font-medium text-gray-900 dark:text-white leading-relaxed">{selectedProfile.about}</p></div>}
+                                                        </div>
+                                                    </section>
+
+                                                    {/* Contact Details */}
+                                                    <section>
+                                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                                                            <Phone className="h-5 w-5 mr-2 text-[#4B0082]" /> Contact Details
+                                                        </h3>
+
+                                                        {/* Phone & WhatsApp */}
+                                                        <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm bg-purple-50 dark:bg-purple-900/10 p-4 rounded-xl mb-4">
+                                                            {mutualFullData.fullContact?.phone && <div><span className="block text-gray-500 mb-1">Phone</span><a href={`tel:${mutualFullData.fullContact.phone}`} className="font-semibold text-[#4B0082] hover:underline">{mutualFullData.fullContact.phone}</a></div>}
+                                                            {mutualFullData.fullContact?.whatsapp_number && <div><span className="block text-gray-500 mb-1">WhatsApp</span><a href={`https://wa.me/${mutualFullData.fullContact.whatsapp_number.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="font-semibold text-green-600 hover:underline flex items-center gap-1"><MessageCircle className="h-3.5 w-3.5" /> {mutualFullData.fullContact.whatsapp_number}</a></div>}
+                                                        </div>
+
+                                                        {/* Current Address */}
+                                                        <div className="mb-4">
+                                                            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Current Address</h4>
+                                                            <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+                                                                {mutualFullData.fullContact?.current_address_line1 && <div className="col-span-2"><span className="block text-gray-500 mb-1">Address Line 1</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.current_address_line1}</span></div>}
+                                                                {mutualFullData.fullContact?.current_address_line2 && <div className="col-span-2"><span className="block text-gray-500 mb-1">Address Line 2</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.current_address_line2}</span></div>}
+                                                                {mutualFullData.fullContact?.current_landmark && <div className="col-span-2"><span className="block text-gray-500 mb-1">Landmark</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.current_landmark}</span></div>}
+                                                                {mutualFullData.fullContact?.current_area && <div><span className="block text-gray-500 mb-1">Area</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.current_area}</span></div>}
+                                                                {mutualFullData.fullContact?.current_taluk && <div><span className="block text-gray-500 mb-1">Taluk</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.current_taluk}</span></div>}
+                                                                {mutualFullData.fullContact?.current_district && <div><span className="block text-gray-500 mb-1">District</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.current_district}</span></div>}
+                                                                {mutualFullData.fullContact?.current_division && <div><span className="block text-gray-500 mb-1">Division</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.current_division}</span></div>}
+                                                                {mutualFullData.fullContact?.current_region && <div><span className="block text-gray-500 mb-1">Region</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.current_region}</span></div>}
+                                                                {mutualFullData.fullContact?.current_state && <div><span className="block text-gray-500 mb-1">State</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.current_state}</span></div>}
+                                                                {mutualFullData.fullContact?.current_country && <div><span className="block text-gray-500 mb-1">Country</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.current_country}</span></div>}
+                                                                {mutualFullData.fullContact?.current_pincode && <div><span className="block text-gray-500 mb-1">Pincode</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.current_pincode}</span></div>}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Permanent Address */}
+                                                        <div>
+                                                            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Permanent Address</h4>
+                                                            <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+                                                                {mutualFullData.fullContact?.permanent_address_line1 && <div className="col-span-2"><span className="block text-gray-500 mb-1">Address Line 1</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.permanent_address_line1}</span></div>}
+                                                                {mutualFullData.fullContact?.permanent_address_line2 && <div className="col-span-2"><span className="block text-gray-500 mb-1">Address Line 2</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.permanent_address_line2}</span></div>}
+                                                                {mutualFullData.fullContact?.permanent_landmark && <div className="col-span-2"><span className="block text-gray-500 mb-1">Landmark</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.permanent_landmark}</span></div>}
+                                                                {mutualFullData.fullContact?.permanent_area && <div><span className="block text-gray-500 mb-1">Area</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.permanent_area}</span></div>}
+                                                                {mutualFullData.fullContact?.permanent_taluk && <div><span className="block text-gray-500 mb-1">Taluk</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.permanent_taluk}</span></div>}
+                                                                {mutualFullData.fullContact?.permanent_district && <div><span className="block text-gray-500 mb-1">District</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.permanent_district}</span></div>}
+                                                                {mutualFullData.fullContact?.permanent_division && <div><span className="block text-gray-500 mb-1">Division</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.permanent_division}</span></div>}
+                                                                {mutualFullData.fullContact?.permanent_region && <div><span className="block text-gray-500 mb-1">Region</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.permanent_region}</span></div>}
+                                                                {mutualFullData.fullContact?.permanent_state && <div><span className="block text-gray-500 mb-1">State</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.permanent_state}</span></div>}
+                                                                {mutualFullData.fullContact?.permanent_country && <div><span className="block text-gray-500 mb-1">Country</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.permanent_country}</span></div>}
+                                                                {mutualFullData.fullContact?.permanent_pincode && <div><span className="block text-gray-500 mb-1">Pincode</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.permanent_pincode}</span></div>}
+                                                            </div>
+                                                        </div>
+                                                    </section>
+
+                                                    {/* Full Education */}
+                                                    {mutualFullData.fullEdu && mutualFullData.fullEdu.length > 0 && (
+                                                        <section>
+                                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                                                                <GraduationCap className="h-5 w-5 mr-2 text-blue-500" /> Educational Details
+                                                            </h3>
+                                                            <div className="space-y-3">
+                                                                {mutualFullData.fullEdu.map((edu: any, i: number) => (
+                                                                    <div key={i} className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm bg-blue-50 dark:bg-blue-900/10 p-4 rounded-xl">
+                                                                        {edu.education && <div><span className="block text-gray-500 mb-1">Level</span><span className="font-medium text-gray-900 dark:text-white">{edu.education === 'Other' ? edu.education_other : edu.education}</span></div>}
+                                                                        {edu.degree && <div><span className="block text-gray-500 mb-1">Degree</span><span className="font-medium text-gray-900 dark:text-white">{edu.degree === 'Other' ? edu.degree_other : edu.degree}</span></div>}
+                                                                        {edu.branch && <div><span className="block text-gray-500 mb-1">Branch</span><span className="font-medium text-gray-900 dark:text-white">{edu.branch}</span></div>}
+                                                                        {edu.institution && <div><span className="block text-gray-500 mb-1">Institution</span><span className="font-medium text-gray-900 dark:text-white">{edu.institution}</span></div>}
+                                                                        {edu.year_of_graduation && <div><span className="block text-gray-500 mb-1">Graduation Year</span><span className="font-medium text-gray-900 dark:text-white">{edu.year_of_graduation}</span></div>}
+                                                                        {edu.status && <div><span className="block text-gray-500 mb-1">Status</span><span className="font-medium text-gray-900 dark:text-white">{edu.status}</span></div>}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </section>
+                                                    )}
+
+                                                    {/* Professional Details */}
+                                                    {(mutualFullData.fullEmp || mutualFullData.fullBus || mutualFullData.fullStu) && (
+                                                        <section>
+                                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                                                                <Briefcase className="h-5 w-5 mr-2 text-indigo-500" /> Professional Details
+                                                            </h3>
+                                                            <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm bg-indigo-50 dark:bg-indigo-900/10 p-4 rounded-xl">
+                                                                {mutualFullData.fullEmp && (<><div><span className="block text-gray-500 mb-1">Type</span><span className="font-medium text-gray-900 dark:text-white">Employee</span></div>{mutualFullData.fullEmp.company && <div><span className="block text-gray-500 mb-1">Company</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullEmp.company}</span></div>}{mutualFullData.fullEmp.designation && <div><span className="block text-gray-500 mb-1">Designation</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullEmp.designation}</span></div>}{mutualFullData.fullEmp.salary && <div><span className="block text-gray-500 mb-1">Salary</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullEmp.salary}</span></div>}{mutualFullData.fullEmp.work_location && <div><span className="block text-gray-500 mb-1">Work Location</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullEmp.work_location}</span></div>}</>)}
+                                                                {mutualFullData.fullBus && (<><div><span className="block text-gray-500 mb-1">Type</span><span className="font-medium text-gray-900 dark:text-white">Business</span></div>{mutualFullData.fullBus.business_name && <div><span className="block text-gray-500 mb-1">Business</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullBus.business_name}</span></div>}{mutualFullData.fullBus.designation && <div><span className="block text-gray-500 mb-1">Designation</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullBus.designation}</span></div>}{mutualFullData.fullBus.annual_returns && <div><span className="block text-gray-500 mb-1">Annual Returns</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullBus.annual_returns}</span></div>}</>)}
+                                                                {mutualFullData.fullStu && (<><div><span className="block text-gray-500 mb-1">Type</span><span className="font-medium text-gray-900 dark:text-white">Student</span></div>{mutualFullData.fullStu.institution && <div><span className="block text-gray-500 mb-1">Institution</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullStu.institution}</span></div>}{mutualFullData.fullStu.course && <div><span className="block text-gray-500 mb-1">Course</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullStu.course}</span></div>}</>)}
+                                                            </div>
+                                                        </section>
+                                                    )}
+
+                                                    {/* Family Details */}
+                                                    {mutualFullData.family && (
+                                                        <section>
+                                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                                                                <User className="h-5 w-5 mr-2 text-rose-500" /> Family Details
+                                                            </h3>
+                                                            <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm bg-rose-50 dark:bg-rose-900/10 p-4 rounded-xl">
+                                                                {mutualFullData.family.father_name && <div><span className="block text-gray-500 mb-1">Father's Name</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.father_name}</span></div>}
+                                                                {mutualFullData.family.father_occupation && <div><span className="block text-gray-500 mb-1">Father's Occupation</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.father_occupation}</span></div>}
+                                                                {mutualFullData.family.mother_name && <div><span className="block text-gray-500 mb-1">Mother's Name</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.mother_name}</span></div>}
+                                                                {mutualFullData.family.mother_occupation && <div><span className="block text-gray-500 mb-1">Mother's Occupation</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.mother_occupation}</span></div>}
+                                                                {mutualFullData.family.siblings && <div><span className="block text-gray-500 mb-1">Siblings</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.siblings}</span></div>}
+                                                                {mutualFullData.family.caste && <div><span className="block text-gray-500 mb-1">Caste</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.caste}</span></div>}
+                                                                {mutualFullData.family.subcaste && <div><span className="block text-gray-500 mb-1">Subcaste</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.subcaste}</span></div>}
+                                                                {mutualFullData.family.kulam && <div><span className="block text-gray-500 mb-1">Kulam</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.kulam}</span></div>}
+                                                                {mutualFullData.family.gotram && <div><span className="block text-gray-500 mb-1">Gotram</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.gotram}</span></div>}
+                                                                {mutualFullData.family.family_type && <div><span className="block text-gray-500 mb-1">Family Type</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.family_type}</span></div>}
+                                                                {mutualFullData.family.family_status && <div><span className="block text-gray-500 mb-1">Family Status</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.family_status}</span></div>}
+                                                            </div>
+                                                        </section>
+                                                    )}
+                                                </>
+                                            )
+                                        )}
                                     </div>
                                 </div>
 
                                 {/* Sticky Action Footer */}
                                 <div className="border-t border-gray-100 dark:border-gray-800 p-4 bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm z-10 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
                                     {parentViewer?.isParent ? (
-                                        <Button
-                                            className="w-full bg-[#1F4068] hover:bg-[#162E4A] text-white py-6"
-                                            onClick={(e) => handleParentSelect(e, selectedProfile.user_id)}
-                                            disabled={actionLoadingId === selectedProfile.user_id}
-                                        >
-                                            <Heart className={`h-5 w-5 mr-2 ${actionLoadingId === selectedProfile.user_id ? "animate-pulse" : ""}`} />
-                                            {actionLoadingId === selectedProfile.user_id ? "Selecting..." : "Select Profile for your child"}
-                                        </Button>
+                                        selectedProfile.isSelected ? (
+                                            <div className="w-full bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-xl p-4 flex items-center justify-center gap-2 text-green-700 dark:text-green-400">
+                                                <CheckCircle2 className="h-5 w-5" />
+                                                <span className="font-semibold">Selected for your child</span>
+                                            </div>
+                                        ) : (
+                                            <Button
+                                                className="w-full bg-[#1F4068] hover:bg-[#162E4A] text-white py-6"
+                                                onClick={(e) => handleParentSelect(e, selectedProfile.user_id)}
+                                                disabled={actionLoadingId === selectedProfile.user_id}
+                                            >
+                                                <Heart className={`h-5 w-5 mr-2 ${actionLoadingId === selectedProfile.user_id ? "animate-pulse" : ""}`} />
+                                                {actionLoadingId === selectedProfile.user_id ? "Selecting..." : "Select Profile for your child"}
+                                            </Button>
+                                        )
                                     ) : (
                                         <Button
                                             className="w-full bg-[#FF1493] hover:bg-[#E01183] text-white py-6"
