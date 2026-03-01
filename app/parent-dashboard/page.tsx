@@ -63,7 +63,24 @@ export default function ParentDashboardPage() {
     }
 
     return (
-        <div className="min-h-screen relative bg-gray-50 dark:bg-[#121212]">
+        <div className="min-h-screen relative overflow-hidden bg-gray-50 dark:bg-[#121212]">
+            {/* Animated gradient background from homepage */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/10 via-[#4B0082]/10 via-[#FF1493]/10 to-[#FFA500]/10 bg-[length:200%_auto] animate-gradient pointer-events-none" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)] pointer-events-none" />
+            
+            {/* Floating orbs */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-20 left-[10%] w-72 h-72 bg-gradient-to-br from-[#1F4068]/20 to-[#4B0082]/20 rounded-full mix-blend-multiply filter blur-2xl" 
+                    style={{ animation: 'float 20s ease-in-out infinite' }}
+                />
+                <div className="absolute top-40 right-[15%] w-72 h-72 bg-gradient-to-br from-[#FF1493]/20 to-[#FFA500]/20 rounded-full mix-blend-multiply filter blur-2xl"
+                    style={{ animation: 'float 25s ease-in-out infinite 2s' }}
+                />
+            </div>
+            
+            {/* Grid pattern overlay */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)] pointer-events-none" />
+
             {/* Header with Logout - Sticky */}
             <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
                 <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">

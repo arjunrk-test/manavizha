@@ -10,6 +10,7 @@ import { BrowseProfiles } from "@/components/browse-profiles"
 import { ManageParents } from "@/components/manage-parents"
 import { ParentSelectionsView } from "@/components/parent-selections-view"
 import { PartnerPreferencesForm } from "@/components/partner-preferences-form"
+import { LikesView } from "@/components/likes-view"
 import { LogOut, ArrowLeft } from "lucide-react"
 import { motion } from "framer-motion"
 
@@ -18,7 +19,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const [profileProgress, setProfileProgress] = useState(0)
-  const [currentView, setCurrentView] = useState<"landing" | "setup" | "browse" | "parents" | "selections" | "partner_preferences">("landing")
+  const [currentView, setCurrentView] = useState<"landing" | "setup" | "browse" | "parents" | "selections" | "partner_preferences" | "likes">("landing")
 
   useEffect(() => {
     // Check if user is authenticated and is NOT a referral partner
@@ -196,7 +197,8 @@ export default function DashboardPage() {
                   currentView === "parents" ? "Manage Parents" :
                     currentView === "selections" ? "Parent Selections" :
                       currentView === "partner_preferences" ? "Partner Preferences" :
-                        "Dashboard"}
+                        currentView === "likes" ? "My Likes & Matches" :
+                          "Dashboard"}
             </h1>
             {user?.email && (
               <p className="text-xs text-gray-600 dark:text-gray-400">{user.email}</p>
@@ -253,6 +255,11 @@ export default function DashboardPage() {
               userId={user.id}
               onBack={() => setCurrentView("landing")}
             />
+          ) : currentView === "likes" ? (
+            <LikesView
+              userId={user.id}
+              onBack={() => setCurrentView("landing")}
+            />
           ) : (
             <UserLandingPage
               userEmail={user.email || ""}
@@ -262,6 +269,7 @@ export default function DashboardPage() {
               onNavigateToParents={() => setCurrentView("parents")}
               onNavigateToSelections={() => setCurrentView("selections")}
               onNavigateToPartnerPreferences={() => setCurrentView("partner_preferences")}
+              onNavigateToLikes={() => setCurrentView("likes")}
             />
           )
         )}
