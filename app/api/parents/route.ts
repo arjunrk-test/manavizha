@@ -3,8 +3,6 @@ import { createClient } from '@supabase/supabase-js'
 import fetch from 'node-fetch'
 import https from 'https'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
 const customFetch = (url: any, options: any = {}) => {
     try {
@@ -29,10 +27,19 @@ const customFetch = (url: any, options: any = {}) => {
     }
 }
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-    global: { fetch: customFetch }
-})
+const getSupabaseAdmin = () => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+
+    if (!supabaseUrl || !supabaseServiceRoleKey) {
+        throw new Error('Supabase URL and Service Role Key are required')
+    }
+
+    return createClient(supabaseUrl, supabaseServiceRoleKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+        global: { fetch: customFetch }
+    })
+}
 
 export async function POST(request: Request) {
     try {
@@ -52,8 +59,9 @@ export async function POST(request: Request) {
             )
         }
 
+        const admin = getSupabaseAdmin()
         // 1. Check if parent already exists for this child with this role
-        const { data: existingParent, error: existingParentError } = await supabaseAdmin
+        const { data: existingParent, error: existingParentError } = await admin
             .from('parents')
             .select('id')
             .eq('child_user_id', child_user_id)
@@ -72,7 +80,7 @@ export async function POST(request: Request) {
         }
 
         // 2. Create the user in Supabase Auth using the Admin API
-        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        const { data: authData, error: authError } = await admin.auth.admin.createUser({
             email,
             password,
             email_confirm: true,
@@ -96,7 +104,7 @@ export async function POST(request: Request) {
         const parentUserId = authData.user.id
 
         // 3. Upsert into public.users so they can technically login and be recognized
-        const { error: usersError } = await supabaseAdmin
+        const { error: usersError } = await admin
             .from('users')
             .upsert({
                 id: parentUserId,
@@ -107,12 +115,12 @@ export async function POST(request: Request) {
 
         if (usersError) {
             // Cleanup auth user if profile creation fails
-            await supabaseAdmin.auth.admin.deleteUser(parentUserId)
+            await admin.auth.admin.deleteUser(parentUserId)
             throw new Error(`Error creating public user record: ${usersError.message}`)
         }
 
         // 4. Create the specific parents record linking them to the child
-        const { data: parentRecord, error: parentError } = await supabaseAdmin
+        const { data: parentRecord, error: parentError } = await admin
             .from('parents')
             .insert({
                 id: parentUserId,
@@ -127,7 +135,7 @@ export async function POST(request: Request) {
 
         if (parentError) {
             // Cleanup
-            await supabaseAdmin.auth.admin.deleteUser(parentUserId)
+            await admin.auth.admin.deleteUser(parentUserId)
             throw new Error(`Error creating parent profile: ${parentError.message}`)
         }
 

@@ -3,8 +3,6 @@ import { createClient } from '@supabase/supabase-js'
 import fetch from 'node-fetch'
 import https from 'https'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
 const customFetch = (url: any, options: any = {}) => {
     try {
@@ -27,10 +25,19 @@ const customFetch = (url: any, options: any = {}) => {
     }
 }
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-    global: { fetch: customFetch }
-})
+const getSupabaseAdmin = () => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+
+    if (!supabaseUrl || !supabaseServiceRoleKey) {
+        throw new Error('Supabase URL and Service Role Key are required')
+    }
+
+    return createClient(supabaseUrl, supabaseServiceRoleKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+        global: { fetch: customFetch }
+    })
+}
 
 // GET /api/likes?userId=xxx — fetch all likes data for a user
 export async function GET(request: Request) {
@@ -42,9 +49,10 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'userId is required' }, { status: 400 })
         }
 
+        const admin = getSupabaseAdmin()
         const [{ data: iLikedData, error: e1 }, { data: likedMeData, error: e2 }] = await Promise.all([
-            supabaseAdmin.from('likes').select('liked_user_id').eq('user_id', userId),
-            supabaseAdmin.from('likes').select('user_id').eq('liked_user_id', userId),
+            admin.from('likes').select('liked_user_id').eq('user_id', userId),
+            admin.from('likes').select('user_id').eq('liked_user_id', userId),
         ])
 
         if (e1 || e2) {
@@ -69,7 +77,8 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'userId and likedUserId are required' }, { status: 400 })
         }
 
-        const { error } = await supabaseAdmin
+        const admin = getSupabaseAdmin()
+        const { error } = await admin
             .from('likes')
             .insert({ user_id: userId, liked_user_id: likedUserId })
 
@@ -95,7 +104,8 @@ export async function DELETE(request: Request) {
             return NextResponse.json({ error: 'userId and likedUserId are required' }, { status: 400 })
         }
 
-        const { error } = await supabaseAdmin
+        const admin = getSupabaseAdmin()
+        const { error } = await admin
             .from('likes')
             .delete()
             .eq('user_id', userId)
