@@ -8,14 +8,15 @@ import * as dns from 'dns'
 // Force Node to prefer IPv4 DNS resolution
 dns.setDefaultResultOrder('ipv4first')
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabaseHost = new URL(supabaseUrl).hostname
 
 export type AdminRole = "super_admin" | "admin" | "editor" | "viewer"
 
 // Resolve Supabase hostname fresh each time to avoid stale DNS cache
 async function resolveHost(): Promise<string> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+    if (!supabaseUrl) throw new Error("NEXT_PUBLIC_SUPABASE_URL is not set")
+    const supabaseHost = new URL(supabaseUrl).hostname
+
     return new Promise((resolve, reject) => {
         dns.resolve4(supabaseHost, (err, addresses) => {
             if (err) reject(err)
@@ -27,7 +28,13 @@ async function resolveHost(): Promise<string> {
 // Build an axios instance that connects directly to the resolved IP
 // with the correct Host header — bypasses ISP DNS issues entirely
 async function getAxios() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    if (!supabaseUrl || !supabaseServiceKey) throw new Error("Supabase credentials are not set")
+
+    const supabaseHost = new URL(supabaseUrl).hostname
     const ip = await resolveHost()
+
     const instance = axios.create({
         baseURL: `https://${ip}`,
         timeout: 15000,
