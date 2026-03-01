@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { supabase } from "@/lib/supabase"
 import { useEffect, useState } from "react"
-import { ArrowLeft, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Star, Coffee } from "lucide-react"
+import { ArrowLeft, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Star, Coffee, Filter, SlidersHorizontal } from "lucide-react"
 import { motion } from "framer-motion"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { toast } from "sonner"
@@ -25,6 +25,8 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
     const [selectedProfile, setSelectedProfile] = useState<any | null>(null)
     const [targetGender, setTargetGender] = useState<string>("")
     const [actionLoadingId, setActionLoadingId] = useState<string>("")
+    const [hasPreferences, setHasPreferences] = useState(false)
+    const [applyPreferences, setApplyPreferences] = useState(true)
 
     // State to track the currently viewed photo index for the modal
     const [modalPhotoIndex, setModalPhotoIndex] = useState(0)
@@ -212,12 +214,25 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 const tg = myGender === "male" ? "Female" : "Male"
                 setTargetGender(tg)
 
+                // Fetch partner_preferences
+                const { data: preferences } = await supabase
+                    .from("partner_preferences")
+                    .select("*")
+                    .eq("user_id", userId)
+                    .maybeSingle()
+
+                if (preferences) {
+                    setHasPreferences(true)
+                }
+
                 // 2. Fetch target profiles
-                const { data: targetProfiles } = await supabase
+                let query = supabase
                     .from("personal_details")
                     .select("*")
                     .ilike("sex", tg)
                     .neq("user_id", userId)
+
+                const { data: targetProfiles } = await query
 
                 if (!targetProfiles || targetProfiles.length === 0) {
                     setIsLoading(false)
@@ -313,7 +328,91 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     }
                 })
 
-                setProfiles(combined)
+                let finalProfiles = combined
+
+                if (preferences && applyPreferences) {
+                    finalProfiles = combined.filter((profile: any) => {
+                        // Age filtering
+                        if (preferences.min_age != null || preferences.max_age != null) {
+                            const profileAge = profile.age ? parseInt(profile.age.toString()) : null
+                            if (profileAge === null) return false
+                            if (preferences.min_age != null && profileAge < preferences.min_age) return false
+                            if (preferences.max_age != null && profileAge > preferences.max_age) return false
+                        }
+
+                        // Height filtering
+                        if (preferences.min_height != null || preferences.max_height != null) {
+                            const profileHeight = profile.height ? parseInt(profile.height.toString()) : null
+                            if (profileHeight === null) return false
+                            if (preferences.min_height != null && profileHeight < preferences.min_height) return false
+                            if (preferences.max_height != null && profileHeight > preferences.max_height) return false
+                        }
+
+                        if (preferences.marital_status && preferences.marital_status.length > 0) {
+                            const isMatch = preferences.marital_status.some((m: string) =>
+                                (profile.marital_status?.toLowerCase() || "").includes(m.toLowerCase())
+                            )
+                            if (!isMatch) return false
+                        }
+
+                        if (preferences.diet && preferences.diet.length > 0) {
+                            const isMatch = preferences.diet.some((d: string) =>
+                                (profile.food_preference?.toLowerCase() || "").includes(d.toLowerCase())
+                            )
+                            if (!isMatch) return false
+                        }
+
+                        if (preferences.location && preferences.location.length > 0) {
+                            if (!profile.location) return false
+                            const locMatches = preferences.location.some((loc: string) =>
+                                profile.location.toLowerCase().includes(loc.toLowerCase())
+                            )
+                            if (!locMatches) return false
+                        }
+
+                        if (preferences.education && preferences.education.length > 0) {
+                            if (!profile.education || profile.education.length === 0) return false
+                            const eduMatches = profile.education.some((edu: any) =>
+                                preferences.education.some((prefEdu: string) => (edu.education?.toLowerCase() || "").includes(prefEdu.toLowerCase()))
+                            )
+                            if (!eduMatches) return false
+                        }
+
+                        if (preferences.employment_type && preferences.employment_type.length > 0) {
+                            if (!profile.professionType) return false
+                            const empMatches = preferences.employment_type.some((emp: string) =>
+                                profile.professionType.toLowerCase().includes(emp.toLowerCase())
+                            )
+                            if (!empMatches) return false
+                        }
+
+                        if (preferences.sector && preferences.sector.length > 0) {
+                            if (!profile.professionDetails?.sector) return false
+                            const sectorMatches = preferences.sector.some((sec: string) =>
+                                (profile.professionDetails.sector.toLowerCase() || "").includes(sec.toLowerCase())
+                            )
+                            if (!sectorMatches) return false
+                        }
+
+                        if (preferences.smoking && preferences.smoking.length > 0) {
+                            const isMatch = preferences.smoking.some((s: string) =>
+                                (profile.socialHabits?.smoking?.toLowerCase() || "").includes(s.toLowerCase())
+                            )
+                            if (!isMatch) return false
+                        }
+
+                        if (preferences.drinking && preferences.drinking.length > 0) {
+                            const isMatch = preferences.drinking.some((d: string) =>
+                                (profile.socialHabits?.drinking?.toLowerCase() || "").includes(d.toLowerCase())
+                            )
+                            if (!isMatch) return false
+                        }
+
+                        return true
+                    })
+                }
+
+                setProfiles(finalProfiles)
             } catch (error) {
                 console.error("Error fetching profiles:", error)
             } finally {
@@ -322,7 +421,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
         }
 
         fetchProfiles()
-    }, [userId])
+    }, [userId, applyPreferences])
 
     if (isLoading) {
         return (
@@ -343,7 +442,32 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
                         Here are some {targetGender.toLowerCase()} profiles tailored for {parentViewer?.isParent ? "your child" : "you"}
                     </p>
+                    {hasPreferences && (
+                        <p className="text-sm font-medium text-[#4B0082] mt-1 bg-[#4B0082]/10 inline-block px-3 py-1 rounded-full">
+                            {applyPreferences ? "✨ Showing filtered matches based on your Partner Preferences" : "⚠️ Preferences are currently disabled"}
+                        </p>
+                    )}
                 </div>
+
+                {hasPreferences && (
+                    <Button
+                        variant={applyPreferences ? "destructive" : "default"}
+                        onClick={() => setApplyPreferences(!applyPreferences)}
+                        className={`flex items-center gap-2 ${!applyPreferences ? "bg-[#4B0082] hover:bg-[#3b0066]" : ""}`}
+                    >
+                        {applyPreferences ? (
+                            <>
+                                <SlidersHorizontal className="h-4 w-4" />
+                                Remove Preferences
+                            </>
+                        ) : (
+                            <>
+                                <Filter className="h-4 w-4" />
+                                Apply Preferences
+                            </>
+                        )}
+                    </Button>
+                )}
             </div>
 
             {profiles.length === 0 ? (

@@ -35,6 +35,7 @@ interface UserLandingPageProps {
   onNavigateToBrowse: () => void
   onNavigateToParents: () => void
   onNavigateToSelections: () => void
+  onNavigateToPartnerPreferences: () => void
 }
 
 interface ProfileData {
@@ -44,7 +45,7 @@ interface ProfileData {
   maritalStatus?: string
 }
 
-export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, onNavigateToBrowse, onNavigateToParents, onNavigateToSelections }: UserLandingPageProps) {
+export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, onNavigateToBrowse, onNavigateToParents, onNavigateToSelections, onNavigateToPartnerPreferences }: UserLandingPageProps) {
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [completionPercentage, setCompletionPercentage] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
@@ -436,6 +437,22 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                   <div className="text-left">
                     <div className="font-semibold">View Matches</div>
                     <div className="text-xs text-gray-500">Coming soon</div>
+                  </div>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start h-auto py-3 hover:bg-[#4B0082]/10 hover:border-[#4B0082]"
+                  onClick={onNavigateToPartnerPreferences}
+                  disabled={completionPercentage === 0}
+                >
+                  <Heart className="h-4 w-4 mr-2" />
+                  <div className="text-left">
+                    <div className="font-semibold">Partner Preferences</div>
+                    <div className="text-xs text-gray-500">
+                      {completionPercentage === 0
+                        ? "Unlock by completing your profile"
+                        : "Set criteria for your ideal match"}
+                    </div>
                   </div>
                 </Button>
                 <Button
