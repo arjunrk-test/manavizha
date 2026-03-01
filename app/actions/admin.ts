@@ -208,3 +208,42 @@ export async function revokeAdminAccess(userId: string) {
         return { success: false, error: errorMsg }
     }
 }
+
+export async function getAllParentIds() {
+    const logFile = 'debug.txt'
+    fs.appendFileSync(logFile, `[${new Date().toISOString()}] getAllParentIds called\n`)
+    try {
+        const ax = await getAxios()
+        const { data } = await ax.get('/rest/v1/parents?select=id')
+        const { data: usersData } = await ax.get('/rest/v1/users?select=id,email,name')
+        fs.appendFileSync(logFile, `[${new Date().toISOString()}] USERS DUMP: ${JSON.stringify(usersData)}\nPARENT DUMP: ${JSON.stringify(data)}\n`)
+        fs.appendFileSync(logFile, `[${new Date().toISOString()}] getAllParentIds SUCCESS: ${data.length} parents\n`)
+        return { success: true, ids: data.map((p: any) => p.id) }
+    } catch (error: any) {
+        const errorMsg = error?.response?.data || error?.message
+        fs.appendFileSync(logFile, `[${new Date().toISOString()}] getAllParentIds ERROR: ${JSON.stringify(errorMsg)}\n`)
+        console.error("Error fetching parent IDs:", errorMsg)
+        return { success: false, ids: [] }
+    }
+}
+
+export async function cleanupData() {
+    const logFile = 'debug.txt'
+    try {
+        const ax = await getAxios()
+        const emailsToDelete = ['tls-test2@test.com', 'tls-test@test.com', 'edge2@test.com']
+        // Get users by email from the admin auth API
+        const { data: allUsers } = await ax.get('/auth/v1/admin/users?page=1&per_page=200')
+        const usersToDelete = (allUsers?.users || []).filter((u: any) => emailsToDelete.includes(u.email))
+        fs.appendFileSync(logFile, `[${new Date().toISOString()}] CLEANUP: Found ${usersToDelete.length} users to delete\n`)
+        for (const u of usersToDelete) {
+            await ax.delete(`/auth/v1/admin/users/${u.id}`)
+            fs.appendFileSync(logFile, `[${new Date().toISOString()}] CLEANUP: Deleted ${u.email} (${u.id})\n`)
+        }
+        return { success: true, deleted: usersToDelete.length }
+    } catch (e: any) {
+        const errorMsg = e?.response?.data || e?.message
+        fs.appendFileSync(logFile, `[${new Date().toISOString()}] CLEANUP ERROR: ${JSON.stringify(errorMsg)}\n`)
+        return { success: false, error: String(errorMsg) }
+    }
+}

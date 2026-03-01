@@ -7,17 +7,24 @@ import { useEffect, useState } from "react"
 import { ArrowLeft, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Star, Coffee } from "lucide-react"
 import { motion } from "framer-motion"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { toast } from "sonner"
 
 interface BrowseProfilesProps {
     userId: string
     onBack?: () => void
+    parentViewer?: {
+        isParent: boolean
+        parentId: string
+        parentRole: string
+    }
 }
 
-export function BrowseProfiles({ userId, onBack }: BrowseProfilesProps) {
+export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesProps) {
     const [isLoading, setIsLoading] = useState(true)
     const [profiles, setProfiles] = useState<any[]>([])
     const [selectedProfile, setSelectedProfile] = useState<any | null>(null)
     const [targetGender, setTargetGender] = useState<string>("")
+    const [actionLoadingId, setActionLoadingId] = useState<string>("")
 
     // State to track the currently viewed photo index for the modal
     const [modalPhotoIndex, setModalPhotoIndex] = useState(0)
@@ -133,6 +140,59 @@ export function BrowseProfiles({ userId, onBack }: BrowseProfilesProps) {
         )
     }
 
+    const handleParentSelect = async (e: React.MouseEvent, profileId: string) => {
+        e.stopPropagation()
+        if (!parentViewer?.isParent) return
+
+        setActionLoadingId(profileId)
+
+        const { error } = await supabase
+            .from("parent_selections")
+            .insert({
+                parent_id: parentViewer.parentId,
+                child_user_id: userId,
+                selected_profile_id: profileId
+            })
+
+        if (error) {
+            if (error.code === '23505') {
+                toast.error(`You already selected this profile for your child.`)
+            } else {
+                toast.error(`Failed to select profile: ${error.message}`)
+            }
+        } else {
+            toast.success(`Profile selected! Your child will be able to review it.`)
+        }
+
+        setActionLoadingId("")
+    }
+
+    const handleCustomerLike = async (e: React.MouseEvent, profileId: string) => {
+        e.stopPropagation()
+        if (parentViewer?.isParent) return
+
+        setActionLoadingId(profileId)
+
+        const { error } = await supabase
+            .from("likes")
+            .insert({
+                user_id: userId,
+                liked_user_id: profileId
+            })
+
+        if (error) {
+            if (error.code === '23505') {
+                toast.error(`You have already liked this profile.`)
+            } else {
+                toast.error(`Failed to like profile: ${error.message}`)
+            }
+        } else {
+            toast.success(`Profile liked! We'll notify them.`)
+        }
+
+        setActionLoadingId("")
+    }
+
     useEffect(() => {
         const fetchProfiles = async () => {
             try {
@@ -173,7 +233,21 @@ export function BrowseProfiles({ userId, onBack }: BrowseProfilesProps) {
                     return
                 }
 
-                // 3. Fetch auxiliary data
+                // 3. Fetch auxiliary data & check likes if parent is viewer
+                let childLikesData: any[] = []
+                let childLikedByData: any[] = []
+
+                if (parentViewer?.isParent) {
+                    const [{ data: clData }, { data: clbData }] = await Promise.all([
+                        supabase.from("likes").select("liked_user_id").eq("user_id", userId),
+                        supabase.from("likes").select("user_id").in("liked_user_id", targetUserIds) // Note: user_id is target, liked_user_id is child? Wait. likes: user_id = liker, liked_user_id = liked
+                    ])
+                    childLikesData = clData || []
+
+                    const { data: clbCorrectData } = await supabase.from("likes").select("user_id").eq("liked_user_id", userId).in("user_id", targetUserIds)
+                    childLikedByData = clbCorrectData || []
+                }
+
                 const [
                     { data: photosData },
                     { data: contactData },
@@ -209,6 +283,17 @@ export function BrowseProfiles({ userId, onBack }: BrowseProfilesProps) {
                     let location = "Location not specified"
                     if (myContact && myContact.current_city) {
                         location = `${myContact.current_city}${myContact.current_state ? `, ${myContact.current_state}` : ''}`
+                    }
+
+                    // Mask location based on mutual like for Parents
+                    if (parentViewer?.isParent) {
+                        const childLikedThisProfile = childLikesData.some(l => l.liked_user_id === p.user_id)
+                        const thisProfileLikedChild = childLikedByData.some(l => l.user_id === p.user_id)
+                        const isMutual = childLikedThisProfile && thisProfileLikedChild
+
+                        if (!isMutual) {
+                            location = "Location hidden (Requires mutual match)"
+                        }
                     }
 
                     return {
@@ -247,17 +332,12 @@ export function BrowseProfiles({ userId, onBack }: BrowseProfilesProps) {
                 <div>
                     <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <Heart className="h-8 w-8 text-[#FF1493]" />
-                        Discover Matches
+                        {parentViewer?.isParent ? "Find Matches For Your Child" : "Discover Matches"}
                     </h2>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
-                        Here are some {targetGender.toLowerCase()} profiles tailored for you
+                        Here are some {targetGender.toLowerCase()} profiles tailored for {parentViewer?.isParent ? "your child" : "you"}
                     </p>
                 </div>
-                {onBack && (
-                    <Button onClick={onBack} variant="outline" className="hidden sm:flex">
-                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
-                    </Button>
-                )}
             </div>
 
             {profiles.length === 0 ? (
@@ -338,167 +418,192 @@ export function BrowseProfiles({ userId, onBack }: BrowseProfilesProps) {
                             </div>
 
                             {/* Right side: Details */}
-                            <div className="flex-1 p-6 md:p-8 overflow-y-auto">
-                                <div className="hidden md:block mb-6">
-                                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                                        {selectedProfile.name}{selectedProfile.age && <span className="text-gray-500 font-normal">, {selectedProfile.age}</span>}
-                                    </h2>
-                                    <p className="text-[#4B0082] font-medium text-lg">{selectedProfile.profession}</p>
+                            <div className="flex-1 flex flex-col overflow-hidden">
+                                <div className="p-6 md:p-8 flex-1 overflow-y-auto">
+                                    <div className="hidden md:block mb-6">
+                                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                                            {selectedProfile.name}{selectedProfile.age && <span className="text-gray-500 font-normal">, {selectedProfile.age}</span>}
+                                        </h2>
+                                        <p className="text-[#4B0082] font-medium text-lg">{selectedProfile.profession}</p>
+                                    </div>
+
+                                    <div className="space-y-8">
+                                        {/* About */}
+                                        {selectedProfile.about && (
+                                            <section>
+                                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
+                                                    <User className="h-5 w-5 mr-2 text-pink-500" /> About Me
+                                                </h3>
+                                                <p className="text-gray-600 dark:text-gray-300 leading-relaxed bg-pink-50 dark:bg-pink-500/10 p-4 rounded-xl">
+                                                    {selectedProfile.about}
+                                                </p>
+                                            </section>
+                                        )}
+
+                                        {/* Quick Info Grid */}
+                                        <section>
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                                                <Heart className="h-5 w-5 mr-2 text-red-500" /> Basic Details
+                                            </h3>
+                                            <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                                                <div>
+                                                    <span className="block text-gray-500 mb-1">Location</span>
+                                                    <span className="font-medium text-gray-900 dark:text-white flex items-center">
+                                                        <MapPin className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
+                                                        {selectedProfile.location}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className="block text-gray-500 mb-1">Height</span>
+                                                    <span className="font-medium text-gray-900 dark:text-white">
+                                                        {selectedProfile.height || "Not specified"}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className="block text-gray-500 mb-1">Mother Tongue</span>
+                                                    <span className="font-medium text-gray-900 dark:text-white">
+                                                        {selectedProfile.mother_tongue || "Not specified"}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className="block text-gray-500 mb-1">Diet</span>
+                                                    <span className="font-medium text-gray-900 dark:text-white">
+                                                        {selectedProfile.food_preference || "Not specified"}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        {/* Education & Career */}
+                                        <section>
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                                                <GraduationCap className="h-5 w-5 mr-2 text-blue-500" /> Education & Career
+                                            </h3>
+                                            <div className="space-y-4 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
+                                                <div className="flex gap-3">
+                                                    <Briefcase className="h-5 w-5 text-gray-400 shrink-0 mt-0.5" />
+                                                    <div>
+                                                        <p className="font-medium text-gray-900 dark:text-white">{selectedProfile.profession}</p>
+                                                        <p className="text-sm text-gray-500">Current Work</p>
+                                                    </div>
+                                                </div>
+
+                                                {selectedProfile.education && selectedProfile.education.map((edu: any, i: number) => (
+                                                    <div key={i} className="flex gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                                                        <GraduationCap className="h-5 w-5 text-gray-400 shrink-0 mt-0.5" />
+                                                        <div>
+                                                            <p className="font-medium text-gray-900 dark:text-white">{edu.education}</p>
+                                                            {edu.institution && <p className="text-sm text-gray-500">{edu.institution}</p>}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </section>
+
+                                        {/* Interests & Hobbies */}
+                                        {selectedProfile.interests && (selectedProfile.interests.hobbies?.length > 0 || selectedProfile.interests.sports?.length > 0 || selectedProfile.interests.music?.length > 0) && (
+                                            <section>
+                                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                                                    <Star className="h-5 w-5 mr-2 text-yellow-500" /> Interests & Hobbies
+                                                </h3>
+                                                <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl space-y-4">
+                                                    {selectedProfile.interests.hobbies && selectedProfile.interests.hobbies.length > 0 && (
+                                                        <div>
+                                                            <span className="block text-sm text-gray-500 mb-1.5">Hobbies</span>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {selectedProfile.interests.hobbies.map((hobby: string, i: number) => (
+                                                                    <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                                                                        {hobby}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    {selectedProfile.interests.sports && selectedProfile.interests.sports.length > 0 && (
+                                                        <div>
+                                                            <span className="block text-sm text-gray-500 mb-1.5">Sports & Fitness</span>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {selectedProfile.interests.sports.map((sport: string, i: number) => (
+                                                                    <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                                                        {sport}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    {selectedProfile.interests.music && selectedProfile.interests.music.length > 0 && (
+                                                        <div>
+                                                            <span className="block text-sm text-gray-500 mb-1.5">Music Preferences</span>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {selectedProfile.interests.music.map((music: string, i: number) => (
+                                                                    <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300">
+                                                                        {music}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </section>
+                                        )}
+
+                                        {/* Social Habits */}
+                                        {selectedProfile.socialHabits && (selectedProfile.socialHabits.smoking || selectedProfile.socialHabits.drinking || selectedProfile.socialHabits.parties) && (
+                                            <section>
+                                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                                                    <Coffee className="h-5 w-5 mr-2 text-orange-500" /> Social Habits
+                                                </h3>
+                                                <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
+                                                    {selectedProfile.socialHabits.smoking && (
+                                                        <div>
+                                                            <span className="block text-gray-500 mb-1">Smoking</span>
+                                                            <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.socialHabits.smoking}</span>
+                                                        </div>
+                                                    )}
+                                                    {selectedProfile.socialHabits.drinking && (
+                                                        <div>
+                                                            <span className="block text-gray-500 mb-1">Drinking</span>
+                                                            <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.socialHabits.drinking}</span>
+                                                        </div>
+                                                    )}
+                                                    {selectedProfile.socialHabits.parties && (
+                                                        <div>
+                                                            <span className="block text-gray-500 mb-1">Parties</span>
+                                                            <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.socialHabits.parties}</span>
+                                                        </div>
+                                                    )}
+                                                    {selectedProfile.socialHabits.pubs && (
+                                                        <div>
+                                                            <span className="block text-gray-500 mb-1">Pubs / Clubs</span>
+                                                            <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.socialHabits.pubs}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </section>
+                                        )}
+                                    </div>
                                 </div>
 
-                                <div className="space-y-8">
-                                    {/* About */}
-                                    {selectedProfile.about && (
-                                        <section>
-                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
-                                                <User className="h-5 w-5 mr-2 text-pink-500" /> About Me
-                                            </h3>
-                                            <p className="text-gray-600 dark:text-gray-300 leading-relaxed bg-pink-50 dark:bg-pink-500/10 p-4 rounded-xl">
-                                                {selectedProfile.about}
-                                            </p>
-                                        </section>
-                                    )}
-
-                                    {/* Quick Info Grid */}
-                                    <section>
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                            <Heart className="h-5 w-5 mr-2 text-red-500" /> Basic Details
-                                        </h3>
-                                        <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
-                                            <div>
-                                                <span className="block text-gray-500 mb-1">Location</span>
-                                                <span className="font-medium text-gray-900 dark:text-white flex items-center">
-                                                    <MapPin className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
-                                                    {selectedProfile.location}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <span className="block text-gray-500 mb-1">Height</span>
-                                                <span className="font-medium text-gray-900 dark:text-white">
-                                                    {selectedProfile.height || "Not specified"}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <span className="block text-gray-500 mb-1">Mother Tongue</span>
-                                                <span className="font-medium text-gray-900 dark:text-white">
-                                                    {selectedProfile.mother_tongue || "Not specified"}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <span className="block text-gray-500 mb-1">Diet</span>
-                                                <span className="font-medium text-gray-900 dark:text-white">
-                                                    {selectedProfile.food_preference || "Not specified"}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </section>
-
-                                    {/* Education & Career */}
-                                    <section>
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                            <GraduationCap className="h-5 w-5 mr-2 text-blue-500" /> Education & Career
-                                        </h3>
-                                        <div className="space-y-4 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
-                                            <div className="flex gap-3">
-                                                <Briefcase className="h-5 w-5 text-gray-400 shrink-0 mt-0.5" />
-                                                <div>
-                                                    <p className="font-medium text-gray-900 dark:text-white">{selectedProfile.profession}</p>
-                                                    <p className="text-sm text-gray-500">Current Work</p>
-                                                </div>
-                                            </div>
-
-                                            {selectedProfile.education && selectedProfile.education.map((edu: any, i: number) => (
-                                                <div key={i} className="flex gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                                                    <GraduationCap className="h-5 w-5 text-gray-400 shrink-0 mt-0.5" />
-                                                    <div>
-                                                        <p className="font-medium text-gray-900 dark:text-white">{edu.education}</p>
-                                                        {edu.institution && <p className="text-sm text-gray-500">{edu.institution}</p>}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </section>
-
-                                    {/* Interests & Hobbies */}
-                                    {selectedProfile.interests && (selectedProfile.interests.hobbies?.length > 0 || selectedProfile.interests.sports?.length > 0 || selectedProfile.interests.music?.length > 0) && (
-                                        <section>
-                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                                <Star className="h-5 w-5 mr-2 text-yellow-500" /> Interests & Hobbies
-                                            </h3>
-                                            <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl space-y-4">
-                                                {selectedProfile.interests.hobbies && selectedProfile.interests.hobbies.length > 0 && (
-                                                    <div>
-                                                        <span className="block text-sm text-gray-500 mb-1.5">Hobbies</span>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {selectedProfile.interests.hobbies.map((hobby: string, i: number) => (
-                                                                <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
-                                                                    {hobby}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                {selectedProfile.interests.sports && selectedProfile.interests.sports.length > 0 && (
-                                                    <div>
-                                                        <span className="block text-sm text-gray-500 mb-1.5">Sports & Fitness</span>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {selectedProfile.interests.sports.map((sport: string, i: number) => (
-                                                                <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                                                                    {sport}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                {selectedProfile.interests.music && selectedProfile.interests.music.length > 0 && (
-                                                    <div>
-                                                        <span className="block text-sm text-gray-500 mb-1.5">Music Preferences</span>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {selectedProfile.interests.music.map((music: string, i: number) => (
-                                                                <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300">
-                                                                    {music}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </section>
-                                    )}
-
-                                    {/* Social Habits */}
-                                    {selectedProfile.socialHabits && (selectedProfile.socialHabits.smoking || selectedProfile.socialHabits.drinking || selectedProfile.socialHabits.parties) && (
-                                        <section>
-                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                                <Coffee className="h-5 w-5 mr-2 text-orange-500" /> Social Habits
-                                            </h3>
-                                            <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
-                                                {selectedProfile.socialHabits.smoking && (
-                                                    <div>
-                                                        <span className="block text-gray-500 mb-1">Smoking</span>
-                                                        <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.socialHabits.smoking}</span>
-                                                    </div>
-                                                )}
-                                                {selectedProfile.socialHabits.drinking && (
-                                                    <div>
-                                                        <span className="block text-gray-500 mb-1">Drinking</span>
-                                                        <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.socialHabits.drinking}</span>
-                                                    </div>
-                                                )}
-                                                {selectedProfile.socialHabits.parties && (
-                                                    <div>
-                                                        <span className="block text-gray-500 mb-1">Parties</span>
-                                                        <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.socialHabits.parties}</span>
-                                                    </div>
-                                                )}
-                                                {selectedProfile.socialHabits.pubs && (
-                                                    <div>
-                                                        <span className="block text-gray-500 mb-1">Pubs / Clubs</span>
-                                                        <span className="font-medium text-gray-900 dark:text-white">{selectedProfile.socialHabits.pubs}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </section>
+                                {/* Sticky Action Footer */}
+                                <div className="border-t border-gray-100 dark:border-gray-800 p-4 bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm z-10 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                                    {parentViewer?.isParent ? (
+                                        <Button
+                                            className="w-full bg-[#1F4068] hover:bg-[#162E4A] text-white py-6"
+                                            onClick={(e) => handleParentSelect(e, selectedProfile.user_id)}
+                                            disabled={actionLoadingId === selectedProfile.user_id}
+                                        >
+                                            <Heart className={`h-5 w-5 mr-2 ${actionLoadingId === selectedProfile.user_id ? "animate-pulse" : ""}`} />
+                                            {actionLoadingId === selectedProfile.user_id ? "Selecting..." : `Select Profile for ${targetGender.toLowerCase()} child`}
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            className="w-full bg-[#FF1493] hover:bg-[#E01183] text-white py-6"
+                                            onClick={(e) => handleCustomerLike(e, selectedProfile.user_id)}
+                                            disabled={actionLoadingId === selectedProfile.user_id}
+                                        >
+                                            <Heart className={`h-5 w-5 mr-2 ${actionLoadingId === selectedProfile.user_id ? "animate-pulse" : ""}`} />
+                                            {actionLoadingId === selectedProfile.user_id ? "Liking..." : "Like & Express Interest"}
+                                        </Button>
                                     )}
                                 </div>
                             </div>
