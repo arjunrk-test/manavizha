@@ -445,6 +445,17 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
           required
         />
 
+        <div className="space-y-2">
+          <Label htmlFor="ancestralOrigin">Ancestral Origin / Native *</Label>
+          <Input
+            id="ancestralOrigin"
+            value={formData.ancestralOrigin || ""}
+            onChange={(e) => onChange("ancestralOrigin", e.target.value)}
+            placeholder="e.g. Karur, Madurai"
+            required
+          />
+        </div>
+
         <SelectDropdown
           id="familyStatus"
           label="Family Status *"

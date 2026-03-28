@@ -3,6 +3,8 @@ export interface FormData {
   name: string
   age: string
   dateOfBirth: string
+  createdBy: string
+  physicalStatus: string
   // Contact Details
   phone: string
   whatsappNumber: string
@@ -79,6 +81,7 @@ export interface FormData {
   fatherOccupation: string
   motherName: string
   motherOccupation: string
+  ancestralOrigin: string
   // Parents Address
   parentsAddressLine1: string
   parentsAddressLine2: string
@@ -123,10 +126,28 @@ export interface FormData {
   // Partner Preferences
   preferredAgeMin: string
   preferredAgeMax: string
-  preferredHeight: string
+  preferredHeightMin: string
+  preferredHeightMax: string
+  preferredMaritalStatus: string
+  preferredMotherTongue: string
+  preferredPhysicalStatus: string
+  preferredEatingHabits: string
+  preferredSmokingHabits: string
+  preferredDrinkingHabits: string
+  preferredReligion: string
+  preferredCaste: string
+  preferredSubcaste: string
+  preferredStar: string
+  preferredDosham: string
   preferredEducation: string
+  preferredEmploymentType: string
   preferredOccupation: string
-  preferredLocation: string
+  preferredAnnualIncome: string
+  preferredCountry: string
+  preferredState: string
+  preferredCity: string
+  preferredCitizenship: string
+  preferredLocation: string // Keep for legacy/fallback
   
   // Photo Section
   userPhotos: string[]

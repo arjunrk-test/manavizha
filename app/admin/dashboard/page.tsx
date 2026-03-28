@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { LogOut, Users, Database, Mail, ArrowRight, User } from "lucide-react"
+import { LogOut, Users, Database, Mail, ArrowRight, User, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { motion } from "framer-motion"
@@ -131,34 +131,11 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen relative">
+      <AdminNavbar />
       <AnimatedBackground />
 
-      {/* Header with Logout - Sticky */}
-      <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-            {user?.email && (
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {user.email}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {/* Content */}
-      <div className="relative z-10">
+      <div className="relative z-10 pt-16">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Admin Dashboard</h2>
@@ -310,6 +287,33 @@ export default function AdminDashboardPage() {
                     </CardTitle>
                     <CardDescription className="text-base mt-2">
                       Manage email templates, campaigns, and communications
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </Link>
+            </motion.div>
+
+            {/* Identity Verification Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.35 }}
+            >
+              <Link href="/admin/verification" className="block">
+                <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-2 border-purple-200/60 dark:border-purple-700/60 shadow-xl group cursor-pointer ring-4 ring-purple-500/10">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-[#4B0082]/10 to-blue-500/10 dark:from-[#4B0082]/30 dark:to-blue-500/30 group-hover:from-[#4B0082]/20 group-hover:to-blue-500/20 transition-all">
+                        <ShieldCheck className="h-8 w-8 text-[#4B0082] dark:text-purple-400" />
+                      </div>
+                      <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-[#4B0082] group-hover:translate-x-1 transition-all" />
+                    </div>
+                    <CardTitle className="text-2xl mt-4 text-gray-900 dark:text-white flex items-center gap-2">
+                      Identity Verification
+                      <div className="px-2 py-0.5 rounded-full bg-red-500 text-[10px] text-white animate-pulse">New Requests</div>
+                    </CardTitle>
+                    <CardDescription className="text-base mt-2">
+                      Review and approve pending identity status for users
                     </CardDescription>
                   </CardHeader>
                 </Card>

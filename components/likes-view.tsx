@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase"
 interface LikesViewProps {
     userId: string
     onBack?: () => void
+    initialTab?: Tab
 }
 
 type Tab = "liked" | "mutual" | "likedme"
@@ -26,8 +27,8 @@ interface ProfileCard {
     iLiked: boolean
 }
 
-export function LikesView({ userId }: LikesViewProps) {
-    const [activeTab, setActiveTab] = useState<Tab>("mutual")
+export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
+    const [activeTab, setActiveTab] = useState<Tab>(initialTab || "mutual")
     const [isLoading, setIsLoading] = useState(true)
     const [iLikedIds, setILikedIds] = useState<string[]>([])
     const [likedMeIds, setLikedMeIds] = useState<string[]>([])
@@ -51,15 +52,31 @@ export function LikesView({ userId }: LikesViewProps) {
     }
 
     // Reset photo index when opening a profile
-    const handleOpenProfile = (profile: ProfileCard) => {
+    const handleOpenProfile = async (profile: ProfileCard) => {
         setModalPhotoIndex(0)
         setSelectedProfile(profile)
+
+        // Record the view
+        if (userId && profile.user_id) {
+            try {
+                fetch('/api/views', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ viewerId: userId, viewedUserId: profile.user_id })
+                })
+            } catch (e) {
+                console.error("Failed to record view:", e)
+            }
+        }
     }
 
 
     useEffect(() => {
         fetchLikes()
-    }, [userId])
+        if (initialTab) {
+            setActiveTab(initialTab)
+        }
+    }, [userId, initialTab])
 
     // Fetch Full Profile Details when a profile is clicked
     useEffect(() => {

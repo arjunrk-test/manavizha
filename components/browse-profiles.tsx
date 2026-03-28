@@ -3,7 +3,8 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { supabase } from "@/lib/supabase"
-import { useEffect, useState } from "react"
+import { useState, useEffect, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import { ArrowLeft, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Star, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle } from "lucide-react"
 import { motion } from "framer-motion"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -28,16 +29,35 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
     const [hasPreferences, setHasPreferences] = useState(false)
     const [applyPreferences, setApplyPreferences] = useState(true)
     const [selectedProfileIds, setSelectedProfileIds] = useState<Set<string>>(new Set())
+    const [shortlistedIds, setShortlistedIds] = useState<string[]>([])
     const [mutualFullData, setMutualFullData] = useState<any>(null)
     const [isFetchingFull, setIsFetchingFull] = useState(false)
+
+    // State to track the active sidebar category
+    const [activeCategory, setActiveCategory] = useState<string>("all-matches")
+    const [searchTerm, setSearchTerm] = useState("")
+    const [isProfileIncomplete, setIsProfileIncomplete] = useState(false)
 
     // State to track the currently viewed photo index for the modal
     const [modalPhotoIndex, setModalPhotoIndex] = useState(0)
 
-    // Function to handle opening modal and resetting the index
-    const handleOpenProfile = (profile: any) => {
-        setModalPhotoIndex(0)
-        setSelectedProfile(profile)
+    const router = useRouter()
+
+    // Function to handle navigating to profile page
+    const handleOpenProfile = async (profile: any, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation()
+        if (!profile.user_id) return
+        
+        // Record the view
+        console.log("Navigating to profile:", profile.user_id)
+
+        // Navigate to the dedicated profile page using window.location for reliability
+        if (profile.user_id) {
+            window.location.href = `/dashboard/profile/${profile.user_id}`
+        } else {
+            console.error("Missing profile.user_id:", profile)
+            toast.error("Profile ID missing")
+        }
     }
 
     // Fetch full profile data when a mutual match modal opens
@@ -209,6 +229,33 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
 
         setActionLoadingId("")
     }
+    const handleShortlist = async (e: React.MouseEvent, profileId: string) => {
+        e.stopPropagation()
+        if (parentViewer?.isParent) return
+
+        setActionLoadingId(profileId)
+        const isCurrentlyShortlisted = shortlistedIds.includes(profileId)
+        const method = isCurrentlyShortlisted ? "DELETE" : "POST"
+
+        const res = await fetch("/api/shortlists", {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, targetUserId: profileId }),
+        })
+
+        if (!res.ok) {
+            toast.error(`Failed to update shortlist.`)
+        } else {
+            if (isCurrentlyShortlisted) {
+                setShortlistedIds(prev => prev.filter(id => id !== profileId))
+                toast.success(`Removed from shortlist`)
+            } else {
+                setShortlistedIds(prev => [...prev, profileId])
+                toast.success(`Profile shortlisted!`)
+            }
+        }
+        setActionLoadingId("")
+    }
 
     const handleCustomerLike = async (e: React.MouseEvent, profileId: string) => {
         e.stopPropagation()
@@ -247,11 +294,13 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     .eq("user_id", userId)
                     .maybeSingle()
 
-                if (!userData) {
+                if (!userData || !userData.sex) {
+                    setIsProfileIncomplete(true)
                     setIsLoading(false)
                     return
                 }
 
+                setIsProfileIncomplete(false)
                 const myGender = userData.sex?.toLowerCase() || ""
                 const tg = myGender === "male" ? "Female" : "Male"
                 setTargetGender(tg)
@@ -302,6 +351,14 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                             const likeData = await likeRes.json()
                             childLikedIds = likeData.iLikedIds || []
                             likedChildIds = likeData.likedMeIds || []
+                        }
+                    } catch { }
+
+                    try {
+                        const shortRes = await fetch(`/api/shortlists?userId=${userId}`)
+                        if (shortRes.ok) {
+                            const shortData = await shortRes.json()
+                            setShortlistedIds(shortData.shortlistedIds || [])
                         }
                     } catch { }
 
@@ -391,77 +448,91 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         // Age filtering
                         if (preferences.min_age != null || preferences.max_age != null) {
                             const profileAge = profile.age ? parseInt(profile.age.toString()) : null
-                            if (profileAge === null) return false
-                            if (preferences.min_age != null && profileAge < preferences.min_age) return false
-                            if (preferences.max_age != null && profileAge > preferences.max_age) return false
+                            if (profileAge !== null) {
+                                if (preferences.min_age != null && profileAge < preferences.min_age) return false
+                                if (preferences.max_age != null && profileAge > preferences.max_age) return false
+                            }
                         }
 
                         // Height filtering
                         if (preferences.min_height != null || preferences.max_height != null) {
                             const profileHeight = profile.height ? parseInt(profile.height.toString()) : null
-                            if (profileHeight === null) return false
-                            if (preferences.min_height != null && profileHeight < preferences.min_height) return false
-                            if (preferences.max_height != null && profileHeight > preferences.max_height) return false
+                            if (profileHeight !== null) {
+                                if (preferences.min_height != null && profileHeight < preferences.min_height) return false
+                                if (preferences.max_height != null && profileHeight > preferences.max_height) return false
+                            }
                         }
 
                         if (preferences.marital_status && preferences.marital_status.length > 0) {
-                            const isMatch = preferences.marital_status.some((m: string) =>
-                                (profile.marital_status?.toLowerCase() || "").includes(m.toLowerCase())
-                            )
-                            if (!isMatch) return false
+                            if (profile.marital_status) {
+                                const isMatch = preferences.marital_status.some((m: string) =>
+                                    (profile.marital_status?.toLowerCase() || "").includes(m.toLowerCase())
+                                )
+                                if (!isMatch) return false
+                            }
                         }
 
                         if (preferences.diet && preferences.diet.length > 0) {
-                            const isMatch = preferences.diet.some((d: string) =>
-                                (profile.food_preference?.toLowerCase() || "").includes(d.toLowerCase())
-                            )
-                            if (!isMatch) return false
+                            if (profile.food_preference) {
+                                const isMatch = preferences.diet.some((d: string) =>
+                                    (profile.food_preference?.toLowerCase() || "").includes(d.toLowerCase())
+                                )
+                                if (!isMatch) return false
+                            }
                         }
 
                         if (preferences.location && preferences.location.length > 0) {
-                            if (!profile.location) return false
-                            const locMatches = preferences.location.some((loc: string) =>
-                                profile.location.toLowerCase().includes(loc.toLowerCase())
-                            )
-                            if (!locMatches) return false
+                            if (profile.location && profile.location !== "Location not specified" && profile.location !== "Location hidden (Requires mutual match)") {
+                                const locMatches = preferences.location.some((loc: string) =>
+                                    profile.location.toLowerCase().includes(loc.toLowerCase())
+                                )
+                                if (!locMatches) return false
+                            }
                         }
 
                         if (preferences.education && preferences.education.length > 0) {
-                            if (!profile.education || profile.education.length === 0) return false
-                            const eduMatches = profile.education.some((edu: any) =>
-                                preferences.education.some((prefEdu: string) => (edu.education?.toLowerCase() || "").includes(prefEdu.toLowerCase()))
-                            )
-                            if (!eduMatches) return false
+                            if (profile.education && profile.education.length > 0) {
+                                const eduMatches = profile.education.some((edu: any) =>
+                                    preferences.education.some((prefEdu: string) => (edu.education?.toLowerCase() || "").includes(prefEdu.toLowerCase()))
+                                )
+                                if (!eduMatches) return false
+                            }
                         }
 
                         if (preferences.employment_type && preferences.employment_type.length > 0) {
-                            if (!profile.professionType) return false
-                            const empMatches = preferences.employment_type.some((emp: string) =>
-                                profile.professionType.toLowerCase().includes(emp.toLowerCase())
-                            )
-                            if (!empMatches) return false
+                            if (profile.professionType) {
+                                const empMatches = preferences.employment_type.some((emp: string) =>
+                                    profile.professionType.toLowerCase().includes(emp.toLowerCase())
+                                )
+                                if (!empMatches) return false
+                            }
                         }
 
                         if (preferences.sector && preferences.sector.length > 0) {
-                            if (!profile.professionDetails?.sector) return false
-                            const sectorMatches = preferences.sector.some((sec: string) =>
-                                (profile.professionDetails.sector.toLowerCase() || "").includes(sec.toLowerCase())
-                            )
-                            if (!sectorMatches) return false
+                            if (profile.professionDetails?.sector) {
+                                const sectorMatches = preferences.sector.some((sec: string) =>
+                                    (profile.professionDetails.sector.toLowerCase() || "").includes(sec.toLowerCase())
+                                )
+                                if (!sectorMatches) return false
+                            }
                         }
 
                         if (preferences.smoking && preferences.smoking.length > 0) {
-                            const isMatch = preferences.smoking.some((s: string) =>
-                                (profile.socialHabits?.smoking?.toLowerCase() || "").includes(s.toLowerCase())
-                            )
-                            if (!isMatch) return false
+                            if (profile.socialHabits?.smoking) {
+                                const isMatch = preferences.smoking.some((s: string) =>
+                                    (profile.socialHabits?.smoking?.toLowerCase() || "").includes(s.toLowerCase())
+                                )
+                                if (!isMatch) return false
+                            }
                         }
 
                         if (preferences.drinking && preferences.drinking.length > 0) {
-                            const isMatch = preferences.drinking.some((d: string) =>
-                                (profile.socialHabits?.drinking?.toLowerCase() || "").includes(d.toLowerCase())
-                            )
-                            if (!isMatch) return false
+                            if (profile.socialHabits?.drinking) {
+                                const isMatch = preferences.drinking.some((d: string) =>
+                                    (profile.socialHabits?.drinking?.toLowerCase() || "").includes(d.toLowerCase())
+                                )
+                                if (!isMatch) return false
+                            }
                         }
 
                         return true
@@ -479,6 +550,184 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
         fetchProfiles()
     }, [userId, applyPreferences])
 
+    // Filter profiles based on selected sidebar category
+    const filteredProfiles = useMemo(() => {
+        const thirtyDaysAgo = new Date()
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+        switch (activeCategory) {
+            case "newly-joined":
+                return profiles.filter(p => new Date(p.created_at) > thirtyDaysAgo)
+            case "matches-with-photos":
+                return profiles.filter(p => p.photos && p.photos.length > 0)
+            case "matches-with-horoscope":
+                return profiles.filter(p => p.horoscope && (p.horoscope.zodiac_sign || p.horoscope.star))
+            case "shortlisted-by-you":
+                return profiles.filter(p => shortlistedIds.includes(p.user_id))
+            case "shortlisted-you":
+                return profiles.filter(p => p.profileLikedChild)
+            case "viewed-by-you":
+                // This would need a 'viewed_by_me' flag or similar
+                return profiles
+            case "nearby-matches":
+                // This would need the current user's location
+                return profiles
+            case "star-matches":
+                return profiles.filter(p => p.horoscope?.star)
+            case "all-matches":
+            default:
+                return profiles
+        }
+    }, [profiles, activeCategory, shortlistedIds])
+
+    const getAgeHeightCasteEducationProfessionCityStr = (profile: any) => {
+        const parts = []
+        if (profile.age) parts.push(`${profile.age} yrs`)
+        if (profile.height) parts.push(profile.height)
+        if (profile.caste) parts.push(profile.caste)
+        if (profile.education && profile.education.length > 0) {
+            const edu = profile.education[0].education || profile.education[0]
+            parts.push(typeof edu === 'string' ? edu : edu.education)
+        }
+        if (profile.profession && profile.profession !== "Not specified") parts.push(profile.profession)
+        if (profile.location && profile.location !== "Location not specified" && profile.location !== "Location hidden (Requires mutual match)") {
+            const city = profile.location.split(',')[0]
+            parts.push(city)
+        }
+        return parts.join(" • ")
+    }
+
+    const HorizontalProfileCard = ({ profile, index }: { profile: any, index: number }) => {
+        const [cardPhotoIndex, setCardPhotoIndex] = useState(0)
+        const hasMultiplePhotos = profile.photos && profile.photos.length > 1
+        // Mock subscription check - default to false per user's request for "Paid members"
+        const isPaidMember = false 
+
+        const handleContactClick = (type: string) => {
+            if (!isPaidMember) {
+                toast.info(`Upgrade to Premium to view ${type} details`, {
+                    description: "Connect with matches instantly with our premium plans."
+                })
+                return
+            }
+            // Logic for paid members would go here (e.g., opening WhatsApp or Dialer)
+            toast.success(`Redirecting to ${type}...`)
+        }
+
+        return (
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="w-full"
+            >
+                <Card
+                    className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group border-gray-200/60 dark:border-gray-700/60 bg-white dark:bg-gray-800 flex flex-col md:flex-row h-auto md:min-h-[180px]"
+                    onClick={(e) => handleOpenProfile(profile, e)}
+                >
+                    {/* Left: Image Section */}
+                    <div className="w-full md:w-52 h-64 md:h-auto relative overflow-hidden bg-gray-100 dark:bg-gray-700 shrink-0">
+                        {profile.photos && profile.photos.length > 0 ? (
+                            <>
+                                <img
+                                    src={profile.photos[cardPhotoIndex]}
+                                    alt={profile.name}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                />
+                                {hasMultiplePhotos && (
+                                    <div className="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded backdrop-blur-sm z-10 font-bold">
+                                        {cardPhotoIndex + 1} / {profile.photos.length}
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                                <User className="h-12 w-12 opacity-30" />
+                                <span className="text-xs mt-2 font-medium">No Photo</span>
+                            </div>
+                        )}
+                        {profile.photo_verified && (
+                            <div className="absolute bottom-3 left-3 bg-blue-600/90 text-white px-2 py-1 rounded-md text-[10px] font-bold flex items-center gap-1 backdrop-blur-sm">
+                                <CheckCircle2 className="h-3 w-3" /> VERIFIED
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right: Content Section */}
+                    <CardContent className="p-5 flex-1 flex flex-col relative">
+                        {/* Top Badge & Icons */}
+                        <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-1 text-blue-600 font-bold text-xs uppercase tracking-tight">
+                                <CheckCircle2 className="h-4 w-4 fill-blue-600 text-white" />
+                                <span>ID verified</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); handleContactClick("Phone"); }}
+                                    className="p-2 rounded-full border border-orange-100 bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors"
+                                >
+                                    <Phone className="h-5 w-5" />
+                                </button>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); handleContactClick("WhatsApp"); }}
+                                    className="p-2 rounded-full border border-green-100 bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
+                                >
+                                    <MessageCircle className="h-5 w-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Name & Status */}
+                        <div className="mb-3">
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">
+                                {profile.name || "Unknown"}
+                            </h3>
+                            <p className="text-xs text-gray-400 font-medium mt-1">
+                                Last seen an hour ago
+                            </p>
+                        </div>
+
+                        {/* Bulleted Details */}
+                        <p className="text-[15px] text-gray-700 dark:text-gray-300 font-medium leading-relaxed mb-4">
+                            {getAgeHeightCasteEducationProfessionCityStr(profile)}
+                        </p>
+
+                        {/* Bottom Actions */}
+                        <div className="mt-auto flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-pink-200 text-pink-600 hover:bg-pink-50 rounded-full h-9 px-4 font-bold text-xs"
+                                    onClick={(e) => handleCustomerLike(e, profile.user_id)}
+                                >
+                                    <Heart className="h-3.5 w-3.5 mr-1.5" /> Interested
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className={`h-9 w-9 p-0 rounded-full transition-colors ${shortlistedIds.includes(profile.user_id) ? 'text-amber-500 hover:text-amber-600 bg-amber-50' : 'text-gray-400 hover:text-blue-600'}`}
+                                    onClick={(e) => handleShortlist(e, profile.user_id)}
+                                >
+                                    <Star className={`h-4 w-4 ${shortlistedIds.includes(profile.user_id) ? 'fill-amber-500' : ''}`} />
+                                </Button>
+                            </div>
+                            
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-[#4B0082] hover:bg-[#4B0082]/5 font-bold text-sm tracking-tight px-0 hover:px-2 transition-all"
+                                onClick={(e) => handleOpenProfile(profile, e)}
+                            >
+                                View Profile →
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            </motion.div>
+        )
+    }
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center py-20">
@@ -487,64 +736,128 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
         )
     }
 
+    const menuGroups = [
+        {
+            title: "All Matches",
+            items: [
+                { id: "all-matches", label: "Your Matches", description: "View all profiles that match your preferences", icon: User },
+            ]
+        },
+        {
+            title: "Based on activity",
+            items: [
+                { id: "shortlisted-by-you", label: "Shortlisted by you", description: "Matches you have shortlisted", icon: Star },
+                { id: "viewed-you", label: "Viewed you", description: "Matches who have viewed your profile", icon: Filter },
+                { id: "shortlisted-you", label: "Shortlisted you", description: "Matches who have shortlisted your profile", icon: User },
+                { id: "viewed-by-you", label: "Viewed by you", description: "Matches you have viewed", icon: Filter },
+            ]
+        },
+        {
+            title: "Recently joined & nearby matches",
+            items: [
+                { id: "newly-joined", label: "Newly Joined", description: "Matches who joined within the last 30 days", icon: User },
+                { id: "nearby-matches", label: "Nearby matches", description: "Matches near your location", icon: MapPin },
+            ]
+        },
+        {
+            title: "Based on profile details",
+            items: [
+                { id: "matches-with-photos", label: "Matches with photos", description: "Matches that have added photos", icon: User },
+                { id: "matches-with-horoscope", label: "Matches with horoscope", description: "Matches that have added horoscope", icon: Star },
+            ]
+        },
+        {
+            title: "Based on astrological compatibility",
+            items: [
+                { id: "star-matches", label: "Star matches", description: "Matches with compatible star sign", icon: Star },
+                { id: "horoscope-matches", label: "Horoscope matches", description: "Matches with horoscope matching yours", icon: Star },
+            ]
+        }
+    ]
+
     return (
-        <div className="w-full max-w-7xl mx-auto px-4 py-8">
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Heart className="h-8 w-8 text-[#FF1493]" />
-                        {parentViewer?.isParent ? "Find Matches For Your Child" : "Discover Matches"}
-                    </h2>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">
-                        Here are some {targetGender.toLowerCase()} profiles tailored for {parentViewer?.isParent ? "your child" : "you"}
-                    </p>
-                    {hasPreferences && (
-                        <p className="text-sm font-medium text-[#4B0082] mt-1 bg-[#4B0082]/10 inline-block px-3 py-1 rounded-full">
-                            {applyPreferences ? "✨ Showing filtered matches based on your Partner Preferences" : "⚠️ Preferences are currently disabled"}
-                        </p>
-                    )}
-                </div>
+        <div className="w-full min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
+            <div className="max-w-7xl mx-auto px-4 py-6">
+                <div className="flex flex-col lg:flex-row gap-8">
+                    {/* Sidebar */}
+                    <aside className="w-full lg:w-72 shrink-0 space-y-6">
+                        <Card className="border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
+                            <div className="p-4 bg-white dark:bg-gray-800 space-y-6">
+                                {menuGroups.map((group) => (
+                                    <div key={group.title} className="space-y-2">
+                                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-2">{group.title}</h4>
+                                        <div className="space-y-1">
+                                            {group.items.map((item) => (
+                                                <button
+                                                    key={item.id}
+                                                    onClick={() => setActiveCategory(item.id)}
+                                                    className={`w-full group text-left px-3 py-2.5 rounded-xl transition-all duration-200 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
+                                                        activeCategory === item.id ? "bg-[#4B0082]/5 dark:bg-[#4B0082]/10 border-l-4 border-[#4B0082]" : "border-l-4 border-transparent"
+                                                    }`}
+                                                >
+                                                    <item.icon className={`h-4 w-4 mt-0.5 ${activeCategory === item.id ? "text-[#4B0082]" : "text-gray-400"}`} />
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className={`text-xs font-bold truncate ${activeCategory === item.id ? "text-[#4B0082]" : "text-gray-700 dark:text-gray-300"}`}>
+                                                            {item.label}
+                                                        </div>
+                                                        <div className="text-[10px] text-gray-500 line-clamp-1 mt-0.5">{item.description}</div>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
+                    </aside>
 
-                {hasPreferences && (
-                    <Button
-                        variant={applyPreferences ? "destructive" : "default"}
-                        onClick={() => setApplyPreferences(!applyPreferences)}
-                        className={`flex items-center gap-2 ${!applyPreferences ? "bg-[#4B0082] hover:bg-[#3b0066]" : ""}`}
-                    >
-                        {applyPreferences ? (
-                            <>
-                                <SlidersHorizontal className="h-4 w-4" />
-                                Remove Preferences
-                            </>
+                    {/* Main Content */}
+                    <div className="flex-1 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                {menuGroups.flatMap(g => g.items).find(i => i.id === activeCategory)?.label || "Discover Matches"}
+                            </h2>
+                            {hasPreferences && (
+                                <Button
+                                    variant={applyPreferences ? "destructive" : "default"}
+                                    onClick={() => setApplyPreferences(!applyPreferences)}
+                                    size="sm"
+                                    className="flex items-center gap-2"
+                                >
+                                    {applyPreferences ? <SlidersHorizontal className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
+                                    {applyPreferences ? "Clear Preferences" : "Applied Preferences"}
+                                </Button>
+                            )}
+                        </div>                        {isProfileIncomplete ? (
+                            <Card className="border-dashed border-2 p-12 text-center bg-white dark:bg-gray-800">
+                                <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <User className="h-10 w-10 text-amber-600" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Complete Your Profile</h3>
+                                <p className="text-gray-500 mt-2 max-w-md mx-auto">To find matches, we need to know your gender and basic details. Please complete your personal information first.</p>
+                                <Button 
+                                    onClick={() => window.location.href = '/dashboard/profile/edit'} 
+                                    className="mt-8 bg-[#4B0082] hover:bg-[#380062] rounded-xl px-8"
+                                >
+                                    Update Profile
+                                </Button>
+                            </Card>
+                        ) : filteredProfiles.length === 0 ? (
+                            <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-3xl border border-dashed border-gray-300 dark:border-gray-700">
+                                <User className="h-16 w-16 text-gray-400 mx-auto mb-4 opacity-50" />
+                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">No Profiles Found</h3>
+                                <p className="text-gray-500 mt-2">Try adjusting your filters or checking back later!</p>
+                            </div>
                         ) : (
-                            <>
-                                <Filter className="h-4 w-4" />
-                                Apply Preferences
-                            </>
+                            <div className="space-y-6">
+                                {filteredProfiles.map((profile, index) => (
+                                    <HorizontalProfileCard key={profile.user_id} profile={profile} index={index} />
+                                ))}
+                            </div>
                         )}
-                    </Button>
-                )}
-            </div>
 
-            {/* Non-parent: all profiles in one grid */}
-            {!parentViewer?.isParent && (
-                profiles.length === 0 ? (
-                    <div className="text-center py-20 bg-white/50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700">
-                        <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">No Profiles Found</h3>
-                        <p className="text-gray-500 mt-2">Check back later for new matches!</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {profiles.map((profile, index) => (
-                            <ProfileCardWrapper key={profile.user_id} profile={profile} index={index} />
-                        ))}
-                    </div>
-                )
-            )}
-
-            {/* Parent view: sectioned layout */}
-            {parentViewer?.isParent && (() => {
+                        {/* Special sectioned view for Parents */}
+                        {parentViewer?.isParent && !isProfileIncomplete && filteredProfiles.length > 0 && (() => {
                 const unselected = profiles.filter(p => !p.isSelected)
                 // Selected but child hasn't liked yet
                 const onlySelected = profiles.filter(p => p.isSelected && !p.childLiked)
@@ -674,8 +987,8 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                     <p className="text-gray-500 text-sm">All available profiles have been selected for your child.</p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                    {unselected.map((profile, index) => <ProfileCardWrapper key={profile.user_id} profile={profile} index={index} />)}
+                                <div className="space-y-6">
+                                    {unselected.map((profile, index) => <HorizontalProfileCard key={profile.user_id} profile={profile} index={index} />)}
                                 </div>
                             )}
                         </div>
@@ -687,8 +1000,8 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                     <CheckCircle2 className="h-5 w-5 text-green-500" /> Selected Profiles
                                     <span className="text-sm font-normal text-gray-500">({onlySelected.length})</span>
                                 </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                    {onlySelected.map((profile, index) => <ProfileCardWrapper key={profile.user_id} profile={profile} index={index} />)}
+                                <div className="space-y-6">
+                                    {onlySelected.map((profile, index) => <HorizontalProfileCard key={profile.user_id} profile={profile} index={index} />)}
                                 </div>
                             </div>
                         )}
@@ -700,11 +1013,11 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                     <Heart className="h-5 w-5 text-rose-500" /> Your Child Showed Interest
                                     <span className="text-sm font-normal text-gray-500">({childLikedOnly.length})</span>
                                 </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div className="space-y-6">
                                     {childLikedOnly.map((profile, index) => (
                                         <div key={profile.user_id} className="flex flex-col rounded-2xl overflow-hidden border border-rose-200 dark:border-rose-800 shadow-sm bg-white dark:bg-gray-800">
                                             <div className="relative">
-                                                <ProfileCardWrapper profile={profile} index={index} />
+                                                <HorizontalProfileCard profile={profile} index={index} />
                                             </div>
                                             <div className="px-4 pb-4">
                                                 <ContactRow profile={profile} />
@@ -729,7 +1042,10 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         )}
                     </div>
                 )
-            })()}
+                        })()}
+                    </div>
+                </div>
+            </div>
 
 
             {/* Profile Detail Dialog */}

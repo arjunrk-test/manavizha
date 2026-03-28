@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Menu, X } from "lucide-react"
+import { Menu, X, ShieldCheck } from "lucide-react"
 import { useState, useEffect } from "react"
 import { AdminAuthDialog } from "@/components/admin-auth-dialog"
 import Image from "next/image"
@@ -58,6 +58,20 @@ export function AdminNavbar() {
           </motion.div>
 
           <div className="hidden md:flex items-center gap-8">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.35 }}
+            >
+              <Button
+                variant="ghost"
+                className="text-gray-600 dark:text-gray-300 hover:text-[#4B0082] font-semibold flex items-center gap-2"
+                onClick={() => window.location.href = "/admin/verification"}
+              >
+                <ShieldCheck className="h-4 w-4" />
+                Verification Queue
+              </Button>
+            </motion.div>
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}

@@ -83,13 +83,20 @@ export default function ParentDashboardPage() {
 
             {/* Header with Logout - Sticky */}
             <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
-                <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <span className="bg-[#4B0082] text-white text-xs px-2 py-1 rounded-full uppercase tracking-widest">{parentRecord?.role}</span>
-                            Parent Dashboard
-                        </h1>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Viewing profiles on behalf of your child</p>
+                <div className="max-w-7xl mx-auto px-4 py-1.5 flex items-center justify-between">
+                    <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
+                                Manavizha
+                            </h1>
+                            <span className="bg-[#4B0082] text-white text-[8px] px-1.5 py-0.5 rounded-full uppercase tracking-tighter">
+                                {parentRecord?.role}
+                            </span>
+                        </div>
+                        <p className="text-[10px] font-medium text-[#4B0082] dark:text-[#A855F7] mt-0.5">
+                            find your perfect partner
+                        </p>
+                        <span className="text-[9px] uppercase tracking-wider text-gray-500 mt-0.5">• Parent Dashboard</span>
                     </div>
                     <div className="flex items-center gap-3">
                         <Button
