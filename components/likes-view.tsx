@@ -4,9 +4,10 @@ import { useEffect, useState } from "react"
 import { Heart, User, MapPin, Briefcase, Sparkles, HeartHandshake, X, GraduationCap, Star, Phone, MessageCircle, Coffee, ChevronLeft, ChevronRight } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
+import { MessageDialog } from "@/components/message-dialog"
 
 interface LikesViewProps {
     userId: string
@@ -40,6 +41,11 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
     const [mutualFullData, setMutualFullData] = useState<any>(null)
     const [modalPhotoIndex, setModalPhotoIndex] = useState(0)
     const [isFetchingFull, setIsFetchingFull] = useState(false)
+    const [isPremium, setIsPremium] = useState(false)
+
+    // Messaging states
+    const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false)
+    const [messageTarget, setMessageTarget] = useState<{ id: string, name: string } | null>(null)
 
     const nextModalPhoto = (e: React.MouseEvent, maxPhotos: number) => {
         e.stopPropagation()
@@ -133,6 +139,13 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
 
             setILikedIds(myLikedIds)
             setLikedMeIds(theyLikedIds)
+
+            // Fetch premium status
+            const settingsRes = await fetch(`/api/settings?userId=${userId}`)
+            if (settingsRes.ok) {
+                const settingsData = await settingsRes.json()
+                setIsPremium(settingsData.is_premium || true) // ALLOW FOR NOW
+            }
 
             const allIds = Array.from(new Set([...myLikedIds, ...theyLikedIds]))
             if (allIds.length === 0) {
@@ -339,13 +352,26 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                         </div>
                         <div className="pt-3 mt-2 border-t border-gray-100 dark:border-gray-800" onClick={e => e.stopPropagation()}>
                             {isMutual ? (
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); setSelectedProfile(profile) }}
-                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold bg-green-50 text-green-600 hover:bg-green-500 hover:text-white border border-green-200 transition-all shadow-sm"
-                                >
-                                    <Sparkles className="h-3.5 w-3.5" />
-                                    View Full Details
-                                </button>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setSelectedProfile(profile) }}
+                                        className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[10px] font-semibold bg-green-50 text-green-600 hover:bg-green-500 hover:text-white border border-green-200 transition-all shadow-sm"
+                                    >
+                                        <Sparkles className="h-3.5 w-3.5" />
+                                        Full Details
+                                    </button>
+                                    <button
+                                        onClick={(e) => { 
+                                            e.stopPropagation(); 
+                                            setMessageTarget({ id: profile.user_id, name: profile.name });
+                                            setIsMessageDialogOpen(true);
+                                        }}
+                                        className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[10px] font-semibold bg-[#4B0082]/10 text-[#4B0082] hover:bg-[#4B0082] hover:text-white border border-[#4B0082]/20 transition-all shadow-sm"
+                                    >
+                                        <MessageCircle className="h-3.5 w-3.5" />
+                                        Message
+                                    </button>
+                                </div>
                             ) : profile.iLiked ? (
                                 <button
                                     onClick={() => handleUnlike(profile.user_id)}
@@ -397,9 +423,11 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                     >
                         <span className={activeTab === tab.key ? (tab.key === "mutual" ? "text-green-600" : tab.key === "liked" ? "text-[#4B0082]" : "text-[#FF1493]") : ""}>{tab.icon}</span>
                         {tab.label}
-                        <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === tab.key ? "bg-[#4B0082] text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"}`}>
-                            {tab.ids.length}
-                        </span>
+                        {tab.ids.length > 0 && (
+                            <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === tab.key ? "bg-[#4B0082] text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"}`}>
+                                {tab.ids.length}
+                            </span>
+                        )}
                     </button>
                 ))
                 }
@@ -507,7 +535,9 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                                                             ))}
                                                         </div>
                                                     </>
-                                                )}
+                                                ) : photoArr.length === 1 ? (
+                                                    null
+                                                ) : null}
                                             </>
                                         ) : (
 
@@ -781,6 +811,17 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                     })()}
                 </DialogContent>
             </Dialog>
+
+            {messageTarget && (
+                <MessageDialog
+                    isOpen={isMessageDialogOpen}
+                    onOpenChange={setIsMessageDialogOpen}
+                    receiverId={messageTarget.id}
+                    receiverName={messageTarget.name}
+                    senderId={userId}
+                    isPremium={isPremium}
+                />
+            )}
         </div >
     )
 }

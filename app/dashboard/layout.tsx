@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
-import { LogOut, ArrowLeft, Edit, Settings } from "lucide-react"
+import { LogOut, ArrowLeft, Edit, Settings, MessageSquare } from "lucide-react"
 import { motion } from "framer-motion"
 
 export default function DashboardLayout({
@@ -16,6 +16,7 @@ export default function DashboardLayout({
   const pathname = usePathname()
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     const checkUser = async () => {
@@ -73,6 +74,35 @@ export default function DashboardLayout({
     checkUser()
   }, [router])
 
+  useEffect(() => {
+    if (!user?.id) return
+
+    const fetchUnreadCount = async () => {
+      const { count, error } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('receiver_id', user.id)
+        .eq('is_read', false)
+      
+      if (!error) setUnreadCount(count || 0)
+    }
+
+    fetchUnreadCount()
+
+    const channel = supabase
+      .channel(`unread-messages-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages', filter: `receiver_id=eq.${user.id}` },
+        () => { fetchUnreadCount() }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user?.id])
+
   const handleLogout = async () => {
     setIsLoading(true)
     await supabase.auth.signOut()
@@ -87,6 +117,7 @@ export default function DashboardLayout({
     if (pathname.includes("/preferences")) return "Partner Preferences"
     if (pathname.includes("/likes")) return "My Likes"
     if (pathname.includes("/horoscope")) return "Horoscope Generator"
+    if (pathname.includes("/messages")) return "Messages"
     return ""
   }
 
@@ -175,6 +206,20 @@ export default function DashboardLayout({
               <Edit className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Update Profile</span>
               <span className="sm:hidden text-[10px]">Update</span>
+            </Button>
+            <Button 
+                onClick={() => router.push("/dashboard/messages")} 
+                variant="outline" 
+                size="icon" 
+                className="h-8 w-8 border-[#4B0082]/20 hover:bg-[#4B0082]/10 text-[#4B0082] dark:text-purple-400 group relative"
+                title="Messages"
+            >
+              <MessageSquare className="h-4 w-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white dark:ring-gray-800">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
             </Button>
             <Button 
                 onClick={() => router.push("/dashboard/settings")} 

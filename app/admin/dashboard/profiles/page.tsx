@@ -5,11 +5,25 @@ import { AnimatedBackground } from "@/components/animated-background"
 import { supabase } from "@/lib/supabase"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState, useMemo } from "react"
-import { ArrowLeft, Users, User, UserCheck, Search, X, HeartHandshake, AlertTriangle } from "lucide-react"
+import { updateUserPremiumSubscription } from "@/app/actions/admin"
+import { ArrowLeft, Users, User, UserCheck, Search, X, HeartHandshake, AlertTriangle, Crown, Star, Gem, Shield, MoreVertical } from "lucide-react"
 import { Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -62,6 +76,21 @@ function FilterSelect({ value, onChange, options, placeholder }: { value: string
     )
 }
 
+function getPremiumBadge(isPremium: boolean, plan: string | null, expiresAt: string | null = null) {
+    if (!isPremium) return <span className="bg-gray-100 dark:bg-gray-800 text-gray-500 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap">Free</span>
+    
+    const isExpired = expiresAt && new Date(expiresAt) < new Date()
+    
+    if (isExpired) return <span className="bg-red-500 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 w-fit shadow-sm"><AlertTriangle className="h-3 w-3"/> Expired</span>
+
+    if (plan === 'till_you_marry') return <span className="bg-gradient-to-r from-[#FF1493] to-[#FF69B4] text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 w-fit shadow-md shadow-pink-200 dark:shadow-none"><Crown className="h-3 w-3"/> Lifetime</span>
+    if (plan === 'elite') return <span className="bg-gradient-to-r from-[#4B0082] to-[#8A2BE2] text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 w-fit shadow-md shadow-purple-200 dark:shadow-none"><Gem className="h-3 w-3"/> Elite</span>
+    if (plan === 'prime_gold') return <span className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 w-fit shadow-md shadow-amber-200 dark:shadow-none"><Star className="h-3 w-3"/> Gold</span>
+    if (plan === 'prime' || plan === '3_months') return <span className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 w-fit shadow-md shadow-blue-200 dark:shadow-none"><Shield className="h-3 w-3"/> Prime</span>
+    
+    return <span className="bg-[#4B0082] text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 w-fit shadow-md shadow-purple-200 dark:shadow-none"><Crown className="h-3 w-3"/> Premium</span>
+}
+
 function AdminProfilesContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -71,6 +100,11 @@ function AdminProfilesContent() {
     const [allProfiles, setAllProfiles] = useState<any[]>([])
     const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS)
     const [selectedProfileForMarriage, setSelectedProfileForMarriage] = useState<string | null>(null)
+    const [isUpdatingPremium, setIsUpdatingPremium] = useState<string | null>(null)
+    const [isManageSubOpen, setIsManageSubOpen] = useState(false)
+    const [manageSubUserId, setManageSubUserId] = useState<string | null>(null)
+    const [subPlan, setSubPlan] = useState<string>('prime')
+    const [subDuration, setSubDuration] = useState<string>('3')
 
     useEffect(() => {
         const fetchData = async () => {
@@ -87,16 +121,18 @@ function AdminProfilesContent() {
             const userIds = personalData.map(p => p.user_id)
             if (userIds.length === 0) { setAllProfiles([]); setIsLoading(false); return }
 
-            // 3. Contact, referral, profession — parallel
+            // 3. Contact, referral, profession, settings — parallel
             const [
                 { data: contactData },
                 { data: referralData },
                 { data: partnersData },
+                { data: settingsData },
                 empRes, busRes, stuRes,
             ] = await Promise.all([
                 supabase.from("contact_details").select("user_id, phone").in("user_id", userIds),
                 supabase.from("referral_details").select("user_id, referral_partner_id").in("user_id", userIds),
                 supabase.from("referral_partners").select("partner_id, name"),
+                supabase.from("user_settings").select("user_id, is_premium, premium_plan, premium_expires_at").in("user_id", userIds),
                 supabase.from("profession_employee").select("user_id, sector, company, designation").in("user_id", userIds),
                 supabase.from("profession_business").select("user_id, business_name").in("user_id", userIds),
                 supabase.from("profession_student").select("user_id, course").in("user_id", userIds),
@@ -111,6 +147,9 @@ function AdminProfilesContent() {
             const partnerNameMap: Record<string, string> = {}
             if (partnersData) partnersData.forEach(p => { if (p.partner_id) partnerNameMap[p.partner_id] = p.name })
 
+            const settingsMap: Record<string, { is_premium: boolean, premium_plan: string | null, premium_expires_at: string | null }> = {}
+            if (settingsData) settingsData.forEach(s => { settingsMap[s.user_id] = { is_premium: s.is_premium, premium_plan: s.premium_plan, premium_expires_at: s.premium_expires_at } })
+
             const profMap: Record<string, string> = {}
             if (empRes.data) empRes.data.forEach((e: any) => { profMap[e.user_id] = e.designation || e.company || e.sector || "Employee" })
             if (busRes.data) busRes.data.forEach((b: any) => { profMap[b.user_id] = b.business_name || "Business" })
@@ -124,6 +163,9 @@ function AdminProfilesContent() {
                     profession: profMap[p.user_id] || "Not Specified",
                     referralPartnerId: partnerId,
                     partnerName: partnerId ? (partnerNameMap[partnerId] || "Unknown Partner") : "None",
+                    isPremium: settingsMap[p.user_id]?.is_premium || false,
+                    premiumPlan: settingsMap[p.user_id]?.premium_plan || null,
+                    premiumExpiresAt: settingsMap[p.user_id]?.premium_expires_at || null,
                 }
             })
 
@@ -185,6 +227,46 @@ function AdminProfilesContent() {
         } else {
             alert("Failed to update status. Please try again.")
         }
+    }
+
+    const handleSaveSubscription = async () => {
+        if (!manageSubUserId) return
+        
+        setIsUpdatingPremium(manageSubUserId)
+        setIsManageSubOpen(false)
+        
+        const isPremium = subPlan !== 'none'
+        const plan = isPremium ? subPlan : null
+        
+        let expiresAt: string | null = null
+        if (isPremium && subDuration !== 'lifetime') {
+            const date = new Date()
+            date.setMonth(date.getMonth() + parseInt(subDuration))
+            expiresAt = date.toISOString()
+        }
+        
+        const { success, error } = await updateUserPremiumSubscription({
+            userId: manageSubUserId,
+            isPremium,
+            plan,
+            expiresAt
+        })
+        
+        if (success) {
+            setAllProfiles(prev => prev.map(p => p.user_id === manageSubUserId ? { ...p, isPremium, premiumPlan: plan, premiumExpiresAt: expiresAt } : p))
+        } else {
+            console.error("Subscription update error:", error)
+            alert("Failed to update premium status. " + (error || ""))
+        }
+        setIsUpdatingPremium(null)
+        setManageSubUserId(null)
+    }
+
+    const openManageSubscription = (userId: string, currentPlan: string | null) => {
+        setManageSubUserId(userId)
+        setSubPlan(currentPlan || 'prime')
+        setSubDuration('3')
+        setIsManageSubOpen(true)
     }
 
     if (isLoading) return (
@@ -311,6 +393,7 @@ function AdminProfilesContent() {
                                                 <TableHead>Profession</TableHead>
                                                 <TableHead>Referral Partner</TableHead>
                                                 <TableHead>Referral Code</TableHead>
+                                                <TableHead>Subscription</TableHead>
                                                 <TableHead className="text-right">Actions</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -334,13 +417,21 @@ function AdminProfilesContent() {
                                                         <TableCell>{profile.profession}</TableCell>
                                                         <TableCell>{profile.partnerName}</TableCell>
                                                         <TableCell className="text-gray-500 font-mono text-sm">{profile.referralPartnerId || "N/A"}</TableCell>
-                                                        <TableCell className="text-right">
+                                                        <TableCell>{getPremiumBadge(profile.isPremium, profile.premiumPlan, profile.premiumExpiresAt)}</TableCell>
+                                                        <TableCell className="text-right flex items-center justify-end gap-2">
                                                             <button
                                                                 onClick={(e) => handleMarkAsMarriedClick(e, profile.user_id)}
                                                                 className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md border-2 border-[#FF1493]/40 text-[#FF1493] bg-[#FF1493]/10 hover:bg-[#FF1493]/20 hover:border-[#FF1493]/60 transition-colors cursor-pointer"
                                                             >
                                                                 <HeartHandshake className="h-4 w-4" />
                                                                 Mark as Married
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); openManageSubscription(profile.user_id, profile.premiumPlan); }}
+                                                                className="inline-flex items-center justify-center p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors border border-gray-200 dark:border-gray-700"
+                                                                title="Manage Subscription"
+                                                            >
+                                                                {isUpdatingPremium === profile.user_id ? <div className="h-5 w-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"/> : <Star className="h-5 w-5 text-amber-500" />}
                                                             </button>
                                                         </TableCell>
                                                     </TableRow>
@@ -362,12 +453,13 @@ function AdminProfilesContent() {
                                                 <TableHead>Profession</TableHead>
                                                 <TableHead>Referral Partner</TableHead>
                                                 <TableHead>Referral Code</TableHead>
+                                                <TableHead>Subscription</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {marriedProfiles.length === 0 ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                                                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                                                         {hasFilters ? "No married profiles match your filters." : "No married profiles found."}
                                                     </TableCell>
                                                 </TableRow>
@@ -387,6 +479,7 @@ function AdminProfilesContent() {
                                                         <TableCell>{profile.profession}</TableCell>
                                                         <TableCell>{profile.partnerName}</TableCell>
                                                         <TableCell className="text-gray-500 font-mono text-sm">{profile.referralPartnerId || "N/A"}</TableCell>
+                                                        <TableCell>{getPremiumBadge(profile.isPremium, profile.premiumPlan, profile.premiumExpiresAt)}</TableCell>
                                                     </TableRow>
                                                 ))
                                             )}
@@ -430,6 +523,61 @@ function AdminProfilesContent() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Manage Subscription Dialog */}
+            <Dialog open={isManageSubOpen} onOpenChange={setIsManageSubOpen}>
+                <DialogContent className="sm:max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl rounded-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <Crown className="h-5 w-5 text-[#4B0082] dark:text-purple-400"/>
+                            Manage Subscription
+                        </DialogTitle>
+                    </DialogHeader>
+                    
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Plan Tier</label>
+                            <select 
+                                value={subPlan}
+                                onChange={(e) => setSubPlan(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#4B0082] focus:border-transparent transition-all"
+                            >
+                                <option value="none">Free (Revoke Premium)</option>
+                                <option value="prime">Prime (₹2,000)</option>
+                                <option value="prime_gold">Prime Gold (₹6,000)</option>
+                                <option value="elite">Elite (₹10,000)</option>
+                                <option value="till_you_marry">Till You Marry (₹10,000)</option>
+                            </select>
+                        </div>
+
+                        {subPlan !== 'none' && subPlan !== 'till_you_marry' && (
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Duration Limit</label>
+                                <select 
+                                    value={subDuration}
+                                    onChange={(e) => setSubDuration(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#4B0082] focus:border-transparent transition-all"
+                                >
+                                    <option value="1">1 Month</option>
+                                    <option value="3">3 Months</option>
+                                    <option value="6">6 Months</option>
+                                    <option value="12">1 Year</option>
+                                    <option value="lifetime">Lifetime Access</option>
+                                </select>
+                            </div>
+                        )}
+                    </div>
+                    
+                    <DialogFooter className="flex items-center gap-2 sm:justify-between border-t border-gray-100 dark:border-gray-800 pt-4">
+                        <Button variant="ghost" onClick={() => setIsManageSubOpen(false)} className="rounded-lg">
+                            Cancel
+                        </Button>
+                        <Button onClick={handleSaveSubscription} className="bg-gradient-to-r from-[#4B0082] to-[#FF1493] hover:opacity-90 text-white rounded-lg">
+                            Save Changes
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

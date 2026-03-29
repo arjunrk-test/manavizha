@@ -7,13 +7,14 @@ import {
     ArrowLeft, MapPin, Briefcase, User, GraduationCap, 
     Heart, Star, CheckCircle2, Phone, MessageCircle,
     Calendar, Coffee, Eye, Info, Users, Shield, Sparkles,
-    Search, Target, Award, HeartHandshake, MoreVertical, UserX, UserMinus, Crown
+    Search, Target, Award, HeartHandshake, MoreVertical, UserX, UserMinus, Crown, Gem
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
+import { MessageDialog } from "@/components/message-dialog"
 
 export default function ProfileViewPage() {
     const router = useRouter()
@@ -33,6 +34,12 @@ export default function ProfileViewPage() {
     const [isShortlistProcessing, setIsShortlistProcessing] = useState(false)
     const [viewerProfile, setViewerProfile] = useState<any>(null)
     const [matchScore, setMatchScore] = useState<{ matches: number, total: number }>({ matches: 18, total: 21 })
+    
+    // Premium & Messaging states
+    const [isViewerPremium, setIsViewerPremium] = useState(false)
+    const [isMutual, setIsMutual] = useState(false)
+    const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false)
+    const [isProcessing, setIsProcessing] = useState(false)
 
     useEffect(() => {
         const getSession = async () => {
@@ -61,6 +68,7 @@ export default function ProfileViewPage() {
                     { data: prefs },
                     { data: photosRow },
                     { data: userRow },
+                    { data: settingsRow },
                 ] = await Promise.all([
                     supabase.from("personal_details").select("*").eq("user_id", targetUserId).single(),
                     supabase.from("contact_details").select("*").eq("user_id", targetUserId).maybeSingle(),
@@ -75,6 +83,7 @@ export default function ProfileViewPage() {
                     supabase.from("partner_preferences").select("*").eq("user_id", targetUserId).maybeSingle(),
                     supabase.from("photos").select("*").eq("user_id", targetUserId).maybeSingle(),
                     supabase.from("users").select("name, email, phone").eq("id", targetUserId).single(),
+                    supabase.from("user_settings").select("*").eq("user_id", targetUserId).maybeSingle(),
                 ])
 
                 if (!personal) {
@@ -102,25 +111,33 @@ export default function ProfileViewPage() {
                     interests: int || {},
                     social: soc || {},
                     partner_preferences: prefs || null,
+                    isPremium: settingsRow?.is_premium || false,
+                    premiumPlan: settingsRow?.premium_plan || null,
                 })
                 setPhotos(allPhotos)
 
                 // Check initial interaction status & fetch viewer profile for matching
                 if (currentUserId) {
-                    const [likesRes, shortRes, viewerRes] = await Promise.all([
+                    const [likesRes, shortRes, viewerRes, settingsRes] = await Promise.all([
                         fetch(`/api/likes?userId=${currentUserId}`),
                         fetch(`/api/shortlists?userId=${currentUserId}`),
-                        supabase.from("personal_details").select("*").eq("user_id", currentUserId).maybeSingle()
+                        supabase.from("personal_details").select("*").eq("user_id", currentUserId).maybeSingle(),
+                        supabase.from("user_settings").select("is_premium, premium_plan").eq("user_id", currentUserId).maybeSingle()
                     ])
                     
                     if (likesRes.ok) {
                         const likesData = await likesRes.json()
                         setIsLiked(likesData.iLikedIds?.includes(targetUserId))
+                        setIsMutual(likesData.iLikedIds?.includes(targetUserId) && likesData.likedMeIds?.includes(targetUserId))
                     }
                     
                     if (shortRes.ok) {
                         const shortData = await shortRes.json()
                         setIsShortlisted(shortData.shortlistedIds?.includes(targetUserId))
+                    }
+
+                    if (settingsRes.data) {
+                        setIsViewerPremium(settingsRes.data.is_premium)
                     }
 
                     if (viewerRes.data) {
@@ -282,9 +299,14 @@ export default function ProfileViewPage() {
     }
 
     const handleSendMessage = () => {
-        toast.error("Premium Member Feature", {
-            description: "Upgrade your account to send direct personalized messages to this profile."
-        })
+        if (isViewerPremium || isMutual) {
+            // Open message dialog logic
+            setIsMessageDialogOpen(true)
+        } else {
+            toast.error("Premium Feature or Mutual Match required", {
+                description: "Upgrade to Premium to message anyone directly, or wait for a mutual interest match."
+            })
+        }
     }
 
     const handleIgnore = async () => {
@@ -381,9 +403,35 @@ export default function ProfileViewPage() {
                             <h1 className="text-4xl sm:text-6xl font-black text-gray-900 dark:text-white tracking-tight">
                                 {profile.name || profile.userName || "Unknown"}
                             </h1>
-                            <div className="h-6 px-3 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold flex items-center tracking-wider uppercase">
+                            <div className="h-6 px-3 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold flex items-center tracking-wider uppercase shadow-sm">
                                 <Shield className="h-3 w-3 mr-1.5" /> ID Verified
                             </div>
+                            
+                            {/* Target Profile Premium Badge */}
+                            {profile.isPremium && (
+                                <div className="flex gap-2">
+                                    {profile.premiumPlan === 'till_you_marry' && (
+                                        <div className="h-6 px-3 rounded-full bg-gradient-to-r from-[#FF1493] to-[#FF69B4] text-white text-[10px] font-bold flex items-center tracking-wider uppercase shadow-md shadow-pink-200">
+                                            <Crown className="h-3 w-3 mr-1.5" /> Lifetime Member
+                                        </div>
+                                    )}
+                                    {profile.premiumPlan === 'elite' && (
+                                        <div className="h-6 px-3 rounded-full bg-gradient-to-r from-[#4B0082] to-[#8A2BE2] text-white text-[10px] font-bold flex items-center tracking-wider uppercase shadow-md shadow-purple-200">
+                                            <Gem className="h-3 w-3 mr-1.5" /> Elite Member
+                                        </div>
+                                    )}
+                                    {profile.premiumPlan === 'prime_gold' && (
+                                        <div className="h-6 px-3 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[10px] font-bold flex items-center tracking-wider uppercase shadow-md shadow-amber-200">
+                                            <Star className="h-3 w-3 mr-1.5" /> Gold Member
+                                        </div>
+                                    )}
+                                    {(profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') && (
+                                        <div className="h-6 px-3 rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-[10px] font-bold flex items-center tracking-wider uppercase shadow-md shadow-blue-200">
+                                            <Shield className="h-3 w-3 mr-1.5" /> Prime Member
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                         <p className="text-lg md:text-xl font-medium text-gray-600 dark:text-gray-400">
                             {detailedAge} • {detailedHeight} • {profile.marital_status} • Created by {profile.created_by || "Self"}
@@ -649,6 +697,15 @@ export default function ProfileViewPage() {
                 </div>
             </div>
 
+            {/* Message Dialog */}
+            <MessageDialog
+                isOpen={isMessageDialogOpen}
+                onOpenChange={setIsMessageDialogOpen}
+                receiverId={targetUserId}
+                receiverName={profile.name || profile.userName || "this member"}
+                senderId={currentUserId || ""}
+                isPremium={isViewerPremium}
+            />
         </div>
     )
 }

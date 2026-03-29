@@ -25,19 +25,15 @@ import {
   CalendarDays,
   Search,
   ShieldCheck,
-  Star
+  Star,
+  Crown,
+  Gem,
+  Shield
 } from "lucide-react"
 import { ProfileCarousel } from "./profile-carousel"
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+  MarriedConfirmationDialog
+} from "@/components/married-confirmation-dialog"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -64,6 +60,9 @@ interface ProfileData {
   maritalStatus?: string
   photo_verified?: boolean
   photos?: string[]
+  isPremium?: boolean
+  premiumPlan?: string | null
+  premiumExpiresAt?: string | null
 }
 
 export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, onNavigateToBrowse, onNavigateToParents, onNavigateToSelections, onNavigateToPartnerPreferences, onNavigateToLikes, onNavigateToMutualMatches, onNavigateToILiked, onNavigateToLikedMe, onProgressChange }: UserLandingPageProps) {
@@ -102,7 +101,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           { data: horoscope },
           { data: interests },
           { data: social },
-          { data: photos }
+          { data: photos },
+          { data: settings }
         ] = await Promise.all([
           supabase.from("personal_details").select("completion_percentage, name, date_of_birth, age, sex, height, weight, skin_color, body_type, marital_status, about, food_preference, languages, photo_verified").eq("user_id", userId).maybeSingle(),
           supabase.from("contact_details").select("completion_percentage, phone, whatsapp_number, permanent_address_line1, permanent_pincode, permanent_area, permanent_taluk, permanent_district, permanent_division, permanent_region, permanent_state, permanent_country, current_address_line1, current_pincode, current_area, current_taluk, current_district, current_division, current_region, current_state, current_country").eq("user_id", userId).maybeSingle(),
@@ -114,7 +114,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           supabase.from("horoscope_details").select("completion_percentage, jaadhagam_url, time_of_birth, place_of_birth, zodiac_sign, star, lagnam, dhosham").eq("user_id", userId).maybeSingle(),
           supabase.from("interests").select("hobbies, interests").eq("user_id", userId).maybeSingle(),
           supabase.from("social_habits").select("smoking, drinking, parties, pubs").eq("user_id", userId).maybeSingle(),
-          supabase.from("photos").select("user_photos, family_photo, aadhar_front, aadhar_back").eq("user_id", userId).maybeSingle()
+          supabase.from("photos").select("user_photos, family_photo, aadhar_front, aadhar_back").eq("user_id", userId).maybeSingle(),
+          supabase.from("user_settings").select("is_premium, premium_plan, premium_expires_at").eq("user_id", userId).maybeSingle()
         ])
 
         const stepProgresses: number[] = []
@@ -336,6 +337,12 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             profileData.photos = userPhotoUrls.filter(Boolean)
         }
 
+        if (settings) {
+            profileData.isPremium = settings.is_premium
+            profileData.premiumPlan = settings.premium_plan
+            profileData.premiumExpiresAt = settings.premium_expires_at
+        }
+        
         if (Object.keys(profileData).length > 0) {
           setProfile(profileData)
         }
@@ -499,6 +506,16 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
       if (error) throw error
 
+      // Also deactivate the profile permanently (10 years)
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          updates: { is_deactivated: true, deactivated_until: new Date(Date.now() + 365 * 10 * 24 * 60 * 60 * 1000).toISOString() }
+        })
+      })
+
       setProfile(prev => prev ? { ...prev, maritalStatus: "Married" } : { maritalStatus: "Married" })
       setShowMarriedConfirmDialog(false)
     } catch (error) {
@@ -509,7 +526,22 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
   const isMarried = profile?.maritalStatus === "Married"
 
+  const getPremiumBadge = () => {
+    if (!profile?.isPremium) return null
+    
+    const isExpired = profile.premiumExpiresAt && new Date(profile.premiumExpiresAt) < new Date()
+    if (isExpired) return null
+    
+    if (profile.premiumPlan === 'till_you_marry') return <span className="bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] md:text-sm uppercase font-bold px-2.5 md:px-3 py-1 rounded-md flex items-center gap-1.5 shadow-lg shadow-pink-500/20 whitespace-nowrap w-fit"><Crown className="h-3 w-3 md:h-4 md:w-4"/> Lifetime</span>
+    if (profile.premiumPlan === 'elite') return <span className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-[10px] md:text-sm uppercase font-bold px-2.5 md:px-3 py-1 rounded-md flex items-center gap-1.5 shadow-lg shadow-indigo-500/20 whitespace-nowrap w-fit"><Gem className="h-3 w-3 md:h-4 md:w-4"/> Elite</span>
+    if (profile.premiumPlan === 'prime_gold') return <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] md:text-sm uppercase font-bold px-2.5 md:px-3 py-1 rounded-md flex items-center gap-1.5 shadow-lg shadow-orange-500/20 whitespace-nowrap w-fit"><Star className="h-3 w-3 md:h-4 md:w-4"/> Prime Gold</span>
+    if (profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') return <span className="bg-gradient-to-r from-blue-400 to-cyan-500 text-white text-[10px] md:text-sm uppercase font-bold px-2.5 md:px-3 py-1 rounded-md flex items-center gap-1.5 shadow-lg shadow-blue-500/20 whitespace-nowrap w-fit"><Shield className="h-3 w-3 md:h-4 md:w-4"/> Prime</span>
+    
+    return <span className="bg-gradient-to-r from-[#4B0082] to-[#FF1493] text-white text-[10px] md:text-sm uppercase font-bold px-2.5 md:px-3 py-1 rounded-md flex items-center gap-1.5 shadow-lg shadow-purple-500/20 whitespace-nowrap w-fit"><Crown className="h-3 w-3 md:h-4 md:w-4"/> Premium</span>
+  }
+
   return (
+  <>
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         {/* Left Sidebar - Sticky */}
@@ -669,9 +701,10 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               transition={{ duration: 0.5 }}
               className="p-6 rounded-2xl bg-gradient-to-r from-[#4B0082]/5 via-[#FF1493]/5 to-transparent border border-[#4B0082]/10"
             >
-              <div className="flex items-center gap-2 mb-1">
-                <Sparkles className="h-5 w-5 text-[#4B0082]" />
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+              <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 mb-2">
+                {getPremiumBadge()}
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2 tracking-tight">
+                  {!profile?.isPremium && <Sparkles className="h-5 w-5 text-[#4B0082]" />}
                   Welcome back, {userName}! 👋
                 </h1>
               </div>
@@ -874,7 +907,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
       </main>
     </div>
 
-    {/* Verification Dialog */}
+    </div>
+    
+    {/* Portals / Dialogs Moved to root level for proper viewport centering */}
     <VerificationDialog 
         isOpen={showVerificationDialog} 
         onClose={() => setShowVerificationDialog(false)} 
@@ -882,37 +917,12 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
         existingPhotos={profile?.photos || []}
     />
 
-    {/* Confirmation Dialog */}
-    <AlertDialog open={showMarriedConfirmDialog} onOpenChange={setShowMarriedConfirmDialog}>
-      <AlertDialogContent className="bg-white dark:bg-gray-900 border-2 border-[#FF1493]/30 dark:border-[#FF1493]/60 shadow-2xl">
-        <AlertDialogHeader>
-          <div className="mx-auto w-12 h-12 bg-[#FF1493]/10 dark:bg-[#FF1493]/20 rounded-full flex items-center justify-center mb-4">
-            <AlertTriangle className="h-6 w-6 text-[#FF1493]" />
-          </div>
-          <AlertDialogTitle className="text-center text-xl text-gray-900 dark:text-white">
-            Confirm Marriage Status
-          </AlertDialogTitle>
-          <AlertDialogDescription className="text-center text-gray-600 dark:text-gray-400 mt-2">
-            Are you sure you want to mark your profile as Married? <br /><br />
-            <strong className="text-gray-900 dark:text-gray-200">This action will:</strong>
-            <ul className="list-disc text-left pl-6 mt-2 space-y-1">
-              <li>Remove your profile from the public matching pool.</li>
-              <li>Stop you from receiving new match suggestions.</li>
-              <li>Hide your profile from new searches.</li>
-            </ul>
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter className="sm:justify-center mt-6 gap-3">
-          <AlertDialogCancel className="w-full sm:w-auto mt-0 border-2 border-gray-400 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold">Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleMarkAsMarried}
-            className="w-full sm:w-auto bg-gradient-to-r from-[#FF1493] to-[#4B0082] hover:opacity-90 text-white border-0 font-semibold shadow-lg shadow-[#FF1493]/20"
-          >
-            Yes, Mark as Married
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  </div>
+    <MarriedConfirmationDialog 
+      isOpen={showMarriedConfirmDialog} 
+      onOpenChange={setShowMarriedConfirmDialog} 
+      onConfirm={handleMarkAsMarried} 
+      isLoading={false} 
+    />
+  </>
   )
 }

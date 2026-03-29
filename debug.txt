@@ -6,3 +6,47 @@ PARENT DUMP: [{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e"}]
 [2026-03-28T09:45:58.592Z] USERS DUMP: [{"id":"6b6fa088-9502-4996-b8f4-f3046abf3766","email":"arjun@example.com","name":null},{"id":"888335fb-e0d8-4e14-b840-40c7227f4f24","email":"ashok@akmofilings.in","name":null},{"id":"55189eac-4b2e-459b-ac0e-67596e377d5e","email":"arjunrk.dev@gmail.com","name":"arjun"},{"id":"a3ea316e-af71-4326-b946-99ee4ee0b88a","email":"kaviya@gmail.com","name":"Kaviya Krishnan"},{"id":"a26227be-712c-4e77-b5d6-1ef38ab1e396","email":"a@gmail.com","name":"a"},{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e","email":"saravanan@test.com","name":"Saravanan"},{"id":"c909ac2c-c057-4e74-9b5b-9f5567e5731a","email":"sk@gmail.com","name":"Krishna"},{"id":"300efff4-9986-44f8-beac-8d8f2d1782f7","email":"ks@gmail.com","name":"Krishna"}]
 PARENT DUMP: [{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e"}]
 [2026-03-28T09:45:58.593Z] getAllParentIds SUCCESS: 1 parents
+[2026-03-29T16:25:37.504Z] getAllParentIds called
+[2026-03-29T16:25:37.817Z] USERS DUMP: [{"id":"6b6fa088-9502-4996-b8f4-f3046abf3766","email":"arjun@example.com","name":null},{"id":"888335fb-e0d8-4e14-b840-40c7227f4f24","email":"ashok@akmofilings.in","name":null},{"id":"55189eac-4b2e-459b-ac0e-67596e377d5e","email":"arjunrk.dev@gmail.com","name":"arjun"},{"id":"a3ea316e-af71-4326-b946-99ee4ee0b88a","email":"kaviya@gmail.com","name":"Kaviya Krishnan"},{"id":"a26227be-712c-4e77-b5d6-1ef38ab1e396","email":"a@gmail.com","name":"a"},{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e","email":"saravanan@test.com","name":"Saravanan"},{"id":"c909ac2c-c057-4e74-9b5b-9f5567e5731a","email":"sk@gmail.com","name":"Krishna"},{"id":"300efff4-9986-44f8-beac-8d8f2d1782f7","email":"ks@gmail.com","name":"Krishna"}]
+PARENT DUMP: [{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e"}]
+[2026-03-29T16:25:37.819Z] getAllParentIds SUCCESS: 1 parents
+[2026-03-29T16:25:37.955Z] getAllParentIds called
+[2026-03-29T16:25:38.194Z] USERS DUMP: [{"id":"6b6fa088-9502-4996-b8f4-f3046abf3766","email":"arjun@example.com","name":null},{"id":"888335fb-e0d8-4e14-b840-40c7227f4f24","email":"ashok@akmofilings.in","name":null},{"id":"55189eac-4b2e-459b-ac0e-67596e377d5e","email":"arjunrk.dev@gmail.com","name":"arjun"},{"id":"a3ea316e-af71-4326-b946-99ee4ee0b88a","email":"kaviya@gmail.com","name":"Kaviya Krishnan"},{"id":"a26227be-712c-4e77-b5d6-1ef38ab1e396","email":"a@gmail.com","name":"a"},{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e","email":"saravanan@test.com","name":"Saravanan"},{"id":"c909ac2c-c057-4e74-9b5b-9f5567e5731a","email":"sk@gmail.com","name":"Krishna"},{"id":"300efff4-9986-44f8-beac-8d8f2d1782f7","email":"ks@gmail.com","name":"Krishna"}]
+PARENT DUMP: [{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e"}]
+[2026-03-29T16:25:38.197Z] getAllParentIds SUCCESS: 1 parents
+[2026-03-29T16:25:48.759Z] getAllParentIds called
+[2026-03-29T16:25:49.014Z] USERS DUMP: [{"id":"6b6fa088-9502-4996-b8f4-f3046abf3766","email":"arjun@example.com","name":null},{"id":"888335fb-e0d8-4e14-b840-40c7227f4f24","email":"ashok@akmofilings.in","name":null},{"id":"55189eac-4b2e-459b-ac0e-67596e377d5e","email":"arjunrk.dev@gmail.com","name":"arjun"},{"id":"a3ea316e-af71-4326-b946-99ee4ee0b88a","email":"kaviya@gmail.com","name":"Kaviya Krishnan"},{"id":"a26227be-712c-4e77-b5d6-1ef38ab1e396","email":"a@gmail.com","name":"a"},{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e","email":"saravanan@test.com","name":"Saravanan"},{"id":"c909ac2c-c057-4e74-9b5b-9f5567e5731a","email":"sk@gmail.com","name":"Krishna"},{"id":"300efff4-9986-44f8-beac-8d8f2d1782f7","email":"ks@gmail.com","name":"Krishna"}]
+PARENT DUMP: [{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e"}]
+[2026-03-29T16:25:49.016Z] getAllParentIds SUCCESS: 1 parents
+[2026-03-29T16:25:53.835Z] getAllParentIds called
+[2026-03-29T16:25:54.043Z] USERS DUMP: [{"id":"6b6fa088-9502-4996-b8f4-f3046abf3766","email":"arjun@example.com","name":null},{"id":"888335fb-e0d8-4e14-b840-40c7227f4f24","email":"ashok@akmofilings.in","name":null},{"id":"55189eac-4b2e-459b-ac0e-67596e377d5e","email":"arjunrk.dev@gmail.com","name":"arjun"},{"id":"a3ea316e-af71-4326-b946-99ee4ee0b88a","email":"kaviya@gmail.com","name":"Kaviya Krishnan"},{"id":"a26227be-712c-4e77-b5d6-1ef38ab1e396","email":"a@gmail.com","name":"a"},{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e","email":"saravanan@test.com","name":"Saravanan"},{"id":"c909ac2c-c057-4e74-9b5b-9f5567e5731a","email":"sk@gmail.com","name":"Krishna"},{"id":"300efff4-9986-44f8-beac-8d8f2d1782f7","email":"ks@gmail.com","name":"Krishna"}]
+PARENT DUMP: [{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e"}]
+[2026-03-29T16:25:54.044Z] getAllParentIds SUCCESS: 1 parents
+[2026-03-29T16:25:55.963Z] getAllParentIds called
+[2026-03-29T16:25:56.235Z] USERS DUMP: [{"id":"6b6fa088-9502-4996-b8f4-f3046abf3766","email":"arjun@example.com","name":null},{"id":"888335fb-e0d8-4e14-b840-40c7227f4f24","email":"ashok@akmofilings.in","name":null},{"id":"55189eac-4b2e-459b-ac0e-67596e377d5e","email":"arjunrk.dev@gmail.com","name":"arjun"},{"id":"a3ea316e-af71-4326-b946-99ee4ee0b88a","email":"kaviya@gmail.com","name":"Kaviya Krishnan"},{"id":"a26227be-712c-4e77-b5d6-1ef38ab1e396","email":"a@gmail.com","name":"a"},{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e","email":"saravanan@test.com","name":"Saravanan"},{"id":"c909ac2c-c057-4e74-9b5b-9f5567e5731a","email":"sk@gmail.com","name":"Krishna"},{"id":"300efff4-9986-44f8-beac-8d8f2d1782f7","email":"ks@gmail.com","name":"Krishna"}]
+PARENT DUMP: [{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e"}]
+[2026-03-29T16:25:56.235Z] getAllParentIds SUCCESS: 1 parents
+[2026-03-29T16:26:00.367Z] getAllParentIds called
+[2026-03-29T16:26:00.595Z] USERS DUMP: [{"id":"6b6fa088-9502-4996-b8f4-f3046abf3766","email":"arjun@example.com","name":null},{"id":"888335fb-e0d8-4e14-b840-40c7227f4f24","email":"ashok@akmofilings.in","name":null},{"id":"55189eac-4b2e-459b-ac0e-67596e377d5e","email":"arjunrk.dev@gmail.com","name":"arjun"},{"id":"a3ea316e-af71-4326-b946-99ee4ee0b88a","email":"kaviya@gmail.com","name":"Kaviya Krishnan"},{"id":"a26227be-712c-4e77-b5d6-1ef38ab1e396","email":"a@gmail.com","name":"a"},{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e","email":"saravanan@test.com","name":"Saravanan"},{"id":"c909ac2c-c057-4e74-9b5b-9f5567e5731a","email":"sk@gmail.com","name":"Krishna"},{"id":"300efff4-9986-44f8-beac-8d8f2d1782f7","email":"ks@gmail.com","name":"Krishna"}]
+PARENT DUMP: [{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e"}]
+[2026-03-29T16:26:00.598Z] getAllParentIds SUCCESS: 1 parents
+[2026-03-29T16:26:02.535Z] getAllParentIds called
+[2026-03-29T16:26:02.762Z] USERS DUMP: [{"id":"6b6fa088-9502-4996-b8f4-f3046abf3766","email":"arjun@example.com","name":null},{"id":"888335fb-e0d8-4e14-b840-40c7227f4f24","email":"ashok@akmofilings.in","name":null},{"id":"55189eac-4b2e-459b-ac0e-67596e377d5e","email":"arjunrk.dev@gmail.com","name":"arjun"},{"id":"a3ea316e-af71-4326-b946-99ee4ee0b88a","email":"kaviya@gmail.com","name":"Kaviya Krishnan"},{"id":"a26227be-712c-4e77-b5d6-1ef38ab1e396","email":"a@gmail.com","name":"a"},{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e","email":"saravanan@test.com","name":"Saravanan"},{"id":"c909ac2c-c057-4e74-9b5b-9f5567e5731a","email":"sk@gmail.com","name":"Krishna"},{"id":"300efff4-9986-44f8-beac-8d8f2d1782f7","email":"ks@gmail.com","name":"Krishna"}]
+PARENT DUMP: [{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e"}]
+[2026-03-29T16:26:02.764Z] getAllParentIds SUCCESS: 1 parents
+[2026-03-29T16:26:06.076Z] getAllParentIds called
+[2026-03-29T16:26:06.290Z] USERS DUMP: [{"id":"6b6fa088-9502-4996-b8f4-f3046abf3766","email":"arjun@example.com","name":null},{"id":"888335fb-e0d8-4e14-b840-40c7227f4f24","email":"ashok@akmofilings.in","name":null},{"id":"55189eac-4b2e-459b-ac0e-67596e377d5e","email":"arjunrk.dev@gmail.com","name":"arjun"},{"id":"a3ea316e-af71-4326-b946-99ee4ee0b88a","email":"kaviya@gmail.com","name":"Kaviya Krishnan"},{"id":"a26227be-712c-4e77-b5d6-1ef38ab1e396","email":"a@gmail.com","name":"a"},{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e","email":"saravanan@test.com","name":"Saravanan"},{"id":"c909ac2c-c057-4e74-9b5b-9f5567e5731a","email":"sk@gmail.com","name":"Krishna"},{"id":"300efff4-9986-44f8-beac-8d8f2d1782f7","email":"ks@gmail.com","name":"Krishna"}]
+PARENT DUMP: [{"id":"a8e6b6e1-3a65-4b1c-bb98-755587ed673e"}]
+[2026-03-29T16:26:06.291Z] getAllParentIds SUCCESS: 1 parents
+[2026-03-29T17:17:27.021Z] updateUserPremiumSubscription: a3ea316e-af71-4326-b946-99ee4ee0b88a to prime_gold
+[2026-03-29T17:17:27.791Z] updateUserPremiumSubscription SUCCESS
+[2026-03-29T17:17:38.934Z] updateUserPremiumSubscription: 20f8d0ed-ec47-41f8-ba3f-fab961c8bca9 to prime
+[2026-03-29T17:17:39.289Z] ERROR: "insert or update on table \"user_settings\" violates foreign key constraint \"user_settings_user_id_fkey\""
+[2026-03-29T17:22:55.908Z] updateUserPremiumSubscription: 20f8d0ed-ec47-41f8-ba3f-fab961c8bca9 to prime
+[2026-03-29T17:22:56.450Z] updateUserPremiumSubscription SUCCESS
+[2026-03-29T17:23:04.475Z] updateUserPremiumSubscription: 20f8d0ed-ec47-41f8-ba3f-fab961c8bca9 to till_you_marry
+[2026-03-29T17:23:04.751Z] updateUserPremiumSubscription SUCCESS
+[2026-03-29T17:23:10.387Z] updateUserPremiumSubscription: 20f8d0ed-ec47-41f8-ba3f-fab961c8bca9 to till_you_marry
+[2026-03-29T17:23:10.613Z] updateUserPremiumSubscription SUCCESS
+[2026-03-29T17:25:40.436Z] updateUserPremiumSubscription: 20f8d0ed-ec47-41f8-ba3f-fab961c8bca9 to prime
+[2026-03-29T17:25:41.389Z] updateUserPremiumSubscription SUCCESS

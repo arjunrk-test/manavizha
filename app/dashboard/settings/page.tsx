@@ -8,6 +8,7 @@ import {
     Bell, Lock, Phone, UserX, UserMinus, Shield, EyeOff, Save, Key, Mail, RefreshCw, AlertTriangle, Heart, CheckCircle2
 } from "lucide-react"
 import { toast } from "sonner"
+import { MarriedConfirmationDialog } from "@/components/married-confirmation-dialog"
 
 export default function SettingsPage() {
     const router = useRouter()
@@ -286,50 +287,12 @@ export default function SettingsPage() {
     return (
         <div className="min-h-screen bg-gray-50/50 dark:bg-[#0A0A0A]">
             
-            {/* Mark as Married Confirmation Dialog */}
-            {showMarriedConfirm && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowMarriedConfirm(false)} />
-                    <div className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-8 max-w-md w-full z-10">
-                        <div className="text-center mb-6">
-                            <div className="h-20 w-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Heart className="h-10 w-10 text-green-500 fill-green-500" />
-                            </div>
-                            <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Congratulations! 🎉</h2>
-                            <p className="text-gray-500 text-sm leading-relaxed">
-                                We're so happy for you! By confirming, your profile will be permanently marked as <strong>Married</strong> and removed from all match listings immediately.
-                            </p>
-                            <p className="text-xs text-rose-500 font-bold mt-3">This action cannot be undone.</p>
-                        </div>
-                        <div className="flex gap-3">
-                            <Button
-                                variant="outline"
-                                className="flex-1 h-12 rounded-2xl font-bold"
-                                onClick={() => setShowMarriedConfirm(false)}
-                                disabled={isMarkingMarried}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                className="flex-1 h-12 rounded-2xl font-black bg-green-500 hover:bg-green-600 text-white shadow-lg"
-                                onClick={handleMarkAsMarried}
-                                disabled={isMarkingMarried}
-                            >
-                                {isMarkingMarried ? (
-                                    <span className="flex items-center gap-2">
-                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                                        Saving...
-                                    </span>
-                                ) : (
-                                    <span className="flex items-center gap-2">
-                                        <CheckCircle2 className="h-5 w-5" /> Yes, Mark as Married
-                                    </span>
-                                )}
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <MarriedConfirmationDialog 
+                isOpen={showMarriedConfirm} 
+                onOpenChange={setShowMarriedConfirm} 
+                onConfirm={handleMarkAsMarried} 
+                isLoading={isMarkingMarried} 
+            />
 
             <div className="max-w-6xl mx-auto px-4 py-8">
                 <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-8 tracking-tight">Profile Settings</h1>

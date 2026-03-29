@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { supabase } from "@/lib/supabase"
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Star, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle, MoreVertical, UserX, UserMinus, Crown } from "lucide-react"
+import { ArrowLeft, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Star, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle, MoreVertical, UserX, UserMinus, Crown, Gem, Shield } from "lucide-react"
 import { motion } from "framer-motion"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -15,6 +15,7 @@ import { getDistanceInKm, getCoordinatesForCity } from "@/lib/locations"
 import { Badge } from "@/components/ui/badge"
 import { Sparkles as SparklesIcon, Info } from "lucide-react"
 import { MatchBreakdownDialog } from "@/components/match-breakdown-dialog"
+import { MessageDialog } from "@/components/message-dialog"
 
 interface BrowseProfilesProps {
     userId: string
@@ -55,6 +56,12 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
 
     // State to track the currently viewed photo index for the modal
     const [modalPhotoIndex, setModalPhotoIndex] = useState(0)
+
+    // Messaging states
+    const [isPremium, setIsPremium] = useState(false)
+    const [likedMeIds, setLikedMeIds] = useState<string[]>([])
+    const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false)
+    const [messageTarget, setMessageTarget] = useState<{ id: string, name: string } | null>(null)
 
     const router = useRouter()
 
@@ -187,6 +194,33 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                 <span className="text-sm">No Photo</span>
                             </div>
                         )}
+                        
+                        {/* Premium Badge strictly as requested */}
+                        {profile.isPremium && (
+                            <div className="absolute top-3 left-3 z-30 flex flex-col gap-1.5 pointer-events-none">
+                                {profile.premiumPlan === 'till_you_marry' && (
+                                    <span className="bg-gradient-to-r from-[#FF1493] to-[#FF69B4] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-pink-500/30">
+                                        <Crown className="h-2.5 w-2.5" /> Lifetime
+                                    </span>
+                                )}
+                                {profile.premiumPlan === 'elite' && (
+                                    <span className="bg-gradient-to-r from-[#4B0082] to-[#8A2BE2] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-purple-500/30">
+                                        <Gem className="h-2.5 w-2.5" /> Elite
+                                    </span>
+                                )}
+                                {profile.premiumPlan === 'prime_gold' && (
+                                    <span className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-amber-500/30">
+                                        <Star className="h-2.5 w-2.5" /> Gold
+                                    </span>
+                                )}
+                                {(profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') && (
+                                    <span className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-blue-500/30">
+                                        <Shield className="h-2.5 w-2.5" /> Prime
+                                    </span>
+                                )}
+                            </div>
+                        )}
+
                         {profile.isSelected && (
                             <div className="absolute top-3 left-3 z-20 bg-green-500 text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow">
                                 <CheckCircle2 className="h-3 w-3" /> Selected
@@ -443,9 +477,16 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     
                     if (likeRes.ok) {
                         const likeData = await likeRes.json()
-                        childLikedIds = likeData.iLikedIds || []
-                        likedChildIds = likeData.likedMeIds || []
                         setLikedIds(likeData.iLikedIds || [])
+                        setLikedMeIds(likeData.likedMeIds || [])
+                    }
+                    
+                    // Fetch premium status
+                    const settingsRes = await fetch(`/api/settings?userId=${userId}`)
+                    if (settingsRes.ok) {
+                        const settingsData = await settingsRes.json()
+                        // ALLOW FOR NOW: Bypass check if requested
+                        setIsPremium(settingsData.is_premium || true)
                     }
                     
                     if (shortRes.ok) {
@@ -515,19 +556,23 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     { data: contactData },
                     { data: empData },
                     { data: busData },
+                    { data: stuData },
                     { data: eduData },
                     { data: interestsData },
                     { data: socialHabitsData },
                     { data: horoscopeData },
+                    { data: settingsData },
                 ] = await Promise.all([
                     supabase.from("photos").select("user_id, user_photos").in("user_id", targetUserIds),
                     supabase.from("contact_details").select("user_id, current_district, current_state, phone, whatsapp_number").in("user_id", targetUserIds),
                     supabase.from("profession_employee").select("user_id, designation, company, sector, employment_type, annual_income").in("user_id", targetUserIds),
                     supabase.from("profession_business").select("user_id, designation, business_name, business_type, annual_income").in("user_id", targetUserIds),
+                    supabase.from("profession_student").select("user_id, course, institution").in("user_id", targetUserIds),
                     supabase.from("education_details").select("user_id, education, institution").in("user_id", targetUserIds),
                     supabase.from("interests").select("*").in("user_id", targetUserIds),
                     supabase.from("social_habits").select("*").in("user_id", targetUserIds),
                     supabase.from("horoscope_details").select("user_id, zodiac_sign, star, lagnam, dhosham, time_of_birth, place_of_birth").in("user_id", targetUserIds),
+                    supabase.from("user_settings").select("user_id, is_premium, premium_plan, premium_expires_at").in("user_id", targetUserIds),
                 ])
 
                 const combined = activeProfiles.map((p: any) => {
@@ -539,6 +584,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     const myInterests = interestsData?.find(x => x.user_id === p.user_id)
                     const mySocial = socialHabitsData?.find(x => x.user_id === p.user_id)
                     const myHoro = horoscopeData?.find(x => x.user_id === p.user_id)
+                    const mySettings = settingsData?.find(x => x.user_id === p.user_id)
 
                     let profession = "Not specified"
                     if (myEmp && myEmp.designation && myEmp.company) profession = `${myEmp.designation} at ${myEmp.company}`
@@ -580,6 +626,9 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         profileLikedChild: likedChildIds.includes(p.user_id),
                         phone: myContact?.phone || null,
                         whatsapp: myContact?.whatsapp_number || null,
+                        isPremium: mySettings?.is_premium || false,
+                        premiumPlan: mySettings?.premium_plan || null,
+                        premiumExpiresAt: mySettings?.premium_expires_at || null,
                     }
                 })
 
@@ -761,17 +810,15 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
     const HorizontalProfileCard = ({ profile, index }: { profile: any, index: number }) => {
         const [cardPhotoIndex, setCardPhotoIndex] = useState(0)
         const hasMultiplePhotos = profile.photos && profile.photos.length > 1
-        // Mock subscription check - default to false per user's request for "Paid members"
-        const isPaidMember = false 
 
         const handleContactClick = (type: string) => {
-            if (!isPaidMember) {
+            if (!isPremium) {
                 toast.info(`Upgrade to Premium to view ${type} details`, {
                     description: "Connect with matches instantly with our premium plans."
                 })
                 return
             }
-            // Logic for paid members would go here (e.g., opening WhatsApp or Dialer)
+            // Logic for premium members would go here (e.g., opening WhatsApp or Dialer)
             toast.success(`Redirecting to ${type}...`)
         }
 
@@ -817,6 +864,32 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         {profile.photo_verified && (
                             <div className="absolute bottom-3 left-3 bg-blue-600/90 text-white px-2 py-1 rounded-md text-[10px] font-bold flex items-center gap-1 backdrop-blur-sm">
                                 <CheckCircle2 className="h-3 w-3" /> VERIFIED
+                            </div>
+                        )}
+
+                        {/* Premium Badge */}
+                        {profile.isPremium && (
+                            <div className="absolute top-3 left-3 z-30 flex flex-col gap-1.5 pointer-events-none">
+                                {profile.premiumPlan === 'till_you_marry' && (
+                                    <span className="bg-gradient-to-r from-[#FF1493] to-[#FF69B4] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-pink-500/30">
+                                        <Crown className="h-2.5 w-2.5" /> Lifetime
+                                    </span>
+                                )}
+                                {profile.premiumPlan === 'elite' && (
+                                    <span className="bg-gradient-to-r from-[#4B0082] to-[#8A2BE2] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-purple-500/30">
+                                        <Gem className="h-2.5 w-2.5" /> Elite
+                                    </span>
+                                )}
+                                {profile.premiumPlan === 'prime_gold' && (
+                                    <span className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-amber-500/30">
+                                        <Star className="h-2.5 w-2.5" /> Gold
+                                    </span>
+                                )}
+                                {(profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') && (
+                                    <span className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-blue-500/30">
+                                        <Shield className="h-2.5 w-2.5" /> Prime
+                                    </span>
+                                )}
                             </div>
                         )}
                     </div>
@@ -930,11 +1003,23 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 z-50" onClick={(e) => e.stopPropagation()}>
                                         <DropdownMenuItem
-                                            onClick={(e) => { e.stopPropagation(); toast.error('Send Message is a Premium Feature', { description: 'Upgrade to send personalized messages.' }) }}
+                                            onClick={(e) => { 
+                                                e.stopPropagation(); 
+                                                const isMutual = likedIds.includes(profile.user_id) && likedMeIds.includes(profile.user_id);
+                                                // Premium users can message anyone, others need a mutual match
+                                                if (isPremium || isMutual) {
+                                                    setMessageTarget({ id: profile.user_id, name: profile.name });
+                                                    setIsMessageDialogOpen(true);
+                                                } else {
+                                                    toast.error('Premium Feature or Mutual Match required', { 
+                                                        description: 'Upgrade to Premium to message anyone directly, or wait for a mutual interest match.' 
+                                                    });
+                                                }
+                                            }}
                                             className="gap-2 cursor-pointer rounded-xl p-3 focus:bg-[#4B0082]/10 focus:text-[#4B0082] font-semibold"
                                         >
                                             <MessageCircle className="h-4 w-4" /> Send Message
-                                            <Crown className="h-3 w-3 ml-auto text-amber-500" />
+                                            {!isPremium && <Crown className="h-3 w-3 ml-auto text-amber-500" />}
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator className="my-1" />
                                         <DropdownMenuItem
@@ -1129,6 +1214,32 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                         onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&size=400&background=random` }} />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center"><User className="h-16 w-16 text-gray-400" /></div>
+                                )}
+
+                                {/* Premium Badge */}
+                                {profile.isPremium && (
+                                    <div className="absolute top-3 left-3 z-30 flex flex-col gap-1.5 pointer-events-none">
+                                        {profile.premiumPlan === 'till_you_marry' && (
+                                            <span className="bg-gradient-to-r from-[#FF1493] to-[#FF69B4] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-pink-500/30">
+                                                <Crown className="h-2.5 w-2.5" /> Lifetime
+                                            </span>
+                                        )}
+                                        {profile.premiumPlan === 'elite' && (
+                                            <span className="bg-gradient-to-r from-[#4B0082] to-[#8A2BE2] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-purple-500/30">
+                                                <Gem className="h-2.5 w-2.5" /> Elite
+                                            </span>
+                                        )}
+                                        {profile.premiumPlan === 'prime_gold' && (
+                                            <span className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-amber-500/30">
+                                                <Star className="h-2.5 w-2.5" /> Gold
+                                            </span>
+                                        )}
+                                        {(profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') && (
+                                            <span className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-blue-500/30">
+                                                <Shield className="h-2.5 w-2.5" /> Prime
+                                            </span>
+                                        )}
+                                    </div>
                                 )}
                             </div>
 
@@ -1766,6 +1877,17 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     )}
                 </DialogContent>
             </Dialog>
+            {/* Message Dialog */}
+            {messageTarget && (
+                <MessageDialog
+                    isOpen={isMessageDialogOpen}
+                    onOpenChange={setIsMessageDialogOpen}
+                    receiverId={messageTarget.id}
+                    receiverName={messageTarget.name}
+                    senderId={userId}
+                    isPremium={isPremium}
+                />
+            )}
         </div>
     )
 }
