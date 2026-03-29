@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
-import { LogOut, ArrowLeft, Edit } from "lucide-react"
+import { LogOut, ArrowLeft, Edit, Settings } from "lucide-react"
 import { motion } from "framer-motion"
 
 export default function DashboardLayout({
@@ -58,6 +58,7 @@ export default function DashboardLayout({
     if (pathname.includes("/selections")) return "Parent Selections"
     if (pathname.includes("/preferences")) return "Partner Preferences"
     if (pathname.includes("/likes")) return "My Likes"
+    if (pathname.includes("/horoscope")) return "Horoscope Generator"
     return ""
   }
 
@@ -146,6 +147,15 @@ export default function DashboardLayout({
               <Edit className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Update Profile</span>
               <span className="sm:hidden text-[10px]">Update</span>
+            </Button>
+            <Button 
+                onClick={() => router.push("/dashboard/settings")} 
+                size="icon" 
+                variant="ghost"
+                className="h-8 w-8 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full"
+                title="Profile Settings"
+            >
+              <Settings className="h-4 w-4 text-gray-600 dark:text-gray-400" />
             </Button>
             <Button onClick={handleLogout} size="sm" className="h-8 bg-red-400 hover:bg-red-500 text-white border-0 shadow-sm transition-all active:scale-95">
               <LogOut className="h-3.5 w-3.5" />

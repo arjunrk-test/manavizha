@@ -7,10 +7,11 @@ import {
     ArrowLeft, MapPin, Briefcase, User, GraduationCap, 
     Heart, Star, CheckCircle2, Phone, MessageCircle,
     Calendar, Coffee, Eye, Info, Users, Shield, Sparkles,
-    Search, Target, Award, HeartHandshake
+    Search, Target, Award, HeartHandshake, MoreVertical, UserX, UserMinus, Crown
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -279,6 +280,58 @@ export default function ProfileViewPage() {
         }
     }
 
+    const handleSendMessage = () => {
+        toast.error("Premium Member Feature", {
+            description: "Upgrade your account to send direct personalized messages to this profile."
+        })
+    }
+
+    const handleIgnore = async () => {
+        if (!currentUserId || isProcessing) return
+        if (!confirm("Are you sure you want to ignore this profile? They will be removed from your feed.")) return
+        setIsProcessing(true)
+        try {
+            const res = await fetch("/api/ignores", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: currentUserId, targetUserId }),
+            })
+            if (res.ok) {
+                toast.success("Profile has been ignored.")
+                router.push("/dashboard/browse")
+            } else {
+                toast.error("Failed to ignore profile")
+            }
+        } catch (e) {
+            toast.error("Something went wrong")
+        } finally {
+            setIsProcessing(false)
+        }
+    }
+
+    const handleBlock = async () => {
+        if (!currentUserId || isProcessing) return
+        if (!confirm("Are you sure you want to block this profile permanently? This cannot be undone from here.")) return
+        setIsProcessing(true)
+        try {
+            const res = await fetch("/api/blocks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: currentUserId, targetUserId }),
+            })
+            if (res.ok) {
+                toast.success("Profile has been blocked.")
+                router.push("/dashboard/browse")
+            } else {
+                toast.error("Failed to block profile")
+            }
+        } catch (e) {
+            toast.error("Something went wrong")
+        } finally {
+            setIsProcessing(false)
+        }
+    }
+
     if (isLoading) return (
         <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-100 border-t-[#4B0082]" />
@@ -331,12 +384,12 @@ export default function ProfileViewPage() {
                                 <Shield className="h-3 w-3 mr-1.5" /> ID Verified
                             </div>
                         </div>
-                        <p className="text-2xl font-medium text-gray-400">
+                        <p className="text-lg md:text-xl font-medium text-gray-600 dark:text-gray-400">
                             {detailedAge} • {detailedHeight} • {profile.marital_status} • Created by {profile.created_by || "Self"}
                         </p>
                     </div>
 
-                    <div className="flex gap-4 w-full md:w-auto">
+                    <div className="flex gap-4 w-full md:w-auto items-center">
                         <Button 
                             onClick={handleShortlist}
                             disabled={isProcessing}
@@ -354,6 +407,29 @@ export default function ProfileViewPage() {
                             <Heart className={`h-5 w-5 mr-3 ${isLiked ? 'fill-white' : ''}`} />
                             {isLiked ? 'Interested' : 'Send Interest'}
                         </Button>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="icon" className="h-14 w-14 rounded-full border-none shadow-xl bg-white hover:bg-gray-50 text-gray-700 shrink-0">
+                                    <MoreVertical className="h-5 w-5" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 z-50">
+                                <DropdownMenuLabel className="text-xs font-bold text-gray-400 px-2 py-1 uppercase tracking-wider">Actions</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={handleSendMessage} className="gap-2 cursor-pointer rounded-xl p-3 focus:bg-[#4B0082]/10 focus:text-[#4B0082] font-semibold">
+                                    <MessageCircle className="h-4 w-4" /> Send Message
+                                    <Crown className="h-3 w-3 ml-auto text-amber-500" />
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator className="my-1" />
+                                <DropdownMenuLabel className="text-xs font-bold text-gray-400 px-2 py-1 uppercase tracking-wider mt-1">Restrict</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={handleIgnore} className="gap-2 cursor-pointer rounded-xl p-3 focus:bg-gray-100 text-gray-600 font-medium">
+                                    <UserMinus className="h-4 w-4" /> Ignore Profile
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleBlock} className="gap-2 cursor-pointer rounded-xl p-3 focus:bg-rose-50 focus:text-rose-600 text-rose-500 font-medium">
+                                    <UserX className="h-4 w-4" /> Block Forever
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
 

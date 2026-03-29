@@ -9,6 +9,11 @@ import { ArrowLeft, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, Che
 import { motion } from "framer-motion"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { toast } from "sonner"
+import { checkTamilPorutham } from "@/lib/astrology"
+import { getDistanceInKm, getCoordinatesForCity } from "@/lib/locations"
+import { Badge } from "@/components/ui/badge"
+import { Sparkles as SparklesIcon, Info } from "lucide-react"
+import { MatchBreakdownDialog } from "@/components/match-breakdown-dialog"
 
 interface BrowseProfilesProps {
     userId: string
@@ -32,11 +37,18 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
     const [shortlistedIds, setShortlistedIds] = useState<string[]>([])
     const [mutualFullData, setMutualFullData] = useState<any>(null)
     const [isFetchingFull, setIsFetchingFull] = useState(false)
+    const [userHoroscope, setUserHoroscope] = useState<any>(null)
+    const [showBreakdown, setShowBreakdown] = useState(false)
+    const [activeBreakdown, setActiveBreakdown] = useState<any>(null)
+    const [breakdownName, setBreakdownName] = useState("")
 
     // State to track the active sidebar category
     const [activeCategory, setActiveCategory] = useState<string>("all-matches")
     const [searchTerm, setSearchTerm] = useState("")
     const [isProfileIncomplete, setIsProfileIncomplete] = useState(false)
+    const [iViewedIds, setIViewedIds] = useState<string[]>([])
+    const [viewedMeIds, setViewedMeIds] = useState<string[]>([])
+    const [currentUserLocation, setCurrentUserLocation] = useState<string>("")
 
     // State to track the currently viewed photo index for the modal
     const [modalPhotoIndex, setModalPhotoIndex] = useState(0)
@@ -50,6 +62,13 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
         
         // Record the view
         console.log("Navigating to profile:", profile.user_id)
+        if (!parentViewer?.isParent) {
+            fetch("/api/views", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ viewerId: userId, viewedUserId: profile.user_id })
+            }).catch(e => console.error("Error logging view", e))
+        }
 
         // Navigate to the dedicated profile page using window.location for reliability
         if (profile.user_id) {
@@ -192,10 +211,58 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                 <span className="truncate">{profile.education[0]?.education || "Not specified"}</span>
                             </div>
                         )}
+                        <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={(e) => handleIgnore(e, profile.user_id)} 
+                                className="h-7 text-[10px] uppercase font-bold tracking-wider text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                            >
+                                Ignore
+                            </Button>
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={(e) => handleBlock(e, profile.user_id)} 
+                                className="h-7 text-[10px] uppercase font-bold tracking-wider text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                            >
+                                Block
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
             </motion.div>
         )
+    }
+
+    const handleIgnore = async (e: React.MouseEvent, profileId: string) => {
+        e.stopPropagation()
+        const res = await fetch("/api/ignores", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, targetUserId: profileId }),
+        })
+        if (res.ok) {
+            setProfiles(prev => prev.filter(p => p.user_id !== profileId))
+            toast.success("Profile ignored and removed from your feed.")
+        } else {
+            toast.error("Failed to ignore profile.")
+        }
+    }
+
+    const handleBlock = async (e: React.MouseEvent, profileId: string) => {
+        e.stopPropagation()
+        const res = await fetch("/api/blocks", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, targetUserId: profileId }),
+        })
+        if (res.ok) {
+            setProfiles(prev => prev.filter(p => p.user_id !== profileId))
+            toast.success("Profile permanently blocked.")
+        } else {
+            toast.error("Failed to block profile.")
+        }
     }
 
     const handleParentSelect = async (e: React.MouseEvent, profileId: string) => {
@@ -294,6 +361,17 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     .eq("user_id", userId)
                     .maybeSingle()
 
+                // Get user's location for nearby matching
+                const { data: myContact } = await supabase
+                    .from("contact_details")
+                    .select("current_district, current_state")
+                    .eq("user_id", userId)
+                    .maybeSingle()
+                
+                if (myContact && myContact.current_district) {
+                    setCurrentUserLocation(`${myContact.current_district}${myContact.current_state ? `, ${myContact.current_state}` : ''}`)
+                }
+
                 if (!userData || !userData.sex) {
                     setIsProfileIncomplete(true)
                     setIsLoading(false)
@@ -316,6 +394,15 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     setHasPreferences(true)
                 }
 
+                // Fetch current user horoscope for matching
+                const { data: myHoro } = await supabase
+                    .from("horoscope_details")
+                    .select("star, zodiac_sign")
+                    .eq("user_id", userId)
+                    .maybeSingle()
+                
+                setUserHoroscope(myHoro)
+
                 // 2. Fetch target profiles
                 let query = supabase
                     .from("personal_details")
@@ -330,8 +417,55 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     return
                 }
 
-                // Filter out married locally to avoid case mismatch issues
-                const unmarriedProfiles = targetProfiles.filter(p => p.marital_status?.toLowerCase() !== "married")
+                // 3. Fetch auxiliary data, blocks, ignores & check likes/selections if parent is viewer
+                let childLikedIds: string[] = []  
+                let likedChildIds: string[] = []  
+                let selectedIds = new Set<string>()
+                let hiddenProfileIds: string[] = []
+
+                try {
+                    const [likeRes, shortRes, viewsRes, blockRes, ignoreRes] = await Promise.all([
+                        fetch(`/api/likes?userId=${userId}`),
+                        fetch(`/api/shortlists?userId=${userId}`),
+                        fetch(`/api/views?userId=${userId}`),
+                        fetch(`/api/blocks?userId=${userId}`),
+                        fetch(`/api/ignores?userId=${userId}`)
+                    ])
+                    
+                    if (likeRes.ok) {
+                        const likeData = await likeRes.json()
+                        childLikedIds = likeData.iLikedIds || []
+                        likedChildIds = likeData.likedMeIds || []
+                    }
+                    
+                    if (shortRes.ok) {
+                        const shortData = await shortRes.json()
+                        setShortlistedIds(shortData.shortlistedIds || [])
+                    }
+
+                    if (viewsRes.ok) {
+                        const viewsData = await viewsRes.json()
+                        setIViewedIds((viewsData.iViewed || []).map((v: any) => v.viewed_user_id))
+                        setViewedMeIds((viewsData.viewedMe || []).map((v: any) => v.viewer_user_id))
+                    }
+
+                    if (blockRes.ok) {
+                        const blockData = await blockRes.json()
+                        hiddenProfileIds.push(...(blockData.blockedIds || []))
+                    }
+
+                    if (ignoreRes.ok) {
+                        const ignoreData = await ignoreRes.json()
+                        hiddenProfileIds.push(...(ignoreData.ignoredIds || []))
+                    }
+
+                } catch { }
+
+                // Filter out married locally and any blocked/ignored profiles
+                const unmarriedProfiles = targetProfiles.filter(p => 
+                    p.marital_status?.toLowerCase() !== "married" && 
+                    !hiddenProfileIds.includes(p.user_id)
+                )
                 const targetUserIds = unmarriedProfiles.map(p => p.user_id)
 
                 if (targetUserIds.length === 0) {
@@ -339,29 +473,9 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     return
                 }
 
-                // 3. Fetch auxiliary data & check likes/selections if parent is viewer
-                let childLikedIds: string[] = []  // profiles child has liked
-                let likedChildIds: string[] = []  // profiles that liked the child
-                let selectedIds = new Set<string>()
+
 
                 if (parentViewer?.isParent) {
-                    try {
-                        const likeRes = await fetch(`/api/likes?userId=${userId}`)
-                        if (likeRes.ok) {
-                            const likeData = await likeRes.json()
-                            childLikedIds = likeData.iLikedIds || []
-                            likedChildIds = likeData.likedMeIds || []
-                        }
-                    } catch { }
-
-                    try {
-                        const shortRes = await fetch(`/api/shortlists?userId=${userId}`)
-                        if (shortRes.ok) {
-                            const shortData = await shortRes.json()
-                            setShortlistedIds(shortData.shortlistedIds || [])
-                        }
-                    } catch { }
-
                     const { data: selectionsData } = await supabase
                         .from("parent_selections")
                         .select("selected_profile_id")
@@ -433,6 +547,9 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         interests: myInterests || null,
                         socialHabits: mySocial || null,
                         horoscope: myHoro || null,
+                        compatibility: (userHoroscope?.star && userHoroscope?.zodiac_sign && myHoro?.star && myHoro?.zodiac_sign) 
+                            ? checkTamilPorutham(userHoroscope.star, userHoroscope.zodiac_sign, myHoro.star, myHoro.zodiac_sign) 
+                            : null,
                         isSelected: selectedIds.has(p.user_id),
                         childLiked: childLikedIds.includes(p.user_id),
                         profileLikedChild: likedChildIds.includes(p.user_id),
@@ -566,19 +683,38 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 return profiles.filter(p => shortlistedIds.includes(p.user_id))
             case "shortlisted-you":
                 return profiles.filter(p => p.profileLikedChild)
+            case "viewed-you":
+                return profiles.filter(p => viewedMeIds.includes(p.user_id))
             case "viewed-by-you":
-                // This would need a 'viewed_by_me' flag or similar
-                return profiles
+                return profiles.filter(p => iViewedIds.includes(p.user_id))
             case "nearby-matches":
-                // This would need the current user's location
-                return profiles
+                if (!currentUserLocation) return profiles
+                const myCity = currentUserLocation.split(',')[0].trim().toLowerCase()
+                const myCoords = getCoordinatesForCity(myCity)
+                
+                return profiles.filter(p => {
+                    const profileCity = (p.location || "").split(',')[0].trim().toLowerCase()
+                    if (myCity === profileCity) return true // Exact text match
+                    if (!myCoords) return profileCity.includes(myCity) || myCity.includes(profileCity) // String fallback if no coords
+                    
+                    const profileCoords = getCoordinatesForCity(profileCity)
+                    if (profileCoords) {
+                        const distance = getDistanceInKm(myCoords.lat, myCoords.lng, profileCoords.lat, profileCoords.lng)
+                        return distance <= 100
+                    }
+                    
+                    // Fallback to substring matching if profile isn't natively mapped
+                    return profileCity.includes(myCity) || myCity.includes(profileCity)
+                })
             case "star-matches":
                 return profiles.filter(p => p.horoscope?.star)
+            case "horoscope-matches":
+                return profiles.filter(p => p.compatibility && p.compatibility.score >= 6)
             case "all-matches":
             default:
                 return profiles
         }
-    }, [profiles, activeCategory, shortlistedIds])
+    }, [profiles, activeCategory, shortlistedIds, viewedMeIds, iViewedIds, currentUserLocation])
 
     const getAgeHeightCasteEducationProfessionCityStr = (profile: any) => {
         const parts = []
@@ -612,6 +748,13 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
             }
             // Logic for paid members would go here (e.g., opening WhatsApp or Dialer)
             toast.success(`Redirecting to ${type}...`)
+        }
+
+        const openBreakdown = (e: React.MouseEvent) => {
+            e.stopPropagation()
+            setActiveBreakdown(profile.compatibility)
+            setBreakdownName(profile.name || "Unknown")
+            setShowBreakdown(true)
         }
 
         return (
@@ -686,6 +829,24 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                 Last seen an hour ago
                             </p>
                         </div>
+
+                        {/* Compatibility Badge */}
+                        {profile.compatibility && (
+                            <div className="absolute top-5 right-5 z-20">
+                                <Badge 
+                                    className={`font-bold border-none shadow-sm gap-1.5 px-3 py-1 cursor-help group/badge ${
+                                        profile.compatibility.status === "Uthamam" ? "bg-green-100 text-green-700 hover:bg-green-200" :
+                                        profile.compatibility.status === "Madhyamam" ? "bg-amber-100 text-amber-700 hover:bg-amber-200" :
+                                        "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    }`}
+                                    onClick={openBreakdown}
+                                >
+                                    <SparklesIcon className="h-3 w-3" />
+                                    <span>{profile.compatibility.score}/10 Matches ({profile.compatibility.status})</span>
+                                    <Info className="h-3 w-3 opacity-0 group-hover/badge:opacity-100 transition-opacity ml-1" />
+                                </Badge>
+                            </div>
+                        )}
 
                         {/* Bulleted Details */}
                         <p className="text-[15px] text-gray-700 dark:text-gray-300 font-medium leading-relaxed mb-4">

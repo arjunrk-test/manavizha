@@ -24,7 +24,8 @@ import {
   MessageSquareHeart,
   CalendarDays,
   Search,
-  ShieldCheck
+  ShieldCheck,
+  Star
 } from "lucide-react"
 import { ProfileCarousel } from "./profile-carousel"
 import {
@@ -38,6 +39,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { supabase } from "@/lib/supabase"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 interface UserLandingPageProps {
@@ -68,9 +70,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [completionPercentage, setCompletionPercentage] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
   const [showMarriedConfirmDialog, setShowMarriedConfirmDialog] = useState(false)
   const [showVerificationDialog, setShowVerificationDialog] = useState(false)
-  const [isVerifying, setIsVerifying] = useState(false)
 
   // New states for match sections
   const [dailyRecs, setDailyRecs] = useState<any[]>([])
@@ -586,6 +588,16 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                   <Users className="h-3.5 w-3.5 mr-2.5 text-[#4B0082] group-hover:scale-110 transition-transform" />
                   <div className="text-left">
                     <div className="font-semibold text-[11px]">Browse</div>
+                  </div>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-auto py-1.5 px-2 hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
+                  onClick={() => router.push("/dashboard/horoscope")}
+                >
+                  <Star className="h-3.5 w-3.5 mr-2.5 text-amber-500 group-hover:scale-110 transition-transform" />
+                  <div className="text-left">
+                    <div className="font-semibold text-[11px]">Generate Horoscope</div>
                   </div>
                 </Button>
                 <div className="pt-2 pb-1 px-2">
