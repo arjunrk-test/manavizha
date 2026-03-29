@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { 
-    Bell, Lock, Phone, UserX, UserMinus, Shield, EyeOff, Save, Key, Mail, RefreshCw, AlertTriangle
+    Bell, Lock, Phone, UserX, UserMinus, Shield, EyeOff, Save, Key, Mail, RefreshCw, AlertTriangle, Heart, CheckCircle2
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -26,12 +26,23 @@ export default function SettingsPage() {
         mobile_privacy: "show_all",
         horoscope_privacy: "visible_all",
         horoscope_password: "",
-        profile_privacy: "show_all"
+        profile_privacy: "show_all",
+        is_deactivated: false,
+        deactivated_until: null,
     })
 
     const [blockedProfiles, setBlockedProfiles] = useState<any[]>([])
     const [ignoredProfiles, setIgnoredProfiles] = useState<any[]>([])
     const [deactivateDays, setDeactivateDays] = useState("15")
+    const [isDeactivating, setIsDeactivating] = useState(false)
+    const [isReactivating, setIsReactivating] = useState(false)
+
+    // Mark as Married confirmation dialog state
+    const [showMarriedConfirm, setShowMarriedConfirm] = useState(false)
+    const [isMarkingMarried, setIsMarkingMarried] = useState(false)
+
+    // Compute active status
+    const isCurrentlyDeactivated = settings.is_deactivated && settings.deactivated_until && new Date(settings.deactivated_until) > new Date()
 
     useEffect(() => {
         const loadInitialData = async () => {
@@ -49,7 +60,7 @@ export default function SettingsPage() {
                 if (setRes.ok) {
                     const setData = await setRes.json()
                     if (Object.keys(setData).length > 0) {
-                        setSettings(setData)
+                        setSettings((prev: any) => ({ ...prev, ...setData }))
                     }
                 }
 
@@ -92,7 +103,7 @@ export default function SettingsPage() {
                 body: JSON.stringify({ userId, updates: { ...settings, ...updates } })
             })
             if (res.ok) {
-                setSettings({ ...settings, ...updates })
+                setSettings((prev: any) => ({ ...prev, ...updates }))
                 toast.success("Settings updated successfully")
             } else {
                 toast.error("Failed to update settings")
@@ -101,6 +112,93 @@ export default function SettingsPage() {
             toast.error("An error occurred while saving")
         } finally {
             setIsSaving(false)
+        }
+    }
+
+    const handleDeactivate = async () => {
+        if (!userId) return
+        setIsDeactivating(true)
+        try {
+            const until = new Date()
+            until.setDate(until.getDate() + parseInt(deactivateDays))
+            const updates = {
+                is_deactivated: true,
+                deactivated_until: until.toISOString(),
+            }
+            const res = await fetch("/api/settings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, updates })
+            })
+            if (res.ok) {
+                setSettings((prev: any) => ({ ...prev, ...updates }))
+                toast.success(`Profile deactivated for ${deactivateDays} days. It is now hidden from all members.`)
+            } else {
+                toast.error("Failed to deactivate profile")
+            }
+        } catch (e) {
+            toast.error("Something went wrong")
+        } finally {
+            setIsDeactivating(false)
+        }
+    }
+
+    const handleReactivate = async () => {
+        if (!userId) return
+        setIsReactivating(true)
+        try {
+            const updates = {
+                is_deactivated: false,
+                deactivated_until: null,
+            }
+            const res = await fetch("/api/settings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, updates })
+            })
+            if (res.ok) {
+                setSettings((prev: any) => ({ ...prev, ...updates }))
+                toast.success("Your profile is now Active again and visible to all members!")
+            } else {
+                toast.error("Failed to reactivate profile")
+            }
+        } catch (e) {
+            toast.error("Something went wrong")
+        } finally {
+            setIsReactivating(false)
+        }
+    }
+
+    const handleMarkAsMarried = async () => {
+        if (!userId) return
+        setIsMarkingMarried(true)
+        try {
+            // Update marital_status in personal_details to "Married"
+            const { error } = await supabase
+                .from('personal_details')
+                .update({ marital_status: 'Married' })
+                .eq('user_id', userId)
+
+            if (error) throw error
+
+            // Also deactivate the profile permanently
+            const updates = {
+                is_deactivated: true,
+                deactivated_until: new Date(Date.now() + 365 * 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 years
+            }
+            await fetch("/api/settings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, updates })
+            })
+
+            setSettings((prev: any) => ({ ...prev, ...updates }))
+            setShowMarriedConfirm(false)
+            toast.success("🎉 Congratulations! Your profile has been marked as Married and removed from all match listings.")
+        } catch (e) {
+            toast.error("Failed to update status. Please try again.")
+        } finally {
+            setIsMarkingMarried(false)
         }
     }
 
@@ -188,6 +286,51 @@ export default function SettingsPage() {
     return (
         <div className="min-h-screen bg-gray-50/50 dark:bg-[#0A0A0A]">
             
+            {/* Mark as Married Confirmation Dialog */}
+            {showMarriedConfirm && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowMarriedConfirm(false)} />
+                    <div className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-8 max-w-md w-full z-10">
+                        <div className="text-center mb-6">
+                            <div className="h-20 w-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Heart className="h-10 w-10 text-green-500 fill-green-500" />
+                            </div>
+                            <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Congratulations! 🎉</h2>
+                            <p className="text-gray-500 text-sm leading-relaxed">
+                                We're so happy for you! By confirming, your profile will be permanently marked as <strong>Married</strong> and removed from all match listings immediately.
+                            </p>
+                            <p className="text-xs text-rose-500 font-bold mt-3">This action cannot be undone.</p>
+                        </div>
+                        <div className="flex gap-3">
+                            <Button
+                                variant="outline"
+                                className="flex-1 h-12 rounded-2xl font-bold"
+                                onClick={() => setShowMarriedConfirm(false)}
+                                disabled={isMarkingMarried}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                className="flex-1 h-12 rounded-2xl font-black bg-green-500 hover:bg-green-600 text-white shadow-lg"
+                                onClick={handleMarkAsMarried}
+                                disabled={isMarkingMarried}
+                            >
+                                {isMarkingMarried ? (
+                                    <span className="flex items-center gap-2">
+                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                        Saving...
+                                    </span>
+                                ) : (
+                                    <span className="flex items-center gap-2">
+                                        <CheckCircle2 className="h-5 w-5" /> Yes, Mark as Married
+                                    </span>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="max-w-6xl mx-auto px-4 py-8">
                 <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-8 tracking-tight">Profile Settings</h1>
                 
@@ -425,39 +568,90 @@ export default function SettingsPage() {
                         {/* DEACTIVATE TAB */}
                         {activeTab === "deactivate" && (
                             <div className="space-y-6 animate-in fade-in">
-                                <div className="bg-amber-50 dark:bg-amber-900/20 p-6 rounded-2xl border border-amber-200/50">
-                                    <h2 className="text-xl font-bold mb-3 text-amber-900 dark:text-amber-100 flex items-center gap-2">
-                                        <AlertTriangle className="h-6 w-6" /> Deactivate Profile
-                                    </h2>
-                                    <p className="text-sm text-amber-800/80 dark:text-amber-200/70 mb-6 leading-relaxed">
-                                        You can temporarily deactivate your profile if you need a break. Upon deactivation, your profile will be hidden globally from our members, and you will not be able to contact anyone until automatically reactivated. Your account is currently <strong>Active</strong>.
-                                    </p>
-                                    
-                                    <div className="space-y-4 max-w-sm">
-                                        <label className="text-xs font-bold uppercase tracking-widest text-amber-900/60">Duration</label>
-                                        <select 
-                                            value={deactivateDays} 
-                                            onChange={e => setDeactivateDays(e.target.value)}
-                                            className="w-full h-12 px-4 rounded-xl border border-amber-200 bg-white/50 focus:ring-amber-500 text-sm font-bold"
+
+                                {/* Account Status Banner */}
+                                <div className={`flex items-center gap-3 p-4 rounded-2xl border font-semibold text-sm ${isCurrentlyDeactivated ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-green-50 border-green-200 text-green-700'}`}>
+                                    <div className={`h-2.5 w-2.5 rounded-full ${isCurrentlyDeactivated ? 'bg-rose-500' : 'bg-green-500 animate-pulse'}`} />
+                                    {isCurrentlyDeactivated
+                                        ? `Your account is currently Deactivated — hidden from all members until ${new Date(settings.deactivated_until).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                                        : 'Your account is currently Active and visible to members'}
+                                </div>
+
+                                {isCurrentlyDeactivated ? (
+                                    /* Reactivate Card */
+                                    <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-2xl border border-blue-200/50">
+                                        <h2 className="text-xl font-bold mb-3 text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                                            <RefreshCw className="h-6 w-6" /> Reactivate Your Profile
+                                        </h2>
+                                        <p className="text-sm text-blue-800/80 dark:text-blue-200/70 mb-6 leading-relaxed">
+                                            Your profile is currently deactivated. Reactivating will immediately make your profile visible to all members again.
+                                        </p>
+                                        <Button
+                                            className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl shadow-lg"
+                                            onClick={handleReactivate}
+                                            disabled={isReactivating}
                                         >
-                                            <option value="15">15 Days</option>
-                                            <option value="30">30 Days</option>
-                                            <option value="60">2 Months</option>
-                                            <option value="90">3 Months</option>
-                                        </select>
-                                        
-                                        <Button 
-                                            className="w-full h-12 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-xl shadow-lg mt-4"
-                                            onClick={() => toast.success(`Profile set to deactivate for ${deactivateDays} days.`)}
-                                        >
-                                            Deactivate Now
+                                            {isReactivating ? (
+                                                <span className="flex items-center gap-2">
+                                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                                    Reactivating...
+                                                </span>
+                                            ) : (
+                                                <span className="flex items-center gap-2">
+                                                    <RefreshCw className="h-5 w-5" /> Reactivate Now
+                                                </span>
+                                            )}
                                         </Button>
                                     </div>
-                                </div>
-                                <div className="text-center mt-12 pt-8 border-t border-gray-100">
-                                    <p className="text-xs text-gray-400 mb-4">Want to permanently delete your account?</p>
-                                    <Button variant="ghost" className="text-red-500 hover:text-red-600 hover:bg-red-50 text-xs font-bold tracking-wider uppercase h-8 px-6">
-                                        Delete Profile Forever
+                                ) : (
+                                    /* Deactivate Card */
+                                    <div className="bg-amber-50 dark:bg-amber-900/20 p-6 rounded-2xl border border-amber-200/50">
+                                        <h2 className="text-xl font-bold mb-3 text-amber-900 dark:text-amber-100 flex items-center gap-2">
+                                            <AlertTriangle className="h-6 w-6" /> Deactivate Profile
+                                        </h2>
+                                        <p className="text-sm text-amber-800/80 dark:text-amber-200/70 mb-6 leading-relaxed">
+                                            You can temporarily deactivate your profile if you need a break. Upon deactivation, your profile will be hidden globally from our members. You can reactivate at any time by logging back in.
+                                        </p>
+                                        
+                                        <div className="space-y-4 max-w-sm">
+                                            <label className="text-xs font-bold uppercase tracking-widest text-amber-900/60">Duration</label>
+                                            <select 
+                                                value={deactivateDays} 
+                                                onChange={e => setDeactivateDays(e.target.value)}
+                                                className="w-full h-12 px-4 rounded-xl border border-amber-200 bg-white/50 focus:ring-amber-500 text-sm font-bold"
+                                            >
+                                                <option value="15">15 Days</option>
+                                                <option value="30">30 Days</option>
+                                                <option value="60">2 Months</option>
+                                                <option value="90">3 Months</option>
+                                            </select>
+                                            
+                                            <Button 
+                                                className="w-full h-12 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-xl shadow-lg mt-4"
+                                                onClick={handleDeactivate}
+                                                disabled={isDeactivating}
+                                            >
+                                                {isDeactivating ? (
+                                                    <span className="flex items-center gap-2">
+                                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                                        Deactivating...
+                                                    </span>
+                                                ) : 'Deactivate Now'}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Mark as Married */}
+                                <div className="text-center mt-12 pt-8 border-t border-gray-100 dark:border-gray-800">
+                                    <p className="text-xs text-gray-400 mb-4">Found your match?</p>
+                                    <Button
+                                        variant="ghost"
+                                        className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 text-xs font-bold tracking-wider uppercase h-8 px-6"
+                                        onClick={() => setShowMarriedConfirm(true)}
+                                    >
+                                        <Heart className="h-3.5 w-3.5 mr-2 fill-green-500" />
+                                        Mark as Married
                                     </Button>
                                 </div>
                             </div>

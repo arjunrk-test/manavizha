@@ -80,6 +80,9 @@ export async function POST(request: Request) {
             if (error.code === '23505') {
                 return NextResponse.json({ error: 'already_shortlisted' }, { status: 409 })
             }
+            if (error.code === 'PGRST116' || error.code === '42P01') {
+                return NextResponse.json({ error: 'Shortlists table does not exist. Please run the migration SQL.' }, { status: 500 })
+            }
             return NextResponse.json({ error: error.message }, { status: 500 })
         }
 

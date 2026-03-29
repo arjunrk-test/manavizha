@@ -29,7 +29,8 @@ export default function ProfileViewPage() {
     // Interaction & Viewer states
     const [isLiked, setIsLiked] = useState(false)
     const [isShortlisted, setIsShortlisted] = useState(false)
-    const [isProcessing, setIsProcessing] = useState(false)
+    const [isLikeProcessing, setIsLikeProcessing] = useState(false)
+    const [isShortlistProcessing, setIsShortlistProcessing] = useState(false)
     const [viewerProfile, setViewerProfile] = useState<any>(null)
     const [matchScore, setMatchScore] = useState<{ matches: number, total: number }>({ matches: 18, total: 21 })
 
@@ -235,8 +236,8 @@ export default function ProfileViewPage() {
     }, [targetUserId, currentUserId, router])
 
     const handleLike = async () => {
-        if (!currentUserId || isProcessing) return
-        setIsProcessing(true)
+        if (!currentUserId || isLikeProcessing) return
+        setIsLikeProcessing(true)
         try {
             const method = isLiked ? "DELETE" : "POST"
             const res = await fetch("/api/likes", {
@@ -253,13 +254,13 @@ export default function ProfileViewPage() {
         } catch (e) {
             toast.error("Something went wrong")
         } finally {
-            setIsProcessing(false)
+            setIsLikeProcessing(false)
         }
     }
 
     const handleShortlist = async () => {
-        if (!currentUserId || isProcessing) return
-        setIsProcessing(true)
+        if (!currentUserId || isShortlistProcessing) return
+        setIsShortlistProcessing(true)
         try {
             const method = isShortlisted ? "DELETE" : "POST"
             const res = await fetch("/api/shortlists", {
@@ -276,7 +277,7 @@ export default function ProfileViewPage() {
         } catch (e) {
             toast.error("Something went wrong")
         } finally {
-            setIsProcessing(false)
+            setIsShortlistProcessing(false)
         }
     }
 
@@ -287,7 +288,7 @@ export default function ProfileViewPage() {
     }
 
     const handleIgnore = async () => {
-        if (!currentUserId || isProcessing) return
+        if (!currentUserId || isLikeProcessing) return
         if (!confirm("Are you sure you want to ignore this profile? They will be removed from your feed.")) return
         setIsProcessing(true)
         try {
@@ -310,7 +311,7 @@ export default function ProfileViewPage() {
     }
 
     const handleBlock = async () => {
-        if (!currentUserId || isProcessing) return
+        if (!currentUserId || isLikeProcessing) return
         if (!confirm("Are you sure you want to block this profile permanently? This cannot be undone from here.")) return
         setIsProcessing(true)
         try {
@@ -392,7 +393,7 @@ export default function ProfileViewPage() {
                     <div className="flex gap-4 w-full md:w-auto items-center">
                         <Button 
                             onClick={handleShortlist}
-                            disabled={isProcessing}
+                            disabled={isShortlistProcessing}
                             variant="outline"
                             className={`flex-1 md:flex-none h-14 px-8 rounded-3xl font-black border-none shadow-xl transition-all ${isShortlisted ? 'bg-amber-50 text-amber-700' : 'bg-white text-gray-700 hover:text-amber-700'}`}
                         >
@@ -401,7 +402,7 @@ export default function ProfileViewPage() {
                         </Button>
                         <Button 
                             onClick={handleLike}
-                            disabled={isProcessing}
+                            disabled={isLikeProcessing}
                             className={`flex-1 md:flex-none h-14 px-8 rounded-3xl font-black shadow-xl transition-all ${isLiked ? 'bg-rose-500 hover:bg-rose-600' : 'bg-[#FF1493] hover:bg-[#E01183]'}`}
                         >
                             <Heart className={`h-5 w-5 mr-3 ${isLiked ? 'fill-white' : ''}`} />

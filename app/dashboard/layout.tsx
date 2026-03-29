@@ -40,6 +40,34 @@ export default function DashboardLayout({
 
       setUser(authUser)
       setIsLoading(false)
+
+      // Check if account was deactivated — auto-reactivate on login and notify
+      try {
+        const settingsRes = await fetch(`/api/settings?userId=${authUser.id}`)
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json()
+          if (settingsData.is_deactivated) {
+            // Reactivate automatically on login
+            await fetch('/api/settings', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: authUser.id,
+                updates: { is_deactivated: false, deactivated_until: null }
+              })
+            })
+            // Short delay so the toast is visible after page load
+            setTimeout(() => {
+              import('sonner').then(({ toast }) => {
+                toast.success('Welcome back! Your profile has been reactivated and is now visible to all members.', {
+                  duration: 6000,
+                  description: 'You can deactivate again anytime from Profile Settings.'
+                })
+              })
+            }, 1200)
+          }
+        }
+      } catch { }
     }
 
     checkUser()

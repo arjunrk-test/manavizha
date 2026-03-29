@@ -5,9 +5,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { supabase } from "@/lib/supabase"
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Star, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle } from "lucide-react"
+import { ArrowLeft, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Star, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle, MoreVertical, UserX, UserMinus, Crown } from "lucide-react"
 import { motion } from "framer-motion"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
 import { checkTamilPorutham } from "@/lib/astrology"
 import { getDistanceInKm, getCoordinatesForCity } from "@/lib/locations"
@@ -31,10 +32,12 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
     const [selectedProfile, setSelectedProfile] = useState<any | null>(null)
     const [targetGender, setTargetGender] = useState<string>("")
     const [actionLoadingId, setActionLoadingId] = useState<string>("")
+    const [shortlistLoadingId, setShortlistLoadingId] = useState<string>("")
     const [hasPreferences, setHasPreferences] = useState(false)
     const [applyPreferences, setApplyPreferences] = useState(true)
     const [selectedProfileIds, setSelectedProfileIds] = useState<Set<string>>(new Set())
     const [shortlistedIds, setShortlistedIds] = useState<string[]>([])
+    const [likedIds, setLikedIds] = useState<string[]>([])
     const [mutualFullData, setMutualFullData] = useState<any>(null)
     const [isFetchingFull, setIsFetchingFull] = useState(false)
     const [userHoroscope, setUserHoroscope] = useState<any>(null)
@@ -300,7 +303,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
         e.stopPropagation()
         if (parentViewer?.isParent) return
 
-        setActionLoadingId(profileId)
+        setShortlistLoadingId(profileId)
         const isCurrentlyShortlisted = shortlistedIds.includes(profileId)
         const method = isCurrentlyShortlisted ? "DELETE" : "POST"
 
@@ -311,7 +314,8 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
         })
 
         if (!res.ok) {
-            toast.error(`Failed to update shortlist.`)
+            const errData = await res.json().catch(() => ({}))
+            toast.error(`Shortlist failed: ${errData.error || 'Unknown error'}`)
         } else {
             if (isCurrentlyShortlisted) {
                 setShortlistedIds(prev => prev.filter(id => id !== profileId))
@@ -321,7 +325,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 toast.success(`Profile shortlisted!`)
             }
         }
-        setActionLoadingId("")
+        setShortlistLoadingId("")
     }
 
     const handleCustomerLike = async (e: React.MouseEvent, profileId: string) => {
@@ -330,21 +334,26 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
 
         setActionLoadingId(profileId)
 
+        const isCurrentlyLiked = likedIds.includes(profileId)
+        const method = isCurrentlyLiked ? "DELETE" : "POST"
+
         const res = await fetch("/api/likes", {
-            method: "POST",
+            method,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId, likedUserId: profileId }),
         })
-        const data = await res.json()
 
         if (!res.ok) {
-            if (data.error === "already_liked") {
-                toast.error(`You have already liked this profile.`)
-            } else {
-                toast.error(`Failed to like profile: ${data.error}`)
-            }
+            const data = await res.json()
+            toast.error(`Failed to update interest: ${data.error}`)
         } else {
-            toast.success(`Profile liked! We'll notify them.`)
+            if (isCurrentlyLiked) {
+                setLikedIds(prev => prev.filter(id => id !== profileId))
+                toast.success(`Interest removed`)
+            } else {
+                setLikedIds(prev => [...prev, profileId])
+                toast.success(`Interest sent! We'll notify them.`)
+            }
         }
 
         setActionLoadingId("")
@@ -436,6 +445,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         const likeData = await likeRes.json()
                         childLikedIds = likeData.iLikedIds || []
                         likedChildIds = likeData.likedMeIds || []
+                        setLikedIds(likeData.iLikedIds || [])
                     }
                     
                     if (shortRes.ok) {
@@ -466,7 +476,22 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     p.marital_status?.toLowerCase() !== "married" && 
                     !hiddenProfileIds.includes(p.user_id)
                 )
-                const targetUserIds = unmarriedProfiles.map(p => p.user_id)
+
+                // Filter out deactivated profiles
+                let deactivatedUserIds: string[] = []
+                try {
+                    const { data: deactivatedSettings } = await supabase
+                        .from('user_settings')
+                        .select('user_id, is_deactivated, deactivated_until')
+                        .in('user_id', unmarriedProfiles.map((p: any) => p.user_id))
+                        .eq('is_deactivated', true)
+                    deactivatedUserIds = (deactivatedSettings || []).filter((s: any) =>
+                        s.deactivated_until && new Date(s.deactivated_until) > new Date()
+                    ).map((s: any) => s.user_id)
+                } catch { }
+
+                const activeProfiles = unmarriedProfiles.filter((p: any) => !deactivatedUserIds.includes(p.user_id))
+                const targetUserIds = activeProfiles.map((p: any) => p.user_id)
 
                 if (targetUserIds.length === 0) {
                     setIsLoading(false)
@@ -505,7 +530,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     supabase.from("horoscope_details").select("user_id, zodiac_sign, star, lagnam, dhosham, time_of_birth, place_of_birth").in("user_id", targetUserIds),
                 ])
 
-                const combined = unmarriedProfiles.map(p => {
+                const combined = activeProfiles.map((p: any) => {
                     const myPhotos = photosData?.find(x => x.user_id === p.user_id)
                     const myContact = contactData?.find(x => x.user_id === p.user_id)
                     const myEmp = empData?.find(x => x.user_id === p.user_id)
@@ -859,29 +884,75 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                 <Button
                                     size="sm"
                                     variant="outline"
-                                    className="border-pink-200 text-pink-600 hover:bg-pink-50 rounded-full h-9 px-4 font-bold text-xs"
+                                    className={`rounded-full h-9 px-4 font-bold text-xs transition-all ${
+                                        likedIds.includes(profile.user_id)
+                                        ? 'bg-rose-500 border-rose-500 text-white hover:bg-rose-600 hover:border-rose-600'
+                                        : 'border-pink-200 text-pink-600 hover:bg-pink-50'
+                                    }`}
                                     onClick={(e) => handleCustomerLike(e, profile.user_id)}
+                                    disabled={actionLoadingId === profile.user_id}
                                 >
-                                    <Heart className="h-3.5 w-3.5 mr-1.5" /> Interested
+                                    <Heart className={`h-3.5 w-3.5 mr-1.5 ${likedIds.includes(profile.user_id) ? 'fill-white' : ''}`} />
+                                    {likedIds.includes(profile.user_id) ? 'Interested' : 'Send Interest'}
                                 </Button>
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className={`h-9 w-9 p-0 rounded-full transition-colors ${shortlistedIds.includes(profile.user_id) ? 'text-amber-500 hover:text-amber-600 bg-amber-50' : 'text-gray-400 hover:text-blue-600'}`}
-                                    onClick={(e) => handleShortlist(e, profile.user_id)}
+                                    className={`h-9 w-9 p-0 rounded-full transition-all ${shortlistedIds.includes(profile.user_id) ? 'text-amber-500 hover:text-amber-600 bg-amber-50' : 'text-gray-400 hover:text-amber-500 hover:bg-amber-50'}`}
+                                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleShortlist(e, profile.user_id); }}
+                                    disabled={shortlistLoadingId === profile.user_id}
                                 >
-                                    <Star className={`h-4 w-4 ${shortlistedIds.includes(profile.user_id) ? 'fill-amber-500' : ''}`} />
+                                    {shortlistLoadingId === profile.user_id
+                                        ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-300 border-t-amber-600" />
+                                        : <Star className={`h-4 w-4 ${shortlistedIds.includes(profile.user_id) ? 'fill-amber-500' : ''}`} />}
                                 </Button>
                             </div>
                             
-                            <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-[#4B0082] hover:bg-[#4B0082]/5 font-bold text-sm tracking-tight px-0 hover:px-2 transition-all"
-                                onClick={(e) => handleOpenProfile(profile, e)}
-                            >
-                                View Profile →
-                            </Button>
+                            <div className="flex items-center gap-1">
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-[#4B0082] hover:bg-[#4B0082]/5 font-bold text-sm tracking-tight px-0 hover:px-2 transition-all"
+                                    onClick={(e) => handleOpenProfile(profile, e)}
+                                >
+                                    View Profile →
+                                </Button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-8 w-8 p-0 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 z-50" onClick={(e) => e.stopPropagation()}>
+                                        <DropdownMenuItem
+                                            onClick={(e) => { e.stopPropagation(); toast.error('Send Message is a Premium Feature', { description: 'Upgrade to send personalized messages.' }) }}
+                                            className="gap-2 cursor-pointer rounded-xl p-3 focus:bg-[#4B0082]/10 focus:text-[#4B0082] font-semibold"
+                                        >
+                                            <MessageCircle className="h-4 w-4" /> Send Message
+                                            <Crown className="h-3 w-3 ml-auto text-amber-500" />
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator className="my-1" />
+                                        <DropdownMenuItem
+                                            onClick={(e) => { e.stopPropagation(); handleIgnore(e, profile.user_id); }}
+                                            className="gap-2 cursor-pointer rounded-xl p-3 focus:bg-gray-100 text-gray-600 font-medium"
+                                        >
+                                            <UserMinus className="h-4 w-4" /> Ignore Profile
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator className="my-1" />
+                                        <DropdownMenuItem
+                                            onClick={(e) => { e.stopPropagation(); handleBlock(e, profile.user_id); }}
+                                            className="gap-2 cursor-pointer rounded-xl p-3 focus:bg-rose-50 focus:text-rose-600 text-rose-500 font-medium"
+                                        >
+                                            <UserX className="h-4 w-4" /> Block Forever
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
