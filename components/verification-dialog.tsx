@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Camera, Upload, CheckCircle2, AlertCircle, X, ShieldCheck } from "lucide-react"
+import { Camera, Upload, CheckCircle2, AlertCircle, X, ShieldCheck, User } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
