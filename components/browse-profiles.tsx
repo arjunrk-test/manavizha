@@ -3,11 +3,19 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { supabase } from "@/lib/supabase"
-import { useEffect, useState } from "react"
-import { ArrowLeft, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Star, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { useRouter } from "next/navigation"
+import { ArrowLeft, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Star, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle, MoreVertical, UserX, UserMinus, Crown, Gem, Shield } from "lucide-react"
 import { motion } from "framer-motion"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
+import { checkTamilPorutham } from "@/lib/astrology"
+import { getDistanceInKm, getCoordinatesForCity } from "@/lib/locations"
+import { Badge } from "@/components/ui/badge"
+import { Sparkles as SparklesIcon, Info } from "lucide-react"
+import { MatchBreakdownDialog } from "@/components/match-breakdown-dialog"
+import { MessageDialog } from "@/components/message-dialog"
 
 interface BrowseProfilesProps {
     userId: string
@@ -25,19 +33,60 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
     const [selectedProfile, setSelectedProfile] = useState<any | null>(null)
     const [targetGender, setTargetGender] = useState<string>("")
     const [actionLoadingId, setActionLoadingId] = useState<string>("")
+    const [shortlistLoadingId, setShortlistLoadingId] = useState<string>("")
     const [hasPreferences, setHasPreferences] = useState(false)
     const [applyPreferences, setApplyPreferences] = useState(true)
     const [selectedProfileIds, setSelectedProfileIds] = useState<Set<string>>(new Set())
+    const [shortlistedIds, setShortlistedIds] = useState<string[]>([])
+    const [likedIds, setLikedIds] = useState<string[]>([])
     const [mutualFullData, setMutualFullData] = useState<any>(null)
     const [isFetchingFull, setIsFetchingFull] = useState(false)
+    const [userHoroscope, setUserHoroscope] = useState<any>(null)
+    const [showBreakdown, setShowBreakdown] = useState(false)
+    const [activeBreakdown, setActiveBreakdown] = useState<any>(null)
+    const [breakdownName, setBreakdownName] = useState("")
+
+    // State to track the active sidebar category
+    const [activeCategory, setActiveCategory] = useState<string>("all-matches")
+    const [searchTerm, setSearchTerm] = useState("")
+    const [isProfileIncomplete, setIsProfileIncomplete] = useState(false)
+    const [iViewedIds, setIViewedIds] = useState<string[]>([])
+    const [viewedMeIds, setViewedMeIds] = useState<string[]>([])
+    const [currentUserLocation, setCurrentUserLocation] = useState<string>("")
 
     // State to track the currently viewed photo index for the modal
     const [modalPhotoIndex, setModalPhotoIndex] = useState(0)
 
-    // Function to handle opening modal and resetting the index
-    const handleOpenProfile = (profile: any) => {
-        setModalPhotoIndex(0)
-        setSelectedProfile(profile)
+    // Messaging states
+    const [isPremium, setIsPremium] = useState(false)
+    const [likedMeIds, setLikedMeIds] = useState<string[]>([])
+    const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false)
+    const [messageTarget, setMessageTarget] = useState<{ id: string, name: string } | null>(null)
+
+    const router = useRouter()
+
+    // Function to handle navigating to profile page
+    const handleOpenProfile = async (profile: any, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation()
+        if (!profile.user_id) return
+        
+        // Record the view
+        console.log("Navigating to profile:", profile.user_id)
+        if (!parentViewer?.isParent) {
+            fetch("/api/views", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ viewerId: userId, viewedUserId: profile.user_id })
+            }).catch(e => console.error("Error logging view", e))
+        }
+
+        // Navigate to the dedicated profile page using window.location for reliability
+        if (profile.user_id) {
+            window.location.href = `/dashboard/profile/${profile.user_id}`
+        } else {
+            console.error("Missing profile.user_id:", profile)
+            toast.error("Profile ID missing")
+        }
     }
 
     // Fetch full profile data when a mutual match modal opens
@@ -145,6 +194,33 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                 <span className="text-sm">No Photo</span>
                             </div>
                         )}
+                        
+                        {/* Premium Badge strictly as requested */}
+                        {profile.isPremium && (
+                            <div className="absolute top-3 left-3 z-30 flex flex-col gap-1.5 pointer-events-none">
+                                {profile.premiumPlan === 'till_you_marry' && (
+                                    <span className="bg-gradient-to-r from-[#FF1493] to-[#FF69B4] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-pink-500/30">
+                                        <Crown className="h-2.5 w-2.5" /> Lifetime
+                                    </span>
+                                )}
+                                {profile.premiumPlan === 'elite' && (
+                                    <span className="bg-gradient-to-r from-[#4B0082] to-[#8A2BE2] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-purple-500/30">
+                                        <Gem className="h-2.5 w-2.5" /> Elite
+                                    </span>
+                                )}
+                                {profile.premiumPlan === 'prime_gold' && (
+                                    <span className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-amber-500/30">
+                                        <Star className="h-2.5 w-2.5" /> Gold
+                                    </span>
+                                )}
+                                {(profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') && (
+                                    <span className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-blue-500/30">
+                                        <Shield className="h-2.5 w-2.5" /> Prime
+                                    </span>
+                                )}
+                            </div>
+                        )}
+
                         {profile.isSelected && (
                             <div className="absolute top-3 left-3 z-20 bg-green-500 text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow">
                                 <CheckCircle2 className="h-3 w-3" /> Selected
@@ -172,10 +248,58 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                 <span className="truncate">{profile.education[0]?.education || "Not specified"}</span>
                             </div>
                         )}
+                        <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={(e) => handleIgnore(e, profile.user_id)} 
+                                className="h-7 text-[10px] uppercase font-bold tracking-wider text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                            >
+                                Ignore
+                            </Button>
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={(e) => handleBlock(e, profile.user_id)} 
+                                className="h-7 text-[10px] uppercase font-bold tracking-wider text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                            >
+                                Block
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
             </motion.div>
         )
+    }
+
+    const handleIgnore = async (e: React.MouseEvent, profileId: string) => {
+        e.stopPropagation()
+        const res = await fetch("/api/ignores", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, targetUserId: profileId }),
+        })
+        if (res.ok) {
+            setProfiles(prev => prev.filter(p => p.user_id !== profileId))
+            toast.success("Profile ignored and removed from your feed.")
+        } else {
+            toast.error("Failed to ignore profile.")
+        }
+    }
+
+    const handleBlock = async (e: React.MouseEvent, profileId: string) => {
+        e.stopPropagation()
+        const res = await fetch("/api/blocks", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, targetUserId: profileId }),
+        })
+        if (res.ok) {
+            setProfiles(prev => prev.filter(p => p.user_id !== profileId))
+            toast.success("Profile permanently blocked.")
+        } else {
+            toast.error("Failed to block profile.")
+        }
     }
 
     const handleParentSelect = async (e: React.MouseEvent, profileId: string) => {
@@ -209,6 +333,34 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
 
         setActionLoadingId("")
     }
+    const handleShortlist = async (e: React.MouseEvent, profileId: string) => {
+        e.stopPropagation()
+        if (parentViewer?.isParent) return
+
+        setShortlistLoadingId(profileId)
+        const isCurrentlyShortlisted = shortlistedIds.includes(profileId)
+        const method = isCurrentlyShortlisted ? "DELETE" : "POST"
+
+        const res = await fetch("/api/shortlists", {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, targetUserId: profileId }),
+        })
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}))
+            toast.error(`Shortlist failed: ${errData.error || 'Unknown error'}`)
+        } else {
+            if (isCurrentlyShortlisted) {
+                setShortlistedIds(prev => prev.filter(id => id !== profileId))
+                toast.success(`Removed from shortlist`)
+            } else {
+                setShortlistedIds(prev => [...prev, profileId])
+                toast.success(`Profile shortlisted!`)
+            }
+        }
+        setShortlistLoadingId("")
+    }
 
     const handleCustomerLike = async (e: React.MouseEvent, profileId: string) => {
         e.stopPropagation()
@@ -216,21 +368,26 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
 
         setActionLoadingId(profileId)
 
+        const isCurrentlyLiked = likedIds.includes(profileId)
+        const method = isCurrentlyLiked ? "DELETE" : "POST"
+
         const res = await fetch("/api/likes", {
-            method: "POST",
+            method,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId, likedUserId: profileId }),
         })
-        const data = await res.json()
 
         if (!res.ok) {
-            if (data.error === "already_liked") {
-                toast.error(`You have already liked this profile.`)
-            } else {
-                toast.error(`Failed to like profile: ${data.error}`)
-            }
+            const data = await res.json()
+            toast.error(`Failed to update interest: ${data.error}`)
         } else {
-            toast.success(`Profile liked! We'll notify them.`)
+            if (isCurrentlyLiked) {
+                setLikedIds(prev => prev.filter(id => id !== profileId))
+                toast.success(`Interest removed`)
+            } else {
+                setLikedIds(prev => [...prev, profileId])
+                toast.success(`Interest sent! We'll notify them.`)
+            }
         }
 
         setActionLoadingId("")
@@ -247,11 +404,24 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     .eq("user_id", userId)
                     .maybeSingle()
 
-                if (!userData) {
+                // Get user's location for nearby matching
+                const { data: myContact } = await supabase
+                    .from("contact_details")
+                    .select("current_district, current_state")
+                    .eq("user_id", userId)
+                    .maybeSingle()
+                
+                if (myContact && myContact.current_district) {
+                    setCurrentUserLocation(`${myContact.current_district}${myContact.current_state ? `, ${myContact.current_state}` : ''}`)
+                }
+
+                if (!userData || !userData.sex) {
+                    setIsProfileIncomplete(true)
                     setIsLoading(false)
                     return
                 }
 
+                setIsProfileIncomplete(false)
                 const myGender = userData.sex?.toLowerCase() || ""
                 const tg = myGender === "male" ? "Female" : "Male"
                 setTargetGender(tg)
@@ -267,6 +437,15 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     setHasPreferences(true)
                 }
 
+                // Fetch current user horoscope for matching
+                const { data: myHoro } = await supabase
+                    .from("horoscope_details")
+                    .select("star, zodiac_sign")
+                    .eq("user_id", userId)
+                    .maybeSingle()
+                
+                setUserHoroscope(myHoro)
+
                 // 2. Fetch target profiles
                 let query = supabase
                     .from("personal_details")
@@ -281,30 +460,88 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     return
                 }
 
-                // Filter out married locally to avoid case mismatch issues
-                const unmarriedProfiles = targetProfiles.filter(p => p.marital_status?.toLowerCase() !== "married")
-                const targetUserIds = unmarriedProfiles.map(p => p.user_id)
+                // 3. Fetch auxiliary data, blocks, ignores & check likes/selections if parent is viewer
+                let childLikedIds: string[] = []  
+                let likedChildIds: string[] = []  
+                let selectedIds = new Set<string>()
+                let hiddenProfileIds: string[] = []
+
+                try {
+                    const [likeRes, shortRes, viewsRes, blockRes, ignoreRes] = await Promise.all([
+                        fetch(`/api/likes?userId=${userId}`),
+                        fetch(`/api/shortlists?userId=${userId}`),
+                        fetch(`/api/views?userId=${userId}`),
+                        fetch(`/api/blocks?userId=${userId}`),
+                        fetch(`/api/ignores?userId=${userId}`)
+                    ])
+                    
+                    if (likeRes.ok) {
+                        const likeData = await likeRes.json()
+                        setLikedIds(likeData.iLikedIds || [])
+                        setLikedMeIds(likeData.likedMeIds || [])
+                    }
+                    
+                    // Fetch premium status
+                    const settingsRes = await fetch(`/api/settings?userId=${userId}`)
+                    if (settingsRes.ok) {
+                        const settingsData = await settingsRes.json()
+                        // ALLOW FOR NOW: Bypass check if requested
+                        setIsPremium(settingsData.is_premium || true)
+                    }
+                    
+                    if (shortRes.ok) {
+                        const shortData = await shortRes.json()
+                        setShortlistedIds(shortData.shortlistedIds || [])
+                    }
+
+                    if (viewsRes.ok) {
+                        const viewsData = await viewsRes.json()
+                        setIViewedIds((viewsData.iViewed || []).map((v: any) => v.viewed_user_id))
+                        setViewedMeIds((viewsData.viewedMe || []).map((v: any) => v.viewer_user_id))
+                    }
+
+                    if (blockRes.ok) {
+                        const blockData = await blockRes.json()
+                        hiddenProfileIds.push(...(blockData.blockedIds || []))
+                    }
+
+                    if (ignoreRes.ok) {
+                        const ignoreData = await ignoreRes.json()
+                        hiddenProfileIds.push(...(ignoreData.ignoredIds || []))
+                    }
+
+                } catch { }
+
+                // Filter out married locally and any blocked/ignored profiles
+                const unmarriedProfiles = targetProfiles.filter(p => 
+                    p.marital_status?.toLowerCase() !== "married" && 
+                    !hiddenProfileIds.includes(p.user_id)
+                )
+
+                // Filter out deactivated profiles
+                let deactivatedUserIds: string[] = []
+                try {
+                    const { data: deactivatedSettings } = await supabase
+                        .from('user_settings')
+                        .select('user_id, is_deactivated, deactivated_until')
+                        .in('user_id', unmarriedProfiles.map((p: any) => p.user_id))
+                        .eq('is_deactivated', true)
+                    deactivatedUserIds = (deactivatedSettings || []).filter((s: any) =>
+                        s.deactivated_until && new Date(s.deactivated_until) > new Date()
+                    ).map((s: any) => s.user_id)
+                } catch { }
+
+                const activeProfiles = unmarriedProfiles.filter((p: any) => !deactivatedUserIds.includes(p.user_id))
+                const targetUserIds = activeProfiles.map((p: any) => p.user_id)
 
                 if (targetUserIds.length === 0) {
                     setIsLoading(false)
                     return
                 }
 
-                // 3. Fetch auxiliary data & check likes/selections if parent is viewer
-                let childLikedIds: string[] = []  // profiles child has liked
-                let likedChildIds: string[] = []  // profiles that liked the child
-                let selectedIds = new Set<string>()
+
 
                 if (parentViewer?.isParent) {
-                    try {
-                        const likeRes = await fetch(`/api/likes?userId=${userId}`)
-                        if (likeRes.ok) {
-                            const likeData = await likeRes.json()
-                            childLikedIds = likeData.iLikedIds || []
-                            likedChildIds = likeData.likedMeIds || []
-                        }
-                    } catch { }
-
                     const { data: selectionsData } = await supabase
                         .from("parent_selections")
                         .select("selected_profile_id")
@@ -319,22 +556,26 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     { data: contactData },
                     { data: empData },
                     { data: busData },
+                    { data: stuData },
                     { data: eduData },
                     { data: interestsData },
                     { data: socialHabitsData },
                     { data: horoscopeData },
+                    { data: settingsData },
                 ] = await Promise.all([
                     supabase.from("photos").select("user_id, user_photos").in("user_id", targetUserIds),
                     supabase.from("contact_details").select("user_id, current_district, current_state, phone, whatsapp_number").in("user_id", targetUserIds),
                     supabase.from("profession_employee").select("user_id, designation, company, sector, employment_type, annual_income").in("user_id", targetUserIds),
                     supabase.from("profession_business").select("user_id, designation, business_name, business_type, annual_income").in("user_id", targetUserIds),
+                    supabase.from("profession_student").select("user_id, course, institution").in("user_id", targetUserIds),
                     supabase.from("education_details").select("user_id, education, institution").in("user_id", targetUserIds),
                     supabase.from("interests").select("*").in("user_id", targetUserIds),
                     supabase.from("social_habits").select("*").in("user_id", targetUserIds),
                     supabase.from("horoscope_details").select("user_id, zodiac_sign, star, lagnam, dhosham, time_of_birth, place_of_birth").in("user_id", targetUserIds),
+                    supabase.from("user_settings").select("user_id, is_premium, premium_plan, premium_expires_at").in("user_id", targetUserIds),
                 ])
 
-                const combined = unmarriedProfiles.map(p => {
+                const combined = activeProfiles.map((p: any) => {
                     const myPhotos = photosData?.find(x => x.user_id === p.user_id)
                     const myContact = contactData?.find(x => x.user_id === p.user_id)
                     const myEmp = empData?.find(x => x.user_id === p.user_id)
@@ -343,6 +584,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     const myInterests = interestsData?.find(x => x.user_id === p.user_id)
                     const mySocial = socialHabitsData?.find(x => x.user_id === p.user_id)
                     const myHoro = horoscopeData?.find(x => x.user_id === p.user_id)
+                    const mySettings = settingsData?.find(x => x.user_id === p.user_id)
 
                     let profession = "Not specified"
                     if (myEmp && myEmp.designation && myEmp.company) profession = `${myEmp.designation} at ${myEmp.company}`
@@ -376,11 +618,17 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         interests: myInterests || null,
                         socialHabits: mySocial || null,
                         horoscope: myHoro || null,
+                        compatibility: (userHoroscope?.star && userHoroscope?.zodiac_sign && myHoro?.star && myHoro?.zodiac_sign) 
+                            ? checkTamilPorutham(userHoroscope.star, userHoroscope.zodiac_sign, myHoro.star, myHoro.zodiac_sign) 
+                            : null,
                         isSelected: selectedIds.has(p.user_id),
                         childLiked: childLikedIds.includes(p.user_id),
                         profileLikedChild: likedChildIds.includes(p.user_id),
                         phone: myContact?.phone || null,
                         whatsapp: myContact?.whatsapp_number || null,
+                        isPremium: mySettings?.is_premium || false,
+                        premiumPlan: mySettings?.premium_plan || null,
+                        premiumExpiresAt: mySettings?.premium_expires_at || null,
                     }
                 })
 
@@ -391,77 +639,91 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         // Age filtering
                         if (preferences.min_age != null || preferences.max_age != null) {
                             const profileAge = profile.age ? parseInt(profile.age.toString()) : null
-                            if (profileAge === null) return false
-                            if (preferences.min_age != null && profileAge < preferences.min_age) return false
-                            if (preferences.max_age != null && profileAge > preferences.max_age) return false
+                            if (profileAge !== null) {
+                                if (preferences.min_age != null && profileAge < preferences.min_age) return false
+                                if (preferences.max_age != null && profileAge > preferences.max_age) return false
+                            }
                         }
 
                         // Height filtering
                         if (preferences.min_height != null || preferences.max_height != null) {
                             const profileHeight = profile.height ? parseInt(profile.height.toString()) : null
-                            if (profileHeight === null) return false
-                            if (preferences.min_height != null && profileHeight < preferences.min_height) return false
-                            if (preferences.max_height != null && profileHeight > preferences.max_height) return false
+                            if (profileHeight !== null) {
+                                if (preferences.min_height != null && profileHeight < preferences.min_height) return false
+                                if (preferences.max_height != null && profileHeight > preferences.max_height) return false
+                            }
                         }
 
                         if (preferences.marital_status && preferences.marital_status.length > 0) {
-                            const isMatch = preferences.marital_status.some((m: string) =>
-                                (profile.marital_status?.toLowerCase() || "").includes(m.toLowerCase())
-                            )
-                            if (!isMatch) return false
+                            if (profile.marital_status) {
+                                const isMatch = preferences.marital_status.some((m: string) =>
+                                    (profile.marital_status?.toLowerCase() || "").includes(m.toLowerCase())
+                                )
+                                if (!isMatch) return false
+                            }
                         }
 
                         if (preferences.diet && preferences.diet.length > 0) {
-                            const isMatch = preferences.diet.some((d: string) =>
-                                (profile.food_preference?.toLowerCase() || "").includes(d.toLowerCase())
-                            )
-                            if (!isMatch) return false
+                            if (profile.food_preference) {
+                                const isMatch = preferences.diet.some((d: string) =>
+                                    (profile.food_preference?.toLowerCase() || "").includes(d.toLowerCase())
+                                )
+                                if (!isMatch) return false
+                            }
                         }
 
                         if (preferences.location && preferences.location.length > 0) {
-                            if (!profile.location) return false
-                            const locMatches = preferences.location.some((loc: string) =>
-                                profile.location.toLowerCase().includes(loc.toLowerCase())
-                            )
-                            if (!locMatches) return false
+                            if (profile.location && profile.location !== "Location not specified" && profile.location !== "Location hidden (Requires mutual match)") {
+                                const locMatches = preferences.location.some((loc: string) =>
+                                    profile.location.toLowerCase().includes(loc.toLowerCase())
+                                )
+                                if (!locMatches) return false
+                            }
                         }
 
                         if (preferences.education && preferences.education.length > 0) {
-                            if (!profile.education || profile.education.length === 0) return false
-                            const eduMatches = profile.education.some((edu: any) =>
-                                preferences.education.some((prefEdu: string) => (edu.education?.toLowerCase() || "").includes(prefEdu.toLowerCase()))
-                            )
-                            if (!eduMatches) return false
+                            if (profile.education && profile.education.length > 0) {
+                                const eduMatches = profile.education.some((edu: any) =>
+                                    preferences.education.some((prefEdu: string) => (edu.education?.toLowerCase() || "").includes(prefEdu.toLowerCase()))
+                                )
+                                if (!eduMatches) return false
+                            }
                         }
 
                         if (preferences.employment_type && preferences.employment_type.length > 0) {
-                            if (!profile.professionType) return false
-                            const empMatches = preferences.employment_type.some((emp: string) =>
-                                profile.professionType.toLowerCase().includes(emp.toLowerCase())
-                            )
-                            if (!empMatches) return false
+                            if (profile.professionType) {
+                                const empMatches = preferences.employment_type.some((emp: string) =>
+                                    profile.professionType.toLowerCase().includes(emp.toLowerCase())
+                                )
+                                if (!empMatches) return false
+                            }
                         }
 
                         if (preferences.sector && preferences.sector.length > 0) {
-                            if (!profile.professionDetails?.sector) return false
-                            const sectorMatches = preferences.sector.some((sec: string) =>
-                                (profile.professionDetails.sector.toLowerCase() || "").includes(sec.toLowerCase())
-                            )
-                            if (!sectorMatches) return false
+                            if (profile.professionDetails?.sector) {
+                                const sectorMatches = preferences.sector.some((sec: string) =>
+                                    (profile.professionDetails.sector.toLowerCase() || "").includes(sec.toLowerCase())
+                                )
+                                if (!sectorMatches) return false
+                            }
                         }
 
                         if (preferences.smoking && preferences.smoking.length > 0) {
-                            const isMatch = preferences.smoking.some((s: string) =>
-                                (profile.socialHabits?.smoking?.toLowerCase() || "").includes(s.toLowerCase())
-                            )
-                            if (!isMatch) return false
+                            if (profile.socialHabits?.smoking) {
+                                const isMatch = preferences.smoking.some((s: string) =>
+                                    (profile.socialHabits?.smoking?.toLowerCase() || "").includes(s.toLowerCase())
+                                )
+                                if (!isMatch) return false
+                            }
                         }
 
                         if (preferences.drinking && preferences.drinking.length > 0) {
-                            const isMatch = preferences.drinking.some((d: string) =>
-                                (profile.socialHabits?.drinking?.toLowerCase() || "").includes(d.toLowerCase())
-                            )
-                            if (!isMatch) return false
+                            if (profile.socialHabits?.drinking) {
+                                const isMatch = preferences.drinking.some((d: string) =>
+                                    (profile.socialHabits?.drinking?.toLowerCase() || "").includes(d.toLowerCase())
+                                )
+                                if (!isMatch) return false
+                            }
                         }
 
                         return true
@@ -479,6 +741,310 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
         fetchProfiles()
     }, [userId, applyPreferences])
 
+    // Filter profiles based on selected sidebar category
+    const filteredProfiles = useMemo(() => {
+        const thirtyDaysAgo = new Date()
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+        switch (activeCategory) {
+            case "newly-joined":
+                return profiles.filter(p => new Date(p.created_at) > thirtyDaysAgo)
+            case "matches-with-photos":
+                return profiles.filter(p => p.photos && p.photos.length > 0)
+            case "matches-with-horoscope":
+                return profiles.filter(p => p.horoscope && (p.horoscope.zodiac_sign || p.horoscope.star))
+            case "shortlisted-by-you":
+                return profiles.filter(p => shortlistedIds.includes(p.user_id))
+            case "shortlisted-you":
+                return profiles.filter(p => p.profileLikedChild)
+            case "viewed-you":
+                return profiles.filter(p => viewedMeIds.includes(p.user_id))
+            case "viewed-by-you":
+                return profiles.filter(p => iViewedIds.includes(p.user_id))
+            case "nearby-matches":
+                if (!currentUserLocation) return profiles
+                const myCity = currentUserLocation.split(',')[0].trim().toLowerCase()
+                const myCoords = getCoordinatesForCity(myCity)
+                
+                return profiles.filter(p => {
+                    const profileCity = (p.location || "").split(',')[0].trim().toLowerCase()
+                    if (myCity === profileCity) return true // Exact text match
+                    if (!myCoords) return profileCity.includes(myCity) || myCity.includes(profileCity) // String fallback if no coords
+                    
+                    const profileCoords = getCoordinatesForCity(profileCity)
+                    if (profileCoords) {
+                        const distance = getDistanceInKm(myCoords.lat, myCoords.lng, profileCoords.lat, profileCoords.lng)
+                        return distance <= 100
+                    }
+                    
+                    // Fallback to substring matching if profile isn't natively mapped
+                    return profileCity.includes(myCity) || myCity.includes(profileCity)
+                })
+            case "star-matches":
+                return profiles.filter(p => p.horoscope?.star)
+            case "horoscope-matches":
+                return profiles.filter(p => p.compatibility && p.compatibility.score >= 6)
+            case "all-matches":
+            default:
+                return profiles
+        }
+    }, [profiles, activeCategory, shortlistedIds, viewedMeIds, iViewedIds, currentUserLocation])
+
+    const getAgeHeightCasteEducationProfessionCityStr = (profile: any) => {
+        const parts = []
+        if (profile.age) parts.push(`${profile.age} yrs`)
+        if (profile.height) parts.push(profile.height)
+        if (profile.caste) parts.push(profile.caste)
+        if (profile.education && profile.education.length > 0) {
+            const edu = profile.education[0].education || profile.education[0]
+            parts.push(typeof edu === 'string' ? edu : edu.education)
+        }
+        if (profile.profession && profile.profession !== "Not specified") parts.push(profile.profession)
+        if (profile.location && profile.location !== "Location not specified" && profile.location !== "Location hidden (Requires mutual match)") {
+            const city = profile.location.split(',')[0]
+            parts.push(city)
+        }
+        return parts.join(" • ")
+    }
+
+    const HorizontalProfileCard = ({ profile, index }: { profile: any, index: number }) => {
+        const [cardPhotoIndex, setCardPhotoIndex] = useState(0)
+        const hasMultiplePhotos = profile.photos && profile.photos.length > 1
+
+        const handleContactClick = (type: string) => {
+            if (!isPremium) {
+                toast.info(`Upgrade to Premium to view ${type} details`, {
+                    description: "Connect with matches instantly with our premium plans."
+                })
+                return
+            }
+            // Logic for premium members would go here (e.g., opening WhatsApp or Dialer)
+            toast.success(`Redirecting to ${type}...`)
+        }
+
+        const openBreakdown = (e: React.MouseEvent) => {
+            e.stopPropagation()
+            setActiveBreakdown(profile.compatibility)
+            setBreakdownName(profile.name || "Unknown")
+            setShowBreakdown(true)
+        }
+
+        return (
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="w-full"
+            >
+                <Card
+                    className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group border-gray-200/60 dark:border-gray-700/60 bg-white dark:bg-gray-800 flex flex-col md:flex-row h-auto md:min-h-[180px]"
+                    onClick={(e) => handleOpenProfile(profile, e)}
+                >
+                    {/* Left: Image Section */}
+                    <div className="w-full md:w-52 h-64 md:h-auto relative overflow-hidden bg-gray-100 dark:bg-gray-700 shrink-0">
+                        {profile.photos && profile.photos.length > 0 ? (
+                            <>
+                                <img
+                                    src={profile.photos[cardPhotoIndex]}
+                                    alt={profile.name}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                />
+                                {hasMultiplePhotos && (
+                                    <div className="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded backdrop-blur-sm z-10 font-bold">
+                                        {cardPhotoIndex + 1} / {profile.photos.length}
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                                <User className="h-12 w-12 opacity-30" />
+                                <span className="text-xs mt-2 font-medium">No Photo</span>
+                            </div>
+                        )}
+                        {profile.photo_verified && (
+                            <div className="absolute bottom-3 left-3 bg-blue-600/90 text-white px-2 py-1 rounded-md text-[10px] font-bold flex items-center gap-1 backdrop-blur-sm">
+                                <CheckCircle2 className="h-3 w-3" /> VERIFIED
+                            </div>
+                        )}
+
+                        {/* Premium Badge */}
+                        {profile.isPremium && (
+                            <div className="absolute top-3 left-3 z-30 flex flex-col gap-1.5 pointer-events-none">
+                                {profile.premiumPlan === 'till_you_marry' && (
+                                    <span className="bg-gradient-to-r from-[#FF1493] to-[#FF69B4] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-pink-500/30">
+                                        <Crown className="h-2.5 w-2.5" /> Lifetime
+                                    </span>
+                                )}
+                                {profile.premiumPlan === 'elite' && (
+                                    <span className="bg-gradient-to-r from-[#4B0082] to-[#8A2BE2] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-purple-500/30">
+                                        <Gem className="h-2.5 w-2.5" /> Elite
+                                    </span>
+                                )}
+                                {profile.premiumPlan === 'prime_gold' && (
+                                    <span className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-amber-500/30">
+                                        <Star className="h-2.5 w-2.5" /> Gold
+                                    </span>
+                                )}
+                                {(profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') && (
+                                    <span className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-blue-500/30">
+                                        <Shield className="h-2.5 w-2.5" /> Prime
+                                    </span>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right: Content Section */}
+                    <CardContent className="p-5 flex-1 flex flex-col relative">
+                        {/* Top Badge & Icons */}
+                        <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-1 text-blue-600 font-bold text-xs uppercase tracking-tight">
+                                <CheckCircle2 className="h-4 w-4 fill-blue-600 text-white" />
+                                <span>ID verified</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); handleContactClick("Phone"); }}
+                                    className="p-2 rounded-full border border-orange-100 bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors"
+                                >
+                                    <Phone className="h-5 w-5" />
+                                </button>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); handleContactClick("WhatsApp"); }}
+                                    className="p-2 rounded-full border border-green-100 bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
+                                >
+                                    <MessageCircle className="h-5 w-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Name & Status */}
+                        <div className="mb-3">
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">
+                                {profile.name || "Unknown"}
+                            </h3>
+                            <p className="text-xs text-gray-400 font-medium mt-1">
+                                Last seen an hour ago
+                            </p>
+                        </div>
+
+                        {/* Compatibility Badge */}
+                        {profile.compatibility && (
+                            <div className="absolute top-5 right-5 z-20">
+                                <Badge 
+                                    className={`font-bold border-none shadow-sm gap-1.5 px-3 py-1 cursor-help group/badge ${
+                                        profile.compatibility.status === "Uthamam" ? "bg-green-100 text-green-700 hover:bg-green-200" :
+                                        profile.compatibility.status === "Madhyamam" ? "bg-amber-100 text-amber-700 hover:bg-amber-200" :
+                                        "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    }`}
+                                    onClick={openBreakdown}
+                                >
+                                    <SparklesIcon className="h-3 w-3" />
+                                    <span>{profile.compatibility.score}/10 Matches ({profile.compatibility.status})</span>
+                                    <Info className="h-3 w-3 opacity-0 group-hover/badge:opacity-100 transition-opacity ml-1" />
+                                </Badge>
+                            </div>
+                        )}
+
+                        {/* Bulleted Details */}
+                        <p className="text-[15px] text-gray-700 dark:text-gray-300 font-medium leading-relaxed mb-4">
+                            {getAgeHeightCasteEducationProfessionCityStr(profile)}
+                        </p>
+
+                        {/* Bottom Actions */}
+                        <div className="mt-auto flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className={`rounded-full h-9 px-4 font-bold text-xs transition-all ${
+                                        likedIds.includes(profile.user_id)
+                                        ? 'bg-rose-500 border-rose-500 text-white hover:bg-rose-600 hover:border-rose-600'
+                                        : 'border-pink-200 text-pink-600 hover:bg-pink-50'
+                                    }`}
+                                    onClick={(e) => handleCustomerLike(e, profile.user_id)}
+                                    disabled={actionLoadingId === profile.user_id}
+                                >
+                                    <Heart className={`h-3.5 w-3.5 mr-1.5 ${likedIds.includes(profile.user_id) ? 'fill-white' : ''}`} />
+                                    {likedIds.includes(profile.user_id) ? 'Interested' : 'Send Interest'}
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className={`h-9 w-9 p-0 rounded-full transition-all ${shortlistedIds.includes(profile.user_id) ? 'text-amber-500 hover:text-amber-600 bg-amber-50' : 'text-gray-400 hover:text-amber-500 hover:bg-amber-50'}`}
+                                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleShortlist(e, profile.user_id); }}
+                                    disabled={shortlistLoadingId === profile.user_id}
+                                >
+                                    {shortlistLoadingId === profile.user_id
+                                        ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-300 border-t-amber-600" />
+                                        : <Star className={`h-4 w-4 ${shortlistedIds.includes(profile.user_id) ? 'fill-amber-500' : ''}`} />}
+                                </Button>
+                            </div>
+                            
+                            <div className="flex items-center gap-1">
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-[#4B0082] hover:bg-[#4B0082]/5 font-bold text-sm tracking-tight px-0 hover:px-2 transition-all"
+                                    onClick={(e) => handleOpenProfile(profile, e)}
+                                >
+                                    View Profile →
+                                </Button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-8 w-8 p-0 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 z-50" onClick={(e) => e.stopPropagation()}>
+                                        <DropdownMenuItem
+                                            onClick={(e) => { 
+                                                e.stopPropagation(); 
+                                                const isMutual = likedIds.includes(profile.user_id) && likedMeIds.includes(profile.user_id);
+                                                // Premium users can message anyone, others need a mutual match
+                                                if (isPremium || isMutual) {
+                                                    setMessageTarget({ id: profile.user_id, name: profile.name });
+                                                    setIsMessageDialogOpen(true);
+                                                } else {
+                                                    toast.error('Premium Feature or Mutual Match required', { 
+                                                        description: 'Upgrade to Premium to message anyone directly, or wait for a mutual interest match.' 
+                                                    });
+                                                }
+                                            }}
+                                            className="gap-2 cursor-pointer rounded-xl p-3 focus:bg-[#4B0082]/10 focus:text-[#4B0082] font-semibold"
+                                        >
+                                            <MessageCircle className="h-4 w-4" /> Send Message
+                                            {!isPremium && <Crown className="h-3 w-3 ml-auto text-amber-500" />}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator className="my-1" />
+                                        <DropdownMenuItem
+                                            onClick={(e) => { e.stopPropagation(); handleIgnore(e, profile.user_id); }}
+                                            className="gap-2 cursor-pointer rounded-xl p-3 focus:bg-gray-100 text-gray-600 font-medium"
+                                        >
+                                            <UserMinus className="h-4 w-4" /> Ignore Profile
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator className="my-1" />
+                                        <DropdownMenuItem
+                                            onClick={(e) => { e.stopPropagation(); handleBlock(e, profile.user_id); }}
+                                            className="gap-2 cursor-pointer rounded-xl p-3 focus:bg-rose-50 focus:text-rose-600 text-rose-500 font-medium"
+                                        >
+                                            <UserX className="h-4 w-4" /> Block Forever
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </motion.div>
+        )
+    }
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center py-20">
@@ -487,64 +1053,128 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
         )
     }
 
+    const menuGroups = [
+        {
+            title: "All Matches",
+            items: [
+                { id: "all-matches", label: "Your Matches", description: "View all profiles that match your preferences", icon: User },
+            ]
+        },
+        {
+            title: "Based on activity",
+            items: [
+                { id: "shortlisted-by-you", label: "Shortlisted by you", description: "Matches you have shortlisted", icon: Star },
+                { id: "viewed-you", label: "Viewed you", description: "Matches who have viewed your profile", icon: Filter },
+                { id: "shortlisted-you", label: "Shortlisted you", description: "Matches who have shortlisted your profile", icon: User },
+                { id: "viewed-by-you", label: "Viewed by you", description: "Matches you have viewed", icon: Filter },
+            ]
+        },
+        {
+            title: "Recently joined & nearby matches",
+            items: [
+                { id: "newly-joined", label: "Newly Joined", description: "Matches who joined within the last 30 days", icon: User },
+                { id: "nearby-matches", label: "Nearby matches", description: "Matches near your location", icon: MapPin },
+            ]
+        },
+        {
+            title: "Based on profile details",
+            items: [
+                { id: "matches-with-photos", label: "Matches with photos", description: "Matches that have added photos", icon: User },
+                { id: "matches-with-horoscope", label: "Matches with horoscope", description: "Matches that have added horoscope", icon: Star },
+            ]
+        },
+        {
+            title: "Based on astrological compatibility",
+            items: [
+                { id: "star-matches", label: "Star matches", description: "Matches with compatible star sign", icon: Star },
+                { id: "horoscope-matches", label: "Horoscope matches", description: "Matches with horoscope matching yours", icon: Star },
+            ]
+        }
+    ]
+
     return (
-        <div className="w-full max-w-7xl mx-auto px-4 py-8">
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Heart className="h-8 w-8 text-[#FF1493]" />
-                        {parentViewer?.isParent ? "Find Matches For Your Child" : "Discover Matches"}
-                    </h2>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">
-                        Here are some {targetGender.toLowerCase()} profiles tailored for {parentViewer?.isParent ? "your child" : "you"}
-                    </p>
-                    {hasPreferences && (
-                        <p className="text-sm font-medium text-[#4B0082] mt-1 bg-[#4B0082]/10 inline-block px-3 py-1 rounded-full">
-                            {applyPreferences ? "✨ Showing filtered matches based on your Partner Preferences" : "⚠️ Preferences are currently disabled"}
-                        </p>
-                    )}
-                </div>
+        <div className="w-full min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
+            <div className="max-w-7xl mx-auto px-4 py-6">
+                <div className="flex flex-col lg:flex-row gap-8">
+                    {/* Sidebar */}
+                    <aside className="w-full lg:w-72 shrink-0 space-y-6">
+                        <Card className="border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
+                            <div className="p-4 bg-white dark:bg-gray-800 space-y-6">
+                                {menuGroups.map((group) => (
+                                    <div key={group.title} className="space-y-2">
+                                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-2">{group.title}</h4>
+                                        <div className="space-y-1">
+                                            {group.items.map((item) => (
+                                                <button
+                                                    key={item.id}
+                                                    onClick={() => setActiveCategory(item.id)}
+                                                    className={`w-full group text-left px-3 py-2.5 rounded-xl transition-all duration-200 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
+                                                        activeCategory === item.id ? "bg-[#4B0082]/5 dark:bg-[#4B0082]/10 border-l-4 border-[#4B0082]" : "border-l-4 border-transparent"
+                                                    }`}
+                                                >
+                                                    <item.icon className={`h-4 w-4 mt-0.5 ${activeCategory === item.id ? "text-[#4B0082]" : "text-gray-400"}`} />
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className={`text-xs font-bold truncate ${activeCategory === item.id ? "text-[#4B0082]" : "text-gray-700 dark:text-gray-300"}`}>
+                                                            {item.label}
+                                                        </div>
+                                                        <div className="text-[10px] text-gray-500 line-clamp-1 mt-0.5">{item.description}</div>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
+                    </aside>
 
-                {hasPreferences && (
-                    <Button
-                        variant={applyPreferences ? "destructive" : "default"}
-                        onClick={() => setApplyPreferences(!applyPreferences)}
-                        className={`flex items-center gap-2 ${!applyPreferences ? "bg-[#4B0082] hover:bg-[#3b0066]" : ""}`}
-                    >
-                        {applyPreferences ? (
-                            <>
-                                <SlidersHorizontal className="h-4 w-4" />
-                                Remove Preferences
-                            </>
+                    {/* Main Content */}
+                    <div className="flex-1 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                {menuGroups.flatMap(g => g.items).find(i => i.id === activeCategory)?.label || "Discover Matches"}
+                            </h2>
+                            {hasPreferences && (
+                                <Button
+                                    variant={applyPreferences ? "destructive" : "default"}
+                                    onClick={() => setApplyPreferences(!applyPreferences)}
+                                    size="sm"
+                                    className="flex items-center gap-2"
+                                >
+                                    {applyPreferences ? <SlidersHorizontal className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
+                                    {applyPreferences ? "Clear Preferences" : "Applied Preferences"}
+                                </Button>
+                            )}
+                        </div>                        {isProfileIncomplete ? (
+                            <Card className="border-dashed border-2 p-12 text-center bg-white dark:bg-gray-800">
+                                <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <User className="h-10 w-10 text-amber-600" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Complete Your Profile</h3>
+                                <p className="text-gray-500 mt-2 max-w-md mx-auto">To find matches, we need to know your gender and basic details. Please complete your personal information first.</p>
+                                <Button 
+                                    onClick={() => window.location.href = '/dashboard/profile/edit'} 
+                                    className="mt-8 bg-[#4B0082] hover:bg-[#380062] rounded-xl px-8"
+                                >
+                                    Update Profile
+                                </Button>
+                            </Card>
+                        ) : filteredProfiles.length === 0 ? (
+                            <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-3xl border border-dashed border-gray-300 dark:border-gray-700">
+                                <User className="h-16 w-16 text-gray-400 mx-auto mb-4 opacity-50" />
+                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">No Profiles Found</h3>
+                                <p className="text-gray-500 mt-2">Try adjusting your filters or checking back later!</p>
+                            </div>
                         ) : (
-                            <>
-                                <Filter className="h-4 w-4" />
-                                Apply Preference
-                            </>
+                            <div className="space-y-6">
+                                {filteredProfiles.map((profile, index) => (
+                                    <HorizontalProfileCard key={profile.user_id} profile={profile} index={index} />
+                                ))}
+                            </div>
                         )}
-                    </Button>
-                )}
-            </div>
 
-            {/* Non-parent: all profiles in one grid */}
-            {!parentViewer?.isParent && (
-                profiles.length === 0 ? (
-                    <div className="text-center py-20 bg-white/50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700">
-                        <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">No Profiles Found</h3>
-                        <p className="text-gray-500 mt-2">Check back later for new matches!</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {profiles.map((profile, index) => (
-                            <ProfileCardWrapper key={profile.user_id} profile={profile} index={index} />
-                        ))}
-                    </div>
-                )
-            )}
-
-            {/* Parent view: sectioned layout */}
-            {parentViewer?.isParent && (() => {
+                        {/* Special sectioned view for Parents */}
+                        {parentViewer?.isParent && !isProfileIncomplete && filteredProfiles.length > 0 && (() => {
                 const unselected = profiles.filter(p => !p.isSelected)
                 // Selected but child hasn't liked yet
                 const onlySelected = profiles.filter(p => p.isSelected && !p.childLiked)
@@ -584,6 +1214,32 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                         onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&size=400&background=random` }} />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center"><User className="h-16 w-16 text-gray-400" /></div>
+                                )}
+
+                                {/* Premium Badge */}
+                                {profile.isPremium && (
+                                    <div className="absolute top-3 left-3 z-30 flex flex-col gap-1.5 pointer-events-none">
+                                        {profile.premiumPlan === 'till_you_marry' && (
+                                            <span className="bg-gradient-to-r from-[#FF1493] to-[#FF69B4] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-pink-500/30">
+                                                <Crown className="h-2.5 w-2.5" /> Lifetime
+                                            </span>
+                                        )}
+                                        {profile.premiumPlan === 'elite' && (
+                                            <span className="bg-gradient-to-r from-[#4B0082] to-[#8A2BE2] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-purple-500/30">
+                                                <Gem className="h-2.5 w-2.5" /> Elite
+                                            </span>
+                                        )}
+                                        {profile.premiumPlan === 'prime_gold' && (
+                                            <span className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-amber-500/30">
+                                                <Star className="h-2.5 w-2.5" /> Gold
+                                            </span>
+                                        )}
+                                        {(profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') && (
+                                            <span className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-blue-500/30">
+                                                <Shield className="h-2.5 w-2.5" /> Prime
+                                            </span>
+                                        )}
+                                    </div>
                                 )}
                             </div>
 
@@ -674,8 +1330,8 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                     <p className="text-gray-500 text-sm">All available profiles have been selected for your child.</p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                    {unselected.map((profile, index) => <ProfileCardWrapper key={profile.user_id} profile={profile} index={index} />)}
+                                <div className="space-y-6">
+                                    {unselected.map((profile, index) => <HorizontalProfileCard key={profile.user_id} profile={profile} index={index} />)}
                                 </div>
                             )}
                         </div>
@@ -687,8 +1343,8 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                     <CheckCircle2 className="h-5 w-5 text-green-500" /> Selected Profiles
                                     <span className="text-sm font-normal text-gray-500">({onlySelected.length})</span>
                                 </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                    {onlySelected.map((profile, index) => <ProfileCardWrapper key={profile.user_id} profile={profile} index={index} />)}
+                                <div className="space-y-6">
+                                    {onlySelected.map((profile, index) => <HorizontalProfileCard key={profile.user_id} profile={profile} index={index} />)}
                                 </div>
                             </div>
                         )}
@@ -700,11 +1356,11 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                     <Heart className="h-5 w-5 text-rose-500" /> Your Child Showed Interest
                                     <span className="text-sm font-normal text-gray-500">({childLikedOnly.length})</span>
                                 </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div className="space-y-6">
                                     {childLikedOnly.map((profile, index) => (
                                         <div key={profile.user_id} className="flex flex-col rounded-2xl overflow-hidden border border-rose-200 dark:border-rose-800 shadow-sm bg-white dark:bg-gray-800">
                                             <div className="relative">
-                                                <ProfileCardWrapper profile={profile} index={index} />
+                                                <HorizontalProfileCard profile={profile} index={index} />
                                             </div>
                                             <div className="px-4 pb-4">
                                                 <ContactRow profile={profile} />
@@ -729,7 +1385,10 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         )}
                     </div>
                 )
-            })()}
+                        })()}
+                    </div>
+                </div>
+            </div>
 
 
             {/* Profile Detail Dialog */}
@@ -1218,6 +1877,17 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     )}
                 </DialogContent>
             </Dialog>
+            {/* Message Dialog */}
+            {messageTarget && (
+                <MessageDialog
+                    isOpen={isMessageDialogOpen}
+                    onOpenChange={setIsMessageDialogOpen}
+                    receiverId={messageTarget.id}
+                    receiverName={messageTarget.name}
+                    senderId={userId}
+                    isPremium={isPremium}
+                />
+            )}
         </div>
     )
 }

@@ -16,6 +16,7 @@ import { HoroscopeDetailsStep } from "@/components/profile-steps/horoscope-detai
 import { InterestsStep } from "@/components/profile-steps/interests-step"
 import { SocialHabitsStep } from "@/components/profile-steps/social-habits-step"
 import { PhotosStep } from "@/components/profile-steps/photos-step"
+import { PartnerPreferencesStep } from "@/components/profile-steps/partner-preferences-step"
 import { ReferralStep } from "@/components/profile-steps/referral-step"
 
 const formSteps = [
@@ -28,6 +29,7 @@ const formSteps = [
   { id: "interests", title: "Interests" },
   { id: "social", title: "Social Habits" },
   { id: "photos", title: "Photos" },
+  { id: "preferences", title: "Partner Preferences" },
   { id: "referral", title: "Referral" },
 ]
 
@@ -44,6 +46,8 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     weight: "",
     skinColor: "",
     bodyType: "",
+    createdBy: "Self",
+    physicalStatus: "Normal",
     permanentAddressLine1: "",
     permanentAddressLine2: "",
     permanentPincode: "",
@@ -105,6 +109,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     fatherOccupation: "",
     motherName: "",
     motherOccupation: "",
+    ancestralOrigin: "",
     parentsAddressLine1: "",
     parentsAddressLine2: "",
     parentsPincode: "",
@@ -140,9 +145,27 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     diet: "",
     preferredAgeMin: "",
     preferredAgeMax: "",
-    preferredHeight: "",
+    preferredHeightMin: "",
+    preferredHeightMax: "",
+    preferredMaritalStatus: "",
+    preferredMotherTongue: "",
+    preferredPhysicalStatus: "Normal",
+    preferredEatingHabits: "",
+    preferredSmokingHabits: "",
+    preferredDrinkingHabits: "",
+    preferredReligion: "",
+    preferredCaste: "",
+    preferredSubcaste: "",
+    preferredStar: "",
+    preferredDosham: "",
     preferredEducation: "",
+    preferredEmploymentType: "",
     preferredOccupation: "",
+    preferredAnnualIncome: "",
+    preferredCountry: "Any",
+    preferredState: "Any",
+    preferredCity: "Any",
+    preferredCitizenship: "Any",
     preferredLocation: "",
     userPhotos: [],
     familyPhoto: "",
@@ -161,6 +184,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const [originalSocialHabitsDetails, setOriginalSocialHabitsDetails] = useState<Partial<FormData> | null>(null)
   const [originalPhotosDetails, setOriginalPhotosDetails] = useState<Partial<FormData> | null>(null)
   const [originalReferralDetails, setOriginalReferralDetails] = useState<Partial<FormData> | null>(null)
+  const [originalPartnerPreferences, setOriginalPartnerPreferences] = useState<Partial<FormData> | null>(null)
   const [originalProfessionalDetails, setOriginalProfessionalDetails] = useState<Partial<FormData> | null>(null)
   const [professionalCompletionPercentage, setProfessionalCompletionPercentage] = useState<number | null>(null)
   const [isReferralPartnerValid, setIsReferralPartnerValid] = useState(false)
@@ -197,6 +221,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             about: data.about || "",
             foodPreference: data.food_preference || "",
             languages: data.languages || [],
+            createdBy: data.created_by || "Self",
+            physicalStatus: data.physical_status || "Normal",
+            subcaste: data.subcaste || "",
           }
 
           // Store original data for comparison
@@ -216,6 +243,55 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     }
 
     loadPersonalDetails()
+  }, [userId])
+
+  // Load partner preferences from database
+  useEffect(() => {
+    const loadPartnerPreferences = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("partner_preferences")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (!error && data) {
+          const loadedData = {
+            preferredAgeMin: data.preferred_age_min?.toString() || "",
+            preferredAgeMax: data.preferred_age_max?.toString() || "",
+            preferredHeightMin: data.preferred_height_min?.toString() || "",
+            preferredHeightMax: data.preferred_height_max?.toString() || "",
+            preferredMaritalStatus: data.preferred_marital_status || "Any",
+            preferredMotherTongue: data.preferred_mother_tongue || "",
+            preferredPhysicalStatus: data.preferred_physical_status || "Any",
+            preferredEatingHabits: data.preferred_eating_habits || "Any",
+            preferredSmokingHabits: data.preferred_smoking_habits || "Any",
+            preferredDrinkingHabits: data.preferred_drinking_habits || "Any",
+            preferredReligion: data.preferred_religion || "",
+            preferredCaste: data.preferred_caste || "",
+            preferredSubcaste: data.preferred_subcaste || "",
+            preferredStar: data.preferred_star || "",
+            preferredDosham: data.preferred_dosham || "Any",
+            preferredEducation: data.preferred_education || "",
+            preferredEmploymentType: data.preferred_employment_type || "Any",
+            preferredOccupation: data.preferred_occupation || "",
+            preferredAnnualIncome: data.preferred_annual_income || "",
+            preferredCountry: data.preferred_country || "",
+            preferredState: data.preferred_state || "",
+            preferredCity: data.preferred_city || "",
+            preferredCitizenship: data.preferred_citizenship || "",
+          }
+          setOriginalPartnerPreferences(loadedData)
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedData,
+          }))
+        }
+      } catch (error) {
+        console.error("Error loading partner preferences:", error)
+      }
+    }
+    loadPartnerPreferences()
   }, [userId])
 
   // Load contact details from database on mount
@@ -363,6 +439,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             subcaste: data.subcaste || "",
             kulam: data.kulam || "",
             gotram: data.gotram || "",
+            ancestralOrigin: data.ancestral_origin || "",
             familyType: data.family_type || "",
             familyStatus: data.family_status || "",
           }
@@ -868,6 +945,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       interests: ["hobbies", "interests"],
       social: ["smoking", "drinking", "parties", "pubs"],
       photos: ["userPhotos", "familyPhoto", "aadharFront", "aadharBack"],
+      preferences: ["preferredAgeMin", "preferredAgeMax", "preferredHeightMin", "preferredHeightMax", "preferredMaritalStatus", "preferredMotherTongue", "preferredPhysicalStatus", "preferredEatingHabits", "preferredSmokingHabits", "preferredDrinkingHabits", "preferredReligion", "preferredCaste", "preferredSubcaste", "preferredStar", "preferredDosham", "preferredEducation", "preferredEmploymentType", "preferredOccupation", "preferredAnnualIncome", "preferredCountry", "preferredState", "preferredCity", "preferredCitizenship"],
       referral: ["referralPartnerId"],
     }
 
@@ -1913,6 +1991,37 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     return currentPartnerId !== originalPartnerId
   }
 
+  const hasPartnerPreferencesChanged = (): boolean => {
+    const prefFields = [
+      "preferredAgeMin", "preferredAgeMax", "preferredHeightMin", "preferredHeightMax",
+      "preferredMaritalStatus", "preferredMotherTongue", "preferredPhysicalStatus",
+      "preferredEatingHabits", "preferredSmokingHabits", "preferredDrinkingHabits",
+      "preferredReligion", "preferredCaste", "preferredSubcaste", "preferredStar",
+      "preferredDosham", "preferredEducation", "preferredEmploymentType", "preferredOccupation",
+      "preferredAnnualIncome", "preferredCountry", "preferredState", "preferredCity", "preferredCitizenship"
+    ]
+
+    if (!originalPartnerPreferences) {
+      return prefFields.some((field) => {
+        const value = formData[field as keyof FormData]
+        const anyFields = ["preferredMaritalStatus", "preferredPhysicalStatus", "preferredEatingHabits", "preferredSmokingHabits", "preferredDrinkingHabits", "preferredDosham", "preferredEmploymentType"]
+        if (anyFields.includes(field)) {
+          return value !== "Any" && value !== "Normal" && value !== "" && value !== null
+        }
+        return value !== "" && value !== null && value !== undefined
+      })
+    }
+
+    for (const field of prefFields) {
+      const currentValue = formData[field as keyof FormData]?.toString().trim() || ""
+      const originalValue = originalPartnerPreferences[field as keyof FormData]?.toString().trim() || ""
+      if (currentValue !== originalValue) {
+        return true
+      }
+    }
+    return false
+  }
+
   // Check if referral partner ID is valid (pattern matches and partner exists)
   const isReferralPartnerIdValid = (): boolean => {
     const partnerIdPattern = /^[A-Z]{2}\d{4}[A-Z]{2}\d{3}$/
@@ -1961,6 +2070,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           about: formData.about || null,
           food_preference: formData.foodPreference || null,
           languages: formData.languages || [],
+          created_by: formData.createdBy || "Self",
+          physical_status: formData.physicalStatus || "Normal",
+          subcaste: formData.subcaste || null,
           completion_percentage: personalDetailsProgress,
         }
 
@@ -1986,6 +2098,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           about: formData.about,
           foodPreference: formData.foodPreference,
           languages: formData.languages,
+          createdBy: formData.createdBy,
+          physicalStatus: formData.physicalStatus,
+          subcaste: formData.subcaste,
         })
 
         toast.success("Personal details saved successfully!", {
@@ -2483,6 +2598,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           subcaste: formData.subcaste || null,
           kulam: formData.kulam || null,
           gotram: formData.gotram || null,
+          ancestral_origin: formData.ancestralOrigin || null,
           family_type: formData.familyType || null,
           family_status: formData.familyStatus || null,
           completion_percentage: familyDetailsProgress,
@@ -2519,6 +2635,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           subcaste: formData.subcaste,
           kulam: formData.kulam,
           gotram: formData.gotram,
+          ancestralOrigin: formData.ancestralOrigin,
           familyType: formData.familyType,
           familyStatus: formData.familyStatus,
         })
@@ -3049,7 +3166,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             color: "#166534",
           },
         })
-      } else if (currentStep === 9) {
+      } else if (currentStep === 10) {
         // Save referral if we're on the referral step
         // Validate partner ID format
         if (!validateReferralDetails()) {
@@ -3135,6 +3252,77 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         })
 
         toast.success("Referral details saved successfully!", {
+          style: {
+            background: "#dcfce7",
+            border: "1px solid #22c55e",
+            color: "#166534",
+          },
+        })
+      } else if (currentStep === 9) {
+        // Save partner preferences if we're on the partner preferences step
+        const preferencesData = {
+          user_id: userId,
+          preferred_age_min: parseInt(formData.preferredAgeMin) || null,
+          preferred_age_max: parseInt(formData.preferredAgeMax) || null,
+          preferred_height_min: parseInt(formData.preferredHeightMin) || null,
+          preferred_height_max: parseInt(formData.preferredHeightMax) || null,
+          preferred_marital_status: formData.preferredMaritalStatus || "Any",
+          preferred_mother_tongue: formData.preferredMotherTongue || null,
+          preferred_physical_status: formData.preferredPhysicalStatus || "Any",
+          preferred_eating_habits: formData.preferredEatingHabits || "Any",
+          preferred_smoking_habits: formData.preferredSmokingHabits || "Any",
+          preferred_drinking_habits: formData.preferredDrinkingHabits || "Any",
+          preferred_religion: formData.preferredReligion || null,
+          preferred_caste: formData.preferredCaste || null,
+          preferred_subcaste: formData.preferredSubcaste || null,
+          preferred_star: formData.preferredStar || null,
+          preferred_dosham: formData.preferredDosham || "Any",
+          preferred_education: formData.preferredEducation || null,
+          preferred_employment_type: formData.preferredEmploymentType || "Any",
+          preferred_occupation: formData.preferredOccupation || null,
+          preferred_annual_income: formData.preferredAnnualIncome || null,
+          preferred_country: formData.preferredCountry || null,
+          preferred_state: formData.preferredState || null,
+          preferred_city: formData.preferredCity || null,
+          preferred_citizenship: formData.preferredCitizenship || null,
+        }
+
+        const { error } = await supabase
+          .from("partner_preferences")
+          .upsert(preferencesData, {
+            onConflict: "user_id",
+          })
+
+        if (error) throw error
+
+        // Update original data after successful save
+        setOriginalPartnerPreferences({
+          preferredAgeMin: formData.preferredAgeMin,
+          preferredAgeMax: formData.preferredAgeMax,
+          preferredHeightMin: formData.preferredHeightMin,
+          preferredHeightMax: formData.preferredHeightMax,
+          preferredMaritalStatus: formData.preferredMaritalStatus,
+          preferredMotherTongue: formData.preferredMotherTongue,
+          preferredPhysicalStatus: formData.preferredPhysicalStatus,
+          preferredEatingHabits: formData.preferredEatingHabits,
+          preferredSmokingHabits: formData.preferredSmokingHabits,
+          preferredDrinkingHabits: formData.preferredDrinkingHabits,
+          preferredReligion: formData.preferredReligion,
+          preferredCaste: formData.preferredCaste,
+          preferredSubcaste: formData.preferredSubcaste,
+          preferredStar: formData.preferredStar,
+          preferredDosham: formData.preferredDosham,
+          preferredEducation: formData.preferredEducation,
+          preferredEmploymentType: formData.preferredEmploymentType,
+          preferredOccupation: formData.preferredOccupation,
+          preferredAnnualIncome: formData.preferredAnnualIncome,
+          preferredCountry: formData.preferredCountry,
+          preferredState: formData.preferredState,
+          preferredCity: formData.preferredCity,
+          preferredCitizenship: formData.preferredCitizenship,
+        })
+
+        toast.success("Partner preferences saved successfully!", {
           style: {
             background: "#dcfce7",
             border: "1px solid #22c55e",
@@ -3312,8 +3500,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                   {currentStep === 5 && <HoroscopeDetailsStep formData={formData} onChange={handleInputChange} />}
                   {currentStep === 6 && <InterestsStep formData={formData} onChange={handleInputChange} />}
                   {currentStep === 7 && <SocialHabitsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 8 && <PhotosStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 9 && <ReferralStep formData={formData} onChange={handleInputChange} onPartnerNameChange={handlePartnerNameChange} />}
+                  {currentStep === 8 && <PhotosStep formData={formData} onChange={handleInputChange} userId={userId} />}
+                  {currentStep === 9 && <PartnerPreferencesStep formData={formData} onChange={handleInputChange} />}
+                  {currentStep === 10 && <ReferralStep formData={formData} onChange={handleInputChange} onPartnerNameChange={handlePartnerNameChange} />}
                 </motion.div>
               </AnimatePresence>
 
@@ -3321,7 +3510,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   onClick={handleSave}
-                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 3 && (!areAllProfessionalDetailsFilled() || !hasProfessionalDetailsChanged())) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged()) || (currentStep === 6 && !hasInterestsDetailsChanged()) || (currentStep === 7 && !hasSocialHabitsDetailsChanged()) || (currentStep === 8 && (!areAllPhotosFieldsFilled() || !hasPhotosDetailsChanged())) || (currentStep === 9 && (!isReferralPartnerIdValid() || !hasReferralDetailsChanged()))}
+                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 3 && (!areAllProfessionalDetailsFilled() || !hasProfessionalDetailsChanged())) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged()) || (currentStep === 6 && !hasInterestsDetailsChanged()) || (currentStep === 7 && !hasSocialHabitsDetailsChanged()) || (currentStep === 8 && (!areAllPhotosFieldsFilled() || !hasPhotosDetailsChanged())) || (currentStep === 9 && !hasPartnerPreferencesChanged()) || (currentStep === 10 && (!isReferralPartnerIdValid() || !hasReferralDetailsChanged()))}
                   className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-3 disabled:opacity-50 disabled:pointer-events-auto disabled:cursor-not-allowed"
                 >
                   {isSaving ? (

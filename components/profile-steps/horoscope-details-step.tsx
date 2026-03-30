@@ -5,9 +5,24 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { FormData } from "@/types/profile"
-import { Upload, X } from "lucide-react"
+import { Upload, X, Zap, Loader2 } from "lucide-react"
 import { useMasterData } from "@/hooks/use-master-data"
 import { SelectDropdown } from "@/components/ui/select-dropdown"
+import { generateHoroscope, Location } from "@/lib/astrology"
+import { toast } from "sonner"
+
+const MAJOR_CITIES: Record<string, Location> = {
+  "Chennai": { latitude: 13.0827, longitude: 80.2707 },
+  "Madurai": { latitude: 9.9252, longitude: 78.1198 },
+  "Coimbatore": { latitude: 11.0168, longitude: 76.9558 },
+  "Trichy": { latitude: 10.7905, longitude: 78.7047 },
+  "Salem": { latitude: 11.6643, longitude: 78.1460 },
+  "Tirunelveli": { latitude: 8.7139, longitude: 77.7567 },
+  "Thanjavur": { latitude: 10.7870, longitude: 79.1378 },
+  "Vellore": { latitude: 12.9165, longitude: 79.1325 },
+  "Erode": { latitude: 11.3410, longitude: 77.7172 },
+  "Tuticorin": { latitude: 8.8053, longitude: 78.1460 },
+};
 
 interface HoroscopeDetailsStepProps {
   formData: FormData
@@ -16,6 +31,7 @@ interface HoroscopeDetailsStepProps {
 
 export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsStepProps) {
   const [preview, setPreview] = useState<string | null>(formData.jaadhagam || null)
+  const [isGenerating, setIsGenerating] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Fetch horoscope master data using the common hook
@@ -66,6 +82,35 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
     }
   }
 
+  const handleAutoGenerate = async () => {
+    if (!formData.dateOfBirth) {
+      toast.error("Please enter your Date of Birth in the Personal Details step first")
+      return
+    }
+    if (!formData.timeOfBirth || !formData.placeOfBirth) {
+      toast.error("Please fill in Time and Place of Birth to generate")
+      return
+    }
+
+    setIsGenerating(true)
+    try {
+      const location = MAJOR_CITIES[formData.placeOfBirth] || MAJOR_CITIES["Chennai"]
+      const fullDateTime = `${formData.dateOfBirth}T${formData.timeOfBirth}:00`
+      const data = await generateHoroscope(fullDateTime, location)
+      
+      onChange("star", data.star)
+      onChange("zodiacSign", data.rashi)
+      onChange("lagnam", data.lagnam)
+      
+      toast.success(`Generated: ${data.star} - ${data.rashi}`)
+    } catch (err) {
+      console.error("Error generating horoscope:", err)
+      toast.error("Failed to generate horoscope details")
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -112,6 +157,27 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
               </div>
             )}
           </div>
+        </div>
+
+        <div className="md:col-span-2 bg-gradient-to-r from-[#4B0082]/5 to-[#FF1493]/5 p-4 rounded-xl border border-[#4B0082]/10 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm">
+              <Zap className="h-5 w-5 text-amber-500" />
+            </div>
+            <div>
+              <p className="font-bold text-sm">Traditional Horoscope Generator</p>
+              <p className="text-[10px] text-gray-500">Auto-fill Star, Rashi, and Lagnam from birth details</p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            onClick={handleAutoGenerate}
+            disabled={isGenerating}
+            className="bg-[#4B0082] hover:bg-[#3B0062] text-white gap-2 font-bold"
+          >
+            {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+            {isGenerating ? "Generating..." : "Generate from Birth Details"}
+          </Button>
         </div>
 
         <div className="space-y-2">

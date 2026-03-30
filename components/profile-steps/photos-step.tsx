@@ -4,15 +4,18 @@ import { useState } from "react"
 import { FormData } from "@/types/profile"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Upload, X, AlertCircle } from "lucide-react"
+import { Upload, X, AlertCircle, ShieldCheck } from "lucide-react"
+import { VerificationDialog } from "@/components/verification-dialog"
 
 interface PhotosStepProps {
   formData: FormData
   onChange: (field: keyof FormData, value: any) => void
+  userId?: string
 }
 
-export function PhotosStep({ formData, onChange }: PhotosStepProps) {
+export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false)
 
   const validateFile = (file: File): string | null => {
     if (file.size > 5 * 1024 * 1024) {
@@ -441,6 +444,41 @@ export function PhotosStep({ formData, onChange }: PhotosStepProps) {
           )}
         </div>
       </div>
+
+      {/* Profile Verification Section */}
+      {userId && (
+        <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/10 dark:to-indigo-900/10 rounded-2xl p-6 border border-blue-100 dark:border-blue-900/30">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Want to get verified?</h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                  Profiles with a verified photo get up to 3x more interest! Complete a quick live selfie verification now to build trust with potential matches.
+                </p>
+              </div>
+              <Button
+                type="button"
+                onClick={() => setShowVerificationDialog(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-4 h-auto rounded-xl shadow-lg shadow-blue-500/20 whitespace-nowrap"
+              >
+                Verify Now
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {userId && (
+        <VerificationDialog
+          isOpen={showVerificationDialog}
+          onClose={() => setShowVerificationDialog(false)}
+          userId={userId}
+          existingPhotos={userPhotos}
+        />
+      )}
     </div>
   )
 }

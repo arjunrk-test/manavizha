@@ -254,3 +254,43 @@ export async function cleanupData() {
         return { success: false, error: String(errorMsg) }
     }
 }
+export async function updateUserPremiumSubscription(data: {
+    userId: string
+    isPremium: boolean
+    plan: string | null
+    expiresAt: string | null
+}) {
+    const logFile = 'debug.txt'
+    fs.appendFileSync(logFile, `[${new Date().toISOString()}] updateUserPremiumSubscription: ${data.userId} to ${data.plan}\n`)
+
+    try {
+        const ax = await getAxios()
+
+        // Check if user_settings exists
+        const { data: settings } = await ax.get(`/rest/v1/user_settings?user_id=eq.${data.userId}&select=user_id`)
+        
+        const payload = {
+            user_id: data.userId,
+            is_premium: data.isPremium,
+            premium_plan: data.plan,
+            premium_expires_at: data.expiresAt,
+            updated_at: new Date().toISOString()
+        }
+
+        if (settings && settings.length > 0) {
+            // Update
+            await ax.patch(`/rest/v1/user_settings?user_id=eq.${data.userId}`, payload)
+        } else {
+            // Insert
+            await ax.post('/rest/v1/user_settings', payload)
+        }
+
+        fs.appendFileSync(logFile, `[${new Date().toISOString()}] updateUserPremiumSubscription SUCCESS\n`)
+        return { success: true }
+    } catch (error: any) {
+        const errorMsg = error?.response?.data?.message || error?.message || "Unknown error"
+        fs.appendFileSync(logFile, `[${new Date().toISOString()}] ERROR: ${JSON.stringify(errorMsg)}\n`)
+        console.error("Error updating subscription:", errorMsg)
+        return { success: false, error: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg) }
+    }
+}

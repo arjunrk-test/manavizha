@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FormData } from "@/types/profile"
 import { useMasterData } from "@/hooks/use-master-data"
 import { SelectDropdown } from "@/components/ui/select-dropdown"
@@ -108,7 +109,38 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
             <p className="text-sm text-red-500 dark:text-red-400">
                 Currently we accept profiles with age less than or equal to 50
             </p>
-            )}
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
+          <div className="space-y-2">
+            <Label htmlFor="createdBy">Profile Created By *</Label>
+            <Select value={formData.createdBy} onValueChange={(value) => onChange("createdBy", value)}>
+              <SelectTrigger id="createdBy" className="rounded-2xl border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+                <SelectValue placeholder="Select who is creating this profile" />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl border-gray-200 dark:border-gray-800 shadow-xl">
+                <SelectItem value="Self">Self</SelectItem>
+                <SelectItem value="Parents">Parents</SelectItem>
+                <SelectItem value="Sibling">Sibling</SelectItem>
+                <SelectItem value="Relative">Relative</SelectItem>
+                <SelectItem value="Friend">Friend</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="physicalStatus">Physical Status *</Label>
+            <Select value={formData.physicalStatus} onValueChange={(value) => onChange("physicalStatus", value)}>
+              <SelectTrigger id="physicalStatus" className="rounded-2xl border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+                <SelectValue placeholder="Select physical status" />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl border-gray-200 dark:border-gray-800 shadow-xl">
+                <SelectItem value="Normal">Normal</SelectItem>
+                <SelectItem value="Physically Challenged">Physically Challenged</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <SelectDropdown

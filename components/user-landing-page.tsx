@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { VerificationDialog } from "@/components/verification-dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { motion } from "framer-motion"
 import {
@@ -13,19 +14,28 @@ import {
   Sparkles,
   HeartHandshake,
   AlertTriangle,
-  UserCircle2
+  UserCircle2,
+  ListFilter,
+  Users2,
+  Clock,
+  Eye,
+  History,
+  ThumbsUp,
+  MessageSquareHeart,
+  CalendarDays,
+  Search,
+  ShieldCheck,
+  Star,
+  Crown,
+  Gem,
+  Shield
 } from "lucide-react"
+import { ProfileCarousel } from "./profile-carousel"
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+  MarriedConfirmationDialog
+} from "@/components/married-confirmation-dialog"
 import { supabase } from "@/lib/supabase"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 interface UserLandingPageProps {
@@ -37,6 +47,10 @@ interface UserLandingPageProps {
   onNavigateToSelections: () => void
   onNavigateToPartnerPreferences: () => void
   onNavigateToLikes: () => void
+  onNavigateToMutualMatches: () => void
+  onNavigateToILiked: () => void
+  onNavigateToLikedMe: () => void
+  onProgressChange?: (progress: number) => void
 }
 
 interface ProfileData {
@@ -44,13 +58,31 @@ interface ProfileData {
   contactNumber?: string
   profession?: string
   maritalStatus?: string
+  photo_verified?: boolean
+  photos?: string[]
+  isPremium?: boolean
+  premiumPlan?: string | null
+  premiumExpiresAt?: string | null
 }
 
-export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, onNavigateToBrowse, onNavigateToParents, onNavigateToSelections, onNavigateToPartnerPreferences, onNavigateToLikes }: UserLandingPageProps) {
+export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, onNavigateToBrowse, onNavigateToParents, onNavigateToSelections, onNavigateToPartnerPreferences, onNavigateToLikes, onNavigateToMutualMatches, onNavigateToILiked, onNavigateToLikedMe, onProgressChange }: UserLandingPageProps) {
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [completionPercentage, setCompletionPercentage] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
   const [showMarriedConfirmDialog, setShowMarriedConfirmDialog] = useState(false)
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false)
+
+  // New states for match sections
+  const [dailyRecs, setDailyRecs] = useState<any[]>([])
+  const [allMatches, setAllMatches] = useState<any[]>([])
+  const [newMatches, setNewMatches] = useState<any[]>([])
+  const [whoViewedMe, setWhoViewedMe] = useState<any[]>([])
+  const [profilesIViewed, setProfilesIViewed] = useState<any[]>([])
+  const [mutualCount, setMutualCount] = useState(0)
+  const [iLikedCount, setILikedCount] = useState(0)
+  const [likedMeCount, setLikedMeCount] = useState(0)
+  const [isSectionsLoading, setIsSectionsLoading] = useState(true)
   const userName = userEmail.split("@")[0]
   const isProfileComplete = completionPercentage === 100
 
@@ -69,9 +101,10 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           { data: horoscope },
           { data: interests },
           { data: social },
-          { data: photos }
+          { data: photos },
+          { data: settings }
         ] = await Promise.all([
-          supabase.from("personal_details").select("completion_percentage, name, date_of_birth, age, sex, height, weight, skin_color, body_type, marital_status, about, food_preference, languages").eq("user_id", userId).maybeSingle(),
+          supabase.from("personal_details").select("completion_percentage, name, date_of_birth, age, sex, height, weight, skin_color, body_type, marital_status, about, food_preference, languages, photo_verified").eq("user_id", userId).maybeSingle(),
           supabase.from("contact_details").select("completion_percentage, phone, whatsapp_number, permanent_address_line1, permanent_pincode, permanent_area, permanent_taluk, permanent_district, permanent_division, permanent_region, permanent_state, permanent_country, current_address_line1, current_pincode, current_area, current_taluk, current_district, current_division, current_region, current_state, current_country").eq("user_id", userId).maybeSingle(),
           supabase.from("education_details").select("education").eq("user_id", userId),
           supabase.from("profession_employee").select("completion_percentage, designation, company").eq("user_id", userId).maybeSingle(),
@@ -81,7 +114,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           supabase.from("horoscope_details").select("completion_percentage, jaadhagam_url, time_of_birth, place_of_birth, zodiac_sign, star, lagnam, dhosham").eq("user_id", userId).maybeSingle(),
           supabase.from("interests").select("hobbies, interests").eq("user_id", userId).maybeSingle(),
           supabase.from("social_habits").select("smoking, drinking, parties, pubs").eq("user_id", userId).maybeSingle(),
-          supabase.from("photos").select("user_photos, family_photo, aadhar_front, aadhar_back").eq("user_id", userId).maybeSingle()
+          supabase.from("photos").select("user_photos, family_photo, aadhar_front, aadhar_back").eq("user_id", userId).maybeSingle(),
+          supabase.from("user_settings").select("is_premium, premium_plan, premium_expires_at").eq("user_id", userId).maybeSingle()
         ])
 
         const stepProgresses: number[] = []
@@ -208,12 +242,18 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
         // Only round and divide if they have started to avoid baseline 10%
         const averageProgress = hasStartedProfile ? Math.round(totalProgress / stepProgresses.length) : 0
         setCompletionPercentage(averageProgress)
+        if (onProgressChange) onProgressChange(averageProgress)
 
         const profileData: ProfileData = {}
 
         // Name
         if (personal?.name) {
           profileData.name = personal.name
+        }
+        
+        // Photo Verified
+        if (personal?.photo_verified !== undefined) {
+            profileData.photo_verified = personal.photo_verified
         }
 
         // Contact Number
@@ -250,7 +290,59 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           const status = personal.marital_status
           profileData.maritalStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
         }
+        
+        if (photos?.user_photos) {
+            const userPhotoUrls = await Promise.all(
+                (photos.user_photos || []).map(async (photo: string, index: number) => {
+                    if (!photo) return ""
+                    
+                    try {
+                        let filePath = photo
+                        
+                        // If it's a full URL, check if it's a Supabase storage URL that needs re-signing
+                        if (photo.startsWith("http")) {
+                            if (photo.includes("/storage/v1/object/sign/user-photos/")) {
+                                // It's a signed URL for our bucket, extract the path after the bucket name
+                                const pathParts = photo.split("/user-photos/")
+                                if (pathParts.length > 1) {
+                                    filePath = pathParts[1].split("?")[0]
+                                } else {
+                                    return photo // Fallback to original
+                                }
+                            } else {
+                                return photo // External URL or different bucket, return as-is
+                            }
+                        }
 
+                        // Standardize the path: ensure it includes the userId if it's just a filename
+                        if (!filePath.includes("/")) {
+                            filePath = `${userId}/${filePath}`
+                        }
+                        
+                        const { data: urlData, error: signError } = await supabase.storage
+                            .from("user-photos")
+                            .createSignedUrl(filePath, 31536000)
+                        
+                        if (signError) {
+                            console.warn(`Could not sign photo ${filePath}:`, signError.message)
+                            return photo // Fallback to raw path or original URL
+                        }
+                        return urlData?.signedUrl || photo
+                    } catch (err) { 
+                        console.error(`Error signing photo ${index}:`, err)
+                        return photo 
+                    }
+                })
+            )
+            profileData.photos = userPhotoUrls.filter(Boolean)
+        }
+
+        if (settings) {
+            profileData.isPremium = settings.is_premium
+            profileData.premiumPlan = settings.premium_plan
+            profileData.premiumExpiresAt = settings.premium_expires_at
+        }
+        
         if (Object.keys(profileData).length > 0) {
           setProfile(profileData)
         }
@@ -264,6 +356,147 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
     calculateProgress()
   }, [userId])
 
+  useEffect(() => {
+    const fetchSectionsData = async () => {
+      if (!userId) return
+      setIsSectionsLoading(true)
+      try {
+        // 1. Get my gender preference
+        const { data: userData } = await supabase
+          .from("personal_details")
+          .select("sex")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (!userData) return
+
+        const targetGender = (userData.sex || "").toLowerCase() === "male" ? "Female" : "Male"
+
+        // 2. Fetch partner preferences
+        const { data: prefs } = await supabase
+          .from("partner_preferences")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        // 3. Fetch activity data (views & likes for counts)
+        const [viewsRes, likesRes] = await Promise.all([
+          fetch(`/api/views?userId=${userId}`),
+          fetch(`/api/likes?userId=${userId}`)
+        ])
+        const viewsData = await viewsRes.json()
+        const likesData = await likesRes.json()
+
+        const likedIds = likesData.iLikedIds || []
+        const likedByMeIds = likesData.likedMeIds || []
+        
+        const viewedIds = (viewsData.iViewed || []).map((v: any) => v.viewed_user_id)
+        const viewedByMeIds = (viewsData.viewedMe || []).map((v: any) => v.viewer_user_id)
+        
+        setILikedCount(likedIds.length)
+        setLikedMeCount(likedByMeIds.length)
+        
+        // Calculate Mutual Count
+        const mutuals = likedIds.filter((id: string) => likedByMeIds.includes(id))
+        setMutualCount(mutuals.length)
+
+        // 4. Fetch all potential matches (opposite gender, not married)
+        const { data: potentialMatches } = await supabase
+          .from("personal_details")
+          .select("*, created_at")
+          .ilike("sex", targetGender)
+          .neq("user_id", userId)
+          .neq("marital_status", "Married")
+
+        if (!potentialMatches || potentialMatches.length === 0) {
+          setIsSectionsLoading(false)
+          return
+        }
+
+        const matchUserIds = potentialMatches.map(p => p.user_id)
+
+        // 5. Fetch photos and contact for these matches
+        const [
+          { data: photosData },
+          { data: contactData },
+          { data: empData },
+          { data: busData },
+          { data: eduData }
+        ] = await Promise.all([
+          supabase.from("photos").select("user_id, user_photos").in("user_id", matchUserIds),
+          supabase.from("contact_details").select("user_id, current_district, current_state").in("user_id", matchUserIds),
+          supabase.from("profession_employee").select("user_id, designation, company").in("user_id", matchUserIds),
+          supabase.from("profession_business").select("user_id, designation, business_name").in("user_id", matchUserIds),
+          supabase.from("education_details").select("user_id, education").in("user_id", matchUserIds)
+        ])
+
+        const combined = potentialMatches.map(p => {
+            const photos = photosData?.find(x => x.user_id === p.user_id)?.user_photos || []
+            const contact = contactData?.find(x => x.user_id === p.user_id)
+            const emp = empData?.find(x => x.user_id === p.user_id)
+            const bus = busData?.find(x => x.user_id === p.user_id)
+            const edu = eduData?.find(x => x.user_id === p.user_id)
+
+            let profession = "Not specified"
+            if (emp?.designation) profession = emp.designation + (emp.company ? ` at ${emp.company}` : "")
+            else if (bus?.designation) profession = bus.designation + (bus.business_name ? ` at ${bus.business_name}` : "")
+
+            return {
+                ...p,
+                photos,
+                location: contact?.current_district ? `${contact.current_district}${contact.current_state ? `, ${contact.current_state}` : ""}` : "Location hidden",
+                profession,
+                education: edu?.education || "Not specified"
+            }
+        })
+
+        // -- Apply Preference Filtering for "All Matches" --
+        let filtered = combined
+        if (prefs) {
+            filtered = combined.filter(p => {
+                if (prefs.min_age && p.age && p.age < prefs.min_age) return false
+                if (prefs.max_age && p.age && p.age > prefs.max_age) return false
+                return true
+            })
+        }
+
+        // -- Section 1: Daily Recommendations (Seeded Shuffle) --
+        // Use YYYY-MM-DD + userId as seed for stability
+        const today = new Date().toISOString().split('T')[0]
+        const seedStr = today + userId
+        let seed = 0
+        for (let i = 0; i < seedStr.length; i++) seed += seedStr.charCodeAt(i)
+
+        const seededShuffle = (arr: any[]) => {
+            const result = [...arr]
+            let s = seed
+            for (let i = result.length - 1; i > 0; i--) {
+                const j = Math.floor((Math.sin(s++) * 10000 - Math.floor(Math.sin(s) * 10000)) * (i + 1))
+                ;[result[i], result[j]] = [result[j], result[i]]
+            }
+            return result
+        }
+        setDailyRecs(seededShuffle(filtered).slice(0, 10))
+
+        // -- Section 2: All Matches --
+        setAllMatches(filtered)
+
+        // -- Section 3: New Matches (Last 30 days) --
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        setNewMatches(combined.filter(p => new Date(p.created_at) > thirtyDaysAgo))
+
+        setWhoViewedMe(combined.filter(p => viewedByMeIds.includes(p.user_id)))
+        setProfilesIViewed(combined.filter(p => viewedIds.includes(p.user_id)))
+
+      } catch (err) {
+        console.error("Error fetching dash sections:", err)
+      } finally {
+        setIsSectionsLoading(false)
+      }
+    }
+    fetchSectionsData()
+  }, [userId])
+
   const handleMarkAsMarried = async () => {
     try {
       const { error } = await supabase
@@ -272,6 +505,16 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
         .eq("user_id", userId)
 
       if (error) throw error
+
+      // Also deactivate the profile permanently (10 years)
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          updates: { is_deactivated: true, deactivated_until: new Date(Date.now() + 365 * 10 * 24 * 60 * 60 * 1000).toISOString() }
+        })
+      })
 
       setProfile(prev => prev ? { ...prev, maritalStatus: "Married" } : { maritalStatus: "Married" })
       setShowMarriedConfirmDialog(false)
@@ -283,228 +526,330 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
   const isMarried = profile?.maritalStatus === "Married"
 
+  const getPremiumBadge = () => {
+    if (!profile?.isPremium) return null
+    
+    const isExpired = profile.premiumExpiresAt && new Date(profile.premiumExpiresAt) < new Date()
+    if (isExpired) return null
+    
+    if (profile.premiumPlan === 'till_you_marry') return <span className="bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] md:text-sm uppercase font-bold px-2.5 md:px-3 py-1 rounded-md flex items-center gap-1.5 shadow-lg shadow-pink-500/20 whitespace-nowrap w-fit"><Crown className="h-3 w-3 md:h-4 md:w-4"/> Lifetime</span>
+    if (profile.premiumPlan === 'elite') return <span className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-[10px] md:text-sm uppercase font-bold px-2.5 md:px-3 py-1 rounded-md flex items-center gap-1.5 shadow-lg shadow-indigo-500/20 whitespace-nowrap w-fit"><Gem className="h-3 w-3 md:h-4 md:w-4"/> Elite</span>
+    if (profile.premiumPlan === 'prime_gold') return <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] md:text-sm uppercase font-bold px-2.5 md:px-3 py-1 rounded-md flex items-center gap-1.5 shadow-lg shadow-orange-500/20 whitespace-nowrap w-fit"><Star className="h-3 w-3 md:h-4 md:w-4"/> Prime Gold</span>
+    if (profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') return <span className="bg-gradient-to-r from-blue-400 to-cyan-500 text-white text-[10px] md:text-sm uppercase font-bold px-2.5 md:px-3 py-1 rounded-md flex items-center gap-1.5 shadow-lg shadow-blue-500/20 whitespace-nowrap w-fit"><Shield className="h-3 w-3 md:h-4 md:w-4"/> Prime</span>
+    
+    return <span className="bg-gradient-to-r from-[#4B0082] to-[#FF1493] text-white text-[10px] md:text-sm uppercase font-bold px-2.5 md:px-3 py-1 rounded-md flex items-center gap-1.5 shadow-lg shadow-purple-500/20 whitespace-nowrap w-fit"><Crown className="h-3 w-3 md:h-4 md:w-4"/> Premium</span>
+  }
+
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Welcome Section */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-6"
-        >
-          <div className="flex items-center gap-2 mb-1">
-            <motion.div
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-            >
-              <Sparkles className="h-6 w-6 text-[#4B0082]" />
-            </motion.div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-              Welcome back, {userName}! 👋
-            </h1>
-          </div>
-          <p className="text-base text-gray-600 dark:text-gray-400">
-            We're excited to help you find your perfect match
-          </p>
-        </motion.div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {/* Profile Completion Card */}
+  <>
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
+        {/* Left Sidebar - Sticky */}
+        <aside className="w-full lg:w-48 xl:w-56 lg:sticky lg:top-20 space-y-4 flex-shrink-0">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="lg:col-span-2"
           >
-            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-2 border-gray-200/60 dark:border-gray-700/60 shadow-xl">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-2xl flex items-center gap-2">
-                      <User className="h-6 w-6 text-[#4B0082]" />
-                      Profile Status
-                    </CardTitle>
-                    <CardDescription className="mt-2">
-                      Complete your profile to increase your match potential
-                    </CardDescription>
-                  </div>
-                  {isProfileComplete && (
-                    <CheckCircle2 className="h-8 w-8 text-green-500" />
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {/* Progress Bar */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Profile Completion
-                      </span>
-                      <span className="text-sm font-bold text-[#4B0082]">
-                        {completionPercentage}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${completionPercentage}%` }}
-                        transition={{ duration: 1, ease: "easeOut" }}
-                        className="h-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] rounded-full"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Profile Info */}
-                  {profile && (
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                      {profile.name && (
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Name</p>
-                          <p className="font-semibold text-gray-900 dark:text-white">{profile.name}</p>
-                        </div>
-                      )}
-                      {profile.contactNumber && (
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Contact Number</p>
-                          <p className="font-semibold text-gray-900 dark:text-white">{profile.contactNumber}</p>
-                        </div>
-                      )}
-                      {profile.profession && (
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Profession</p>
-                          <p className="font-semibold text-gray-900 dark:text-white">{profile.profession}</p>
-                        </div>
-                      )}
-                      {profile.maritalStatus && (
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Marital Status</p>
-                          <p className="font-semibold text-gray-900 dark:text-white">{profile.maritalStatus}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Action Button */}
-                  <Button
-                    onClick={onNavigateToProfileSetup}
-                    className="w-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white font-semibold py-6 text-lg"
-                  >
-                    {isProfileComplete ? (
-                      <>
-                        <Edit className="h-5 w-5 mr-2" />
-                        Update Profile
-                      </>
-                    ) : (
-                      <>
-                        <ArrowRight className="h-5 w-5 mr-2" />
-                        Complete Your Profile
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Quick Actions Card */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-2 border-gray-200/60 dark:border-gray-700/60 shadow-xl h-full">
-              <CardHeader>
-                <CardTitle className="text-xl flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-[#4B0082]" />
+            <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border border-gray-200/60 dark:border-gray-700/60 shadow-lg overflow-hidden">
+              <CardHeader className="py-3 px-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50">
+                <CardTitle className="text-[11px] uppercase tracking-wider flex items-center gap-2 font-bold text-gray-500">
+                  <Sparkles className="h-3 w-3 text-[#4B0082]" />
                   Quick Actions
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="p-1.5 space-y-0.5">
                 {completionPercentage === 0 ? (
-                  <div className="text-sm text-red-500 mb-4 bg-red-50 dark:bg-red-900/10 p-3 rounded-md border border-red-100 dark:border-red-900/50 flex items-start gap-2">
-                    <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <p>Please complete your profile to access matchmaking features.</p>
+                  <div className="text-xs text-red-500 mb-2 bg-red-50 dark:bg-red-900/10 p-2 rounded-md border border-red-100 dark:border-red-900/50">
+                    Complete profile to unlock features
                   </div>
                 ) : null}
                 <Button
-                  variant="outline"
-                  className="w-full justify-start h-auto py-3 hover:bg-[#4B0082]/10 hover:border-[#4B0082]"
-                  onClick={onNavigateToLikes}
+                  variant="ghost"
+                  className="w-full justify-start h-auto py-1.5 px-2 hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
+                  onClick={onNavigateToMutualMatches}
                   disabled={completionPercentage === 0}
                 >
-                  <Heart className="h-4 w-4 mr-2 text-[#FF1493]" />
-                  <div className="text-left">
-                    <div className="font-semibold">My Likes & Matches</div>
-                    <div className="text-xs text-gray-500">
-                      {completionPercentage === 0
-                        ? "Unlock by completing your profile"
-                        : "View liked profiles & mutual matches"}
-                    </div>
+                  <HeartHandshake className="h-3.5 w-3.5 mr-2.5 text-[#4B0082] group-hover:scale-110 transition-transform" />
+                  <div className="flex-1 flex items-center justify-between">
+                    <div className="font-semibold text-[11px]">Mutual Matches</div>
+                    <span className="bg-[#4B0082] text-white text-[9px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{mutualCount}</span>
                   </div>
                 </Button>
                 <Button
-                  variant="outline"
-                  className="w-full justify-start h-auto py-3 hover:bg-[#4B0082]/10 hover:border-[#4B0082]"
+                  variant="ghost"
+                  className="w-full justify-start h-auto py-1.5 px-2 hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
+                  onClick={onNavigateToILiked}
+                  disabled={completionPercentage === 0}
+                >
+                  <Heart className="h-3.5 w-3.5 mr-2.5 text-[#FF1493] group-hover:scale-110 transition-transform" />
+                  <div className="flex-1 flex items-center justify-between">
+                    <div className="font-semibold text-[11px]">I Liked</div>
+                    <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[9px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{iLikedCount}</span>
+                  </div>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-auto py-1.5 px-2 hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
+                  onClick={onNavigateToLikedMe}
+                  disabled={completionPercentage === 0}
+                >
+                  <Sparkles className="h-3.5 w-3.5 mr-2.5 text-[#4B0082] group-hover:scale-110 transition-transform" />
+                  <div className="flex-1 flex items-center justify-between">
+                    <div className="font-semibold text-[11px]">Liked Me</div>
+                    <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[9px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{likedMeCount}</span>
+                  </div>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-auto py-1.5 px-2 hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
                   onClick={onNavigateToPartnerPreferences}
                   disabled={completionPercentage === 0}
                 >
-                  <Heart className="h-4 w-4 mr-2" />
+                  <Search className="h-3.5 w-3.5 mr-2.5 text-[#4B0082] group-hover:scale-110 transition-transform" />
                   <div className="text-left">
-                    <div className="font-semibold">Partner Preferences</div>
-                    <div className="text-xs text-gray-500">
-                      {completionPercentage === 0
-                        ? "Unlock by completing your profile"
-                        : "Set criteria for your ideal match"}
-                    </div>
+                    <div className="font-semibold text-[11px]">Preferences</div>
                   </div>
                 </Button>
                 <Button
-                  variant="outline"
-                  className="w-full justify-start h-auto py-3 hover:bg-[#4B0082]/10 hover:border-[#4B0082]"
+                  variant="ghost"
+                  className="w-full justify-start h-auto py-1.5 px-2 hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
                   onClick={onNavigateToBrowse}
                   disabled={completionPercentage === 0}
                 >
-                  <Users className="h-4 w-4 mr-2" />
+                  <Users className="h-3.5 w-3.5 mr-2.5 text-[#4B0082] group-hover:scale-110 transition-transform" />
                   <div className="text-left">
-                    <div className="font-semibold">Browse Profiles</div>
-                    <div className="text-xs text-gray-500">
-                      {completionPercentage === 0
-                        ? "Unlock by completing your profile"
-                        : "Find your perfect match"}
-                    </div>
+                    <div className="font-semibold text-[11px]">Browse</div>
                   </div>
                 </Button>
-                <div className="pt-2 pb-1">
-                  <div className="h-px bg-gray-200 dark:bg-gray-800 w-full"></div>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-auto py-1.5 px-2 hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
+                  onClick={() => router.push("/dashboard/horoscope")}
+                >
+                  <Star className="h-3.5 w-3.5 mr-2.5 text-amber-500 group-hover:scale-110 transition-transform" />
+                  <div className="text-left">
+                    <div className="font-semibold text-[11px]">Generate Horoscope</div>
+                  </div>
+                </Button>
+                <div className="pt-2 pb-1 px-2">
+                  <div className="h-px bg-gray-100 dark:bg-gray-700 w-full mb-2"></div>
+                  <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Parental Access</div>
                 </div>
                 <Button
-                  variant="outline"
-                  className="w-full justify-start h-auto py-3 hover:bg-[#4B0082]/10 hover:border-[#4B0082]"
+                  variant="ghost"
+                  className="w-full justify-start h-auto py-1.5 px-2 hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
                   onClick={onNavigateToSelections}
                 >
-                  <Heart className="h-4 w-4 mr-2 text-[#FF1493]" />
+                  <Heart className="h-3.5 w-3.5 mr-2.5 text-[#FF1493] group-hover:scale-110 transition-transform" />
                   <div className="text-left">
-                    <div className="font-semibold">Parent Selections</div>
-                    <div className="text-xs text-gray-500">View what your parents picked</div>
+                    <div className="font-semibold text-[11px]">Selections</div>
                   </div>
                 </Button>
                 <Button
-                  variant="outline"
-                  className="w-full justify-start h-auto py-3 hover:bg-[#4B0082]/10 hover:border-[#4B0082]"
+                  variant="ghost"
+                  className="w-full justify-start h-auto py-1.5 px-2 hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
                   onClick={onNavigateToParents}
                 >
-                  <UserCircle2 className="h-4 w-4 mr-2 text-[#4B0082]" />
+                  <UserCircle2 className="h-3.5 w-3.5 mr-2.5 text-[#4B0082] group-hover:scale-110 transition-transform" />
                   <div className="text-left">
-                    <div className="font-semibold">Manage Parents</div>
-                    <div className="text-xs text-gray-500">Add an account for mother/father</div>
+                    <div className="font-semibold text-[11px]">Parents</div>
                   </div>
                 </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
+
+                {!isMarried && (
+                  <>
+                    <div className="pt-2 pb-1 px-2">
+                      <div className="h-px bg-gray-100 dark:bg-gray-700 w-full mb-2"></div>
+                      <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Profile Status</div>
+                    </div>
+                      {!profile?.photo_verified && (
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start h-auto py-1.5 px-2 hover:bg-blue-500/10 hover:text-blue-600 group transition-all"
+                          onClick={() => setShowVerificationDialog(true)}
+                        >
+                          <ShieldCheck className="h-3.5 w-3.5 mr-2.5 text-blue-500 group-hover:scale-110 transition-transform" />
+                          <div className="text-left">
+                            <div className="font-semibold text-[11px]">Verify Profile</div>
+                          </div>
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start h-auto py-1.5 px-2 hover:bg-[#FF1493]/10 hover:text-[#FF1493] group transition-all"
+                        onClick={() => setShowMarriedConfirmDialog(true)}
+                      >
+                        <HeartHandshake className="h-3.5 w-3.5 mr-2.5 text-[#FF1493] group-hover:scale-110 transition-transform" />
+                        <div className="text-left">
+                          <div className="font-semibold text-[11px]">Mark as Married</div>
+                        </div>
+                      </Button>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          </aside>
+  
+          {/* Right Main Content */}
+          <main className="flex-1 w-full min-w-0 space-y-6">
+            {/* Welcome Area */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="p-6 rounded-2xl bg-gradient-to-r from-[#4B0082]/5 via-[#FF1493]/5 to-transparent border border-[#4B0082]/10"
+            >
+              <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 mb-2">
+                {getPremiumBadge()}
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2 tracking-tight">
+                  {!profile?.isPremium && <Sparkles className="h-5 w-5 text-[#4B0082]" />}
+                  Welcome back, {userName}! 👋
+                </h1>
+              </div>
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  We're excited to help you find your perfect match
+                </p>
+                {profile?.photo_verified && (
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                        <CheckCircle2 className="h-3 w-3" /> Verified
+                    </span>
+                )}
+              </div>
+            </motion.div>
+ 
+            {/* Verification Banner Prompt - Only show if complete but NOT verified */}
+            {isProfileComplete && !profile?.photo_verified && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                onClick={() => setShowVerificationDialog(true)}
+                className="group cursor-pointer"
+              >
+                <div className="bg-gradient-to-r from-[#4B0082] to-blue-600 p-4 rounded-2xl text-white shadow-xl hover:shadow-[#4B0082]/20 transition-all active:scale-[0.98] border border-white/10 relative overflow-hidden">
+                    {/* Animated background pulse */}
+                    <div className="absolute inset-0 bg-white/10 animate-pulse group-hover:bg-white/20 transition-colors" />
+                    
+                    <div className="relative flex items-center justify-between font-outfit">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/30">
+                                <ShieldCheck className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-sm">Welcome back! Verify your identity by clicking here</h3>
+                                <p className="text-[10px] opacity-80 mt-0.5 group-hover:opacity-100 transition-opacity">Help others trust your profile more. It only takes a minute!</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-lg text-xs font-bold border border-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all">
+                             Verify Now <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                    </div>
+                </div>
+              </motion.div>
+            )}
+
+          {/* Profile Status Card - Only show if not 100% */}
+          {!isProfileComplete && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Card className="bg-white/95 dark:bg-gray-800/95 border-2 border-[#4B0082]/20 shadow-lg">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-xl flex items-center gap-2">
+                        <User className="h-5 w-5 text-[#4B0082]" />
+                        Complete Your Profile
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        Unlock better matches by completing your profile
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-medium">Completion Progress</span>
+                      <span className="text-xs font-bold text-[#4B0082]">{completionPercentage}%</span>
+                    </div>
+                    <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden border border-gray-200 dark:border-gray-800">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${completionPercentage}%` }}
+                        transition={{ duration: 1 }}
+                        className="h-full bg-gradient-to-r from-[#4B0082] to-[#FF1493]"
+                      />
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={onNavigateToProfileSetup} 
+                    className="w-full bg-[#4B0082] hover:bg-[#3B0062] text-white text-sm"
+                  >
+                    Update My Profile
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* --- Match Sections --- */}
+          <div className="space-y-2">
+            <ProfileCarousel
+                title="Daily Recommendations"
+                subtitle="Recommended matches for today"
+                profiles={dailyRecs}
+                onProfileClick={(p) => onNavigateToBrowse()}
+                onViewAll={onNavigateToBrowse}
+                isLoading={isSectionsLoading}
+                icon={<CalendarDays className="h-6 w-6" />}
+            />
+
+            <ProfileCarousel
+                title="All Matches"
+                subtitle="Members who match your partner preferences"
+                profiles={allMatches}
+                onProfileClick={(p) => onNavigateToBrowse()}
+                onViewAll={onNavigateToBrowse}
+                isLoading={isSectionsLoading}
+                icon={<Users2 className="h-6 w-6" />}
+            />
+
+            <ProfileCarousel
+                title="New Matches"
+                subtitle="Members who joined in the last 30 days"
+                profiles={newMatches}
+                onProfileClick={(p) => onNavigateToBrowse()}
+                onViewAll={onNavigateToBrowse}
+                isLoading={isSectionsLoading}
+                icon={<Clock className="h-6 w-6" />}
+            />
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <ProfileCarousel
+                    title="Who Viewed You"
+                    subtitle="Members who visited your profile"
+                    profiles={whoViewedMe}
+                    onProfileClick={(p) => onNavigateToBrowse()}
+                    onViewAll={onNavigateToBrowse}
+                    isLoading={isSectionsLoading}
+                    icon={<Eye className="h-6 w-6" />}
+                />
+                <ProfileCarousel
+                    title="Profiles You Viewed"
+                    subtitle="Members whose profiles you visited"
+                    profiles={profilesIViewed}
+                    onProfileClick={(p) => onNavigateToBrowse()}
+                    onViewAll={onNavigateToBrowse}
+                    isLoading={isSectionsLoading}
+                    icon={<History className="h-6 w-6" />}
+                />
+            </div>
 
         </div>
 
@@ -559,39 +904,25 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             </Card>
           )}
         </motion.div>
-      </div>
-
-      {/* Confirmation Dialog */}
-      <AlertDialog open={showMarriedConfirmDialog} onOpenChange={setShowMarriedConfirmDialog}>
-        <AlertDialogContent className="bg-white dark:bg-gray-900 border-2 border-[#FF1493]/30 dark:border-[#FF1493]/60 shadow-2xl">
-          <AlertDialogHeader>
-            <div className="mx-auto w-12 h-12 bg-[#FF1493]/10 dark:bg-[#FF1493]/20 rounded-full flex items-center justify-center mb-4">
-              <AlertTriangle className="h-6 w-6 text-[#FF1493]" />
-            </div>
-            <AlertDialogTitle className="text-center text-xl text-gray-900 dark:text-white">
-              Confirm Marriage Status
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-center text-gray-600 dark:text-gray-400 mt-2">
-              Are you sure you want to mark your profile as Married? <br /><br />
-              <strong className="text-gray-900 dark:text-gray-200">This action will:</strong>
-              <ul className="list-disc text-left pl-6 mt-2 space-y-1">
-                <li>Remove your profile from the public matching pool.</li>
-                <li>Stop you from receiving new match suggestions.</li>
-                <li>Hide your profile from new searches.</li>
-              </ul>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="sm:justify-center mt-6 gap-3">
-            <AlertDialogCancel className="w-full sm:w-auto mt-0 border-2 border-gray-400 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleMarkAsMarried}
-              className="w-full sm:w-auto bg-gradient-to-r from-[#FF1493] to-[#4B0082] hover:opacity-90 text-white border-0 font-semibold shadow-lg shadow-[#FF1493]/20"
-            >
-              Yes, Mark as Married
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      </main>
     </div>
+
+    </div>
+    
+    {/* Portals / Dialogs Moved to root level for proper viewport centering */}
+    <VerificationDialog 
+        isOpen={showVerificationDialog} 
+        onClose={() => setShowVerificationDialog(false)} 
+        userId={userId} 
+        existingPhotos={profile?.photos || []}
+    />
+
+    <MarriedConfirmationDialog 
+      isOpen={showMarriedConfirmDialog} 
+      onOpenChange={setShowMarriedConfirmDialog} 
+      onConfirm={handleMarkAsMarried} 
+      isLoading={false} 
+    />
+  </>
   )
 }

@@ -209,9 +209,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* GPU acceleration for animated elements */
-[class*="animate-"],
-[class*="motion-"] {
+/* GPU acceleration for specific animated elements only */
+[class*="animate-pulse"],
+[class*="animate-bounce"],
+[class*="animate-spinner"] {
   will-change: transform, opacity;
   transform: translateZ(0);
   backface-visibility: hidden;

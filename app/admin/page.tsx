@@ -16,7 +16,8 @@ import {
   Database,
   Activity,
   Mail,
-  Phone
+  Phone,
+  ShieldCheck
 } from "lucide-react"
 
 const features = [
@@ -27,6 +28,14 @@ const features = [
     color: "from-blue-500 to-cyan-500",
     bgColor: "from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30",
     iconBg: "bg-blue-500",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Profile Verification",
+    description: "Review and approve photo verification requests from users via side-by-side comparison.",
+    color: "from-amber-500 to-orange-500",
+    bgColor: "from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30",
+    iconBg: "bg-amber-500",
   },
   {
     icon: Database,
