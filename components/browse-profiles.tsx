@@ -561,7 +561,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     { data: interestsData },
                     { data: socialHabitsData },
                     { data: horoscopeData },
-                    { data: settingsData },
+                    settingsApiRes,
                 ] = await Promise.all([
                     supabase.from("photos").select("user_id, user_photos").in("user_id", targetUserIds),
                     supabase.from("contact_details").select("user_id, current_district, current_state, phone, whatsapp_number").in("user_id", targetUserIds),
@@ -572,8 +572,11 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     supabase.from("interests").select("*").in("user_id", targetUserIds),
                     supabase.from("social_habits").select("*").in("user_id", targetUserIds),
                     supabase.from("horoscope_details").select("user_id, zodiac_sign, star, lagnam, dhosham, time_of_birth, place_of_birth").in("user_id", targetUserIds),
-                    supabase.from("user_settings").select("user_id, is_premium, premium_plan, premium_expires_at").in("user_id", targetUserIds),
+                    // Use server API to bypass RLS on user_settings
+                    fetch(`/api/premium-status?userIds=${targetUserIds.join(",")}`).then(r => r.ok ? r.json() : []).catch(() => []),
                 ])
+
+                const settingsData: any[] = Array.isArray(settingsApiRes) ? settingsApiRes : []
 
                 const combined = activeProfiles.map((p: any) => {
                     const myPhotos = photosData?.find(x => x.user_id === p.user_id)

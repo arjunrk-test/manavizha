@@ -68,7 +68,7 @@ export default function ProfileViewPage() {
                     { data: prefs },
                     { data: photosRow },
                     { data: userRow },
-                    { data: settingsRow },
+                    settingsApiResult,
                 ] = await Promise.all([
                     supabase.from("personal_details").select("*").eq("user_id", targetUserId).single(),
                     supabase.from("contact_details").select("*").eq("user_id", targetUserId).maybeSingle(),
@@ -83,7 +83,8 @@ export default function ProfileViewPage() {
                     supabase.from("partner_preferences").select("*").eq("user_id", targetUserId).maybeSingle(),
                     supabase.from("photos").select("*").eq("user_id", targetUserId).maybeSingle(),
                     supabase.from("users").select("name, email, phone").eq("id", targetUserId).single(),
-                    supabase.from("user_settings").select("*").eq("user_id", targetUserId).maybeSingle(),
+                    // Use server API to bypass RLS - target user's settings not readable by anon
+                    fetch(`/api/premium-status?userIds=${targetUserId}`).then(r => r.ok ? r.json() : []).catch(() => []),
                 ])
 
                 if (!personal) {
@@ -97,6 +98,9 @@ export default function ProfileViewPage() {
                 if (photosRow?.user_photos) {
                     allPhotos = photosRow.user_photos
                 }
+
+                // Derive settingsRow from API result (array of 0 or 1 items)
+                const settingsRow = Array.isArray(settingsApiResult) ? settingsApiResult[0] : null
 
                 // Build combined profile object
                 setProfile({
