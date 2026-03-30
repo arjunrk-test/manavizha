@@ -503,7 +503,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                                                         (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedProfile.name || 'User') + '&size=400&background=random'
                                                     }}
                                                 />
-                                                {photoArr.length > 1 && (
+                                                {photoArr.length > 1 ? (
                                                     <>
                                                         <div className="absolute top-1/2 left-4 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <button
@@ -535,8 +535,6 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                                                             ))}
                                                         </div>
                                                     </>
-                                                ) : photoArr.length === 1 ? (
-                                                    null
                                                 ) : null}
                                             </>
                                         ) : (
