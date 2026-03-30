@@ -421,13 +421,15 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           { data: contactData },
           { data: empData },
           { data: busData },
-          { data: eduData }
+          { data: eduData },
+          premiumApiRes
         ] = await Promise.all([
           supabase.from("photos").select("user_id, user_photos").in("user_id", matchUserIds),
           supabase.from("contact_details").select("user_id, current_district, current_state").in("user_id", matchUserIds),
           supabase.from("profession_employee").select("user_id, designation, company").in("user_id", matchUserIds),
           supabase.from("profession_business").select("user_id, designation, business_name").in("user_id", matchUserIds),
-          supabase.from("education_details").select("user_id, education").in("user_id", matchUserIds)
+          supabase.from("education_details").select("user_id, education").in("user_id", matchUserIds),
+          fetch(`/api/premium-status?userIds=${matchUserIds.join(",")}`).then(r => r.ok ? r.json() : []).catch(() => [])
         ])
 
         const combined = potentialMatches.map(p => {
@@ -436,6 +438,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             const emp = empData?.find(x => x.user_id === p.user_id)
             const bus = busData?.find(x => x.user_id === p.user_id)
             const edu = eduData?.find(x => x.user_id === p.user_id)
+            const premiumStatus = Array.isArray(premiumApiRes) ? premiumApiRes.find((x: any) => x.user_id === p.user_id) : null
 
             let profession = "Not specified"
             if (emp?.designation) profession = emp.designation + (emp.company ? ` at ${emp.company}` : "")
@@ -446,7 +449,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 photos,
                 location: contact?.current_district ? `${contact.current_district}${contact.current_state ? `, ${contact.current_state}` : ""}` : "Location hidden",
                 profession,
-                education: edu?.education || "Not specified"
+                education: edu?.education || "Not specified",
+                isPremium: premiumStatus?.is_premium || false,
+                premiumPlan: premiumStatus?.premium_plan || null,
             }
         })
 

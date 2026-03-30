@@ -1,6 +1,6 @@
 "use client"
 
-import { MapPin, Briefcase, User, GraduationCap, Heart, CheckCircle2 } from "lucide-react"
+import { MapPin, Briefcase, User, GraduationCap, Heart, CheckCircle2, Crown, Gem, Star, Shield } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -54,6 +54,31 @@ export function ProfilePreviewCard({ profile, onClick, priority }: ProfilePrevie
                             <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg backdrop-blur-md flex items-center gap-1">
                                 <Heart className="h-2.5 w-2.5 fill-current" /> MATCH
                             </span>
+                        )}
+                        {/* Premium Badge Overlay */}
+                        {profile.isPremium && (
+                            <div className="flex flex-col gap-1">
+                                {profile.premiumPlan === 'till_you_marry' && (
+                                    <span className="bg-gradient-to-r from-[#FF1493] to-[#FF69B4] text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-lg flex items-center gap-0.5">
+                                        <Crown className="h-2 w-2" /> LIFETIME
+                                    </span>
+                                )}
+                                {profile.premiumPlan === 'elite' && (
+                                    <span className="bg-gradient-to-r from-[#4B0082] to-[#8A2BE2] text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-lg flex items-center gap-0.5">
+                                        <Gem className="h-2 w-2" /> ELITE
+                                    </span>
+                                )}
+                                {profile.premiumPlan === 'prime_gold' && (
+                                    <span className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-lg flex items-center gap-0.5">
+                                        <Star className="h-2 w-2" /> GOLD
+                                    </span>
+                                )}
+                                {(profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') && (
+                                    <span className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-lg flex items-center gap-0.5">
+                                        <Shield className="h-2 w-2" /> PRIME
+                                    </span>
+                                )}
+                            </div>
                         )}
                     </div>
 
