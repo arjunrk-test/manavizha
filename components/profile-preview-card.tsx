@@ -21,7 +21,7 @@ export function ProfilePreviewCard({ profile, onClick, priority }: ProfilePrevie
             className="h-full"
         >
             <Card
-                className="overflow-hidden h-fit max-w-[160px] sm:max-w-[200px] hover:shadow-2xl transition-all cursor-pointer group border-gray-200/60 dark:border-gray-700/60 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm relative flex flex-col rounded-xl shadow-md"
+                className="overflow-hidden h-fit max-w-[10rem] sm:max-w-[12.5rem] hover:shadow-2xl transition-all cursor-pointer group border-gray-200/60 dark:border-gray-700/60 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm relative flex flex-col rounded-xl shadow-md"
                 onClick={onClick}
             >
                 {/* Image Section */}

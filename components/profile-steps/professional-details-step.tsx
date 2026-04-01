@@ -141,11 +141,11 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
   const isStudent = selectedValue === "student"
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-12">
       {/* Employment Type Selection */}
       <CustomSelectDropdown
         id="employmentType"
-        label="Employment Type *"
+        label="Professional Matrix Status *"
         value={formData.employmentType || ""}
         onChange={(value) => onChange("employmentType", value)}
         options={employmentTypeOptions}
@@ -154,170 +154,11 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
 
       {/* Employee-specific fields */}
       {isEmployee && (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <CustomSelectDropdown
-          id="sector"
-          label="Sector *"
-          value={formData.sector || ""}
-          onChange={(value) => onChange("sector", value)}
-          options={sectorOptions}
-          required
-          showOtherInput={sectorOptions.some(opt => opt.value.toLowerCase() === "other")}
-          otherValue={formData.sectorOther || ""}
-          onOtherChange={(value) => onChange("sectorOther", value)}
-          otherPlaceholder="Please specify sector"
-        />
-        <div className="space-y-2">
-              <Label htmlFor="company">Company *</Label>
-          <Input
-            id="company"
-                value={formData.company || ""}
-            onChange={(e) => onChange("company", e.target.value)}
-            placeholder="Enter company name"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="designation">Designation *</Label>
-              <Input
-                id="designation"
-                value={formData.designation || ""}
-                onChange={(e) => onChange("designation", e.target.value)}
-                placeholder="e.g., Software Engineer, Manager, etc."
-                required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="salary">Annual Salary *</Label>
-          <div className="relative">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none z-0">
-              ₹
-            </div>
-            <Input
-              id="salary"
-              type="text"
-                  value={formData.salary?.startsWith("₹") ? formData.salary.slice(1) : formData.salary || ""}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9]/g, "")
-                onChange("salary", value ? `₹${value}` : "₹")
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Backspace" && formData.salary === "₹") {
-                  e.preventDefault()
-                }
-              }}
-              placeholder="Enter annual salary"
-              required
-              className="pl-8"
-            />
-          </div>
-        </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="workLocation">Work Location *</Label>
-          <Input
-            id="workLocation"
-                value={formData.workLocation || ""}
-            onChange={(e) => onChange("workLocation", e.target.value)}
-            placeholder="Enter work location"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Payslip Upload */}
-          <div className="space-y-2">
-            <Label htmlFor="payslip">Last 3 Months Payslip (Optional - Max 3 files, each under 5MB)</Label>
-            {payslipError && (
-              <div className="text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
-                {payslipError}
-              </div>
-            )}
-            {(formData.payslip as string[]) && (formData.payslip as string[]).length > 0 ? (
-              <div className="space-y-4">
-                {(formData.payslip as string[]).map((payslip, index) => (
-                  <div key={index} className="relative max-w-md">
-                    {payslip.startsWith("data:image/") ? (
-                      <img
-                        src={payslip}
-                        alt={`Payslip ${index + 1}`}
-                        className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
-                      />
-                    ) : (
-                      <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Payslip {index + 1} uploaded</p>
-                      </div>
-                    )}
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removePayslip(index)}
-                      className="absolute top-2 right-2"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                {(formData.payslip as string[]).length < 3 && (
-                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
-                    <input
-                      type="file"
-                      accept="image/*,application/pdf"
-                      onChange={handlePayslipUpload}
-                      className="hidden"
-                      id="payslip-upload"
-                      multiple
-                    />
-                    <label
-                      htmlFor="payslip-upload"
-                      className="cursor-pointer flex flex-col items-center gap-2"
-                    >
-                      <Upload className="h-8 w-8 text-gray-400" />
-                      <span className="text-gray-600 dark:text-gray-400">
-                        Click to upload more payslips or drag and drop
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        {(formData.payslip as string[]).length} of 3 files uploaded. Image or PDF up to 5MB each
-                      </span>
-                    </label>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
-                <input
-                  type="file"
-                  accept="image/*,application/pdf"
-                  onChange={handlePayslipUpload}
-                  className="hidden"
-                  id="payslip-upload"
-                  multiple
-                  required
-                />
-                <label
-                  htmlFor="payslip-upload"
-                  className="cursor-pointer flex flex-col items-center gap-2"
-                >
-                  <Upload className="h-8 w-8 text-gray-400" />
-                  <span className="text-gray-600 dark:text-gray-400">
-                    Click to upload payslips or drag and drop
-                  </span>
-                  <span className="text-sm text-gray-500">Max 3 files, Image or PDF up to 5MB each</span>
-                </label>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Business/Self-Employed specific fields */}
-      {isBusiness && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <CustomSelectDropdown
               id="sector"
-              label="Sector *"
+              label="Economic Sector *"
               value={formData.sector || ""}
               onChange={(value) => onChange("sector", value)}
               options={sectorOptions}
@@ -325,21 +166,173 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
               showOtherInput={sectorOptions.some(opt => opt.value.toLowerCase() === "other")}
               otherValue={formData.sectorOther || ""}
               onOtherChange={(value) => onChange("sectorOther", value)}
-              otherPlaceholder="Please specify sector"
+              otherPlaceholder="Manual Sector Entry"
             />
             <div className="space-y-2">
-              <Label htmlFor="businessName">Business Name *</Label>
+              <Label htmlFor="company" className="sds-label">Enterprise Entity *</Label>
+              <Input
+                id="company"
+                value={formData.company || ""}
+                onChange={(e) => onChange("company", e.target.value)}
+                placeholder="Official Corporate Name"
+                required
+                className="sds-input w-full"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="designation" className="sds-label">Professional Designation *</Label>
+              <Input
+                id="designation"
+                value={formData.designation || ""}
+                onChange={(e) => onChange("designation", e.target.value)}
+                placeholder="e.g., Senior Systems Architect"
+                required
+                className="sds-input w-full"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="salary" className="sds-label">Annual Compensation *</Label>
+              <div className="relative group">
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#4B0082]/40 font-black text-sm pointer-events-none z-10 transition-colors group-focus-within:text-[#4B0082]">
+                  ₹
+                </div>
+                <Input
+                  id="salary"
+                  type="text"
+                  value={formData.salary?.startsWith("₹") ? formData.salary.slice(1) : formData.salary || ""}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9]/g, "")
+                    onChange("salary", value ? `₹${value}` : "₹")
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Backspace" && formData.salary === "₹") {
+                      e.preventDefault()
+                    }
+                  }}
+                  placeholder="e.g., 2,400,000"
+                  required
+                  className="sds-input pl-10 w-full"
+                />
+              </div>
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="workLocation" className="sds-label">Geographic Operating Base *</Label>
+              <Input
+                id="workLocation"
+                value={formData.workLocation || ""}
+                onChange={(e) => onChange("workLocation", e.target.value)}
+                placeholder="City, State, Country"
+                required
+                className="sds-input w-full"
+              />
+            </div>
+          </div>
+
+          {/* Payslip Upload */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-6 mb-4">
+              <Label htmlFor="payslip" className="sds-label !mb-0 whitespace-nowrap">Earnings Verification Matrix</Label>
+              <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent" />
+            </div>
+            
+            {payslipError && (
+              <div className="text-rose-500 text-[10px] font-black uppercase tracking-widest bg-rose-50/50 p-4 rounded-2xl border border-rose-100/50 animate-in shake-in duration-300">
+                {payslipError}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {(formData.payslip as string[] || []).map((payslip, index) => (
+                <div key={index} className="relative group">
+                  <div className="sds-glass rounded-3xl overflow-hidden border-2 border-indigo-50/50 shadow-lg aspect-[4/3] flex items-center justify-center bg-white/20">
+                    {payslip.startsWith("data:image/") ? (
+                      <img
+                        src={payslip}
+                        alt={`Payslip ${index + 1}`}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="h-12 w-12 rounded-2xl bg-[#4B0082]/10 flex items-center justify-center text-[#4B0082]">
+                          <Upload className="h-6 w-6" />
+                        </div>
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400">PDF Protocol {index + 1}</p>
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => removePayslip(index)}
+                    className="absolute -top-3 -right-3 h-8 w-8 rounded-full shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-rose-500 hover:bg-rose-600 border-2 border-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              
+              {(formData.payslip as string[] || []).length < 3 && (
+                <div className="sds-glass rounded-3xl border-2 border-dashed border-indigo-100 bg-indigo-50/10 aspect-[4/3] relative group hover:border-[#4B0082]/30 transition-all duration-500">
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={handlePayslipUpload}
+                    className="hidden"
+                    id="payslip-upload"
+                    multiple
+                  />
+                  <label
+                    htmlFor="payslip-upload"
+                    className="absolute inset-0 cursor-pointer flex flex-col items-center justify-center p-6 text-center"
+                  >
+                    <div className="h-12 w-12 rounded-2xl bg-[#4B0082]/5 flex items-center justify-center text-[#4B0082]/40 mb-3 transition-all duration-500 group-hover:scale-110 group-hover:bg-[#4B0082]/10 group-hover:text-[#4B0082]">
+                      <Upload className="h-6 w-6" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 group-hover:text-[#4B0082] transition-colors">
+                      Sync Attachment
+                    </span>
+                    <span className="text-[9px] text-[#4B0082]/20 font-bold uppercase mt-1 tracking-widest group-hover:text-[#4B0082]/40 transition-colors">
+                      {(formData.payslip as string[] || []).length} / 03 Records
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Business/Self-Employed specific fields */}
+      {isBusiness && (
+        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <CustomSelectDropdown
+              id="sector"
+              label="Market Sector *"
+              value={formData.sector || ""}
+              onChange={(value) => onChange("sector", value)}
+              options={sectorOptions}
+              required
+              showOtherInput={sectorOptions.some(opt => opt.value.toLowerCase() === "other")}
+              otherValue={formData.sectorOther || ""}
+              onOtherChange={(value) => onChange("sectorOther", value)}
+              otherPlaceholder="Manual Sector Entry"
+            />
+            <div className="space-y-2">
+              <Label htmlFor="businessName" className="sds-label">Commercial Entity Name *</Label>
               <Input
                 id="businessName"
                 value={formData.businessName || ""}
                 onChange={(e) => onChange("businessName", e.target.value)}
-                placeholder="Enter business name"
+                placeholder="Official Registered Title"
                 required
+                className="sds-input w-full"
               />
             </div>
             <CustomSelectDropdown
               id="businessType"
-              label="What Type of Business *"
+              label="Operating Architecture *"
               value={formData.businessType || ""}
               onChange={(value) => onChange("businessType", value)}
               options={businessTypeOptions}
@@ -347,22 +340,23 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
               showOtherInput={businessTypeOptions.some(opt => opt.value.toLowerCase() === "other")}
               otherValue={formData.businessTypeOther || ""}
               onOtherChange={(value) => onChange("businessTypeOther", value)}
-              otherPlaceholder="Please specify business type"
+              otherPlaceholder="Manual Type Entry"
             />
             <div className="space-y-2">
-              <Label htmlFor="designation">Designation *</Label>
+              <Label htmlFor="designation" className="sds-label">Strategic Designation *</Label>
               <Input
                 id="designation"
                 value={formData.designation || ""}
                 onChange={(e) => onChange("designation", e.target.value)}
-                placeholder="e.g., Owner, Director, Partner, etc."
+                placeholder="e.g., Executive Director"
                 required
+                className="sds-input w-full"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="annualReturns">Annual Returns *</Label>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none z-0">
+              <Label htmlFor="annualReturns" className="sds-label">Fiscal Annual Returns *</Label>
+              <div className="relative group">
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#4B0082]/40 font-black text-sm pointer-events-none z-10 transition-colors group-focus-within:text-[#4B0082]">
                   ₹
                 </div>
                 <Input
@@ -378,134 +372,157 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                       e.preventDefault()
                     }
                   }}
-                  placeholder="Enter annual returns"
+                  placeholder="e.g., 5,000,000"
                   required
-                  className="pl-8"
+                  className="sds-input pl-10 w-full"
                 />
               </div>
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="businessLocation">Business Location *</Label>
+              <Label htmlFor="businessLocation" className="sds-label">Headquarters Location *</Label>
               <Input
                 id="businessLocation"
                 value={formData.businessLocation || ""}
                 onChange={(e) => onChange("businessLocation", e.target.value)}
-                placeholder="Enter main business location"
+                placeholder="City, State, Country"
                 required
+                className="sds-input w-full"
               />
             </div>
           </div>
 
           {/* ITR Document Upload */}
-          <div className="space-y-2">
-            <Label htmlFor="itrDocument">Last Filed ITR Document (Optional)</Label>
+          <div className="space-y-6">
+            <div className="flex items-center gap-6 mb-4">
+              <Label htmlFor="itrDocument" className="sds-label !mb-0 whitespace-nowrap">Fiscal Integrity Verification</Label>
+              <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent" />
+            </div>
+
             {itrError && (
-              <div className="text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+              <div className="text-rose-500 text-[10px] font-black uppercase tracking-widest bg-rose-50/50 p-4 rounded-2xl border border-rose-100/50 animate-in shake-in duration-300">
                 {itrError}
               </div>
             )}
-            {formData.itrDocument ? (
-              <div className="relative max-w-md">
-                {formData.itrDocument.startsWith("data:image/") ? (
-                  <img
-                    src={formData.itrDocument}
-                    alt="ITR Document"
-                    className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
-                  />
-                ) : (
-                  <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">ITR Document uploaded</p>
+
+            <div className="max-w-md">
+              {formData.itrDocument ? (
+                <div className="relative group">
+                  <div className="sds-glass rounded-3xl overflow-hidden border-2 border-indigo-50/50 shadow-lg p-2 bg-white/20">
+                    {formData.itrDocument.startsWith("data:image/") ? (
+                      <img
+                        src={formData.itrDocument}
+                        alt="ITR Document"
+                        className="w-full h-auto rounded-2xl"
+                      />
+                    ) : (
+                      <div className="p-8 flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600">
+                          <Upload className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700">ITR Protocol Verified</p>
+                          <p className="text-[9px] text-amber-500/60 font-bold uppercase tracking-widest mt-1 text-xs">File Encrypted & Stored</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={removeItr}
-                  className="absolute top-2 right-2"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
-                <input
-                  type="file"
-                  accept="image/*,application/pdf"
-                  onChange={handleItrUpload}
-                  className="hidden"
-                  id="itr-upload"
-                />
-                <label
-                  htmlFor="itr-upload"
-                  className="cursor-pointer flex flex-col items-center gap-2"
-                >
-                  <Upload className="h-8 w-8 text-gray-400" />
-                  <span className="text-gray-600 dark:text-gray-400">
-                    Click to upload ITR document or drag and drop
-                  </span>
-                  <span className="text-sm text-gray-500">Image or PDF up to 5MB</span>
-                </label>
-              </div>
-            )}
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    onClick={removeItr}
+                    className="absolute -top-3 -right-3 h-8 w-8 rounded-full shadow-xl bg-rose-500 hover:bg-rose-600 border-2 border-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="sds-glass rounded-3xl border-2 border-dashed border-indigo-100 bg-indigo-50/10 relative group hover:border-[#4B0082]/30 transition-all duration-500 overflow-hidden">
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={handleItrUpload}
+                    className="hidden"
+                    id="itr-upload"
+                  />
+                  <label
+                    htmlFor="itr-upload"
+                    className="cursor-pointer flex flex-col items-center justify-center p-12 text-center"
+                  >
+                    <div className="h-16 w-16 rounded-[2rem] bg-[#4B0082]/5 flex items-center justify-center text-[#4B0082]/40 mb-4 transition-all duration-500 group-hover:scale-110 group-hover:bg-[#4B0082]/10 group-hover:text-[#4B0082]">
+                      <Upload className="h-8 w-8" />
+                    </div>
+                    <span className="text-[11px] font-black uppercase tracking-[0.3em] text-indigo-400 group-hover:text-[#4B0082] transition-colors mb-2">
+                       Append ITR Logic (Optional)
+                    </span>
+                    <span className="text-[9px] text-black/20 font-bold uppercase tracking-tighter">
+                      Image or PDF Protocol up to 5MB
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
 
       {/* Student-specific fields */}
       {isStudent && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="institution">Institution / University *</Label>
+        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="institution" className="sds-label">Academy / University *</Label>
               <Input
                 id="institution"
                 value={formData.institution || ""}
                 onChange={(e) => onChange("institution", e.target.value)}
-                placeholder="Enter institution or university name"
+                placeholder="Official Institution Name"
                 required
+                className="sds-input w-full"
               />
             </div>
             <CustomSelectDropdown
               id="course"
-              label="Course / Degree *"
+              label="Course / Vector *"
               value={formData.course || ""}
               onChange={(value) => onChange("course", value)}
               options={courseOptions}
               required
             />
             <div className="space-y-2">
-              <Label htmlFor="fieldOfStudy">Field of Study / Major *</Label>
+              <Label htmlFor="fieldOfStudy" className="sds-label">Field of Strategic Study *</Label>
               <Input
                 id="fieldOfStudy"
                 value={formData.fieldOfStudy || ""}
                 onChange={(e) => onChange("fieldOfStudy", e.target.value)}
-                placeholder="e.g., Computer Science, Electronics, etc."
+                placeholder="e.g., Quantum Computing, Humanities"
                 required
+                className="sds-input w-full"
               />
             </div>
             <CustomSelectDropdown
               id="yearOfStudy"
-              label="Year of Study *"
+              label="Phase of Study *"
               value={formData.yearOfStudy || ""}
               onChange={(value) => onChange("yearOfStudy", value)}
               options={yearOfStudyOptions}
               required
             />
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="expectedGraduationYear">Expected Graduation Year *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="expectedGraduationYear" className="sds-label">Expected Archival Year *</Label>
               <Input
                 id="expectedGraduationYear"
                 type="number"
                 value={formData.expectedGraduationYear || ""}
                 onChange={(e) => onChange("expectedGraduationYear", e.target.value)}
-                placeholder="e.g., 2025"
+                placeholder="YYYY"
                 min="2000"
                 max="2100"
                 required
-          />
-        </div>
-      </div>
+                className="sds-input w-full"
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>

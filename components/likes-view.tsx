@@ -23,6 +23,7 @@ interface ProfileCard {
     age?: number
     profession: string
     location: string
+    sex?: string
     photo: string | null
     photos: string[]
     iLiked: boolean
@@ -161,7 +162,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                 { data: busData },
                 { data: contactData },
             ] = await Promise.all([
-                supabase.from("personal_details").select("user_id, name, age").in("user_id", allIds),
+                supabase.from("personal_details").select("user_id, name, age, sex").in("user_id", allIds),
                 supabase.from("photos").select("user_id, user_photos").in("user_id", allIds),
                 supabase.from("profession_employee").select("user_id, designation, company").in("user_id", allIds),
                 supabase.from("profession_business").select("user_id, designation, business_name").in("user_id", allIds),
@@ -190,6 +191,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                     user_id: uid,
                     name: personal?.name || "Unknown",
                     age: personal?.age,
+                    sex: personal?.sex || "Not specified",
                     profession,
                     location,
                     photo: photos?.user_photos?.[0] || null,
@@ -297,99 +299,101 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
     ]
 
     const currentTab = tabs.find(t => t.key === activeTab)!
-    const currentProfiles = getProfileList(currentTab.ids)
-
-    const ProfileCard = ({ profile }: { profile: ProfileCard }) => {
+    const currentProfiles = getProfileList(currentTab.ids)    const ProfileCard = ({ profile }: { profile: any }) => {
         const isMutual = iLikedIds.includes(profile.user_id) && likedMeIds.includes(profile.user_id)
+        const genderColor = profile.sex?.toLowerCase() === 'female' 
+            ? 'border-pink-100/50 hover:border-pink-200 shadow-[0_8px_30px_rgb(255,182,193,0.1)]' 
+            : 'border-blue-100/50 hover:border-blue-200 shadow-[0_8px_30px_rgb(173,216,230,0.1)]'
+
         return (
             <motion.div
                 layout
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="h-full"
             >
                 <div
-                    className="rounded-2xl overflow-hidden bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-md hover:shadow-xl transition-all cursor-pointer group flex flex-col h-full"
+                    className={`sds-glass rounded-[2.5rem] overflow-hidden hover:shadow-[0_20px_50px_rgba(75,0,130,0.1)] transition-all duration-500 cursor-pointer group flex flex-col h-full border-2 ${genderColor}`}
                     onClick={() => handleOpenProfile(profile)}
                 >
-                    <div className="aspect-[4/5] relative overflow-hidden bg-gray-100 dark:bg-gray-700">
+                    <div className="aspect-[4/5] relative overflow-hidden bg-gray-50/30">
                         {profile.photo ? (
                             <img
                                 src={profile.photo}
                                 alt={profile.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
                                 onError={(e) => {
                                     (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&size=400&background=random`
                                 }}
                             />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                <User className="h-16 w-16 opacity-40" />
+                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-200">
+                                <User className="h-20 w-20 opacity-10" />
+                                <span className="text-[10px] mt-2 font-black uppercase tracking-[0.3em] opacity-30">No Image Intel</span>
                             </div>
                         )}
                         {isMutual && (
-                            <div className="absolute top-3 left-3 bg-green-500 text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow">
-                                <HeartHandshake className="h-3 w-3" /> Match
+                            <div className="absolute top-4 left-4 bg-[#FEF9C3]/90 text-[#854d0e] text-[8px] font-black px-4 py-2 rounded-full flex items-center gap-2 shadow-xl border border-yellow-200 tracking-[0.2em] uppercase backdrop-blur-md z-10">
+                                <Sparkles className="h-3.5 w-3.5 animate-pulse" /> Mutual Match
                             </div>
                         )}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-10 pb-3 px-3">
-                            <h3 className="text-white font-semibold text-base drop-shadow-md flex items-center gap-2">
-                                {profile.name} {profile.age && <span className="text-sm font-normal">({profile.age})</span>}
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-8 pt-24">
+                            <h3 className="text-white text-3xl font-light tracking-tight drop-shadow-lg">
+                                {profile.name} <span className="font-bold text-rose-300/80 ml-1">{profile.age && `, ${profile.age}`}</span>
                             </h3>
                         </div>
                     </div>
 
-                    <div className="p-3 space-y-1 flex-1 flex flex-col justify-between">
-                        <div>
-                            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                <Briefcase className="h-3.5 w-3.5 mr-1.5 shrink-0" />
-                                <span className="truncate">{profile.profession}</span>
+                    <div className="p-6 space-y-4 flex-1 flex flex-col justify-between bg-gradient-to-b from-white/40 to-transparent">
+                        <div className="space-y-3">
+                            <div className="flex items-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-indigo-600 transition-colors">
+                                <Briefcase className="h-3.5 w-3.5 mr-3 text-indigo-400/50" />
+                                <span className="truncate">{profile.profession === "Not specified" ? "Vocation Undisclosed" : profile.profession}</span>
                             </div>
-                            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                <MapPin className="h-3.5 w-3.5 mr-1.5 shrink-0" />
-                                <span className="truncate">{profile.location}</span>
+                            <div className="flex items-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                <MapPin className="h-3.5 w-3.5 mr-3 text-indigo-400/50" />
+                                <span className="truncate">{profile.location.split(',')[0]}</span>
                             </div>
                         </div>
-                        <div className="pt-3 mt-2 border-t border-gray-100 dark:border-gray-800" onClick={e => e.stopPropagation()}>
+                        
+                        <div className="pt-6 border-t border-black/[0.03]" onClick={e => e.stopPropagation()}>
                             {isMutual ? (
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setSelectedProfile(profile) }}
-                                        className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[10px] font-semibold bg-green-50 text-green-600 hover:bg-green-500 hover:text-white border border-green-200 transition-all shadow-sm"
+                                <div className="grid grid-cols-2 gap-3">
+                                    <Button
+                                        onClick={(e) => { e.stopPropagation(); handleOpenProfile(profile) }}
+                                        className="h-12 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] bg-emerald-50/80 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-all duration-300 shadow-sm border-none backdrop-blur-sm"
                                     >
-                                        <Sparkles className="h-3.5 w-3.5" />
-                                        Full Details
-                                    </button>
-                                    <button
+                                        View Profile
+                                    </Button>
+                                    <Button
                                         onClick={(e) => { 
                                             e.stopPropagation(); 
                                             setMessageTarget({ id: profile.user_id, name: profile.name });
                                             setIsMessageDialogOpen(true);
                                         }}
-                                        className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[10px] font-semibold bg-[#4B0082]/10 text-[#4B0082] hover:bg-[#4B0082] hover:text-white border border-[#4B0082]/20 transition-all shadow-sm"
+                                        className="h-12 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] bg-indigo-50/80 text-indigo-700 hover:bg-[#4B0082] hover:text-white transition-all duration-300 shadow-sm border-none backdrop-blur-sm"
                                     >
-                                        <MessageCircle className="h-3.5 w-3.5" />
-                                        Message
-                                    </button>
+                                        Comms
+                                    </Button>
                                 </div>
                             ) : profile.iLiked ? (
-                                <button
+                                <Button
                                     onClick={() => handleUnlike(profile.user_id)}
                                     disabled={actionLoadingId === profile.user_id}
-                                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold bg-[#4B0082]/10 text-[#4B0082] hover:bg-red-50 hover:text-red-500 border border-[#4B0082]/20 hover:border-red-300 transition-all disabled:opacity-50"
+                                    className="w-full h-12 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] bg-rose-50/80 text-rose-500 hover:bg-rose-500 hover:text-white transition-all duration-300 disabled:opacity-50 shadow-sm border-none"
                                 >
-                                    <Heart className={`h-3.5 w-3.5 fill-current ${actionLoadingId === profile.user_id ? "animate-pulse" : ""}`} />
-                                    {actionLoadingId === profile.user_id ? "Unliking..." : "Unlike"}
-                                </button>
+                                    {actionLoadingId === profile.user_id ? "Processing..." : "Retract Interest"}
+                                </Button>
                             ) : (
-                                <button
+                                <Button
                                     onClick={() => handleLike(profile.user_id)}
                                     disabled={actionLoadingId === profile.user_id}
-                                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold bg-[#FF1493]/10 text-[#FF1493] hover:bg-[#FF1493] hover:text-white border border-[#FF1493]/20 hover:border-[#FF1493] transition-all disabled:opacity-50"
+                                    className="w-full h-12 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-50 shadow-xl shadow-indigo-900/20"
                                 >
-                                    <Heart className={`h-3.5 w-3.5 ${actionLoadingId === profile.user_id ? "animate-pulse" : ""}`} />
-                                    {actionLoadingId === profile.user_id ? "Liking..." : "Like Back"}
-                                </button>
+                                    {actionLoadingId === profile.user_id ? "Processing..." : "Send Interest Back"}
+                                </Button>
                             )}
                         </div>
                     </div>
@@ -399,34 +403,41 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
     }
 
     return (
-        <div className="w-full max-w-7xl mx-auto px-4 py-8">
-            <div className="mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <Heart className="h-8 w-8 text-[#FF1493]" />
-                    My Likes & Matches
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
-                    See who you liked, who liked you, and your mutual connections
-                </p>
+        <div className="w-full max-w-7xl mx-auto px-4 py-12">
+            <div className="mb-12 border-b border-black/5 pb-8 flex items-end justify-between">
+                <div>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#4B0082]/40 mb-2">Connection Matrix</h4>
+                    <h2 className="text-5xl font-light text-gray-900 tracking-tight flex items-center gap-4">
+                        Likes <span className="text-[#4B0082] font-black">&</span> Matches
+                    </h2>
+                </div>
+                <div className="text-right hidden md:block">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Platform Analytics</p>
+                    <p className="text-xs font-bold text-[#4B0082]">Real-time match scoring active</p>
+                </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-2 mb-8 flex-wrap">
+            {/* Tabs Redesign */}
+            <div className="sds-glass rounded-[2rem] p-2 mb-16 flex gap-1 border-2 border-indigo-50/50 max-w-2xl shadow-[0_20px_50px_rgba(75,0,130,0.05)]">
                 {tabs.map(tab => (
                     <button
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}
-                        className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all border-2 ${activeTab === tab.key
-                            ? "bg-white dark:bg-gray-800 border-[#4B0082] text-[#4B0082] shadow-md"
-                            : "bg-white/60 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-[#4B0082]/50"
+                        className={`flex-1 flex items-center justify-center gap-3 px-8 py-5 rounded-[1.5rem] transition-all duration-500 relative overflow-hidden ${activeTab === tab.key
+                            ? "bg-[#4B0082] text-white shadow-xl shadow-indigo-900/30 scale-[1.02] z-10"
+                            : "text-gray-400 hover:bg-indigo-50/50 hover:text-[#4B0082]"
                             }`}
                     >
-                        <span className={activeTab === tab.key ? (tab.key === "mutual" ? "text-green-600" : tab.key === "liked" ? "text-[#4B0082]" : "text-[#FF1493]") : ""}>{tab.icon}</span>
-                        {tab.label}
+                        <span className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-300 ${activeTab === tab.key ? "text-white" : "group-hover:text-[#4B0082]"}`}>
+                            {tab.label}
+                        </span>
                         {tab.ids.length > 0 && (
-                            <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === tab.key ? "bg-[#4B0082] text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"}`}>
+                            <span className={`px-2.5 py-1 rounded-full text-[9px] font-black transition-all duration-500 ${activeTab === tab.key ? "bg-white/20 text-white" : "bg-gray-100/80 text-gray-400"}`}>
                                 {tab.ids.length}
                             </span>
+                        )}
+                        {activeTab === tab.key && (
+                            <motion.div layoutId="tab-pill" className="absolute bottom-0 left-0 right-0 h-1 bg-indigo-300/40" />
                         )}
                     </button>
                 ))
@@ -479,7 +490,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                         const isMutual = iLikedIds.includes(selectedProfile.user_id) && likedMeIds.includes(selectedProfile.user_id);
 
                         return (
-                            <div className="flex flex-col md:flex-row h-[85vh] md:h-[600px]">
+                            <div className="flex flex-col md:flex-row h-[85vh] md:h-[35rem]">
                                 {/* Left side: Photo Gallery */}
                                 <div className="md:w-2/5 bg-gray-100 dark:bg-gray-800 relative group">
                                     {(() => {

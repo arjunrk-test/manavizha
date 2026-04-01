@@ -126,49 +126,91 @@ export function ReferralStep({ formData, onChange, onPartnerNameChange }: Referr
   const isValidPattern = partnerIdPattern.test(formData.referralPartnerId || "")
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="referralPartnerId">Referral Partner ID *</Label>
-          <Input
-            id="referralPartnerId"
-            value={formData.referralPartnerId || ""}
-            onChange={handleInputChange}
-            placeholder="AB1234CD567"
-            maxLength={11}
-          />
-          {!isValidPattern && formData.referralPartnerId && (
-            <p className="text-sm text-yellow-600 dark:text-yellow-400">
-              Format: 2 letters, 4 numbers, 2 letters, 3 numbers (e.g., AB1234CD567)
-            </p>
-          )}
-          {isValidPattern && !partnerError && (
-            <p className="text-sm text-green-600 dark:text-green-400">
-              ✓ Valid format
-            </p>
-          )}
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            If someone referred you to this platform, enter their partner ID here.
-          </p>
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="space-y-8">
+        <div className="flex items-center gap-4 mb-2">
+          <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
+            <span className="text-[#4B0082] font-black text-xs">R1</span>
+          </div>
+          <div>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Network Protocol</h4>
+            <h3 className="text-xl font-light text-gray-900 tracking-tight">Referral Sync</h3>
+          </div>
+          <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="referralPartnerName">Referral Partner Name</Label>
-          <Input
-            id="referralPartnerName"
-            value={isLoadingPartner ? "Loading..." : partnerError || partnerName}
-            readOnly
-            disabled
-            className={`bg-gray-100 dark:bg-gray-800 cursor-not-allowed ${
-              partnerError ? "border-red-500 text-red-600" : partnerName ? "border-green-500 text-green-600" : ""
-            }`}
-            placeholder="Partner name will appear here"
-          />
-          {isLoadingPartner && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Fetching partner details...
-            </p>
-          )}
+        <div className="sds-glass rounded-[2.5rem] p-10 border-indigo-50/50 space-y-8 shadow-[0_20px_50px_-20px_rgba(75,0,130,0.1)]">
+          <div className="space-y-3">
+            <Label htmlFor="referralPartnerId" className="sds-label ml-1">Referral Partner ID *</Label>
+            <div className="relative group">
+              <Input
+                id="referralPartnerId"
+                value={formData.referralPartnerId || ""}
+                onChange={handleInputChange}
+                placeholder="AB1234CD567"
+                maxLength={11}
+                className={`sds-input w-full uppercase font-black tracking-widest h-16 px-6 text-lg transition-all duration-500 ${
+                  isValidPattern && partnerName ? "border-emerald-200 bg-emerald-50/20" : 
+                  partnerError ? "border-rose-200 bg-rose-50/20" : ""
+                }`}
+              />
+              {isLoadingPartner && (
+                <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#4B0082]/20 border-t-[#4B0082]"></div>
+                </div>
+              )}
+            </div>
+            
+            <div className="px-2">
+              {!isValidPattern && formData.referralPartnerId && (
+                <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mt-2 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+                  <span className="w-1 h-1 rounded-full bg-amber-500" />
+                  Format: 02 Alpha | 04 Numeric | 02 Alpha | 03 Numeric
+                </p>
+              )}
+              {isValidPattern && !partnerError && partnerName && (
+                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-2 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Protocol Authorized
+                </p>
+              )}
+              <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest mt-3">
+                Specify the unique identifier of your referring entity
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-6 border-t border-indigo-50/50">
+            <Label htmlFor="referralPartnerName" className="sds-label ml-1">Resolved Entity Identity</Label>
+            <div className="relative">
+              <Input
+                id="referralPartnerName"
+                value={isLoadingPartner ? "Synchronizing..." : partnerError || partnerName}
+                readOnly
+                disabled
+                className={`sds-input w-full h-16 px-6 font-bold transition-all duration-700 ${
+                  partnerError ? "text-rose-500 bg-rose-50/10 border-rose-100" : 
+                  partnerName ? "text-[#4B0082] bg-indigo-50/10 border-indigo-100" : 
+                  "text-gray-300 bg-black/[0.02] border-transparent opacity-40 cursor-not-allowed"
+                }`}
+                placeholder="Pending Resolution..."
+              />
+              {partnerName && !isLoadingPartner && !partnerError && (
+                <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                  <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+              )}
+            </div>
+            {partnerError && (
+              <p className="text-[9px] font-black text-rose-500 uppercase tracking-[0.2em] mt-2 px-2 animate-pulse">
+                {partnerError}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>

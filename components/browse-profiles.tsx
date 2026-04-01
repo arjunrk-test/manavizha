@@ -5,10 +5,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { supabase } from "@/lib/supabase"
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Star, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle, MoreVertical, UserX, UserMinus, Crown, Gem, Shield } from "lucide-react"
+import { ArrowLeft, ArrowRight, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Star, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle, MoreVertical, UserX, UserMinus, Crown, Gem, Shield, X } from "lucide-react"
 import { motion } from "framer-motion"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { calculateTrustScore } from "@/lib/utils/profile-utils"
 import { toast } from "sonner"
 import { checkTamilPorutham } from "@/lib/astrology"
 import { getDistanceInKm, getCoordinatesForCity } from "@/lib/locations"
@@ -563,7 +564,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     { data: horoscopeData },
                     settingsApiRes,
                 ] = await Promise.all([
-                    supabase.from("photos").select("user_id, user_photos").in("user_id", targetUserIds),
+                    supabase.from("photos").select("user_id, user_photos, family_photo").in("user_id", targetUserIds),
                     supabase.from("contact_details").select("user_id, current_district, current_state, phone, whatsapp_number").in("user_id", targetUserIds),
                     supabase.from("profession_employee").select("user_id, designation, company, sector, employment_type, annual_income").in("user_id", targetUserIds),
                     supabase.from("profession_business").select("user_id, designation, business_name, business_type, annual_income").in("user_id", targetUserIds),
@@ -613,6 +614,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     return {
                         ...p,
                         photos: myPhotos?.user_photos || [],
+                        family_photo: myPhotos?.family_photo,
                         location,
                         profession,
                         professionDetails: myEmp || myBus || null,
@@ -813,6 +815,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
     const HorizontalProfileCard = ({ profile, index }: { profile: any, index: number }) => {
         const [cardPhotoIndex, setCardPhotoIndex] = useState(0)
         const hasMultiplePhotos = profile.photos && profile.photos.length > 1
+        const genderColor = profile.sex?.toLowerCase() === 'female' ? 'border-pink-200' : 'border-blue-200'
 
         const handleContactClick = (type: string) => {
             if (!isPremium) {
@@ -821,7 +824,6 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 })
                 return
             }
-            // Logic for premium members would go here (e.g., opening WhatsApp or Dialer)
             toast.success(`Redirecting to ${type}...`)
         }
 
@@ -839,316 +841,309 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 transition={{ delay: index * 0.05 }}
                 className="w-full"
             >
-                <Card
-                    className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group border-gray-200/60 dark:border-gray-700/60 bg-white dark:bg-gray-800 flex flex-col md:flex-row h-auto md:min-h-[180px]"
+                <div
+                    className={`sds-glass rounded-[2.5rem] overflow-hidden hover:shadow-[0_20px_50px_rgba(75,0,130,0.1)] transition-all duration-500 cursor-pointer group flex flex-col md:flex-row h-auto md:min-h-[220px] ${
+                        profile.sex?.toLowerCase() === 'female' 
+                        ? 'border-pink-100/50 hover:border-pink-200 shadow-[0_8px_30px_rgb(255,182,193,0.1)]' 
+                        : 'border-blue-100/50 hover:border-blue-200 shadow-[0_8px_30px_rgb(173,216,230,0.1)]'
+                    } border-2`}
                     onClick={(e) => handleOpenProfile(profile, e)}
                 >
                     {/* Left: Image Section */}
-                    <div className="w-full md:w-52 h-64 md:h-auto relative overflow-hidden bg-gray-100 dark:bg-gray-700 shrink-0">
+                    <div className="w-full md:w-56 h-72 md:h-auto relative overflow-hidden bg-gray-50/30 shrink-0">
                         {profile.photos && profile.photos.length > 0 ? (
                             <>
                                 <img
                                     src={profile.photos[cardPhotoIndex]}
                                     alt={profile.name}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
                                 />
                                 {hasMultiplePhotos && (
-                                    <div className="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded backdrop-blur-sm z-10 font-bold">
+                                    <div className="absolute bottom-4 right-4 sds-glass text-[9px] px-3 py-1.5 rounded-full z-10 font-bold tracking-[0.2em] text-[#4B0082] bg-white/60">
                                         {cardPhotoIndex + 1} / {profile.photos.length}
                                     </div>
                                 )}
                             </>
                         ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                                <User className="h-12 w-12 opacity-30" />
-                                <span className="text-xs mt-2 font-medium">No Photo</span>
+                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-200">
+                                <User className="h-16 w-16 opacity-10" />
+                                <span className="text-[10px] mt-2 font-black uppercase tracking-[0.3em] opacity-30">No Intelligence Data</span>
                             </div>
                         )}
+                        
                         {profile.photo_verified && (
-                            <div className="absolute bottom-3 left-3 bg-blue-600/90 text-white px-2 py-1 rounded-md text-[10px] font-bold flex items-center gap-1 backdrop-blur-sm">
-                                <CheckCircle2 className="h-3 w-3" /> VERIFIED
+                            <div className="absolute bottom-4 left-4 bg-emerald-500/90 text-white px-3 py-1.5 rounded-full text-[8px] font-black flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 uppercase tracking-[0.2em] backdrop-blur-md">
+                                <CheckCircle2 className="h-3 w-3" /> Verified
                             </div>
                         )}
 
-                        {/* Premium Badge */}
                         {profile.isPremium && (
-                            <div className="absolute top-3 left-3 z-30 flex flex-col gap-1.5 pointer-events-none">
-                                {profile.premiumPlan === 'till_you_marry' && (
-                                    <span className="bg-gradient-to-r from-[#FF1493] to-[#FF69B4] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-pink-500/30">
-                                        <Crown className="h-2.5 w-2.5" /> Lifetime
-                                    </span>
-                                )}
-                                {profile.premiumPlan === 'elite' && (
-                                    <span className="bg-gradient-to-r from-[#4B0082] to-[#8A2BE2] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-purple-500/30">
-                                        <Gem className="h-2.5 w-2.5" /> Elite
-                                    </span>
-                                )}
-                                {profile.premiumPlan === 'prime_gold' && (
-                                    <span className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-amber-500/30">
-                                        <Star className="h-2.5 w-2.5" /> Gold
-                                    </span>
-                                )}
-                                {(profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') && (
-                                    <span className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-blue-500/30">
-                                        <Shield className="h-2.5 w-2.5" /> Prime
-                                    </span>
-                                )}
+                            <div className="absolute top-4 left-4 z-30 flex flex-col gap-2">
+                                <span className="bg-gradient-to-r from-indigo-600 to-indigo-400 text-white text-[8px] uppercase font-black px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-xl shadow-indigo-500/30 tracking-[0.2em] backdrop-blur-md">
+                                    <Crown className="h-3 w-3" /> Premium
+                                </span>
                             </div>
                         )}
                     </div>
 
                     {/* Right: Content Section */}
-                    <CardContent className="p-5 flex-1 flex flex-col relative">
-                        {/* Top Badge & Icons */}
-                        <div className="flex items-start justify-between mb-2">
-                            <div className="flex items-center gap-1 text-blue-600 font-bold text-xs uppercase tracking-tight">
-                                <CheckCircle2 className="h-4 w-4 fill-blue-600 text-white" />
-                                <span>ID verified</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); handleContactClick("Phone"); }}
-                                    className="p-2 rounded-full border border-orange-100 bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors"
-                                >
-                                    <Phone className="h-5 w-5" />
-                                </button>
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); handleContactClick("WhatsApp"); }}
-                                    className="p-2 rounded-full border border-green-100 bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
-                                >
-                                    <MessageCircle className="h-5 w-5" />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Name & Status */}
-                        <div className="mb-3">
-                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">
-                                {profile.name || "Unknown"}
-                            </h3>
-                            <p className="text-xs text-gray-400 font-medium mt-1">
-                                Last seen an hour ago
-                            </p>
-                        </div>
-
-                        {/* Compatibility Badge */}
+                    <div className="p-6 md:p-8 flex-1 flex flex-col relative bg-gradient-to-br from-white/40 to-transparent">
+                        {/* Compatibility Badge - Positioned Top Right */}
                         {profile.compatibility && (
-                            <div className="absolute top-5 right-5 z-20">
+                            <div className="absolute top-6 right-6 z-20">
                                 <Badge 
-                                    className={`font-bold border-none shadow-sm gap-1.5 px-3 py-1 cursor-help group/badge ${
-                                        profile.compatibility.status === "Uthamam" ? "bg-green-100 text-green-700 hover:bg-green-200" :
-                                        profile.compatibility.status === "Madhyamam" ? "bg-amber-100 text-amber-700 hover:bg-amber-200" :
-                                        "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    className={`font-black border-none shadow-sm gap-2 px-5 py-2.5 cursor-help group/badge rounded-2xl text-[9px] uppercase tracking-[0.2em] transition-all duration-300 ${
+                                        profile.compatibility.status === "Uthamam" ? "bg-emerald-50/80 text-emerald-700 hover:bg-emerald-100" :
+                                        profile.compatibility.status === "Madhyamam" ? "bg-amber-50/80 text-amber-700 hover:bg-amber-100" :
+                                        "bg-gray-50/80 text-gray-700 hover:bg-gray-100"
                                     }`}
                                     onClick={openBreakdown}
                                 >
-                                    <SparklesIcon className="h-3 w-3" />
-                                    <span>{profile.compatibility.score}/10 Matches ({profile.compatibility.status})</span>
-                                    <Info className="h-3 w-3 opacity-0 group-hover/badge:opacity-100 transition-opacity ml-1" />
+                                    <SparklesIcon className="h-3.5 w-3.5" />
+                                    <span>{profile.compatibility.score}/10 {profile.compatibility.status}</span>
                                 </Badge>
                             </div>
                         )}
 
-                        {/* Bulleted Details */}
-                        <p className="text-[15px] text-gray-700 dark:text-gray-300 font-medium leading-relaxed mb-4">
-                            {getAgeHeightCasteEducationProfessionCityStr(profile)}
+                        <div className="mb-4">
+                            <h3 className="text-2xl font-light text-gray-900 tracking-tight leading-none mb-2 group-hover:text-[#4B0082] transition-colors duration-300">
+                                {profile.name || "Unknown"}<span className="font-bold text-[#4B0082]/30 ml-2">{profile.age && `, ${profile.age}`}</span>
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-5 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                                <div className="flex items-center gap-1.5">
+                                    <MapPin className="h-3.5 w-3.5 text-indigo-400" />
+                                    {profile.location.split(',')[0]}
+                                </div>
+                                <div className="w-1.5 h-1.5 bg-indigo-100 rounded-full" />
+                                <div className="flex items-center gap-1.5 text-emerald-600/60 transition-opacity group-hover:opacity-100">
+                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                    Trust Score {calculateTrustScore(
+                                        profile.photo_verified, 
+                                        profile.completion_percentage || 80, 
+                                        profile.photos?.length || 0,
+                                        !!profile.family_photo
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <p className="text-gray-500/80 text-sm font-medium leading-relaxed mb-6 max-w-2xl line-clamp-2 italic">
+                            "{getAgeHeightCasteEducationProfessionCityStr(profile)}"
                         </p>
 
-                        {/* Bottom Actions */}
-                        <div className="mt-auto flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                        <div className="mt-auto flex flex-wrap items-center justify-between pt-8 border-t border-black/[0.03]">
+                            <div className="flex items-center gap-4">
                                 <Button
                                     size="sm"
-                                    variant="outline"
-                                    className={`rounded-full h-9 px-4 font-bold text-xs transition-all ${
+                                    className={`h-12 px-10 rounded-2xl font-black text-[9px] uppercase tracking-[0.3em] transition-all duration-500 ${
                                         likedIds.includes(profile.user_id)
-                                        ? 'bg-rose-500 border-rose-500 text-white hover:bg-rose-600 hover:border-rose-600'
-                                        : 'border-pink-200 text-pink-600 hover:bg-pink-50'
+                                        ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-xl shadow-rose-500/30 ring-4 ring-rose-500/10'
+                                        : 'bg-[#4B0082] text-white hover:bg-indigo-700 shadow-xl shadow-indigo-900/20 hover:shadow-indigo-900/30'
                                     }`}
                                     onClick={(e) => handleCustomerLike(e, profile.user_id)}
                                     disabled={actionLoadingId === profile.user_id}
                                 >
-                                    <Heart className={`h-3.5 w-3.5 mr-1.5 ${likedIds.includes(profile.user_id) ? 'fill-white' : ''}`} />
-                                    {likedIds.includes(profile.user_id) ? 'Interested' : 'Send Interest'}
+                                    {likedIds.includes(profile.user_id) ? 'Interest Sent' : 'Send Interest'}
                                 </Button>
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className={`h-9 w-9 p-0 rounded-full transition-all ${shortlistedIds.includes(profile.user_id) ? 'text-amber-500 hover:text-amber-600 bg-amber-50' : 'text-gray-400 hover:text-amber-500 hover:bg-amber-50'}`}
+                                    className={`h-12 w-12 p-0 rounded-2xl transition-all duration-300 ${shortlistedIds.includes(profile.user_id) ? 'text-amber-500 hover:text-amber-600 bg-amber-50/50 shadow-inner' : 'text-gray-300 hover:text-amber-400 hover:bg-amber-50/30'}`}
                                     onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleShortlist(e, profile.user_id); }}
                                     disabled={shortlistLoadingId === profile.user_id}
                                 >
-                                    {shortlistLoadingId === profile.user_id
-                                        ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-300 border-t-amber-600" />
-                                        : <Star className={`h-4 w-4 ${shortlistedIds.includes(profile.user_id) ? 'fill-amber-500' : ''}`} />}
+                                    <Star className={`h-5 w-5 ${shortlistedIds.includes(profile.user_id) ? 'fill-amber-500 text-amber-500' : ''}`} />
                                 </Button>
                             </div>
                             
-                            <div className="flex items-center gap-1">
-                                <Button
-                                    size="sm"
+                            <div className="flex items-center gap-3">
+                                <Button 
                                     variant="ghost"
-                                    className="text-[#4B0082] hover:bg-[#4B0082]/5 font-bold text-sm tracking-tight px-0 hover:px-2 transition-all"
+                                    className="h-12 px-6 rounded-2xl font-black text-[9px] uppercase tracking-[0.3em] text-gray-400 hover:text-indigo-600 hover:bg-indigo-50/30 transition-all duration-300"
                                     onClick={(e) => handleOpenProfile(profile, e)}
                                 >
-                                    View Profile →
+                                    View Profile
+                                    <ArrowRight className="h-3.5 w-3.5 ml-2 transition-transform group-hover:translate-x-1" />
                                 </Button>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            className="h-8 w-8 p-0 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            <MoreVertical className="h-4 w-4" />
+                                        <Button variant="ghost" size="sm" className="h-12 w-12 rounded-2xl text-gray-300 hover:text-gray-900 border border-black/[0.03] hover:bg-white/50 transition-all">
+                                            <MoreVertical className="h-5 w-5" />
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 z-50" onClick={(e) => e.stopPropagation()}>
+                                    <DropdownMenuContent align="end" className="w-64 sds-glass rounded-3xl p-2 z-50 overflow-hidden border-indigo-50/30 shadow-2xl backdrop-blur-2xl" onClick={(e) => e.stopPropagation()}>
                                         <DropdownMenuItem
                                             onClick={(e) => { 
                                                 e.stopPropagation(); 
                                                 const isMutual = likedIds.includes(profile.user_id) && likedMeIds.includes(profile.user_id);
-                                                // Premium users can message anyone, others need a mutual match
                                                 if (isPremium || isMutual) {
                                                     setMessageTarget({ id: profile.user_id, name: profile.name });
                                                     setIsMessageDialogOpen(true);
                                                 } else {
-                                                    toast.error('Premium Feature or Mutual Match required', { 
-                                                        description: 'Upgrade to Premium to message anyone directly, or wait for a mutual interest match.' 
+                                                    toast.error('Tactical Access Required', { 
+                                                        description: 'Upgrade to Premium for direct comms, or achieve mutual interest parity.' 
                                                     });
                                                 }
                                             }}
-                                            className="gap-2 cursor-pointer rounded-xl p-3 focus:bg-[#4B0082]/10 focus:text-[#4B0082] font-semibold"
+                                            className="gap-4 cursor-pointer rounded-2xl p-5 focus:bg-[#4B0082] focus:text-white font-black text-[10px] uppercase tracking-[0.2em] transition-all duration-300"
                                         >
-                                            <MessageCircle className="h-4 w-4" /> Send Message
-                                            {!isPremium && <Crown className="h-3 w-3 ml-auto text-amber-500" />}
+                                            <MessageCircle className="h-5 w-5 opacity-60" /> Establish Comms
+                                            {!isPremium && <Crown className="h-3.5 w-3.5 ml-auto text-amber-500/80" />}
                                         </DropdownMenuItem>
-                                        <DropdownMenuSeparator className="my-1" />
+                                        <div className="h-px bg-black/[0.03] my-1" />
                                         <DropdownMenuItem
                                             onClick={(e) => { e.stopPropagation(); handleIgnore(e, profile.user_id); }}
-                                            className="gap-2 cursor-pointer rounded-xl p-3 focus:bg-gray-100 text-gray-600 font-medium"
+                                            className="gap-4 cursor-pointer rounded-2xl p-5 focus:bg-gray-50/80 text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] transition-all"
                                         >
-                                            <UserMinus className="h-4 w-4" /> Ignore Profile
+                                            <UserMinus className="h-5 w-5 opacity-40" /> De-prioritize
                                         </DropdownMenuItem>
-                                        <DropdownMenuSeparator className="my-1" />
                                         <DropdownMenuItem
                                             onClick={(e) => { e.stopPropagation(); handleBlock(e, profile.user_id); }}
-                                            className="gap-2 cursor-pointer rounded-xl p-3 focus:bg-rose-50 focus:text-rose-600 text-rose-500 font-medium"
+                                            className="gap-4 cursor-pointer rounded-2xl p-5 focus:bg-rose-50/80 focus:text-rose-600 text-rose-400/60 font-bold text-[10px] uppercase tracking-[0.2em] transition-all"
                                         >
-                                            <UserX className="h-4 w-4" /> Block Forever
+                                            <UserX className="h-5 w-5 opacity-40" /> Terminate Vector
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </motion.div>
         )
     }
 
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center py-20">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4B0082]"></div>
+            <div className="flex flex-col items-center justify-center py-40 space-y-4">
+                <div className="relative w-12 h-12">
+                    <div className="absolute inset-0 border-4 border-[#4B0082]/10 rounded-full"></div>
+                    <div className="absolute inset-0 border-4 border-[#4B0082] border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#4B0082]/40">Finding Matches</p>
             </div>
         )
     }
 
     const menuGroups = [
         {
-            title: "All Matches",
+            title: "Matches",
             items: [
-                { id: "all-matches", label: "Your Matches", description: "View all profiles that match your preferences", icon: User },
+                { id: "all-matches", label: "Matches for you", description: "View all profiles that match your preferences", icon: User },
             ]
         },
         {
-            title: "Based on activity",
+            title: "Activity",
             items: [
                 { id: "shortlisted-by-you", label: "Shortlisted by you", description: "Matches you have shortlisted", icon: Star },
-                { id: "viewed-you", label: "Viewed you", description: "Matches who have viewed your profile", icon: Filter },
-                { id: "shortlisted-you", label: "Shortlisted you", description: "Matches who have shortlisted your profile", icon: User },
+                { id: "viewed-you", label: "Who viewed you", description: "Matches who have viewed your profile", icon: Filter },
+                { id: "shortlisted-you", label: "Who shortlisted you", description: "Matches who have shortlisted your profile", icon: User },
                 { id: "viewed-by-you", label: "Viewed by you", description: "Matches you have viewed", icon: Filter },
             ]
         },
         {
-            title: "Recently joined & nearby matches",
+            title: "New & Local",
             items: [
                 { id: "newly-joined", label: "Newly Joined", description: "Matches who joined within the last 30 days", icon: User },
                 { id: "nearby-matches", label: "Nearby matches", description: "Matches near your location", icon: MapPin },
             ]
         },
         {
-            title: "Based on profile details",
+            title: "Profile Detail",
             items: [
-                { id: "matches-with-photos", label: "Matches with photos", description: "Matches that have added photos", icon: User },
-                { id: "matches-with-horoscope", label: "Matches with horoscope", description: "Matches that have added horoscope", icon: Star },
+                { id: "matches-with-photos", label: "Profiles with photos", description: "Matches that have added photos", icon: User },
+                { id: "matches-with-horoscope", label: "Profiles with horoscope", description: "Matches that have added horoscope", icon: Star },
             ]
         },
         {
-            title: "Based on astrological compatibility",
+            title: "Compatibility",
             items: [
                 { id: "star-matches", label: "Star matches", description: "Matches with compatible star sign", icon: Star },
                 { id: "horoscope-matches", label: "Horoscope matches", description: "Matches with horoscope matching yours", icon: Star },
             ]
         }
     ]
+    
+    // Add Parent Selections group if parent viewer
+    if (parentViewer?.isParent) {
+        menuGroups.unshift({
+            title: "Parent Choice",
+            items: [
+                { id: "parent-selections", label: "Selection for Child", description: "Manage profiles you've selected for your child", icon: Shield },
+            ]
+        })
+    }
 
     return (
         <div className="w-full min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
-            <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="max-w-[100rem] mx-auto px-4 py-6">
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Sidebar */}
-                    <aside className="w-full lg:w-72 shrink-0 space-y-6">
-                        <Card className="border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
-                            <div className="p-4 bg-white dark:bg-gray-800 space-y-6">
+                    <aside className="w-full lg:w-[18rem] shrink-0 space-y-6 lg:sticky lg:top-24">
+                        <div className="sds-glass rounded-[3rem] overflow-hidden p-4 border-2 border-indigo-100/50 shadow-[0_32px_64px_-12px_rgba(75,0,130,0.12)]">
+                            <div className="p-4 border-b border-black/[0.03] mb-4">
+                                <h4 className="text-xs font-black uppercase tracking-[0.4em] text-[#4B0082]">Filter Matches</h4>
+                            </div>
+                            <div className="space-y-4 p-2">
                                 {menuGroups.map((group) => (
-                                    <div key={group.title} className="space-y-2">
-                                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-2">{group.title}</h4>
-                                        <div className="space-y-1">
+                                    <div key={group.title} className="space-y-3 mb-10 last:mb-0">
+                                        <div className="px-4 py-1 text-[11px] font-black uppercase tracking-[0.4em] text-indigo-900/40 font-josefin">{group.title}</div>
+                                        <div className="space-y-2">
                                             {group.items.map((item) => (
                                                 <button
                                                     key={item.id}
                                                     onClick={() => setActiveCategory(item.id)}
-                                                    className={`w-full group text-left px-3 py-2.5 rounded-xl transition-all duration-200 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
-                                                        activeCategory === item.id ? "bg-[#4B0082]/5 dark:bg-[#4B0082]/10 border-l-4 border-[#4B0082]" : "border-l-4 border-transparent"
+                                                    className={`w-full group text-left px-6 py-5 rounded-[2rem] transition-all duration-500 flex items-center gap-4 relative overflow-hidden ${
+                                                        activeCategory === item.id 
+                                                        ? "bg-[#4B0082] text-white shadow-2xl shadow-indigo-500/40 scale-[1.02] z-10" 
+                                                        : "hover:bg-indigo-50/50 text-indigo-900/60 hover:text-[#4B0082]"
                                                     }`}
                                                 >
-                                                    <item.icon className={`h-4 w-4 mt-0.5 ${activeCategory === item.id ? "text-[#4B0082]" : "text-gray-400"}`} />
+                                                    <item.icon className={`h-5 w-5 transition-transform duration-500 ${activeCategory === item.id ? "text-white scale-110" : "text-indigo-900/20 group-hover:text-[#4B0082] group-hover:scale-110"}`} />
                                                     <div className="flex-1 min-w-0">
-                                                        <div className={`text-xs font-bold truncate ${activeCategory === item.id ? "text-[#4B0082]" : "text-gray-700 dark:text-gray-300"}`}>
+                                                        <div className={`text-[12px] font-black uppercase tracking-[0.16em] truncate transition-colors duration-300 ${activeCategory === item.id ? "text-white" : "group-hover:text-[#4B0082]"}`}>
                                                             {item.label}
                                                         </div>
-                                                        <div className="text-[10px] text-gray-500 line-clamp-1 mt-0.5">{item.description}</div>
                                                     </div>
+                                                    {activeCategory === item.id && (
+                                                        <motion.div layoutId="active-pill" className="absolute left-0 w-1 h-8 bg-indigo-300 rounded-r-full" />
+                                                    )}
+                                                    {activeCategory === item.id && <ArrowRight className="h-3.5 w-3.5 text-white/40" />}
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                        </Card>
+                        </div>
                     </aside>
 
+
                     {/* Main Content */}
-                    <div className="flex-1 space-y-6">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                {menuGroups.flatMap(g => g.items).find(i => i.id === activeCategory)?.label || "Discover Matches"}
-                            </h2>
+                    <div className="flex-1 space-y-10">
+                        <div className="flex items-end justify-between pb-10 border-b border-black/[0.04]">
+                            <div>
+                                <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-[#4B0082]/40 mb-3">Discovery</h4>
+                                <h2 className="text-6xl font-light text-gray-900 tracking-tighter">
+                                    {menuGroups.flatMap(g => g.items).find(i => i.id === activeCategory)?.label || "Discover Matches"}
+                                </h2>
+                            </div>
                             {hasPreferences && (
                                 <Button
-                                    variant={applyPreferences ? "destructive" : "default"}
+                                    variant="ghost"
                                     onClick={() => setApplyPreferences(!applyPreferences)}
-                                    size="sm"
-                                    className="flex items-center gap-2"
+                                    className={`h-12 px-6 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
+                                        applyPreferences 
+                                        ? "bg-rose-50 text-rose-600 hover:bg-rose-100" 
+                                        : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                                    }`}
                                 >
-                                    {applyPreferences ? <SlidersHorizontal className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
-                                    {applyPreferences ? "Clear Preferences" : "Applied Preferences"}
+                                    {applyPreferences ? <X className="h-4 w-4 mr-2" /> : <Filter className="h-4 w-4 mr-2" />}
+                                    {applyPreferences ? "Clear Filters" : "Apply Filters"}
                                 </Button>
                             )}
-                        </div>                        {isProfileIncomplete ? (
+                        </div>
+                        {isProfileIncomplete ? (
                             <Card className="border-dashed border-2 p-12 text-center bg-white dark:bg-gray-800">
                                 <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
                                     <User className="h-10 w-10 text-amber-600" />
@@ -1201,139 +1196,109 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     </div>
                 )
 
-                const FullProfileCard = ({ profile }: { profile: any }) => (
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-amber-300 dark:border-amber-600 overflow-hidden shadow-md">
-                        {/* Mutual badge */}
-                        <div className="bg-amber-50 dark:bg-amber-900/20 px-4 py-2 flex items-center gap-2">
-                            <Star className="h-4 w-4 text-amber-500" />
-                            <span className="text-xs font-bold text-amber-700 dark:text-amber-400">Mutual Match — Your child and this profile liked each other!</span>
-                        </div>
-
-                        <div className="flex flex-col md:flex-row">
-                            {/* Photo */}
-                            <div className="md:w-48 h-56 md:h-auto bg-gray-100 dark:bg-gray-700 shrink-0 relative">
-                                {profile.photos?.[0] ? (
-                                    <img src={profile.photos[0]} alt={profile.name} className="w-full h-full object-cover"
-                                        onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&size=400&background=random` }} />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center"><User className="h-16 w-16 text-gray-400" /></div>
-                                )}
-
-                                {/* Premium Badge */}
-                                {profile.isPremium && (
-                                    <div className="absolute top-3 left-3 z-30 flex flex-col gap-1.5 pointer-events-none">
-                                        {profile.premiumPlan === 'till_you_marry' && (
-                                            <span className="bg-gradient-to-r from-[#FF1493] to-[#FF69B4] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-pink-500/30">
-                                                <Crown className="h-2.5 w-2.5" /> Lifetime
-                                            </span>
-                                        )}
-                                        {profile.premiumPlan === 'elite' && (
-                                            <span className="bg-gradient-to-r from-[#4B0082] to-[#8A2BE2] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-purple-500/30">
-                                                <Gem className="h-2.5 w-2.5" /> Elite
-                                            </span>
-                                        )}
-                                        {profile.premiumPlan === 'prime_gold' && (
-                                            <span className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-amber-500/30">
-                                                <Star className="h-2.5 w-2.5" /> Gold
-                                            </span>
-                                        )}
-                                        {(profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') && (
-                                            <span className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-blue-500/30">
-                                                <Shield className="h-2.5 w-2.5" /> Prime
-                                            </span>
-                                        )}
-                                    </div>
-                                )}
+                const FullProfileCard = ({ profile }: { profile: any }) => {
+                    const genderColor = profile.sex?.toLowerCase() === 'female' ? 'border-pink-200' : 'border-blue-200'
+                    return (
+                        <div className={`sds-glass rounded-[2.5rem] overflow-hidden border-2 shadow-2xl ${genderColor}`}>
+                            {/* Mutual match header */}
+                            <div className="bg-amber-50/50 px-6 py-4 flex items-center gap-3 border-b border-amber-100">
+                                <SparklesIcon className="h-5 w-5 text-amber-500 animate-pulse" />
+                                <span className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Target Found — Highly Compatible Mutual Match</span>
                             </div>
 
-                            {/* Details */}
-                            <div className="flex-1 p-5 space-y-4 overflow-y-auto max-h-[500px]">
-                                {/* Name */}
-                                <div>
-                                    <h4 className="text-xl font-bold text-gray-900 dark:text-white">{profile.name}{profile.age && `, ${profile.age}`}</h4>
-                                    {profile.marital_status && <span className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 px-2 py-0.5 rounded-full">{profile.marital_status}</span>}
+                            <div className="flex flex-col md:flex-row">
+                                {/* Photo Container */}
+                                <div className="md:w-64 h-72 md:h-auto bg-gray-50 shrink-0 relative overflow-hidden">
+                                    {profile.photos?.[0] ? (
+                                        <img src={profile.photos[0]} alt={profile.name} className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                                            onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&size=400&background=random` }} />
+                                    ) : (
+                                        <div className="w-full h-full flex flex-col items-center justify-center opacity-20"><User className="h-20 w-20 text-[#4B0082]" /></div>
+                                    )}
+
+                                    {profile.isPremium && (
+                                        <div className="absolute top-4 left-4 z-10">
+                                            <span className="bg-[#4B0082] text-white text-[8px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-full shadow-lg">Premium Active</span>
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* Basic info grid */}
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                    {profile.profession !== "Not specified" && <div><span className="text-gray-500">Profession</span><p className="font-medium text-gray-900 dark:text-white truncate">{profile.profession}</p></div>}
-                                    {profile.location && <div><span className="text-gray-500">Location</span><p className="font-medium text-gray-900 dark:text-white">{profile.location}</p></div>}
-                                    {profile.religion && <div><span className="text-gray-500">Religion</span><p className="font-medium text-gray-900 dark:text-white">{profile.religion}</p></div>}
-                                    {profile.caste && <div><span className="text-gray-500">Caste</span><p className="font-medium text-gray-900 dark:text-white">{profile.caste}</p></div>}
-                                    {profile.height && <div><span className="text-gray-500">Height</span><p className="font-medium text-gray-900 dark:text-white">{profile.height}</p></div>}
-                                </div>
-
-
-                                {/* Education */}
-                                {profile.education?.length > 0 && (
+                                {/* Deep Intel Sections */}
+                                <div className="flex-1 p-8 space-y-8 max-h-[600px] overflow-y-auto">
                                     <div>
-                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1"><GraduationCap className="h-3.5 w-3.5" />Education</p>
-                                        {profile.education.map((edu: any, i: number) => (
-                                            <p key={i} className="text-sm text-gray-800 dark:text-gray-200">{edu.education}{edu.institution && ` — ${edu.institution}`}</p>
+                                        <h4 className="text-4xl font-light text-gray-900 tracking-tight leading-none mb-3">
+                                            {profile.name}<span className="font-black text-[#4B0082]">{profile.age && `, ${profile.age}`}</span>
+                                        </h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {profile.marital_status && <span className="text-[9px] font-black uppercase tracking-widest bg-black/5 text-gray-500 px-3 py-1.5 rounded-full">{profile.marital_status}</span>}
+                                            {profile.photo_verified && <span className="text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-full">Photo Verified</span>}
+                                        </div>
+                                    </div>
+
+                                    {/* Data Points */}
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                                        {[
+                                            { icon: Briefcase, label: "Vocation", value: profile.profession },
+                                            { icon: MapPin, label: "Sector", value: profile.location.split(',')[0] },
+                                            { icon: GraduationCap, label: "Academy", value: profile.education?.[0]?.education || "None" },
+                                            { icon: Heart, label: "Ancestry", value: profile.caste || profile.religion },
+                                            { icon: Star, label: "Cosmic", value: profile.horoscope?.star || "Unknown" }
+                                        ].map((point, i) => (
+                                            <div key={i} className="space-y-1">
+                                                <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-[#4B0082]/40">
+                                                    <point.icon className="h-3 w-3" />
+                                                    {point.label}
+                                                </div>
+                                                <p className="text-xs font-bold text-gray-800 tracking-tight truncate">{point.value || "Not Disclosed"}</p>
+                                            </div>
                                         ))}
                                     </div>
-                                )}
 
-                                {/* Profession Details */}
-                                {profile.professionDetails && (
-                                    <div>
-                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1"><Briefcase className="h-3.5 w-3.5" />Professional</p>
-                                        <div className="grid grid-cols-2 gap-1 text-sm">
-                                            {profile.professionDetails.designation && <div><span className="text-gray-400">Role</span><p className="font-medium text-gray-900 dark:text-white">{profile.professionDetails.designation}</p></div>}
-                                            {(profile.professionDetails.company || profile.professionDetails.business_name) && <div><span className="text-gray-400">Company</span><p className="font-medium text-gray-900 dark:text-white">{profile.professionDetails.company || profile.professionDetails.business_name}</p></div>}
-                                            {profile.professionDetails.annual_income && <div><span className="text-gray-400">Income</span><p className="font-medium text-gray-900 dark:text-white">{profile.professionDetails.annual_income}</p></div>}
+                                    {/* Intermediary Action */}
+                                    <div className="pt-4 border-t border-black/5 flex items-center justify-between">
+                                        <div className="space-y-1">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-[#4B0082]">Action Priority</p>
+                                            <p className="text-xs text-gray-400">Mutual interest significantly increases outcome success.</p>
                                         </div>
+                                        <Button
+                                            onClick={() => setSelectedProfile(profile)}
+                                            className="h-12 px-8 rounded-2xl bg-[#4B0082] text-white font-black text-[10px] uppercase tracking-widest hover:shadow-xl hover:shadow-indigo-500/30 transition-all"
+                                        >
+                                            Analyze Deep Profile
+                                        </Button>
                                     </div>
-                                )}
-
-                                {/* Horoscope */}
-                                {profile.horoscope && (
-                                    <div>
-                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Horoscope</p>
-                                        <div className="grid grid-cols-2 gap-1 text-sm">
-                                            {profile.horoscope.zodiac_sign && <div><span className="text-gray-400">Zodiac</span><p className="font-medium text-gray-900 dark:text-white">{profile.horoscope.zodiac_sign}</p></div>}
-                                            {profile.horoscope.star && <div><span className="text-gray-400">Star</span><p className="font-medium text-gray-900 dark:text-white">{profile.horoscope.star}</p></div>}
-                                            {profile.horoscope.dhosham && <div><span className="text-gray-400">Dhosham</span><p className="font-medium text-gray-900 dark:text-white">{profile.horoscope.dhosham}</p></div>}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Interests */}
-                                {profile.interests?.hobbies?.length > 0 && (
-                                    <div>
-                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Interests</p>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {profile.interests.hobbies.map((h: string, i: number) => <span key={i} className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 px-2 py-0.5 rounded-full">{h}</span>)}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Contact */}
-                                <ContactRow profile={profile} />
-
-                                {/* View Full Modal button */}
-                                <button onClick={() => setSelectedProfile(profile)} className="w-full mt-2 text-sm font-semibold text-[#4B0082] border border-[#4B0082]/30 rounded-xl py-2 hover:bg-[#4B0082]/10 transition">
-                                    View Full Profile →
-                                </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )
+                    )
+                }
 
                 return (
                     <div className="space-y-12">
                         {/* Section 1: Find Matches (unselected only) */}
-                        <div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                <Heart className="h-5 w-5 text-[#FF1493]" /> Find Matches
-                                <span className="text-sm font-normal text-gray-500">({unselected.length})</span>
-                            </h3>
+                        <div className="space-y-8">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 sds-glass rounded-2xl flex items-center justify-center text-[#FF1493] border-pink-50">
+                                        <Heart className="h-5 w-5 fill-current" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-light text-gray-900 tracking-tight">Prime Recommendations</h3>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Curated by our Intelligence Engine</p>
+                                    </div>
+                                </div>
+                                <div className="text-[10px] font-black uppercase tracking-widest text-[#4B0082] bg-indigo-50 px-4 py-2 rounded-full">
+                                    {unselected.length} AVAILABLE
+                                </div>
+                            </div>
+                            
                             {unselected.length === 0 ? (
-                                <div className="text-center py-10 bg-white/50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-300 dark:border-gray-600">
-                                    <p className="text-gray-500 text-sm">All available profiles have been selected for your child.</p>
+                                <div className="p-20 sds-glass rounded-[3rem] text-center border-dashed border-2 border-indigo-100 mb-10">
+                                    <SparklesIcon className="h-10 w-10 text-indigo-200 mx-auto mb-4" />
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 max-w-xs mx-auto">No unselected profiles matching criteria at this vector.</p>
                                 </div>
                             ) : (
-                                <div className="space-y-6">
+                                <div className="space-y-10">
                                     {unselected.map((profile, index) => <HorizontalProfileCard key={profile.user_id} profile={profile} index={index} />)}
                                 </div>
                             )}
@@ -1341,12 +1306,17 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
 
                         {/* Section 2: Selected Profiles (child hasn't liked yet) */}
                         {onlySelected.length > 0 && (
-                            <div>
-                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                    <CheckCircle2 className="h-5 w-5 text-green-500" /> Selected Profiles
-                                    <span className="text-sm font-normal text-gray-500">({onlySelected.length})</span>
-                                </h3>
-                                <div className="space-y-6">
+                            <div className="space-y-8 pt-10 border-t border-black/5">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 sds-glass rounded-2xl flex items-center justify-center text-emerald-500 border-emerald-50">
+                                        <CheckCircle2 className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-light text-gray-900 tracking-tight">Active Shortlist</h3>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Profiles queued for further analysis</p>
+                                    </div>
+                                </div>
+                                <div className="space-y-10">
                                     {onlySelected.map((profile, index) => <HorizontalProfileCard key={profile.user_id} profile={profile} index={index} />)}
                                 </div>
                             </div>

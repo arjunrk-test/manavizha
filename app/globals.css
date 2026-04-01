@@ -6,27 +6,17 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
-    --primary: 214 52% 27%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 271 100% 25%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 328 100% 54%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 214 52% 27%;
     --radius: 0.5rem;
+
+    /* Soft & Airy Palette */
+    --female: 330 81% 60%;
+    --male: 211 100% 50%;
+    --marriage-light: 48 96% 89%;
+    --marriage: 45 93% 47%;
+    --glass-white: 0 0% 100% / 0.4;
+    --glass-border: 0 0% 100% / 0.2;
   }
+
 
   .dark {
     --background: 0 0% 9%;
@@ -48,15 +38,44 @@
     --border: 0 0% 20%;
     --input: 0 0% 20%;
     --ring: 214 52% 27%;
+    
+    /* Dark Mode Glass */
+    --glass-white: 0 0% 100% / 0.05;
+    --glass-border: 0 0% 100% / 0.1;
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
+@layer components {
+  /* SDS Soft Glass - Premium Airy Polish */
+  .sds-glass {
+    @apply backdrop-blur-2xl border border-[hsl(var(--glass-border))] shadow-[0_4px_24px_0_rgba(0,0,0,0.04)];
+    background: hsl(var(--glass-white));
   }
-  body {
-    @apply bg-background text-foreground;
+
+  .sds-card {
+    @apply rounded-[1.5rem] p-6 sds-glass transition-all duration-500 hover:shadow-lg;
+  }
+
+  .sds-label {
+    @apply text-[10px] font-black uppercase tracking-[0.2em] text-[#4B0082]/50 mb-2 block;
+  }
+
+  .sds-input {
+    @apply h-11 rounded-xl border-2 border-indigo-50 bg-white/50 px-4 text-[12px] font-bold text-gray-900 transition-all focus:border-[#4B0082] focus:bg-white focus:ring-0 placeholder:text-gray-300;
+  }
+
+  .sds-grain::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.02;
+    z-index: 9999;
+    pointer-events: none;
+    background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+    filter: contrast(150%) brightness(150%);
   }
 }
 
@@ -77,10 +96,17 @@ body {
   display: none;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
+/* Root scaling for high-density 75% visual layout */
 html {
+  font-size: 75%; /* Base 12px */
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
+}
+
+@media (max-width: 768px) {
+  html {
+    font-size: 100%; /* Keep mobile at 100% for accessibility */
+  }
 }
 
 body {

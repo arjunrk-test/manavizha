@@ -60,49 +60,53 @@ export function CustomSelectDropdown({
   )
 
   return (
-    <div className={`space-y-2 ${className}`}>
-      <Label htmlFor={id}>
+    <div className={`space-y-2 flex flex-col ${className}`}>
+      <Label htmlFor={id} className="sds-label">
         {label}
       </Label>
       <div className="relative" ref={dropdownRef}>
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem]"
+          className={`sds-input w-full flex items-center justify-between text-left group transition-all duration-300 active:scale-[0.98] ${isOpen ? "border-[#4B0082] bg-white" : ""}`}
         >
-          <span className={`flex-1 text-left ${selectedOption ? "" : "text-gray-500"}`}>
+          <span className={`flex-1 truncate ${selectedOption ? "text-gray-900" : "text-gray-300 transition-colors"}`}>
             {selectedOption ? (
-              <span className="break-words whitespace-normal">{selectedOption.value}</span>
+              <span className="font-bold">{selectedOption.value}</span>
             ) : (
-              "Select"
+              "Select Position / Area"
             )}
           </span>
-          <ChevronDown className={`h-4 w-4 transition-transform flex-shrink-0 ml-2 ${isOpen ? "rotate-180" : ""}`} />
+          <ChevronDown className={`h-4 w-4 text-[#4B0082]/40 transition-transform duration-500 ml-2 flex-shrink-0 ${isOpen ? "rotate-180" : ""}`} />
         </button>
         {isOpen && (
-          <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
-            {options.map((option) => {
-              const optionValue = (option.value || "").trim()
-              const currentValue = (value || "").trim()
-              const isSelected = optionValue === currentValue
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  onMouseDown={(e) => {
-                    // Prevent focus loss on the container which might trigger useClickOutside
-                    e.preventDefault()
-                  }}
-                  onClick={() => {
-                    handleSelect(option.value)
-                  }}
-                  className={`w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-left transition-colors ${isSelected ? "bg-gray-100 dark:bg-gray-800" : ""
+          <div className="absolute z-50 w-full mt-3 sds-glass rounded-3xl shadow-2xl border-indigo-50/50 backdrop-blur-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="overflow-y-auto max-h-60 p-2 space-y-1 custom-scrollbar">
+              {options.map((option) => {
+                const optionValue = (option.value || "").trim()
+                const currentValue = (value || "").trim()
+                const isSelected = optionValue === currentValue
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault()
+                    }}
+                    onClick={() => {
+                      handleSelect(option.value)
+                    }}
+                    className={`w-full px-5 py-3.5 rounded-2xl text-left text-xs font-bold transition-all duration-300 ${
+                      isSelected 
+                      ? "bg-[#4B0082] text-white shadow-lg shadow-indigo-900/20" 
+                      : "hover:bg-indigo-50/50 text-gray-500 hover:text-[#4B0082]"
                     }`}
-                >
-                  <span className="break-words whitespace-normal text-sm">{option.value}</span>
-                </button>
-              )
-            })}
+                  >
+                    {option.value}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         )}
       </div>
@@ -112,7 +116,7 @@ export function CustomSelectDropdown({
           value={otherValue}
           onChange={(e) => onOtherChange(e.target.value)}
           placeholder={otherPlaceholder}
-          className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
+          className="sds-input mt-3 w-full animate-in slide-in-from-top-2 duration-300"
           required={required}
         />
       )}
