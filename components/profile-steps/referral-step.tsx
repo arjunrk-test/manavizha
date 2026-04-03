@@ -133,8 +133,8 @@ export function ReferralStep({ formData, onChange, onPartnerNameChange }: Referr
             <span className="text-[#4B0082] font-black text-xs">R1</span>
           </div>
           <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Network Protocol</h4>
-            <h3 className="text-xl font-light text-gray-900 tracking-tight">Referral Sync</h3>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Referral</h4>
+            <h3 className="text-xl font-light text-gray-900 tracking-tight">Partner Details</h3>
           </div>
           <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
         </div>
@@ -165,27 +165,27 @@ export function ReferralStep({ formData, onChange, onPartnerNameChange }: Referr
               {!isValidPattern && formData.referralPartnerId && (
                 <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mt-2 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
                   <span className="w-1 h-1 rounded-full bg-amber-500" />
-                  Format: 02 Alpha | 04 Numeric | 02 Alpha | 03 Numeric
+                  Format: 2 Letters, 4 Numbers, 2 Letters, 3 Numbers
                 </p>
               )}
               {isValidPattern && !partnerError && partnerName && (
                 <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-2 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Protocol Authorized
+                  ID Verified
                 </p>
               )}
               <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest mt-3">
-                Specify the unique identifier of your referring entity
+                Enter the ID of your referral partner
               </p>
             </div>
           </div>
 
           <div className="space-y-3 pt-6 border-t border-indigo-50/50">
-            <Label htmlFor="referralPartnerName" className="sds-label ml-1">Resolved Entity Identity</Label>
+            <Label htmlFor="referralPartnerName" className="sds-label ml-1">Partner Name</Label>
             <div className="relative">
               <Input
                 id="referralPartnerName"
-                value={isLoadingPartner ? "Synchronizing..." : partnerError || partnerName}
+                value={isLoadingPartner ? "Finding partner..." : partnerError || partnerName}
                 readOnly
                 disabled
                 className={`sds-input w-full h-16 px-6 font-bold transition-all duration-700 ${
@@ -193,7 +193,7 @@ export function ReferralStep({ formData, onChange, onPartnerNameChange }: Referr
                   partnerName ? "text-[#4B0082] bg-indigo-50/10 border-indigo-100" : 
                   "text-gray-300 bg-black/[0.02] border-transparent opacity-40 cursor-not-allowed"
                 }`}
-                placeholder="Pending Resolution..."
+                placeholder="Waiting for ID..."
               />
               {partnerName && !isLoadingPartner && !partnerError && (
                 <div className="absolute right-6 top-1/2 -translate-y-1/2">

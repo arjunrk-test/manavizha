@@ -397,65 +397,65 @@ export default function ProfileViewPage() {
     ].filter(Boolean).join(" • ")
 
     return (
-        <div className="min-h-screen pb-24">
+        <div className="min-h-screen pb-24 bg-gradient-to-br from-gray-50 to-indigo-50/30">
 
             <div className="max-w-6xl mx-auto px-4 py-8 space-y-10">
                 {/* 1. Header & Quick Actions Area */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-10 border-b border-gray-100 dark:border-gray-800">
-                    <div className="space-y-4">
-                        <div className="flex flex-wrap items-center gap-3">
-                            <h1 className="text-4xl sm:text-6xl font-black text-gray-900 dark:text-white tracking-tight">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 pb-12 border-b border-indigo-100/50">
+                    <div className="space-y-6">
+                        <div className="flex flex-wrap items-center gap-4">
+                            <h1 className="text-5xl sm:text-7xl font-black text-gray-900 dark:text-white tracking-tighter leading-none">
                                 {profile.name || profile.userName || "Unknown"}
                             </h1>
-                            <div className="h-6 px-3 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold flex items-center tracking-wider uppercase shadow-sm">
-                                <Shield className="h-3 w-3 mr-1.5" /> ID Verified
+                            <div className="h-8 px-4 rounded-full bg-indigo-50 text-[#4B0082] text-[10px] font-black flex items-center tracking-[0.2em] uppercase shadow-sm border border-indigo-100">
+                                <Shield className="h-4 w-4 mr-2" /> ID Verified
                             </div>
                             
                             {/* Target Profile Premium Badge */}
                             {profile.isPremium && (
-                                <div className="flex gap-2">
+                                <div className="flex gap-3">
                                     {profile.premiumPlan === 'till_you_marry' && (
-                                        <div className="h-6 px-3 rounded-full bg-gradient-to-r from-[#FF1493] to-[#FF69B4] text-white text-[10px] font-bold flex items-center tracking-wider uppercase shadow-md shadow-pink-200">
-                                            <Crown className="h-3 w-3 mr-1.5" /> Lifetime Member
+                                        <div className="h-8 px-4 rounded-full bg-gradient-to-r from-[#FF1493] to-[#FF69B4] text-white text-[10px] font-black flex items-center tracking-[0.2em] uppercase shadow-xl shadow-pink-200">
+                                            <Crown className="h-4 w-4 mr-2" /> Lifetime Member
                                         </div>
                                     )}
                                     {profile.premiumPlan === 'elite' && (
-                                        <div className="h-6 px-3 rounded-full bg-gradient-to-r from-[#4B0082] to-[#8A2BE2] text-white text-[10px] font-bold flex items-center tracking-wider uppercase shadow-md shadow-purple-200">
-                                            <Gem className="h-3 w-3 mr-1.5" /> Elite Member
+                                        <div className="h-8 px-4 rounded-full bg-gradient-to-r from-[#4B0082] to-[#8A2BE2] text-white text-[10px] font-black flex items-center tracking-[0.2em] uppercase shadow-xl shadow-purple-200">
+                                            <Gem className="h-4 w-4 mr-2" /> Elite Member
                                         </div>
                                     )}
                                     {profile.premiumPlan === 'prime_gold' && (
-                                        <div className="h-6 px-3 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[10px] font-bold flex items-center tracking-wider uppercase shadow-md shadow-amber-200">
-                                            <Star className="h-3 w-3 mr-1.5" /> Gold Member
+                                        <div className="h-8 px-4 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[10px] font-black flex items-center tracking-[0.2em] uppercase shadow-xl shadow-amber-200">
+                                            <Star className="h-4 w-4 mr-2" /> Gold Member
                                         </div>
                                     )}
                                     {(profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') && (
-                                        <div className="h-6 px-3 rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-[10px] font-bold flex items-center tracking-wider uppercase shadow-md shadow-blue-200">
-                                            <Shield className="h-3 w-3 mr-1.5" /> Prime Member
+                                        <div className="h-8 px-4 rounded-full bg-gradient-to-r from-indigo-600 to-cyan-600 text-white text-[10px] font-black flex items-center tracking-[0.2em] uppercase shadow-xl shadow-indigo-200">
+                                            <Shield className="h-4 w-4 mr-2" /> Prime Member
                                         </div>
                                     )}
                                 </div>
                             )}
                         </div>
-                        <p className="text-lg md:text-xl font-medium text-gray-600 dark:text-gray-400">
-                            {detailedAge} • {detailedHeight} • {profile.marital_status} • Created by {profile.created_by || "Self"}
+                        <p className="text-xl md:text-2xl font-medium text-indigo-900/40 tracking-tight">
+                            {detailedAge} • {detailedHeight} • {profile.marital_status} • Created by <span className="text-[#4B0082] font-bold">{profile.created_by || "Self"}</span>
                         </p>
                     </div>
 
-                    <div className="flex gap-4 w-full md:w-auto items-center">
+                    <div className="flex gap-5 w-full md:w-auto items-center">
                         <Button 
                             onClick={handleShortlist}
                             disabled={isShortlistProcessing}
                             variant="outline"
-                            className={`flex-1 md:flex-none h-14 px-8 rounded-3xl font-black border-none shadow-xl transition-all ${isShortlisted ? 'bg-amber-50 text-amber-700' : 'bg-white text-gray-700 hover:text-amber-700'}`}
+                            className={`flex-1 md:flex-none h-16 px-10 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] border-none shadow-2xl transition-all duration-500 hover:scale-105 ${isShortlisted ? 'bg-amber-500 text-white shadow-amber-500/30' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
                         >
-                            <Star className={`h-5 w-5 mr-3 ${isShortlisted ? 'fill-amber-500 text-amber-500' : ''}`} />
-                            {isShortlisted ? 'Saved' : 'Save Profile'}
+                            <Star className={`h-5 w-5 mr-3 ${isShortlisted ? 'fill-white' : ''}`} />
+                            {isShortlisted ? 'Saved' : 'Save'}
                         </Button>
                         <Button 
                             onClick={handleLike}
                             disabled={isLikeProcessing}
-                            className={`flex-1 md:flex-none h-14 px-8 rounded-3xl font-black shadow-xl transition-all ${isLiked ? 'bg-rose-500 hover:bg-rose-600' : 'bg-[#FF1493] hover:bg-[#E01183]'}`}
+                            className={`flex-1 md:flex-none h-16 px-10 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl transition-all duration-500 hover:scale-105 ${isLiked ? 'bg-indigo-900 text-white shadow-indigo-900/30' : 'bg-[#4B0082] hover:bg-[#3b0062] text-white shadow-indigo-500/30'}`}
                         >
                             <Heart className={`h-5 w-5 mr-3 ${isLiked ? 'fill-white' : ''}`} />
                             {isLiked ? 'Interested' : 'Send Interest'}
@@ -463,23 +463,23 @@ export default function ProfileViewPage() {
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="icon" className="h-14 w-14 rounded-full border-none shadow-xl bg-white hover:bg-gray-50 text-gray-700 shrink-0">
-                                    <MoreVertical className="h-5 w-5" />
+                                <Button variant="outline" size="icon" className="h-16 w-16 rounded-full border-none shadow-2xl bg-white hover:bg-gray-50 text-gray-700 shrink-0 transition-transform hover:rotate-90 duration-500">
+                                    <MoreVertical className="h-6 w-6" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 z-50">
-                                <DropdownMenuLabel className="text-xs font-bold text-gray-400 px-2 py-1 uppercase tracking-wider">Actions</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={handleSendMessage} className="gap-2 cursor-pointer rounded-xl p-3 focus:bg-[#4B0082]/10 focus:text-[#4B0082] font-semibold">
-                                    <MessageCircle className="h-4 w-4" /> Send Message
-                                    <Crown className="h-3 w-3 ml-auto text-amber-500" />
+                            <DropdownMenuContent align="end" className="w-64 sds-glass rounded-3xl p-3 z-50 border-indigo-50/50 shadow-2xl">
+                                <DropdownMenuLabel className="text-[10px] font-black text-indigo-300 px-3 py-2 uppercase tracking-[0.2em]">Options</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={handleSendMessage} className="gap-3 cursor-pointer rounded-2xl p-4 focus:bg-[#4B0082] focus:text-white font-black text-[10px] uppercase tracking-[0.2em] transition-all">
+                                    <MessageCircle className="h-5 w-5" /> Send Message
+                                    <Crown className="h-4 w-4 ml-auto text-amber-500" />
                                 </DropdownMenuItem>
-                                <DropdownMenuSeparator className="my-1" />
-                                <DropdownMenuLabel className="text-xs font-bold text-gray-400 px-2 py-1 uppercase tracking-wider mt-1">Restrict</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={handleIgnore} className="gap-2 cursor-pointer rounded-xl p-3 focus:bg-gray-100 text-gray-600 font-medium">
-                                    <UserMinus className="h-4 w-4" /> Ignore Profile
+                                <DropdownMenuSeparator className="my-2 bg-indigo-50/50" />
+                                <DropdownMenuLabel className="text-[10px] font-black text-indigo-300 px-3 py-2 uppercase tracking-[0.2em]">More Options</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={handleIgnore} className="gap-3 cursor-pointer rounded-2xl p-4 focus:bg-gray-100 text-gray-500 font-bold text-[10px] uppercase tracking-[0.2em]">
+                                    <UserMinus className="h-5 w-5" /> Skip
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={handleBlock} className="gap-2 cursor-pointer rounded-xl p-3 focus:bg-rose-50 focus:text-rose-600 text-rose-500 font-medium">
-                                    <UserX className="h-4 w-4" /> Block Forever
+                                <DropdownMenuItem onClick={handleBlock} className="gap-3 cursor-pointer rounded-2xl p-4 focus:bg-rose-500 focus:text-white text-rose-500 font-black text-[10px] uppercase tracking-[0.2em]">
+                                    <UserX className="h-5 w-5" /> Block
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -570,15 +570,15 @@ export default function ProfileViewPage() {
                     <div className="lg:col-span-8 space-y-12">
 
                         {/* Detailed Grid System */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                            
                             {/* Personal & Social */}
-                            <section className="space-y-6">
-                                <h2 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-                                    <User className="h-5 w-5 text-pink-500" />
-                                    Personal & Appearance
+                            <section className="space-y-8">
+                                <h2 className="text-2xl font-black flex items-center gap-4 text-gray-900 dark:text-white uppercase tracking-widest">
+                                    <div className="w-12 h-12 rounded-2xl bg-pink-100 flex items-center justify-center text-pink-600 shadow-lg shadow-pink-200">
+                                        <User className="h-6 w-6" />
+                                    </div>
+                                    Personal Details
                                 </h2>
-                                <div className="space-y-5 bg-white/70 dark:bg-gray-900/70 backdrop-blur-md p-6 rounded-3xl shadow-2xl">
+                                <div className="space-y-6 sds-glass p-8 rounded-[2.5rem] shadow-2xl border-white/50">
                                     <DetailRow label="Date of Birth" value={profile.date_of_birth} />
                                     <DetailRow label="Marital Status" value={profile.marital_status} />
                                     <DetailRow label="Physical Status" value={profile.physical_status || "Normal"} />
@@ -591,12 +591,14 @@ export default function ProfileViewPage() {
                             </section>
 
                             {/* Family Details */}
-                            <section className="space-y-6">
-                                <h2 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-                                    <Users className="h-5 w-5 text-amber-500" />
-                                    Family Background
+                            <section className="space-y-8">
+                                <h2 className="text-2xl font-black flex items-center gap-4 text-gray-900 dark:text-white uppercase tracking-widest">
+                                    <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 shadow-lg shadow-amber-200">
+                                        <Users className="h-6 w-6" />
+                                    </div>
+                                    Family Details
                                 </h2>
-                                <div className="space-y-5 bg-white/70 dark:bg-gray-900/70 backdrop-blur-md p-6 rounded-3xl shadow-2xl">
+                                <div className="space-y-6 sds-glass p-8 rounded-[2.5rem] shadow-2xl border-white/50">
                                     <DetailRow label="Ancestral Origin" value={profile.family.ancestral_origin} />
                                     <DetailRow label="Father Occupation" value={profile.family.father_occupation} />
                                     <DetailRow label="Mother Occupation" value={profile.family.mother_occupation} />
@@ -608,12 +610,14 @@ export default function ProfileViewPage() {
                             </section>
 
                             {/* Horoscope Area */}
-                            <section className="space-y-6">
-                                <h2 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-                                    <Sparkles className="h-5 w-5 text-indigo-500" />
-                                    Astro & Horoscope
+                            <section className="space-y-8">
+                                <h2 className="text-2xl font-black flex items-center gap-4 text-gray-900 dark:text-white uppercase tracking-widest">
+                                    <div className="w-12 h-12 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-600 shadow-lg shadow-indigo-200">
+                                        <Sparkles className="h-6 w-6" />
+                                    </div>
+                                    Horoscope Details
                                 </h2>
-                                <div className="space-y-5 bg-white/70 dark:bg-gray-900/70 backdrop-blur-md p-6 rounded-3xl shadow-2xl">
+                                <div className="space-y-6 sds-glass p-8 rounded-[2.5rem] shadow-2xl border-white/50">
                                     <DetailRow label="Star" value={profile.horoscope.star} />
                                     <DetailRow label="Raasi / Moon Sign" value={profile.horoscope.zodiac_sign} />
                                     <DetailRow label="Birth Place" value={profile.horoscope.place_of_birth} />
@@ -624,13 +628,15 @@ export default function ProfileViewPage() {
                             </section>
 
                             {/* Professional Area */}
-                            <section className="space-y-6">
-                                <h2 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-                                    <Award className="h-5 w-5 text-green-500" />
-                                    Career & Lifestyle
+                            <section className="space-y-8">
+                                <h2 className="text-2xl font-black flex items-center gap-4 text-gray-900 dark:text-white uppercase tracking-widest">
+                                    <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 shadow-lg shadow-emerald-200">
+                                        <Award className="h-6 w-6" />
+                                    </div>
+                                    Work & Life
                                 </h2>
-                                <div className="space-y-5 bg-white/70 dark:bg-gray-900/70 backdrop-blur-md p-6 rounded-3xl shadow-2xl">
-                                    <DetailRow label="Highest Education" value={profile.education[0]?.education} />
+                                <div className="space-y-6 sds-glass p-8 rounded-[2.5rem] shadow-2xl border-white/50">
+                                    <DetailRow label="Highest Education" value={profile.education?.[0]?.education} />
                                     <DetailRow label="Occupation" value={profile.professionDetails?.designation || profile.professionType} />
                                     <DetailRow label="Organization" value={profile.professionDetails?.company || profile.professionDetails?.business_name || profile.professionDetails?.institution} />
                                     <DetailRow label="Income (Annual)" value={profile.professionDetails?.annual_income || profile.professionDetails?.salary} />
@@ -638,24 +644,26 @@ export default function ProfileViewPage() {
                                     <DetailRow label="Drinking / Smoking" value={`${profile.social?.drinking || 'No'} / ${profile.social?.smoking || 'No'}`} />
                                 </div>
                             </section>
-                        </div>
 
                         {/* Dedicated Partner Preferences Section */}
                         {profile.partner_preferences && (
-                            <section className="pt-10 space-y-8">
+                            <section className="pt-20 space-y-12">
                                 {/* Match Score Banner */}
-                                <div className="bg-white/95 p-6 rounded-[2rem] shadow-xl flex items-center justify-between border-l-8 border-pink-500">
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-14 w-14 rounded-full bg-pink-50 flex items-center justify-center">
-                                            <HeartHandshake className="h-7 w-7 text-pink-500" />
+                                <div className="sds-glass p-10 rounded-[3rem] shadow-2xl flex flex-col md:flex-row items-center justify-between border-l-[12px] border-[#4B0082]">
+                                    <div className="flex items-center gap-8 mb-6 md:mb-0">
+                                        <div className="h-20 w-20 rounded-[2rem] bg-indigo-50 flex items-center justify-center shadow-inner">
+                                            <HeartHandshake className="h-10 w-10 text-[#4B0082]" />
                                         </div>
                                         <div>
-                                            <h3 className="text-xl font-bold text-gray-900">Compatibility Score</h3>
-                                            <p className="text-sm text-gray-500">You match {matchScore.matches}/{matchScore.total} of her preferences</p>
+                                            <h3 className="text-3xl font-black text-gray-900 tracking-tight">Match Score</h3>
+                                            <p className="text-lg text-indigo-400 font-bold uppercase tracking-widest mt-1">How well you match</p>
                                         </div>
                                     </div>
-                                    <div className="text-3xl font-black text-pink-500">
-                                        {Math.round((matchScore.matches / matchScore.total) * 100)}%
+                                    <div className="flex flex-col items-center md:items-end">
+                                        <div className="text-7xl font-black text-[#4B0082] tracking-tighter">
+                                            {Math.round((matchScore.matches / matchScore.total) * 100)}%
+                                        </div>
+                                        <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mt-2">Compatibility Score</p>
                                     </div>
                                 </div>
 

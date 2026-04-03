@@ -68,7 +68,7 @@ export function ProfileCarousel({
                 </div>
                 <div className="flex gap-4 px-4 overflow-hidden">
                     {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="min-w-[10rem] sm:min-w-[12.5rem] aspect-[4/6] bg-gray-100 dark:bg-gray-800 animate-pulse rounded-2xl" />
+                        <div key={i} className="min-w-[11rem] sm:min-w-[13.5rem] aspect-[3/4] bg-gray-100 dark:bg-gray-700 animate-pulse rounded-[2rem]" />
                     ))}
                 </div>
             </div>
@@ -154,7 +154,7 @@ export function ProfileCarousel({
                             profiles.map((profile, index) => (
                                 <div
                                     key={profile.user_id || index}
-                                    className="w-[10rem] sm:w-[12.5rem] flex-none snap-start"
+                                    className="w-[11rem] sm:w-[13.5rem] flex-none snap-start"
                                 >
                                     <ProfilePreviewCard
                                         profile={profile}

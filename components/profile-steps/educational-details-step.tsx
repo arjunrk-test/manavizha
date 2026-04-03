@@ -137,9 +137,9 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
                 <GraduationCap className="h-6 w-6 text-[#4B0082]" />
               </div>
               <div>
-                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-1">Academic Horizon</h4>
+                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-1">Education</h4>
                 <h3 className="text-2xl font-light text-gray-900 tracking-tight">
-                  Qualification Level <span className="font-bold text-[#4B0082]/40">{index + 1}</span>
+                  Qualification <span className="font-bold text-[#4B0082]/40">{index + 1}</span>
                 </h3>
               </div>
             </div>
@@ -152,14 +152,14 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
                 className="h-12 px-6 rounded-2xl text-rose-500 hover:bg-rose-50/80 font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border border-transparent hover:border-rose-100"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Discard Link
+                Remove
               </Button>
             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <SelectDropdown
               id={`education-${index}`}
-              label="Intelligence Level *"
+              label="Education Category *"
               value={edu.education || ""}
               onChange={(value) => {
                 updateEducation(index, "education", value)
@@ -169,12 +169,12 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
             />
             {educationLevelOptions.some(opt => opt.value.toLowerCase() === "other") && edu.education?.toLowerCase() === "other" && (
               <div className="space-y-2">
-                <Label htmlFor={`educationOther-${index}`} className="sds-label">Specify Level Signature *</Label>
+                <Label htmlFor={`educationOther-${index}`} className="sds-label">Specify Level *</Label>
                 <Input
                   id={`educationOther-${index}`}
                   value={edu.educationOther || ""}
                   onChange={(e) => updateEducation(index, "educationOther", e.target.value)}
-                  placeholder="Manual Override Level"
+                  placeholder="Enter Education Level"
                   required
                   className="sds-input w-full"
                 />
@@ -182,7 +182,7 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
             )}
             <SelectDropdown
               id={`degree-${index}`}
-              label="Degree / Vector *"
+              label="Degree / Qualification *"
               value={edu.degree || ""}
               onChange={(value) => updateEducation(index, "degree", value)}
               options={getQualificationsForLevel(edu.education || "")}
@@ -191,24 +191,24 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
             />
             {getQualificationsForLevel(edu.education || "").some(opt => opt.value.toLowerCase() === "other") && edu.degree?.toLowerCase() === "other" && (
               <div className="space-y-2">
-                <Label htmlFor={`degreeOther-${index}`} className="sds-label">Specify Vector *</Label>
+                <Label htmlFor={`degreeOther-${index}`} className="sds-label">Specify Degree *</Label>
                 <Input
                   id={`degreeOther-${index}`}
                   value={edu.degreeOther || ""}
                   onChange={(e) => updateEducation(index, "degreeOther", e.target.value)}
-                  placeholder="Manual Override Vector"
+                  placeholder="Enter Degree Name"
                   required
                   className="sds-input w-full"
                 />
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor={`branch-${index}`} className="sds-label">Specialization Sector</Label>
+              <Label htmlFor={`branch-${index}`} className="sds-label">Major / Subject</Label>
               <Input
                 id={`branch-${index}`}
                 value={edu.branch || ""}
                 onChange={(e) => updateEducation(index, "branch", e.target.value)}
-                placeholder="e.g., Tactical AI, Cyber Systems"
+                placeholder="e.g. Computer Science, Commerce"
                 className="sds-input w-full"
               />
             </div>
@@ -218,12 +218,12 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
                 id={`institution-${index}`}
                 value={edu.institution || ""}
                 onChange={(e) => updateEducation(index, "institution", e.target.value)}
-                placeholder="Enter elite institution name"
+                placeholder="Enter College Name"
                 className="sds-input w-full"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor={`yearOfGraduation-${index}`} className="sds-label">Archival Graduation Year</Label>
+              <Label htmlFor={`yearOfGraduation-${index}`} className="sds-label">Graduation Year</Label>
               <Input
                 id={`yearOfGraduation-${index}`}
                 type="number"
@@ -243,7 +243,7 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
             </div>
             <SelectDropdown
               id={`status-${index}`}
-              label="Vector Status *"
+              label="Education Status *"
               value={edu.status || ""}
               onChange={(value) => updateEducation(index, "status", value)}
               options={statusOptions}
@@ -259,7 +259,7 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
         className="h-24 w-full rounded-[2.5rem] bg-[#4B0082]/[0.02] text-[#4B0082] border-2 border-dashed border-indigo-100 hover:bg-indigo-50/50 hover:border-indigo-300 transition-all duration-500 font-black text-[11px] uppercase tracking-[0.4em] group"
       >
         <Plus className="h-6 w-6 mr-4 transition-transform group-hover:rotate-90 group-hover:scale-110" />
-        Add Academic Intersection
+        Add More Education
       </Button>
     </div>
   )

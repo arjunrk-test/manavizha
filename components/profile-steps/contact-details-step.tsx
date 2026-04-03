@@ -260,15 +260,15 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
             <span className="text-[#4B0082] font-black text-xs">01</span>
           </div>
           <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Sync Protocol</h4>
-            <h3 className="text-xl font-light text-gray-900 tracking-tight">Communication Access</h3>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Contact</h4>
+            <h3 className="text-xl font-light text-gray-900 tracking-tight">Phone & WhatsApp</h3>
           </div>
           <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50 shadow-[0_20px_50px_-20px_rgba(75,0,130,0.05)]">
           <div className="flex flex-col space-y-3">
-            <Label htmlFor="phone" className="sds-label ml-1">Intelligence Phone *</Label>
+            <Label htmlFor="phone" className="sds-label ml-1">Phone Number *</Label>
             <div className="relative group">
               <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#4B0082]/40 font-black text-[11px] pointer-events-none z-10 transition-colors group-focus-within:text-[#4B0082] tracking-widest">
                 +91
@@ -298,7 +298,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
 
           <div className="flex flex-col space-y-3">
             <div className="flex items-center justify-between px-1">
-              <Label htmlFor="whatsappNumber" className="sds-label">Secure WhatsApp *</Label>
+              <Label htmlFor="whatsappNumber" className="sds-label">WhatsApp Number *</Label>
               <div 
                 className="flex items-center gap-2 cursor-pointer group/toggle"
                 onClick={() => {
@@ -310,7 +310,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                 <div className={`w-8 h-4 rounded-full transition-all duration-300 relative ${isWhatsappSameAsPhone ? "bg-emerald-500" : "bg-gray-200"}`}>
                   <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all duration-300 ${isWhatsappSameAsPhone ? "left-4.5" : "left-0.5"}`} />
                 </div>
-                <span className="text-[8px] font-black uppercase tracking-widest text-[#4B0082]/40 group-hover/toggle:text-[#4B0082] transition-colors">Sync Logic</span>
+                <span className="text-[8px] font-black uppercase tracking-widest text-[#4B0082]/40 group-hover/toggle:text-[#4B0082] transition-colors">Same as Phone</span>
               </div>
             </div>
             <div className="relative group">
@@ -350,8 +350,8 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
             <span className="text-[#4B0082] font-black text-xs">02</span>
           </div>
           <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Primary Residence Domain</h4>
-            <h3 className="text-xl font-light text-gray-900 tracking-tight">Geographic Anchor</h3>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Permanent Address</h4>
+            <h3 className="text-xl font-light text-gray-900 tracking-tight">Where you live permanently</h3>
           </div>
           <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
         </div>
@@ -359,7 +359,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
         <div className="sds-glass rounded-[2.5rem] p-10 border-indigo-50/50 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3 md:col-span-2">
-              <Label htmlFor="permanentAddressLine1" className="sds-label ml-1">Vector Line 1 *</Label>
+              <Label htmlFor="permanentAddressLine1" className="sds-label ml-1">Address Line 1 *</Label>
               <Input
                 id="permanentAddressLine1"
                 value={formData.permanentAddressLine1}
@@ -370,7 +370,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
               />
             </div>
             <div className="space-y-3 md:col-span-2">
-              <Label htmlFor="permanentAddressLine2" className="sds-label ml-1">Vector Line 2</Label>
+              <Label htmlFor="permanentAddressLine2" className="sds-label ml-1">Address Line 2</Label>
               <Input
                 id="permanentAddressLine2"
                 value={formData.permanentAddressLine2}
@@ -380,7 +380,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
               />
             </div>
             <div className="space-y-3">
-              <Label htmlFor="permanentPincode" className="sds-label ml-1">Geo-Code Pincode *</Label>
+              <Label htmlFor="permanentPincode" className="sds-label ml-1">Pincode *</Label>
               <div className="relative">
                 <Input
                   id="permanentPincode"
@@ -405,7 +405,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
               </div>
             </div>
             <div className="space-y-3">
-              <Label htmlFor="permanentArea" className="sds-label ml-1">Target Area *</Label>
+              <Label htmlFor="permanentArea" className="sds-label ml-1">Area / Colony *</Label>
               <div className="relative" ref={permanentAreaRef}>
                 <button
                   type="button"
@@ -441,7 +441,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
               </div>
             </div>
             <div className="space-y-3">
-              <Label htmlFor="permanentDistrict" className="sds-label ml-1">District Hub</Label>
+              <Label htmlFor="permanentDistrict" className="sds-label ml-1">District</Label>
               <Input
                 id="permanentDistrict"
                 value={formData.permanentDistrict}
@@ -450,7 +450,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
               />
             </div>
             <div className="space-y-3">
-              <Label htmlFor="permanentState" className="sds-label ml-1">State Jurisdiction</Label>
+              <Label htmlFor="permanentState" className="sds-label ml-1">State</Label>
               <Input
                 id="permanentState"
                 value={formData.permanentState}
@@ -459,7 +459,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
               />
             </div>
             <div className="space-y-3 md:col-span-2">
-              <Label htmlFor="permanentLandmark" className="sds-label ml-1">Geo Landmark Signature</Label>
+              <Label htmlFor="permanentLandmark" className="sds-label ml-1">Landmark</Label>
               <Input
                 id="permanentLandmark"
                 value={formData.permanentLandmark}
@@ -480,8 +480,8 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
               <span className="text-[#4B0082] font-black text-xs">03</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Live Location</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Temporal Node</h3>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Current Location</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">Where you live now</h3>
             </div>
           </div>
           
@@ -508,14 +508,14 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
             <div className={`w-10 h-5 rounded-full transition-all duration-300 relative ${isCurrentAddressSameAsPermanent ? "bg-[#4B0082]" : "bg-gray-200"}`}>
               <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${isCurrentAddressSameAsPermanent ? "left-6" : "left-1"}`} />
             </div>
-            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#4B0082]/60 group-hover:text-[#4B0082] transition-colors">Mirror Primary</span>
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#4B0082]/60 group-hover:text-[#4B0082] transition-colors">Same as Permanent</span>
           </div>
         </div>
 
         <div className={`sds-glass rounded-[2.5rem] p-10 border-indigo-50/50 space-y-8 transition-all duration-700 ${isCurrentAddressSameAsPermanent ? "opacity-30 grayscale pointer-events-none scale-[0.98]" : ""}`}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3 md:col-span-2">
-              <Label htmlFor="currentAddressLine1" className="sds-label ml-1">Vector Line 1 *</Label>
+              <Label htmlFor="currentAddressLine1" className="sds-label ml-1">Address Line 1 *</Label>
               <Input
                 id="currentAddressLine1"
                 value={formData.currentAddressLine1}
@@ -527,7 +527,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
               />
             </div>
             <div className="space-y-3">
-              <Label htmlFor="currentPincode" className="sds-label ml-1">Geo-Code Pincode *</Label>
+              <Label htmlFor="currentPincode" className="sds-label ml-1">Pincode *</Label>
               <div className="relative">
                 <Input
                   id="currentPincode"
@@ -553,7 +553,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
               </div>
             </div>
             <div className="space-y-3">
-              <Label htmlFor="currentArea" className="sds-label ml-1">Target Area *</Label>
+              <Label htmlFor="currentArea" className="sds-label ml-1">Area / Colony *</Label>
               <div className="relative" ref={currentAreaRef}>
                 <button
                   type="button"

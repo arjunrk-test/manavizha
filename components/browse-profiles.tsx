@@ -17,6 +17,8 @@ import { Badge } from "@/components/ui/badge"
 import { Sparkles as SparklesIcon, Info } from "lucide-react"
 import { MatchBreakdownDialog } from "@/components/match-breakdown-dialog"
 import { MessageDialog } from "@/components/message-dialog"
+import { calculateLifestyleScore } from "@/lib/matching"
+import { CompatibilitySheet } from "./compatibility-sheet"
 
 interface BrowseProfilesProps {
     userId: string
@@ -57,12 +59,18 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
 
     // State to track the currently viewed photo index for the modal
     const [modalPhotoIndex, setModalPhotoIndex] = useState(0)
+    const [viewerFullProfile, setViewerFullProfile] = useState<any>(null)
 
     // Messaging states
     const [isPremium, setIsPremium] = useState(false)
     const [likedMeIds, setLikedMeIds] = useState<string[]>([])
     const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false)
     const [messageTarget, setMessageTarget] = useState<{ id: string, name: string } | null>(null)
+    const [isMounted, setIsMounted] = useState(false)
+
+    useEffect(() => {
+        setIsMounted(true)
+    }, [])
 
     const router = useRouter()
 
@@ -439,13 +447,33 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 }
 
                 // Fetch current user horoscope for matching
-                const { data: myHoro } = await supabase
-                    .from("horoscope_details")
-                    .select("star, zodiac_sign")
-                    .eq("user_id", userId)
-                    .maybeSingle()
+                const [
+                    { data: myHoro },
+                    { data: myInterests },
+                    { data: mySocial },
+                    { data: myEmp },
+                    { data: myBus }
+                ] = await Promise.all([
+                    supabase.from("horoscope_details").select("*").eq("user_id", userId).maybeSingle(),
+                    supabase.from("interests").select("*").eq("user_id", userId).maybeSingle(),
+                    supabase.from("social_habits").select("*").eq("user_id", userId).maybeSingle(),
+                    supabase.from("profession_employee").select("*").eq("user_id", userId).maybeSingle(),
+                    supabase.from("profession_business").select("*").eq("user_id", userId).maybeSingle()
+                ])
                 
                 setUserHoroscope(myHoro)
+                setViewerFullProfile({
+                    ...userData,
+                    ...(myContact || {}),
+                    interests: myInterests?.interests || [],
+                    hobbies: myInterests?.hobbies || [],
+                    smoking: mySocial?.smoking,
+                    drinking: mySocial?.drinking,
+                    foodPreference: userData?.food_preference,
+                    workLocation: myEmp?.work_location || myBus?.business_location,
+                    sector: myEmp?.sector || myBus?.business_type,
+                    salary: myEmp?.salary || myBus?.annual_returns
+                })
 
                 // 2. Fetch target profiles
                 let query = supabase
@@ -566,8 +594,8 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 ] = await Promise.all([
                     supabase.from("photos").select("user_id, user_photos, family_photo").in("user_id", targetUserIds),
                     supabase.from("contact_details").select("user_id, current_district, current_state, phone, whatsapp_number").in("user_id", targetUserIds),
-                    supabase.from("profession_employee").select("user_id, designation, company, sector, employment_type, annual_income").in("user_id", targetUserIds),
-                    supabase.from("profession_business").select("user_id, designation, business_name, business_type, annual_income").in("user_id", targetUserIds),
+                    supabase.from("profession_employee").select("user_id, designation, company, sector, salary").in("user_id", targetUserIds),
+                    supabase.from("profession_business").select("user_id, designation, business_name, business_type, annual_returns").in("user_id", targetUserIds),
                     supabase.from("profession_student").select("user_id, course, institution").in("user_id", targetUserIds),
                     supabase.from("education_details").select("user_id, education, institution").in("user_id", targetUserIds),
                     supabase.from("interests").select("*").in("user_id", targetUserIds),
@@ -623,9 +651,20 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         interests: myInterests || null,
                         socialHabits: mySocial || null,
                         horoscope: myHoro || null,
-                        compatibility: (userHoroscope?.star && userHoroscope?.zodiac_sign && myHoro?.star && myHoro?.zodiac_sign) 
-                            ? checkTamilPorutham(userHoroscope.star, userHoroscope.zodiac_sign, myHoro.star, myHoro.zodiac_sign) 
-                            : null,
+                        compatibility: (userHoroscope?.star && myHoro?.star) 
+                            ? checkTamilPorutham(userHoroscope.star, userHoroscope.zodiac_sign || "", myHoro.star, myHoro.zodiac_sign || "") 
+                            : { score: 0, status: 'Athamam', breakdown: {} },
+                        lifestyleMatch: viewerFullProfile ? calculateLifestyleScore(viewerFullProfile, {
+                            ...p,
+                            foodPreference: p.food_preference,
+                            hobbies: myInterests?.hobbies || [],
+                            interests: myInterests?.interests || [],
+                            smoking: mySocial?.smoking,
+                            drinking: mySocial?.drinking,
+                            workLocation: myEmp?.work_location || myBus?.business_location,
+                            sector: myEmp?.sector || myBus?.business_type,
+                            salary: myEmp?.salary || myBus?.annual_returns
+                        }) : null,
                         isSelected: selectedIds.has(p.user_id),
                         childLiked: childLikedIds.includes(p.user_id),
                         profileLikedChild: likedChildIds.includes(p.user_id),
@@ -638,6 +677,15 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 })
 
                 let finalProfiles = combined
+
+                // Apply Sorting by Lifestyle Compatibility as priority
+                if (isPremium) {
+                    finalProfiles = [...combined].sort((a, b) => {
+                        const scoreA = a.lifestyleMatch?.totalScore || 0
+                        const scoreB = b.lifestyleMatch?.totalScore || 0
+                        return scoreB - scoreA
+                    })
+                }
 
                 if (preferences && applyPreferences) {
                     finalProfiles = combined.filter((profile: any) => {
@@ -829,7 +877,10 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
 
         const openBreakdown = (e: React.MouseEvent) => {
             e.stopPropagation()
-            setActiveBreakdown(profile.compatibility)
+            setActiveBreakdown({
+                lifestyle: profile.lifestyleMatch,
+                horoscope: profile.compatibility
+            })
             setBreakdownName(profile.name || "Unknown")
             setShowBreakdown(true)
         }
@@ -842,11 +893,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 className="w-full"
             >
                 <div
-                    className={`sds-glass rounded-[2.5rem] overflow-hidden hover:shadow-[0_20px_50px_rgba(75,0,130,0.1)] transition-all duration-500 cursor-pointer group flex flex-col md:flex-row h-auto md:min-h-[220px] ${
-                        profile.sex?.toLowerCase() === 'female' 
-                        ? 'border-pink-100/50 hover:border-pink-200 shadow-[0_8px_30px_rgb(255,182,193,0.1)]' 
-                        : 'border-blue-100/50 hover:border-blue-200 shadow-[0_8px_30px_rgb(173,216,230,0.1)]'
-                    } border-2`}
+                    className={`sds-glass rounded-[3rem] overflow-hidden hover:shadow-[0_40px_80px_rgba(75,0,130,0.15)] transition-all duration-700 cursor-pointer group flex flex-col md:flex-row h-auto md:min-h-[260px] border-2 border-indigo-100/30 hover:border-indigo-400 group-hover:bg-white/95`}
                     onClick={(e) => handleOpenProfile(profile, e)}
                 >
                     {/* Left: Image Section */}
@@ -859,7 +906,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
                                 />
                                 {hasMultiplePhotos && (
-                                    <div className="absolute bottom-4 right-4 sds-glass text-[9px] px-3 py-1.5 rounded-full z-10 font-bold tracking-[0.2em] text-[#4B0082] bg-white/60">
+                                    <div className="absolute bottom-4 right-4 sds-glass text-[10px] px-4 py-2 rounded-full z-10 font-black tracking-[0.2em] text-[#4B0082] bg-white/80 shadow-md">
                                         {cardPhotoIndex + 1} / {profile.photos.length}
                                     </div>
                                 )}
@@ -867,7 +914,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         ) : (
                             <div className="w-full h-full flex flex-col items-center justify-center text-gray-200">
                                 <User className="h-16 w-16 opacity-10" />
-                                <span className="text-[10px] mt-2 font-black uppercase tracking-[0.3em] opacity-30">No Intelligence Data</span>
+                                <span className="text-[10px] mt-2 font-black uppercase tracking-[0.3em] opacity-30">No Photo Uploaded</span>
                             </div>
                         )}
                         
@@ -888,22 +935,15 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
 
                     {/* Right: Content Section */}
                     <div className="p-6 md:p-8 flex-1 flex flex-col relative bg-gradient-to-br from-white/40 to-transparent">
-                        {/* Compatibility Badge - Positioned Top Right */}
-                        {profile.compatibility && (
-                            <div className="absolute top-6 right-6 z-20">
-                                <Badge 
-                                    className={`font-black border-none shadow-sm gap-2 px-5 py-2.5 cursor-help group/badge rounded-2xl text-[9px] uppercase tracking-[0.2em] transition-all duration-300 ${
-                                        profile.compatibility.status === "Uthamam" ? "bg-emerald-50/80 text-emerald-700 hover:bg-emerald-100" :
-                                        profile.compatibility.status === "Madhyamam" ? "bg-amber-50/80 text-amber-700 hover:bg-amber-100" :
-                                        "bg-gray-50/80 text-gray-700 hover:bg-gray-100"
-                                    }`}
-                                    onClick={openBreakdown}
-                                >
-                                    <SparklesIcon className="h-3.5 w-3.5" />
-                                    <span>{profile.compatibility.score}/10 {profile.compatibility.status}</span>
-                                </Badge>
-                            </div>
-                        )}
+                        {/* Compatibility Score - DUAL CORE */}
+                        <div className="absolute top-6 right-6 z-20">
+                            <MatchScoreBadge 
+                                lifestyleScore={profile.lifestyleMatch?.totalScore || 0}
+                                poruthamScore={profile.compatibility?.score || 0}
+                                isPremium={isPremium}
+                                onClick={openBreakdown}
+                            />
+                        </div>
 
                         <div className="mb-4">
                             <h3 className="text-2xl font-light text-gray-900 tracking-tight leading-none mb-2 group-hover:text-[#4B0082] transition-colors duration-300">
@@ -975,19 +1015,18 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                         <DropdownMenuItem
                                             onClick={(e) => { 
                                                 e.stopPropagation(); 
-                                                const isMutual = likedIds.includes(profile.user_id) && likedMeIds.includes(profile.user_id);
                                                 if (isPremium || isMutual) {
                                                     setMessageTarget({ id: profile.user_id, name: profile.name });
                                                     setIsMessageDialogOpen(true);
                                                 } else {
-                                                    toast.error('Tactical Access Required', { 
-                                                        description: 'Upgrade to Premium for direct comms, or achieve mutual interest parity.' 
+                                                    toast.error('Premium Required', { 
+                                                        description: 'Upgrade to Premium for direct messaging, or wait for a mutual match.' 
                                                     });
                                                 }
                                             }}
                                             className="gap-4 cursor-pointer rounded-2xl p-5 focus:bg-[#4B0082] focus:text-white font-black text-[10px] uppercase tracking-[0.2em] transition-all duration-300"
                                         >
-                                            <MessageCircle className="h-5 w-5 opacity-60" /> Establish Comms
+                                            <MessageCircle className="h-5 w-5 opacity-60" /> Send Message
                                             {!isPremium && <Crown className="h-3.5 w-3.5 ml-auto text-amber-500/80" />}
                                         </DropdownMenuItem>
                                         <div className="h-px bg-black/[0.03] my-1" />
@@ -995,13 +1034,13 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                             onClick={(e) => { e.stopPropagation(); handleIgnore(e, profile.user_id); }}
                                             className="gap-4 cursor-pointer rounded-2xl p-5 focus:bg-gray-50/80 text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] transition-all"
                                         >
-                                            <UserMinus className="h-5 w-5 opacity-40" /> De-prioritize
+                                            <UserMinus className="h-5 w-5 opacity-40" /> Skip for Now
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                             onClick={(e) => { e.stopPropagation(); handleBlock(e, profile.user_id); }}
                                             className="gap-4 cursor-pointer rounded-2xl p-5 focus:bg-rose-50/80 focus:text-rose-600 text-rose-400/60 font-bold text-[10px] uppercase tracking-[0.2em] transition-all"
                                         >
-                                            <UserX className="h-5 w-5 opacity-40" /> Terminate Vector
+                                            <UserX className="h-5 w-5 opacity-40" /> Block Profile
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -1029,37 +1068,29 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
         {
             title: "Matches",
             items: [
-                { id: "all-matches", label: "Matches for you", description: "View all profiles that match your preferences", icon: User },
+                { id: "all-matches", label: "All Matches", description: "View all profiles that match your preferences", icon: User },
             ]
         },
         {
             title: "Activity",
             items: [
-                { id: "shortlisted-by-you", label: "Shortlisted by you", description: "Matches you have shortlisted", icon: Star },
-                { id: "viewed-you", label: "Who viewed you", description: "Matches who have viewed your profile", icon: Filter },
-                { id: "shortlisted-you", label: "Who shortlisted you", description: "Matches who have shortlisted your profile", icon: User },
-                { id: "viewed-by-you", label: "Viewed by you", description: "Matches you have viewed", icon: Filter },
+                { id: "shortlisted-by-you", label: "Shortlisted", description: "Matches you have shortlisted", icon: Star },
+                { id: "viewed-you", label: "Who viewed me", description: "Matches who have viewed your profile", icon: Filter },
+                { id: "shortlisted-you", label: "Who shortlisted me", description: "Matches who have shortlisted your profile", icon: User },
+                { id: "viewed-by-you", label: "Profiles I viewed", description: "Matches you have viewed", icon: Filter },
             ]
         },
         {
-            title: "New & Local",
+            title: "Local",
             items: [
-                { id: "newly-joined", label: "Newly Joined", description: "Matches who joined within the last 30 days", icon: User },
-                { id: "nearby-matches", label: "Nearby matches", description: "Matches near your location", icon: MapPin },
+                { id: "newly-joined", label: "New Members", description: "Matches who joined within the last 30 days", icon: User },
+                { id: "nearby-matches", label: "Matches near me", description: "Matches near your location", icon: MapPin },
             ]
         },
         {
-            title: "Profile Detail",
+            title: "Profile Details",
             items: [
-                { id: "matches-with-photos", label: "Profiles with photos", description: "Matches that have added photos", icon: User },
-                { id: "matches-with-horoscope", label: "Profiles with horoscope", description: "Matches that have added horoscope", icon: Star },
-            ]
-        },
-        {
-            title: "Compatibility",
-            items: [
-                { id: "star-matches", label: "Star matches", description: "Matches with compatible star sign", icon: Star },
-                { id: "horoscope-matches", label: "Horoscope matches", description: "Matches with horoscope matching yours", icon: Star },
+                { id: "matches-with-photos", label: "With Photos", description: "Matches that have added photos", icon: User },
             ]
         }
     ]
@@ -1095,8 +1126,8 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                                     onClick={() => setActiveCategory(item.id)}
                                                     className={`w-full group text-left px-6 py-5 rounded-[2rem] transition-all duration-500 flex items-center gap-4 relative overflow-hidden ${
                                                         activeCategory === item.id 
-                                                        ? "bg-[#4B0082] text-white shadow-2xl shadow-indigo-500/40 scale-[1.02] z-10" 
-                                                        : "hover:bg-indigo-50/50 text-indigo-900/60 hover:text-[#4B0082]"
+                                                        ? "bg-[#4B0082] text-white shadow-2xl shadow-indigo-900/40 scale-[1.05] z-10 font-black" 
+                                                        : "hover:bg-indigo-50 text-indigo-900/80 hover:text-[#4B0082] font-bold"
                                                     }`}
                                                 >
                                                     <item.icon className={`h-5 w-5 transition-transform duration-500 ${activeCategory === item.id ? "text-white scale-110" : "text-indigo-900/20 group-hover:text-[#4B0082] group-hover:scale-110"}`} />
@@ -1105,7 +1136,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                                             {item.label}
                                                         </div>
                                                     </div>
-                                                    {activeCategory === item.id && (
+                                                    {isMounted && activeCategory === item.id && (
                                                         <motion.div layoutId="active-pill" className="absolute left-0 w-1 h-8 bg-indigo-300 rounded-r-full" />
                                                     )}
                                                     {activeCategory === item.id && <ArrowRight className="h-3.5 w-3.5 text-white/40" />}
@@ -1203,7 +1234,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                             {/* Mutual match header */}
                             <div className="bg-amber-50/50 px-6 py-4 flex items-center gap-3 border-b border-amber-100">
                                 <SparklesIcon className="h-5 w-5 text-amber-500 animate-pulse" />
-                                <span className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Target Found — Highly Compatible Mutual Match</span>
+                                <span className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Mutual Match Found</span>
                             </div>
 
                             <div className="flex flex-col md:flex-row">
@@ -1223,7 +1254,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                     )}
                                 </div>
 
-                                {/* Deep Intel Sections */}
+                                {/* Profile Details */}
                                 <div className="flex-1 p-8 space-y-8 max-h-[600px] overflow-y-auto">
                                     <div>
                                         <h4 className="text-4xl font-light text-gray-900 tracking-tight leading-none mb-3">
@@ -1238,11 +1269,11 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                     {/* Data Points */}
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                                         {[
-                                            { icon: Briefcase, label: "Vocation", value: profile.profession },
-                                            { icon: MapPin, label: "Sector", value: profile.location.split(',')[0] },
-                                            { icon: GraduationCap, label: "Academy", value: profile.education?.[0]?.education || "None" },
-                                            { icon: Heart, label: "Ancestry", value: profile.caste || profile.religion },
-                                            { icon: Star, label: "Cosmic", value: profile.horoscope?.star || "Unknown" }
+                                            { icon: Briefcase, label: "Profession", value: profile.profession },
+                                            { icon: MapPin, label: "Area", value: profile.location.split(',')[0] },
+                                            { icon: GraduationCap, label: "Education", value: profile.education?.[0]?.education || "None" },
+                                            { icon: Heart, label: "Caste", value: profile.caste || profile.religion },
+                                            { icon: Star, label: "Horoscope", value: profile.horoscope?.star || "Unknown" }
                                         ].map((point, i) => (
                                             <div key={i} className="space-y-1">
                                                 <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-[#4B0082]/40">
@@ -1254,17 +1285,17 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                         ))}
                                     </div>
 
-                                    {/* Intermediary Action */}
+                                    {/* Action */}
                                     <div className="pt-4 border-t border-black/5 flex items-center justify-between">
                                         <div className="space-y-1">
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-[#4B0082]">Action Priority</p>
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-[#4B0082]">Status</p>
                                             <p className="text-xs text-gray-400">Mutual interest significantly increases outcome success.</p>
                                         </div>
                                         <Button
                                             onClick={() => setSelectedProfile(profile)}
                                             className="h-12 px-8 rounded-2xl bg-[#4B0082] text-white font-black text-[10px] uppercase tracking-widest hover:shadow-xl hover:shadow-indigo-500/30 transition-all"
                                         >
-                                            Analyze Deep Profile
+                                            View Full Profile
                                         </Button>
                                     </div>
                                 </div>
@@ -1278,13 +1309,15 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         {/* Section 1: Find Matches (unselected only) */}
                         <div className="space-y-8">
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 sds-glass rounded-2xl flex items-center justify-center text-[#FF1493] border-pink-50">
-                                        <Heart className="h-5 w-5 fill-current" />
+                                <div className="flex items-center gap-4 mb-2">
+                                    <div className="w-12 h-12 rounded-[1.25rem] bg-[#4B0082] flex items-center justify-center shadow-lg shadow-indigo-900/20">
+                                        <User className="text-white h-6 w-6" />
                                     </div>
-                                    <div>
-                                        <h3 className="text-xl font-light text-gray-900 tracking-tight">Prime Recommendations</h3>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Curated by our Intelligence Engine</p>
+                                    <div className="flex-1">
+                                        <h1 className="text-3xl font-light text-gray-900 tracking-tight leading-none mb-1">
+                                            Find your partner
+                                        </h1>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/40">Browse Profiles</p>
                                     </div>
                                 </div>
                                 <div className="text-[10px] font-black uppercase tracking-widest text-[#4B0082] bg-indigo-50 px-4 py-2 rounded-full">
@@ -1312,8 +1345,8 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                         <CheckCircle2 className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-light text-gray-900 tracking-tight">Active Shortlist</h3>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Profiles queued for further analysis</p>
+                                        <h3 className="text-xl font-light text-gray-900 tracking-tight">Shortlisted Profiles</h3>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Profiles you have saved</p>
                                     </div>
                                 </div>
                                 <div className="space-y-10">
@@ -1826,22 +1859,22 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                             </div>
                                         ) : (
                                             <Button
-                                                className="w-full bg-[#1F4068] hover:bg-[#162E4A] text-white py-6"
+                                                className="w-full bg-[#4B0082] hover:bg-indigo-700 text-white py-6 rounded-[1.5rem] font-bold tracking-widest text-[11px] uppercase shadow-lg shadow-indigo-500/20"
                                                 onClick={(e) => handleParentSelect(e, selectedProfile.user_id)}
                                                 disabled={actionLoadingId === selectedProfile.user_id}
                                             >
-                                                <Heart className={`h-5 w-5 mr-2 ${actionLoadingId === selectedProfile.user_id ? "animate-pulse" : ""}`} />
-                                                {actionLoadingId === selectedProfile.user_id ? "Selecting..." : "Select Profile for your child"}
+                                                <Heart className={`h-5 w-5 mr-3 ${actionLoadingId === selectedProfile.user_id ? "animate-pulse" : ""}`} />
+                                                {actionLoadingId === selectedProfile.user_id ? "Selecting..." : "Select Profile for child"}
                                             </Button>
                                         )
                                     ) : (
                                         <Button
-                                            className="w-full bg-[#FF1493] hover:bg-[#E01183] text-white py-6"
+                                            className="w-full bg-[#4B0082] hover:bg-indigo-700 text-white py-6 rounded-[1.5rem] font-bold tracking-widest text-[11px] uppercase shadow-lg shadow-indigo-500/20"
                                             onClick={(e) => handleCustomerLike(e, selectedProfile.user_id)}
                                             disabled={actionLoadingId === selectedProfile.user_id}
                                         >
-                                            <Heart className={`h-5 w-5 mr-2 ${actionLoadingId === selectedProfile.user_id ? "animate-pulse" : ""}`} />
-                                            {actionLoadingId === selectedProfile.user_id ? "Liking..." : "Like & Express Interest"}
+                                            <Heart className={`h-5 w-5 mr-3 ${actionLoadingId === selectedProfile.user_id ? "animate-pulse" : ""}`} />
+                                            {actionLoadingId === selectedProfile.user_id ? "Liking..." : "Send Interest"}
                                         </Button>
                                     )}
                                 </div>
@@ -1861,6 +1894,16 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     isPremium={isPremium}
                 />
             )}
+            {/* Compatibility Sheet - Detailed Breakdown */}
+            <CompatibilitySheet 
+                isOpen={showBreakdown}
+                onClose={() => setShowBreakdown(false)}
+                userName={breakdownName}
+                lifestyleScore={activeBreakdown?.lifestyle?.totalScore || 0}
+                poruthamScore={activeBreakdown?.horoscope?.score || 0}
+                breakdown={activeBreakdown?.lifestyle?.breakdown || []}
+                poruthamDetails={activeBreakdown?.horoscope?.breakdown}
+            />
         </div>
     )
 }

@@ -19,7 +19,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
             <span className="text-[#4B0082] font-black text-xs">P1</span>
           </div>
           <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Archetype Matrix</h4>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Basics</h4>
             <h3 className="text-xl font-light text-gray-900 tracking-tight">Basic & Lifestyle Preferences</h3>
           </div>
           <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
@@ -37,7 +37,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
                 min="18"
                 className="sds-input flex-1 text-center font-black"
               />
-              <span className="text-[10px] font-black text-indigo-200 uppercase tracking-widest px-2">thru</span>
+              <span className="text-[10px] font-black text-indigo-200 uppercase tracking-widest px-2">to</span>
               <Input
                 type="number"
                 value={formData.preferredAgeMax}
@@ -50,7 +50,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
           </div>
 
           <div className="space-y-3">
-            <Label className="sds-label ml-1">Vertical Stature (cm)</Label>
+            <Label className="sds-label ml-1">Height (cm)</Label>
             <div className="flex items-center gap-3">
               <Input
                 type="number"
@@ -59,7 +59,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
                 placeholder="Min"
                 className="sds-input flex-1 text-center font-black"
               />
-              <span className="text-[10px] font-black text-indigo-200 uppercase tracking-widest px-2">thru</span>
+              <span className="text-[10px] font-black text-indigo-200 uppercase tracking-widest px-2">to</span>
               <Input
                 type="number"
                 value={formData.preferredHeightMax}
@@ -71,7 +71,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
           </div>
 
           <div className="space-y-3">
-            <Label className="sds-label ml-1">Marital Standing</Label>
+            <Label className="sds-label ml-1">Marital Status</Label>
             <Select value={formData.preferredMaritalStatus} onValueChange={(v) => onChange("preferredMaritalStatus", v)}>
               <SelectTrigger className="sds-input w-full h-14 border-indigo-50/50">
                 <SelectValue placeholder="Select Status" />
@@ -85,7 +85,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
           </div>
 
           <div className="space-y-3">
-            <Label className="sds-label ml-1">Physical Form</Label>
+            <Label className="sds-label ml-1">Physical Status</Label>
             <Select value={formData.preferredPhysicalStatus} onValueChange={(v) => onChange("preferredPhysicalStatus", v)}>
               <SelectTrigger className="sds-input w-full h-14 border-indigo-50/50">
                 <SelectValue placeholder="Select Form" />
@@ -99,7 +99,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
           </div>
 
           <div className="space-y-3">
-            <Label className="sds-label ml-1">Linguistic Origin</Label>
+            <Label className="sds-label ml-1">Mother Tongue</Label>
             <Input
               value={formData.preferredMotherTongue}
               onChange={(e) => onChange("preferredMotherTongue", e.target.value)}
@@ -109,7 +109,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
           </div>
 
           <div className="space-y-3">
-            <Label className="sds-label ml-1">Dietary Logic</Label>
+            <Label className="sds-label ml-1">Eating Habits</Label>
             <Select value={formData.preferredEatingHabits} onValueChange={(v) => onChange("preferredEatingHabits", v)}>
               <SelectTrigger className="sds-input w-full h-14 border-indigo-50/50">
                 <SelectValue placeholder="Select Diet" />
@@ -123,7 +123,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
           </div>
 
           <div className="space-y-3 md:col-span-2">
-            <Label className="sds-label ml-1">Social Habits Calibration</Label>
+            <Label className="sds-label ml-1">Social Habits</Label>
             <div className="grid grid-cols-2 gap-8">
               <Select value={formData.preferredSmokingHabits} onValueChange={(v) => onChange("preferredSmokingHabits", v)}>
                 <SelectTrigger className="sds-input h-14 border-indigo-50/50">
@@ -157,7 +157,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
             <span className="text-[#4B0082] font-black text-xs">P2</span>
           </div>
           <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Celestial Alignment</h4>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Religion</h4>
             <h3 className="text-xl font-light text-gray-900 tracking-tight">Religious & Horoscope Preferences</h3>
           </div>
           <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
@@ -165,7 +165,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50">
           <div className="space-y-3">
-            <Label className="sds-label ml-1">Faith Identity</Label>
+            <Label className="sds-label ml-1">Religion</Label>
             <Input
               value={formData.preferredReligion}
               onChange={(e) => onChange("preferredReligion", e.target.value)}
@@ -174,7 +174,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
             />
           </div>
           <div className="space-y-3">
-            <Label className="sds-label ml-1">Heritage (Caste)</Label>
+            <Label className="sds-label ml-1">Caste</Label>
             <Input
               value={formData.preferredCaste}
               onChange={(e) => onChange("preferredCaste", e.target.value)}
@@ -183,7 +183,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
             />
           </div>
           <div className="space-y-3">
-            <Label className="sds-label ml-1">Sect Identity</Label>
+            <Label className="sds-label ml-1">Subcaste</Label>
             <Input
               value={formData.preferredSubcaste}
               onChange={(e) => onChange("preferredSubcaste", e.target.value)}
@@ -192,7 +192,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
             />
           </div>
           <div className="space-y-3">
-            <Label className="sds-label ml-1">Astral Birth Star</Label>
+            <Label className="sds-label ml-1">Star</Label>
             <Input
               value={formData.preferredStar}
               onChange={(e) => onChange("preferredStar", e.target.value)}
@@ -201,7 +201,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
             />
           </div>
           <div className="space-y-3 md:col-span-2">
-            <Label className="sds-label ml-1">Dhosham Compatibility</Label>
+            <Label className="sds-label ml-1">Dhosham</Label>
             <Select value={formData.preferredDosham} onValueChange={(v) => onChange("preferredDosham", v)}>
               <SelectTrigger className="sds-input w-full h-14 border-indigo-50/50">
                 <SelectValue placeholder="Select Compatibility" />
@@ -223,7 +223,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
             <span className="text-[#4B0082] font-black text-xs">P3</span>
           </div>
           <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Functional Domain</h4>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Professional</h4>
             <h3 className="text-xl font-light text-gray-900 tracking-tight">Professional & Location</h3>
           </div>
           <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
@@ -231,7 +231,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50">
           <div className="space-y-3">
-            <Label className="sds-label ml-1">Academic Threshold</Label>
+            <Label className="sds-label ml-1">Education</Label>
             <Input
               value={formData.preferredEducation}
               onChange={(e) => onChange("preferredEducation", e.target.value)}
@@ -240,7 +240,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
             />
           </div>
           <div className="space-y-3">
-            <Label className="sds-label ml-1">Engagement Model</Label>
+            <Label className="sds-label ml-1">Employment Type</Label>
             <Select value={formData.preferredEmploymentType} onValueChange={(v) => onChange("preferredEmploymentType", v)}>
               <SelectTrigger className="sds-input w-full h-14 border-indigo-50/50">
                 <SelectValue placeholder="Select Sector" />
@@ -253,7 +253,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
             </Select>
           </div>
           <div className="space-y-3">
-            <Label className="sds-label ml-1">Professional Role</Label>
+            <Label className="sds-label ml-1">Occupation</Label>
             <Input
               value={formData.preferredOccupation}
               onChange={(e) => onChange("preferredOccupation", e.target.value)}
@@ -262,7 +262,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
             />
           </div>
           <div className="space-y-3">
-            <Label className="sds-label ml-1">Economic standing (Annual)</Label>
+            <Label className="sds-label ml-1">Annual Income</Label>
             <Input
               value={formData.preferredAnnualIncome}
               onChange={(e) => onChange("preferredAnnualIncome", e.target.value)}
@@ -271,7 +271,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
             />
           </div>
           <div className="space-y-3 md:col-span-2">
-            <Label className="sds-label ml-1">Geographic Territory</Label>
+            <Label className="sds-label ml-1">Location (Country & State)</Label>
             <div className="grid grid-cols-2 gap-8">
               <Input
                 value={formData.preferredCountry}
@@ -288,7 +288,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
             </div>
           </div>
           <div className="space-y-3 md:col-span-2">
-            <Label className="sds-label ml-1">Metropolitics (City)</Label>
+            <Label className="sds-label ml-1">City</Label>
             <Input
               value={formData.preferredCity}
               onChange={(e) => onChange("preferredCity", e.target.value)}

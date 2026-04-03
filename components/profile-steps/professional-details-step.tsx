@@ -145,7 +145,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
       {/* Employment Type Selection */}
       <CustomSelectDropdown
         id="employmentType"
-        label="Professional Matrix Status *"
+        label="Employment Type *"
         value={formData.employmentType || ""}
         onChange={(value) => onChange("employmentType", value)}
         options={employmentTypeOptions}
@@ -158,7 +158,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <CustomSelectDropdown
               id="sector"
-              label="Economic Sector *"
+              label="Industry *"
               value={formData.sector || ""}
               onChange={(value) => onChange("sector", value)}
               options={sectorOptions}
@@ -166,32 +166,32 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
               showOtherInput={sectorOptions.some(opt => opt.value.toLowerCase() === "other")}
               otherValue={formData.sectorOther || ""}
               onOtherChange={(value) => onChange("sectorOther", value)}
-              otherPlaceholder="Manual Sector Entry"
+              otherPlaceholder="Enter Industry Name"
             />
             <div className="space-y-2">
-              <Label htmlFor="company" className="sds-label">Enterprise Entity *</Label>
+              <Label htmlFor="company" className="sds-label">Company Name *</Label>
               <Input
                 id="company"
                 value={formData.company || ""}
                 onChange={(e) => onChange("company", e.target.value)}
-                placeholder="Official Corporate Name"
+                placeholder="Enter Company Name"
                 required
                 className="sds-input w-full"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="designation" className="sds-label">Professional Designation *</Label>
+              <Label htmlFor="designation" className="sds-label">Role / Designation *</Label>
               <Input
                 id="designation"
                 value={formData.designation || ""}
                 onChange={(e) => onChange("designation", e.target.value)}
-                placeholder="e.g., Senior Systems Architect"
+                placeholder="e.g. Software Engineer, Manager"
                 required
                 className="sds-input w-full"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="salary" className="sds-label">Annual Compensation *</Label>
+              <Label htmlFor="salary" className="sds-label">Annual Salary *</Label>
               <div className="relative group">
                 <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#4B0082]/40 font-black text-sm pointer-events-none z-10 transition-colors group-focus-within:text-[#4B0082]">
                   ₹
@@ -216,7 +216,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
               </div>
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="workLocation" className="sds-label">Geographic Operating Base *</Label>
+              <Label htmlFor="workLocation" className="sds-label">Work Location *</Label>
               <Input
                 id="workLocation"
                 value={formData.workLocation || ""}
@@ -231,7 +231,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
           {/* Payslip Upload */}
           <div className="space-y-6">
             <div className="flex items-center gap-6 mb-4">
-              <Label htmlFor="payslip" className="sds-label !mb-0 whitespace-nowrap">Earnings Verification Matrix</Label>
+              <Label htmlFor="payslip" className="sds-label !mb-0 whitespace-nowrap">Upload Payslips</Label>
               <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent" />
             </div>
             
@@ -256,7 +256,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                         <div className="h-12 w-12 rounded-2xl bg-[#4B0082]/10 flex items-center justify-center text-[#4B0082]">
                           <Upload className="h-6 w-6" />
                         </div>
-                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400">PDF Protocol {index + 1}</p>
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400">PDF File {index + 1}</p>
                       </div>
                     )}
                   </div>
@@ -290,10 +290,10 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                       <Upload className="h-6 w-6" />
                     </div>
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 group-hover:text-[#4B0082] transition-colors">
-                      Sync Attachment
+                      Upload File
                     </span>
                     <span className="text-[9px] text-[#4B0082]/20 font-bold uppercase mt-1 tracking-widest group-hover:text-[#4B0082]/40 transition-colors">
-                      {(formData.payslip as string[] || []).length} / 03 Records
+                      {(formData.payslip as string[] || []).length} / 03 Files
                     </span>
                   </label>
                 </div>
@@ -309,7 +309,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <CustomSelectDropdown
               id="sector"
-              label="Market Sector *"
+              label="Business Sector *"
               value={formData.sector || ""}
               onChange={(value) => onChange("sector", value)}
               options={sectorOptions}
@@ -317,22 +317,22 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
               showOtherInput={sectorOptions.some(opt => opt.value.toLowerCase() === "other")}
               otherValue={formData.sectorOther || ""}
               onOtherChange={(value) => onChange("sectorOther", value)}
-              otherPlaceholder="Manual Sector Entry"
+              otherPlaceholder="Enter Sector Name"
             />
             <div className="space-y-2">
-              <Label htmlFor="businessName" className="sds-label">Commercial Entity Name *</Label>
+              <Label htmlFor="businessName" className="sds-label">Business Name *</Label>
               <Input
                 id="businessName"
                 value={formData.businessName || ""}
                 onChange={(e) => onChange("businessName", e.target.value)}
-                placeholder="Official Registered Title"
+                placeholder="Enter Business Name"
                 required
                 className="sds-input w-full"
               />
             </div>
             <CustomSelectDropdown
               id="businessType"
-              label="Operating Architecture *"
+              label="Business Type *"
               value={formData.businessType || ""}
               onChange={(value) => onChange("businessType", value)}
               options={businessTypeOptions}
@@ -340,10 +340,10 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
               showOtherInput={businessTypeOptions.some(opt => opt.value.toLowerCase() === "other")}
               otherValue={formData.businessTypeOther || ""}
               onOtherChange={(value) => onChange("businessTypeOther", value)}
-              otherPlaceholder="Manual Type Entry"
+              otherPlaceholder="Enter Business Type"
             />
             <div className="space-y-2">
-              <Label htmlFor="designation" className="sds-label">Strategic Designation *</Label>
+              <Label htmlFor="designation" className="sds-label">Role in Business *</Label>
               <Input
                 id="designation"
                 value={formData.designation || ""}
@@ -354,7 +354,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="annualReturns" className="sds-label">Fiscal Annual Returns *</Label>
+              <Label htmlFor="annualReturns" className="sds-label">Annual Business Returns *</Label>
               <div className="relative group">
                 <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#4B0082]/40 font-black text-sm pointer-events-none z-10 transition-colors group-focus-within:text-[#4B0082]">
                   ₹
@@ -379,7 +379,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
               </div>
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="businessLocation" className="sds-label">Headquarters Location *</Label>
+              <Label htmlFor="businessLocation" className="sds-label">Business Location *</Label>
               <Input
                 id="businessLocation"
                 value={formData.businessLocation || ""}
@@ -394,7 +394,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
           {/* ITR Document Upload */}
           <div className="space-y-6">
             <div className="flex items-center gap-6 mb-4">
-              <Label htmlFor="itrDocument" className="sds-label !mb-0 whitespace-nowrap">Fiscal Integrity Verification</Label>
+              <Label htmlFor="itrDocument" className="sds-label !mb-0 whitespace-nowrap">Upload ITR Document</Label>
               <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent" />
             </div>
 
@@ -420,8 +420,8 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                           <Upload className="h-6 w-6" />
                         </div>
                         <div>
-                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700">ITR Protocol Verified</p>
-                          <p className="text-[9px] text-amber-500/60 font-bold uppercase tracking-widest mt-1 text-xs">File Encrypted & Stored</p>
+                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700">ITR Document Uploaded</p>
+                          <p className="text-[9px] text-amber-500/60 font-bold uppercase tracking-widest mt-1 text-xs">File Securely Stored</p>
                         </div>
                       </div>
                     )}
@@ -453,10 +453,10 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                       <Upload className="h-8 w-8" />
                     </div>
                     <span className="text-[11px] font-black uppercase tracking-[0.3em] text-indigo-400 group-hover:text-[#4B0082] transition-colors mb-2">
-                       Append ITR Logic (Optional)
+                       Upload ITR (Optional)
                     </span>
                     <span className="text-[9px] text-black/20 font-bold uppercase tracking-tighter">
-                      Image or PDF Protocol up to 5MB
+                      Image or PDF up to 5MB
                     </span>
                   </label>
                 </div>
@@ -483,33 +483,33 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
             </div>
             <CustomSelectDropdown
               id="course"
-              label="Course / Vector *"
+              label="Course *"
               value={formData.course || ""}
               onChange={(value) => onChange("course", value)}
               options={courseOptions}
               required
             />
             <div className="space-y-2">
-              <Label htmlFor="fieldOfStudy" className="sds-label">Field of Strategic Study *</Label>
+              <Label htmlFor="fieldOfStudy" className="sds-label">Main Subject *</Label>
               <Input
                 id="fieldOfStudy"
                 value={formData.fieldOfStudy || ""}
                 onChange={(e) => onChange("fieldOfStudy", e.target.value)}
-                placeholder="e.g., Quantum Computing, Humanities"
+                placeholder="e.g. Science, Arts, Commerce"
                 required
                 className="sds-input w-full"
               />
             </div>
             <CustomSelectDropdown
               id="yearOfStudy"
-              label="Phase of Study *"
+              label="Current Year of Study *"
               value={formData.yearOfStudy || ""}
               onChange={(value) => onChange("yearOfStudy", value)}
               options={yearOfStudyOptions}
               required
             />
             <div className="space-y-2">
-              <Label htmlFor="expectedGraduationYear" className="sds-label">Expected Archival Year *</Label>
+              <Label htmlFor="expectedGraduationYear" className="sds-label">Expected Graduation Year *</Label>
               <Input
                 id="expectedGraduationYear"
                 type="number"

@@ -36,6 +36,9 @@ import {
 } from "@/components/married-confirmation-dialog"
 import { SubscriptionDialog } from "./subscription-dialog"
 import { calculateTrustScore } from "@/lib/utils/profile-utils"
+import { checkTamilPorutham } from "@/lib/astrology"
+import { calculateLifestyleScore } from "@/lib/matching"
+import { CompatibilitySheet } from "./compatibility-sheet"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -83,6 +86,12 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
   const [newMatches, setNewMatches] = useState<any[]>([])
   const [whoViewedMe, setWhoViewedMe] = useState<any[]>([])
   const [profilesIViewed, setProfilesIViewed] = useState<any[]>([])
+  
+  // Dual Core Compatibility states
+  const [showBreakdown, setShowBreakdown] = useState(false)
+  const [activeBreakdown, setActiveBreakdown] = useState<any>(null)
+  const [breakdownName, setBreakdownName] = useState("")
+  const [viewerFullProfile, setViewerFullProfile] = useState<any>(null)
   const [mutualCount, setMutualCount] = useState(0)
   const [iLikedCount, setILikedCount] = useState(0)
   const [likedMeCount, setLikedMeCount] = useState(0)
@@ -380,12 +389,35 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
         const targetGender = (userData.sex || "").toLowerCase() === "male" ? "Female" : "Male"
 
-        // 2. Fetch partner preferences
-        const { data: prefs } = await supabase
-          .from("partner_preferences")
-          .select("*")
-          .eq("user_id", userId)
-          .maybeSingle()
+        // 2. Fetch partner preferences and viewer details
+        const [
+            { data: prefs },
+            { data: myHoro },
+            { data: myInterests },
+            { data: mySocial },
+            { data: myEmp },
+            { data: myBus }
+        ] = await Promise.all([
+            supabase.from("partner_preferences").select("*").eq("user_id", userId).maybeSingle(),
+            supabase.from("horoscope_details").select("*").eq("user_id", userId).maybeSingle(),
+            supabase.from("interests").select("*").eq("user_id", userId).maybeSingle(),
+            supabase.from("social_habits").select("*").eq("user_id", userId).maybeSingle(),
+            supabase.from("profession_employee").select("*").eq("user_id", userId).maybeSingle(),
+            supabase.from("profession_business").select("*").eq("user_id", userId).maybeSingle()
+        ])
+
+        const viewerData = {
+            ...userData,
+            interests: myInterests?.interests || [],
+            hobbies: myInterests?.hobbies || [],
+            smoking: mySocial?.smoking,
+            drinking: mySocial?.drinking,
+            foodPreference: userData?.food_preference,
+            workLocation: myEmp?.work_location || myBus?.business_location,
+            sector: myEmp?.sector || myBus?.business_type,
+            salary: myEmp?.salary || myBus?.annual_returns
+        }
+        setViewerFullProfile(viewerData)
 
         // 3. Fetch activity data (views & likes for counts)
         const [viewsRes, likesRes] = await Promise.all([
@@ -430,13 +462,19 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           { data: empData },
           { data: busData },
           { data: eduData },
+          { data: targetInterestsData },
+          { data: targetSocialData },
+          { data: targetHoroData },
           premiumApiRes
         ] = await Promise.all([
           supabase.from("photos").select("user_id, user_photos").in("user_id", matchUserIds),
           supabase.from("contact_details").select("user_id, current_district, current_state").in("user_id", matchUserIds),
-          supabase.from("profession_employee").select("user_id, designation, company").in("user_id", matchUserIds),
-          supabase.from("profession_business").select("user_id, designation, business_name").in("user_id", matchUserIds),
+          supabase.from("profession_employee").select("*").in("user_id", matchUserIds),
+          supabase.from("profession_business").select("*").in("user_id", matchUserIds),
           supabase.from("education_details").select("user_id, education").in("user_id", matchUserIds),
+          supabase.from("interests").select("*").in("user_id", matchUserIds),
+          supabase.from("social_habits").select("*").in("user_id", matchUserIds),
+          supabase.from("horoscope_details").select("*").in("user_id", matchUserIds),
           fetch(`/api/premium-status?userIds=${matchUserIds.join(",")}`).then(r => r.ok ? r.json() : []).catch(() => [])
         ])
 
@@ -452,6 +490,27 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             if (emp?.designation) profession = emp.designation + (emp.company ? ` at ${emp.company}` : "")
             else if (bus?.designation) profession = bus.designation + (bus.business_name ? ` at ${bus.business_name}` : "")
 
+            const targetInterests = targetInterestsData?.find(x => x.user_id === p.user_id)
+            const targetSocial = targetSocialData?.find(x => x.user_id === p.user_id)
+            const targetHoro = targetHoroData?.find(x => x.user_id === p.user_id)
+
+            const targetProfileData = {
+                ...p,
+                foodPreference: p.food_preference,
+                hobbies: targetInterests?.hobbies || [],
+                interests: targetInterests?.interests || [],
+                smoking: targetSocial?.smoking,
+                drinking: targetSocial?.drinking,
+                workLocation: emp?.work_location || bus?.business_location,
+                sector: emp?.sector || bus?.business_type,
+                salary: emp?.salary || bus?.annual_returns
+            }
+
+            const lifestyleMatch = viewerData ? calculateLifestyleScore(viewerData, targetProfileData) : null
+            const horoscopeMatch = (myHoro?.star && targetHoro?.star) 
+                ? checkTamilPorutham(myHoro.star, myHoro.zodiac_sign || "", targetHoro.star, targetHoro.zodiac_sign || "")
+                : { score: 0, status: 'Athamam', breakdown: {} }
+
             return {
                 ...p,
                 photos,
@@ -460,6 +519,15 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 education: edu?.education || "Not specified",
                 isPremium: premiumStatus?.is_premium || false,
                 premiumPlan: premiumStatus?.premium_plan || null,
+                lifestyleScore: lifestyleMatch?.totalScore || 0,
+                poruthamScore: horoscopeMatch?.score || 0,
+                viewerIsPremium: profile?.isPremium,
+                onScoreClick: (e: any) => {
+                    e.stopPropagation()
+                    setActiveBreakdown({ lifestyle: lifestyleMatch, horoscope: horoscopeMatch })
+                    setBreakdownName(p.name || "Unknown")
+                    setShowBreakdown(true)
+                }
             }
         })
 
@@ -545,72 +613,70 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
     const isExpired = profile.premiumExpiresAt && new Date(profile.premiumExpiresAt) < new Date()
     if (isExpired) return null
     
-    if (profile.premiumPlan === 'till_you_marry') return <span className="bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] md:text-sm uppercase font-bold px-2.5 md:px-3 py-1 rounded-md flex items-center gap-1.5 shadow-lg shadow-pink-500/20 whitespace-nowrap w-fit"><Crown className="h-3 w-3 md:h-4 md:w-4"/> Lifetime</span>
-    if (profile.premiumPlan === 'elite') return <span className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-[10px] md:text-sm uppercase font-bold px-2.5 md:px-3 py-1 rounded-md flex items-center gap-1.5 shadow-lg shadow-indigo-500/20 whitespace-nowrap w-fit"><Gem className="h-3 w-3 md:h-4 md:w-4"/> Elite</span>
-    if (profile.premiumPlan === 'prime_gold') return <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] md:text-sm uppercase font-bold px-2.5 md:px-3 py-1 rounded-md flex items-center gap-1.5 shadow-lg shadow-orange-500/20 whitespace-nowrap w-fit"><Star className="h-3 w-3 md:h-4 md:w-4"/> Prime Gold</span>
-    if (profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') return <span className="bg-gradient-to-r from-blue-400 to-cyan-500 text-white text-[10px] md:text-sm uppercase font-bold px-2.5 md:px-3 py-1 rounded-md flex items-center gap-1.5 shadow-lg shadow-blue-500/20 whitespace-nowrap w-fit"><Shield className="h-3 w-3 md:h-4 md:w-4"/> Prime</span>
+    if (profile.premiumPlan === 'till_you_marry') return <span className="bg-gradient-to-r from-[#FF1493] to-[#FF69B4] text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-pink-500/20 tracking-widest"><Crown className="h-3.5 w-3.5 md:h-4 md:w-4"/> Lifetime Member</span>
+    if (profile.premiumPlan === 'elite') return <span className="bg-gradient-to-r from-[#4B0082] to-[#8A2BE2] text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-purple-500/20 tracking-widest"><Gem className="h-3.5 w-3.5 md:h-4 md:w-4"/> Elite Member</span>
+    if (profile.premiumPlan === 'prime_gold') return <span className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-amber-500/20 tracking-widest"><Star className="h-3.5 w-3.5 md:h-4 md:w-4"/> Gold Member</span>
+    if (profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') return <span className="bg-gradient-to-r from-blue-600 to-cyan-700 text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-blue-500/20 tracking-widest"><Shield className="h-3.5 w-3.5 md:h-4 md:w-4"/> Prime Member</span>
     
-    return <span className="bg-gradient-to-r from-[#4B0082] to-[#FF1493] text-white text-[10px] md:text-sm uppercase font-bold px-2.5 md:px-3 py-1 rounded-md flex items-center gap-1.5 shadow-lg shadow-purple-500/20 whitespace-nowrap w-fit"><Crown className="h-3 w-3 md:h-4 md:w-4"/> Premium</span>
+    return <span className="bg-gradient-to-r from-[#4B0082] to-[#3b0062] text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-indigo-500/20 tracking-widest"><Crown className="h-3.5 w-3.5 md:h-4 md:w-4"/> Premium</span>
   }
 
   return (
   <>
-    <div className="max-w-[100rem] mx-auto px-4 sm:px-6 py-6">
+    <div className="max-w-[105rem] mx-auto px-4 sm:px-8 py-4">
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Left Sidebar - Sticky */}
-        <aside className="w-full lg:w-[16rem] xl:w-[18rem] lg:sticky lg:top-20 space-y-4 flex-shrink-0">
+        <aside className="w-full lg:w-[15rem] xl:w-[16rem] lg:sticky lg:top-16 space-y-3 flex-shrink-0">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             className="sds-glass rounded-[2rem] overflow-hidden p-2"
           >
-            <div className="py-4 px-4 border-b border-black/5 dark:border-white/5 mb-2">
-              <h4 className="text-[11px] uppercase tracking-[0.2em] flex items-center gap-2 font-black text-[#4B0082]">
+            <div className="py-3 px-3 border-b border-black/5 dark:border-white/5 mb-1">
                 <Sparkles className="h-3.5 w-3.5" />
                 My Activity
-              </h4>
             </div>
             
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {completionPercentage === 0 ? (
                 <div className="text-[10px] text-amber-600 mb-2 bg-amber-50/50 p-3 rounded-2xl border border-amber-100 font-bold leading-relaxed text-center">
-                  Initialize profile to unlock matching engine.
+                  Complete your profile to see matches.
                 </div>
               ) : null}
               <Button
                 variant="ghost"
-                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
+                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
                 onClick={onNavigateToMutualMatches}
                 disabled={completionPercentage === 0}
               >
                 <HeartHandshake className="h-4 w-4 mr-3 text-[#4B0082] group-hover:scale-110 transition-transform" />
                 <div className="flex-1 flex items-center justify-between">
                   <div className="font-bold text-[10px] uppercase tracking-wider">Mutual Matches</div>
-                  <span className="bg-[#4B0082] text-white text-[9px] px-2.5 py-1 rounded-full font-black">{mutualCount}</span>
+                  <span className="bg-[#4B0082] text-white text-[9px] px-2.5 py-1 rounded-full font-black shadow-lg shadow-indigo-500/20">{mutualCount}</span>
                 </div>
               </Button>
               <Button
                 variant="ghost"
-                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
+                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
                 onClick={onNavigateToILiked}
                 disabled={completionPercentage === 0}
               >
                 <Heart className="h-4 w-4 mr-3 text-[#FF1493] group-hover:scale-110 transition-transform" />
                 <div className="flex-1 flex items-center justify-between">
-                  <div className="font-bold text-[10px] uppercase tracking-wider">Sent Interests</div>
+                  <div className="font-bold text-[10px] uppercase tracking-wider">I Liked</div>
                   <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[9px] px-2.5 py-1 rounded-full font-black">{iLikedCount}</span>
                 </div>
               </Button>
               <Button
                 variant="ghost"
-                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
+                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
                 onClick={onNavigateToLikedMe}
                 disabled={completionPercentage === 0}
               >
                 <Sparkles className="h-4 w-4 mr-3 text-[#4B0082] group-hover:scale-110 transition-transform" />
                 <div className="flex-1 flex items-center justify-between">
-                  <div className="font-bold text-[10px] uppercase tracking-wider">Received Interests</div>
+                  <div className="font-bold text-[10px] uppercase tracking-wider">Who Liked Me</div>
                   <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[9px] px-2.5 py-1 rounded-full font-black">{likedMeCount}</span>
                 </div>
               </Button>
@@ -620,13 +686,13 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               <div className="py-2 px-5 mb-1">
                 <h4 className="text-[11px] uppercase tracking-[0.2em] flex items-center gap-2 font-black text-indigo-900/40">
                   <UserCircle2 className="h-3.5 w-3.5" />
-                  Parent Access
+                  Parents
                 </h4>
               </div>
 
               <Button
                 variant="ghost"
-                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
+                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
                 onClick={onNavigateToSelections}
                 disabled={completionPercentage === 0}
               >
@@ -636,7 +702,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               
               <Button
                 variant="ghost"
-                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
+                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
                 onClick={onNavigateToParents}
                 disabled={completionPercentage === 0}
               >
@@ -646,48 +712,21 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               
               <Button
                 variant="ghost"
-                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
+                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
                 onClick={onNavigateToPartnerPreferences}
                 disabled={completionPercentage === 0}
               >
                 <Search className="h-4 w-4 mr-3 text-[#4B0082]" />
                 <div className="font-bold text-[10px] uppercase tracking-wider">Partner Preference</div>
               </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
-                onClick={onNavigateToBrowse}
-                disabled={completionPercentage === 0}
-              >
-                <Users className="h-4 w-4 mr-3 text-[#4B0082]" />
-                <div className="font-bold text-[10px] uppercase tracking-wider">Discover</div>
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
-                onClick={() => router.push("/dashboard/horoscope")}
-              >
-                <Sparkles className="h-4 w-4 mr-3 text-[#4B0082]" />
-                <div className="font-bold text-[10px] uppercase tracking-wider">Horoscope Generator</div>
-              </Button>
-
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
-                onClick={() => {
-                    if (profile?.isPremium) {
-                        router.push("/dashboard/horoscope?match=true") // Placeholder for matching logic
-                    } else {
-                        setShowSubscriptionDialog(true)
-                    }
-                }}
-              >
-                <Star className="h-4 w-4 mr-3 text-amber-500" />
-                <div className="font-bold text-[10px] uppercase tracking-wider text-amber-600">Horoscope Match</div>
-                {!profile?.isPremium && <Crown className="h-3 w-3 ml-auto text-amber-500/50" />}
-              </Button>
-
               <div className="h-px bg-black/5 dark:bg-white/5 my-2 mx-4" />
+              
+              <div className="py-2 px-5 mb-1">
+                <h4 className="text-[11px] uppercase tracking-[0.2em] flex items-center gap-2 font-black text-indigo-900/40">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  Account
+                </h4>
+              </div>
               
               {!isMarried && (
                 <>
@@ -703,39 +742,45 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                   )}
                   <Button
                     variant="ghost"
-                    className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#FF1493]/5 hover:text-[#FF1493] transition-all font-bold text-[10px] uppercase tracking-wider"
+                    className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/10 hover:text-[#4B0082] transition-all font-bold text-[10px] uppercase tracking-wider"
                     onClick={() => setShowMarriedConfirmDialog(true)}
                   >
-                    <HeartHandshake className="h-4 w-4 mr-3 text-[#FF1493]" />
+                    <HeartHandshake className="h-4 w-4 mr-3 text-[#4B0082]" />
                     Hide Profile
                   </Button>
                 </>
               )}
+              
+              <div className="mt-8 p-6 bg-[#4B0082] rounded-[2rem] text-white shadow-xl shadow-indigo-900/30 relative overflow-hidden group/card">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12 blur-2xl group-hover/card:scale-150 transition-transform duration-700" />
+                <h5 className="text-[9px] font-black uppercase tracking-widest text-white/50 mb-4">Safety Tip</h5>
+                <p className="text-[11px] font-bold leading-relaxed">Never share your bank details with anyone you meet online. Stay safe!</p>
+              </div>
             </div>
           </motion.div>
           </aside>
   
           {/* Right Main Content */}
-          <main className="flex-1 w-full min-w-0 space-y-6 pb-32">
+          <main className="flex-1 w-full min-w-0 space-y-5 pb-24">
             {/* Welcome Banner */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="p-8 rounded-[3rem] sds-glass group relative overflow-hidden"
+              className="p-10 md:p-14 rounded-[3.5rem] sds-glass group relative overflow-hidden shadow-2xl border-indigo-100/30 flex flex-col md:flex-row justify-between items-end gap-8"
             >
-              <div className="absolute top-0 right-0 w-80 h-80 bg-[#4B0082]/5 rounded-full blur-[80px] -mr-40 -mt-40 group-hover:bg-[#4B0082]/10 transition-colors duration-1000" />
+              <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-indigo-500/5 rounded-full blur-[100px] -mr-48 -mt-48 group-hover:bg-indigo-500/10 transition-colors duration-1000" />
               
-              <div className="relative z-10">
-                <div className="flex flex-col md:flex-row md:items-center gap-4 mb-8">
+              <div className="relative z-10 flex-1">
+                <div className="flex flex-wrap items-center gap-3 mb-8">
                   {getPremiumBadge()}
                   {profile?.photo_verified && (
-                    <span className="flex items-center gap-1.5 text-[9px] font-black text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full uppercase tracking-widest border border-emerald-100">
-                      <CheckCircle2 className="h-4 w-4" /> Registry Verified
+                    <span className="flex items-center gap-1.5 text-[9px] font-black text-emerald-700 bg-emerald-50 px-4 py-1.5 rounded-full uppercase tracking-widest border border-emerald-100 shadow-sm">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Verified
                     </span>
                   )}
-                  <span className="flex items-center gap-1.5 text-[9px] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full uppercase tracking-widest border border-indigo-100">
-                    <ShieldCheck className="h-4 w-4" /> Trust Score {calculateTrustScore(
+                  <span className="flex items-center gap-1.5 text-[9px] font-black text-indigo-700 bg-indigo-50 px-4 py-1.5 rounded-full uppercase tracking-widest border border-indigo-100 shadow-sm">
+                    <ShieldCheck className="h-3.5 w-3.5" /> Trust Score {calculateTrustScore(
                         !!profile?.photo_verified, 
                         completionPercentage, 
                         profile?.photos?.length || 0,
@@ -744,13 +789,26 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                   </span>
                 </div>
                 
-                <h1 className="text-4xl md:text-5xl font-light text-gray-900 tracking-tight mb-4 leading-none">
-                  Vannakam, <span className="font-black text-[#4B0082]">{userName}</span> <span className="inline-block animate-bounce ml-1 text-2xl">✨</span>
+                <h1 className="text-5xl md:text-8xl font-black text-gray-900 tracking-tighter mb-4 leading-none lowercase">
+                   hello, <span className="text-[#4B0082]">{userName?.split(' ')[0]}</span><span className="text-[#FF1493]">.</span>
                 </h1>
                 
-                <p className="text-gray-600 text-base font-medium max-w-xl leading-relaxed">
-                  The registry has synthesized <span className="text-[#4B0082] font-black underline decoration-indigo-100 underline-offset-4">12 optimized matchings</span> for your review this cycle.
+                <p className="text-gray-500 text-lg md:text-xl font-medium max-w-2xl leading-relaxed">
+                  You have <span className="text-[#4B0082] font-black">{allMatches.length || 0} potential soulmates</span> waiting to be discovered today.
                 </p>
+              </div>
+
+              <div className="relative z-10 w-full md:w-auto">
+                 <div className="bg-white/60 backdrop-blur-xl p-2 rounded-[2rem] border border-white flex items-center gap-3 shadow-2xl shadow-indigo-900/10 max-w-sm ml-auto">
+                    <div className="w-12 h-12 bg-[#4B0082] rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-900/20 shrink-0">
+                        <Search className="h-5 w-5 text-white" />
+                    </div>
+                    <input 
+                        type="text" 
+                        placeholder="Search by ID or Name..." 
+                        className="bg-transparent border-none outline-none text-xs font-bold uppercase tracking-widest text-[#4B0082] placeholder:text-gray-300 w-full"
+                    />
+                 </div>
               </div>
             </motion.div>
 
@@ -775,7 +833,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                     </div>
                   </div>
                   <Button className="h-12 px-6 rounded-xl bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest">
-                    Initialize
+                    Verify Now
                   </Button>
                 </div>
               </motion.div>
@@ -791,7 +849,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               className="sds-glass rounded-[2.5rem] p-10 flex flex-col md:flex-row md:items-center justify-between gap-10"
             >
               <div className="flex-1">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6">Entity Completion</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6">Profile Progress</p>
                 <div className="flex items-baseline gap-2 mb-6">
                   <span className="text-7xl font-black text-gray-900 tracking-tighter">{completionPercentage}</span>
                   <span className="text-xl font-black text-[#4B0082]">%</span>
@@ -808,7 +866,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 onClick={onNavigateToProfileSetup}
                 className="h-14 px-10 rounded-2xl bg-[#4B0082] text-white font-black text-[10px] uppercase tracking-widest hover:bg-[#3B0062] transition-all shadow-xl shadow-indigo-500/20"
               >
-                Augment Profile
+                Complete Profile
               </Button>
             </motion.div>
           )}
@@ -846,100 +904,114 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 icon={<Clock className="h-6 w-6" />}
             />
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <ProfileCarousel
-                    title="Who Viewed You"
-                    subtitle="Members who visited your profile"
-                    profiles={whoViewedMe}
-                    onProfileClick={(p) => onNavigateToBrowse()}
-                    onViewAll={onNavigateToBrowse}
-                    isLoading={isSectionsLoading}
-                    icon={<Eye className="h-6 w-6" />}
-                />
-                <ProfileCarousel
-                    title="Profiles You Viewed"
-                    subtitle="Members whose profiles you visited"
-                    profiles={profilesIViewed}
-                    onProfileClick={(p) => onNavigateToBrowse()}
-                    onViewAll={onNavigateToBrowse}
-                    isLoading={isSectionsLoading}
-                    icon={<History className="h-6 w-6" />}
-                />
+            {/* Secondary Sections Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div className="sds-glass rounded-[3rem] p-8 border-indigo-100/30 hover:bg-white/60 transition-colors">
+                    <ProfileCarousel
+                        title="Who Viewed me"
+                        subtitle="Visitors to your profile"
+                        profiles={whoViewedMe}
+                        onProfileClick={(p) => onNavigateToBrowse()}
+                        onViewAll={onNavigateToBrowse}
+                        isLoading={isSectionsLoading}
+                        icon={<Eye className="h-5 w-5" />}
+                    />
+                </div>
+                <div className="sds-glass rounded-[3rem] p-8 border-indigo-100/30 hover:bg-white/60 transition-colors">
+                    <ProfileCarousel
+                        title="Profiles I Viewed"
+                        subtitle="Matches you visited"
+                        profiles={profilesIViewed}
+                        onProfileClick={(p) => onNavigateToBrowse()}
+                        onViewAll={onNavigateToBrowse}
+                        isLoading={isSectionsLoading}
+                        icon={<History className="h-5 w-5" />}
+                    />
+                </div>
             </div>
 
         </div>
-        {/* Marriage/Success Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-8"
-        >
-          {isMarried ? (
-            <div className="sds-glass rounded-[3rem] p-16 text-center relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-80 h-80 bg-[hsl(var(--marriage))]/5 rounded-full blur-[80px] -mr-40 -mt-40" />
-              <div className="relative z-10">
-                <div className="w-24 h-24 bg-[hsl(var(--marriage-light))] rounded-full flex items-center justify-center mx-auto mb-8 shadow-xl shadow-amber-500/10">
-                  <Star className="h-10 w-10 text-[hsl(var(--marriage))]" />
+          {/* Marriage/Success Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="mt-8"
+          >
+            {isMarried ? (
+              <div className="sds-glass rounded-[3rem] p-16 text-center relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-80 h-80 bg-[hsl(var(--marriage))]/5 rounded-full blur-[80px] -mr-40 -mt-40" />
+                <div className="relative z-10">
+                  <div className="w-24 h-24 bg-[hsl(var(--marriage-light))] rounded-full flex items-center justify-center mx-auto mb-8 shadow-xl shadow-amber-500/10">
+                    <Star className="h-10 w-10 text-[hsl(var(--marriage))]" />
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-4">Congratulations!</h2>
+                  <p className="text-gray-500 text-lg font-medium max-w-2xl mx-auto mb-10 leading-relaxed">
+                    Your profile is now hidden after your marriage. We wish you a happy life together!
+                  </p>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setShowMarriedConfirmDialog(true)}
+                    className="h-14 px-10 rounded-2xl border-[#4B0082]/20 text-gray-600 font-black text-[10px] uppercase tracking-widest hover:bg-[#4B0082] hover:text-white transition-all bg-white/80 shadow-sm"
+                  >
+                    Change Status
+                  </Button>
                 </div>
-                <h2 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-4">Celestial Union Confirmed</h2>
-                <p className="text-gray-500 text-lg font-medium max-w-2xl mx-auto mb-10 leading-relaxed">
-                  Your profile has been archived following a successful union. May your next cycle be filled with optimal harmony.
-                </p>
+              </div>
+            ) : (
+              <div className="sds-glass rounded-[3rem] p-12 flex flex-col md:flex-row items-center justify-between gap-10">
+                <div className="flex-1">
+                  <h3 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-3 mb-2">
+                    <HeartHandshake className="h-6 w-6 text-[#FF1493]" />
+                    Found your partner?
+                  </h3>
+                  <p className="text-gray-500 font-medium leading-relaxed max-w-xl">
+                    Once you find your partner, marking your profile as married hides it from other users. You will be moved to our success stories.
+                  </p>
+                </div>
                 <Button 
-                  variant="outline"
                   onClick={() => setShowMarriedConfirmDialog(true)}
-                  className="h-14 px-10 rounded-2xl border-[#4B0082]/10 text-gray-500 font-black text-[10px] uppercase tracking-widest hover:bg-[#4B0082] hover:text-white transition-all bg-white/50"
+                  className="h-14 px-10 rounded-2xl bg-white border border-[#FF1493]/20 text-[#FF1493] font-black text-[10px] uppercase tracking-widest hover:bg-[#FF1493] hover:text-white transition-all shadow-xl shadow-pink-500/10"
                 >
-                  Modify Archival Status
+                  Mark as Married
                 </Button>
               </div>
-            </div>
-          ) : (
-            <div className="sds-glass rounded-[3rem] p-12 flex flex-col md:flex-row items-center justify-between gap-10">
-              <div className="flex-1">
-                <h3 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-3 mb-2">
-                  <HeartHandshake className="h-6 w-6 text-[#FF1493]" />
-                  Found your match?
-                </h3>
-                <p className="text-gray-500 font-medium leading-relaxed max-w-xl">
-                  Once you've found your partner, archiving your profile ensures the registry stops further processing. Your data will be moved to the successful matches collective.
-                </p>
-              </div>
-              <Button 
-                onClick={() => setShowMarriedConfirmDialog(true)}
-                className="h-14 px-10 rounded-2xl bg-white border border-[#FF1493]/20 text-[#FF1493] font-black text-[10px] uppercase tracking-widest hover:bg-[#FF1493] hover:text-white transition-all shadow-xl shadow-pink-500/10"
-              >
-                Mark as Married
-              </Button>
-            </div>
-          )}
-        </motion.div>
-      </main>
+            )}
+          </motion.div>
+        </main>
+      </div>
     </div>
+  
+  {/* Portals / Dialogs Moved to root level for proper viewport centering */}
+  <VerificationDialog 
+    isOpen={showVerificationDialog} 
+    onClose={() => setShowVerificationDialog(false)} 
+    userId={userId} 
+    existingPhotos={profile?.photos || []}
+  />
 
-    </div>
-    
-    {/* Portals / Dialogs Moved to root level for proper viewport centering */}
-    <VerificationDialog 
-        isOpen={showVerificationDialog} 
-        onClose={() => setShowVerificationDialog(false)} 
-        userId={userId} 
-        existingPhotos={profile?.photos || []}
-    />
+  <MarriedConfirmationDialog 
+    isOpen={showMarriedConfirmDialog} 
+    onOpenChange={setShowMarriedConfirmDialog} 
+    onConfirm={handleMarkAsMarried} 
+    isLoading={false} 
+  />
 
-    <MarriedConfirmationDialog 
-      isOpen={showMarriedConfirmDialog} 
-      onOpenChange={setShowMarriedConfirmDialog} 
-      onConfirm={handleMarkAsMarried} 
-      isLoading={false} 
-    />
+  <SubscriptionDialog 
+    isOpen={showSubscriptionDialog} 
+    onClose={() => setShowSubscriptionDialog(false)} 
+    featureName="Direct Horoscope Matching"
+  />
 
-    <SubscriptionDialog 
-      isOpen={showSubscriptionDialog} 
-      onClose={() => setShowSubscriptionDialog(false)} 
-      featureName="Direct Horoscope Matching"
-    />
-  </>
-  )
+  <CompatibilitySheet 
+    isOpen={showBreakdown}
+    onClose={() => setShowBreakdown(false)}
+    userName={breakdownName}
+    lifestyleScore={activeBreakdown?.lifestyle?.totalScore || 0}
+    poruthamScore={activeBreakdown?.horoscope?.score || 0}
+    breakdown={activeBreakdown?.lifestyle?.breakdown || []}
+    poruthamDetails={activeBreakdown?.horoscope?.breakdown}
+  />
+</>
+)
 }

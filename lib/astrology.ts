@@ -204,6 +204,135 @@ export async function generateHoroscope(dateTime: string, location: Location, ti
 
 export type MatchStatus = 'Uthamam' | 'Madhyamam' | 'Athamam';
 
+// --- Porutham Data ---
+const NAKSHATRA_DATA: Record<string, { gana: string, yoni: string, rajju: string, vedha: string }> = {
+    "Ashwini": { gana: "Deva", yoni: "Horse", rajju: "Foot", vedha: "Jyeshtha" },
+    "Bharani": { gana: "Manushya", yoni: "Elephant", rajju: "Thigh", vedha: "Anuradha" },
+    "Krithika": { gana: "Rakshasa", yoni: "Goat", rajju: "Hip", vedha: "Vishakha" },
+    "Rohini": { gana: "Manushya", yoni: "Serpent", rajju: "Navel", vedha: "Swati" },
+    "Mrigashira": { gana: "Deva", yoni: "Serpent", rajju: "Neck", vedha: "Chitra" },
+    "Ardra": { gana: "Manushya", yoni: "Dog", rajju: "Neck", vedha: "Shravana" },
+    "Punarvasu": { gana: "Deva", yoni: "Cat", rajju: "Navel", vedha: "Uttara Ashadha" },
+    "Pushya": { gana: "Deva", yoni: "Sheep", rajju: "Hip", vedha: "Purva Ashadha" },
+    "Ashlesha": { gana: "Rakshasa", yoni: "Cat", rajju: "Thigh", vedha: "Mula" },
+    "Magha": { gana: "Rakshasa", yoni: "Rat", rajju: "Foot", vedha: "Revati" },
+    "Purva Phalguni": { gana: "Manushya", yoni: "Rat", rajju: "Thigh", vedha: "Uttara Bhadrapada" },
+    "Uttara Phalguni": { gana: "Manushya", yoni: "Cow", rajju: "Hip", vedha: "Purva Bhadrapada" },
+    "Hasta": { gana: "Deva", yoni: "Buffalo", rajju: "Navel", vedha: "Shatabhisha" },
+    "Chitra": { gana: "Rakshasa", yoni: "Tiger", rajju: "Neck", vedha: "Mrigashira" },
+    "Swati": { gana: "Deva", yoni: "Buffalo", rajju: "Navel", vedha: "Rohini" },
+    "Vishakha": { gana: "Rakshasa", yoni: "Tiger", rajju: "Hip", vedha: "Krithika" },
+    "Anuradha": { gana: "Deva", yoni: "Deer", rajju: "Thigh", vedha: "Bharani" },
+    "Jyeshtha": { gana: "Rakshasa", yoni: "Deer", rajju: "Foot", vedha: "Ashwini" },
+    "Mula": { gana: "Rakshasa", yoni: "Dog", rajju: "Foot", vedha: "Ashlesha" },
+    "Purva Ashadha": { gana: "Manushya", yoni: "Monkey", rajju: "Thigh", vedha: "Pushya" },
+    "Uttara Ashadha": { gana: "Manushya", yoni: "Mongoose", rajju: "Hip", vedha: "Punarvasu" },
+    "Shravana": { gana: "Deva", yoni: "Monkey", rajju: "Neck", vedha: "Ardra" },
+    "Dhanishta": { gana: "Rakshasa", yoni: "Lion", rajju: "Neck", vedha: "Shatabhisha" },
+    "Shatabhisha": { gana: "Rakshasa", yoni: "Horse", rajju: "Navel", vedha: "Hasta" },
+    "Purva Bhadrapada": { gana: "Manushya", yoni: "Lion", rajju: "Hip", vedha: "Uttara Phalguni" },
+    "Uttara Bhadrapada": { gana: "Manushya", yoni: "Cow", rajju: "Thigh", vedha: "Purva Phalguni" },
+    "Revati": { gana: "Deva", yoni: "Elephant", rajju: "Foot", vedha: "Magha" }
+};
+
+const RASHI_LORDS: Record<string, string> = {
+    "Mesha": "Mars", "Vrishabha": "Venus", "Mithuna": "Mercury", "Karka": "Moon",
+    "Simha": "Sun", "Kanya": "Mercury", "Tula": "Venus", "Vrishchika": "Mars",
+    "Dhanu": "Jupiter", "Makara": "Saturn", "Kumbha": "Saturn", "Meena": "Jupiter"
+};
+
+const FRIENDSHIP: Record<string, string[]> = {
+    "Sun": ["Moon", "Mars", "Jupiter"],
+    "Moon": ["Sun", "Mercury"],
+    "Mars": ["Sun", "Moon", "Jupiter"],
+    "Mercury": ["Sun", "Venus"],
+    "Jupiter": ["Sun", "Moon", "Mars"],
+    "Venus": ["Mercury", "Saturn"],
+    "Saturn": ["Mercury", "Venus"]
+};
+
+/**
+ * Calculates the traditional Tamil 10-Porutham score.
+ */
 export function checkTamilPorutham(girlStar: string, girlRashi: string, boyStar: string, boyRashi: string): { score: number; status: MatchStatus; breakdown: Record<string, boolean> } {
-    return { score: 0, status: 'Athamam', breakdown: {} };
+    // Standardize names (remove Tamil script if present)
+    const gStar = girlStar.split(' (')[0];
+    const bStar = boyStar.split(' (')[0];
+    const gRashi = girlRashi.split(' (')[0];
+    const bRashi = boyRashi.split(' (')[0];
+
+    const gData = NAKSHATRA_DATA[gStar];
+    const bData = NAKSHATRA_DATA[bStar];
+
+    if (!gData || !bData) return { score: 0, status: 'Athamam', breakdown: {} };
+
+    const gIdx = NAKSHATRAS.indexOf(gStar);
+    const bIdx = NAKSHATRAS.indexOf(bStar);
+    const gRIdx = RASHIS.indexOf(gRashi);
+    const bRIdx = RASHIS.indexOf(bRashi);
+
+    const breakdown: Record<string, boolean> = {};
+    let matchedCount = 0;
+
+    // 1. Dina Porutham (Count from girl to boy)
+    const dinaDist = (bIdx - gIdx + 27) % 27 + 1;
+    breakdown['Dina'] = [2, 4, 6, 8, 9, 11, 13, 15, 17, 18, 20, 22, 24, 26, 27].includes(dinaDist);
+    if (breakdown['Dina']) matchedCount++;
+
+    // 2. Gana Porutham
+    if (gData.gana === bData.gana) {
+        breakdown['Gana'] = true;
+    } else if (gData.gana === "Deva" && bData.gana === "Manushya") {
+        breakdown['Gana'] = true;
+    } else if (gData.gana === "Manushya" && bData.gana === "Deva") {
+        breakdown['Gana'] = true;
+    } else {
+        breakdown['Gana'] = false;
+    }
+    if (breakdown['Gana']) matchedCount++;
+
+    // 3. Mahendra Porutham
+    const mahDist = (bIdx - gIdx + 27) % 27 + 1;
+    breakdown['Mahendra'] = [4, 7, 10, 13, 16, 19, 22, 25].includes(mahDist);
+    if (breakdown['Mahendra']) matchedCount++;
+
+    // 4. Stree Deerkha
+    breakdown['Stree Deerkha'] = (bIdx - gIdx + 27) % 27 > 13;
+    if (breakdown['Stree Deerkha']) matchedCount++;
+
+    // 5. Yoni Porutham
+    const avoidYoni: Record<string, string> = { "Horse": "Buffalo", "Elephant": "Lion", "Sheep": "Monkey", "Serpent": "Mongoose", "Tiger": "Goat", "Rat": "Cat", "Dog": "Deer" };
+    breakdown['Yoni'] = avoidYoni[gData.yoni] !== bData.yoni && avoidYoni[bData.yoni] !== gData.yoni;
+    if (breakdown['Yoni']) matchedCount++;
+
+    // 6. Rasi Porutham
+    const rasiDist = (bRIdx - gRIdx + 12) % 12 + 1;
+    breakdown['Rasi'] = ![2, 3, 4, 5, 6].includes(rasiDist) && rasiDist !== 1;
+    if (breakdown['Rasi']) matchedCount++;
+
+    // 7. Rasiyathipathi Porutham
+    const gLord = RASHI_LORDS[gRashi];
+    const bLord = RASHI_LORDS[bRashi];
+    breakdown['Rasiyathipathi'] = gLord === bLord || (FRIENDSHIP[gLord]?.includes(bLord) || FRIENDSHIP[bLord]?.includes(gLord));
+    if (breakdown['Rasiyathipathi']) matchedCount++;
+
+    // 8. Vasya Porutham
+    const vasyaMap: Record<string, string[]> = { "Mesha": ["Simha", "Vrishchika"], "Vrishabha": ["Kadaga", "Thulam"] }; // Simplified
+    breakdown['Vasya'] = vasyaMap[gRashi]?.includes(bRashi) || false;
+    if (breakdown['Vasya']) matchedCount++;
+
+    // 9. Vedha Porutham (Should NOT match)
+    breakdown['Vedha'] = gData.vedha !== bStar;
+    if (breakdown['Vedha']) matchedCount++;
+
+    // 10. Rajju Porutham (Should NOT be on same Rajju)
+    breakdown['Rajju'] = gData.rajju !== bData.rajju;
+    if (breakdown['Rajju']) matchedCount++;
+
+    const score = matchedCount;
+    let status: MatchStatus = 'Athamam';
+    if (score >= 7) status = 'Uthamam';
+    else if (score >= 5) status = 'Madhyamam';
+
+    return { score, status, breakdown };
 }

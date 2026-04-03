@@ -43,8 +43,8 @@ export function InterestsStep({ formData, onChange }: InterestsStepProps) {
               <span className="text-[#4B0082] font-black text-xs">H1</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Leisure Matrix</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Hobbies & Activities</h3>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Activities</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">Hobbies</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
           </div>
@@ -80,8 +80,8 @@ export function InterestsStep({ formData, onChange }: InterestsStepProps) {
               <span className="text-[#4B0082] font-black text-xs">I2</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Intellectual Vector</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Interests & Pursuits</h3>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Passions</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">Interests</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
           </div>

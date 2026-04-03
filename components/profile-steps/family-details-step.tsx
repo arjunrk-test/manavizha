@@ -134,8 +134,8 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
               <span className="text-[#4B0082] font-black text-xs">P1</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Parental Matrix</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Identity & Profession</h3>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Family</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">Parents' Details</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
           </div>
@@ -147,7 +147,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                 id="fatherName"
                 value={formData.fatherName || ""}
                 onChange={(e) => onChange("fatherName", e.target.value)}
-                placeholder="Official Father Identity"
+                placeholder="Enter Father's Name"
                 required
                 className="sds-input w-full"
               />
@@ -169,7 +169,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                 id="motherName"
                 value={formData.motherName || ""}
                 onChange={(e) => onChange("motherName", e.target.value)}
-                placeholder="Official Mother Identity"
+                placeholder="Enter Mother's Name"
                 required
                 className="sds-input w-full"
               />
@@ -195,8 +195,8 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
               <span className="text-[#4B0082] font-black text-xs">P2</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Parental Domain</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Archival Residence</h3>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Location</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">Parents' Address</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
           </div>
@@ -224,7 +224,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="parentsPincode" className="sds-label">Intelligence Pincode *</Label>
+              <Label htmlFor="parentsPincode" className="sds-label">Pincode *</Label>
               <div className="relative group">
                 <Input
                   id="parentsPincode"
@@ -249,7 +249,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="parentsArea" className="sds-label">Designated Area *</Label>
+              <Label htmlFor="parentsArea" className="sds-label">Area *</Label>
               <div className="relative" ref={parentsAreaRef}>
                 <button
                   type="button"
@@ -285,7 +285,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="parentsTaluk" className="sds-label">Taluk Signature</Label>
+              <Label htmlFor="parentsTaluk" className="sds-label">Taluk</Label>
               <Input
                 id="parentsTaluk"
                 value={formData.parentsTaluk || ""}
@@ -294,7 +294,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="parentsDistrict" className="sds-label">District Domain</Label>
+              <Label htmlFor="parentsDistrict" className="sds-label">District</Label>
               <Input
                 id="parentsDistrict"
                 value={formData.parentsDistrict || ""}
@@ -303,7 +303,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="parentsLandmark" className="sds-label">Landmark Signature</Label>
+              <Label htmlFor="parentsLandmark" className="sds-label">Landmark</Label>
               <Input
                 id="parentsLandmark"
                 value={formData.parentsLandmark || ""}
@@ -322,8 +322,8 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
               <span className="text-[#4B0082] font-black text-xs">H3</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Lineage Protocol</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Heritage Matrix</h3>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Background</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">Caste & Heritage</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
           </div>
@@ -331,7 +331,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50">
             <SelectDropdown
               id="caste"
-              label="Caste Identity *"
+              label="Caste *"
               value={formData.caste || ""}
               onChange={(value) => onChange("caste", value)}
               options={casteOptions}
@@ -339,7 +339,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
             />
             <SelectDropdown
               id="subcaste"
-              label="Subcaste / Section *"
+              label="Subcaste *"
               value={formData.subcaste || ""}
               onChange={(value) => onChange("subcaste", value)}
               options={subcasteOptions}
@@ -347,7 +347,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
             />
             <SelectDropdown
               id="kulam"
-              label="Kulam / Clan *"
+              label="Kulam *"
               value={formData.kulam || ""}
               onChange={(value) => onChange("kulam", value)}
               options={kulamOptions}
@@ -355,14 +355,14 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
             />
             <SelectDropdown
               id="gotram"
-              label="Gotram / Lineage *"
+              label="Gotram *"
               value={formData.gotram || ""}
               onChange={(value) => onChange("gotram", value)}
               options={gotramOptions}
               required
             />
             <div className="space-y-2">
-              <Label htmlFor="ancestralOrigin" className="sds-label">Ancestral Logic / Native *</Label>
+              <Label htmlFor="ancestralOrigin" className="sds-label">Native Place *</Label>
               <Input
                 id="ancestralOrigin"
                 value={formData.ancestralOrigin || ""}
@@ -374,7 +374,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
             </div>
             <SelectDropdown
               id="familyStatus"
-              label="Familial Standing *"
+              label="Family Status *"
               value={formData.familyStatus || ""}
               onChange={(value) => onChange("familyStatus", value)}
               options={familyStatusOptions}
@@ -382,19 +382,19 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
             />
             <SelectDropdown
               id="familyType"
-              label="Family Structure *"
+              label="Family Type *"
               value={formData.familyType || ""}
               onChange={(value) => onChange("familyType", value)}
               options={familyTypeOptions}
               required
             />
             <div className="space-y-2">
-              <Label htmlFor="siblings" className="sds-label">Sibling Network *</Label>
+              <Label htmlFor="siblings" className="sds-label">Siblings *</Label>
               <Input
                 id="siblings"
                 value={formData.siblings || ""}
                 onChange={(e) => onChange("siblings", e.target.value)}
-                placeholder="e.g., 01 Brother, 01 Sister"
+                placeholder="e.g. 1 Brother, 1 Sister"
                 required
                 className="sds-input w-full"
               />
@@ -404,7 +404,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
 
         {/* Narrative Section */}
         <div className="space-y-4 md:col-span-2">
-          <Label htmlFor="familyDescription" className="sds-label">Familial Narrative *</Label>
+          <Label htmlFor="familyDescription" className="sds-label">About Family *</Label>
           <Textarea
             id="familyDescription"
             value={formData.familyDescription || ""}

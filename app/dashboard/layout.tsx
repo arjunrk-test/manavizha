@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
-import { LogOut, ArrowLeft, Edit, Settings, MessageSquare } from "lucide-react"
+import { LogOut, ArrowLeft, Edit, Settings, MessageSquare, User } from "lucide-react"
 import { motion } from "framer-motion"
 
 export default function DashboardLayout({
@@ -165,9 +165,9 @@ export default function DashboardLayout({
               initial={{ opacity: 0.15 }}
               animate={{ opacity: [0.1, 0.25, 0.15, 0.25, 0.1], rotate: [0, 360], x: [-40, 40, -40] }}
               transition={{
-                opacity: { duration: 8 + Math.random() * 4, repeat: Infinity, ease: "easeInOut" },
+                opacity: { duration: 8 + (i % 4), repeat: Infinity, ease: "easeInOut" },
                 rotate: { duration: 60 + i * 8, repeat: Infinity, ease: "linear" },
-                x: { duration: 12 + Math.random() * 6, repeat: Infinity, ease: "easeInOut", delay: i * 0.7 }
+                x: { duration: 12 + (i % 6), repeat: Infinity, ease: "easeInOut", delay: i * 0.7 }
               }}
             >
               <img src={imagePath} alt="" className="w-full h-full object-contain brightness-0 invert opacity-20" />
@@ -198,10 +198,20 @@ export default function DashboardLayout({
               </Button>
             )}
             <Button 
+                onClick={() => router.push(`/dashboard/profile/${user.id}`)} 
+                variant="outline" 
+                size="sm" 
+                className="h-8 gap-2 border-indigo-500/20 hover:bg-indigo-50 text-[#4B0082] font-bold text-[10px] uppercase tracking-widest px-4 shadow-sm"
+            >
+              <User className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Preview Profile</span>
+              <span className="sm:hidden">Preview</span>
+            </Button>
+            <Button 
                 onClick={() => router.push("/dashboard/setup")} 
                 variant="outline" 
                 size="sm" 
-                className="h-8 gap-2 border-[#4B0082]/20 hover:bg-[#4B0082]/10 text-[#4B0082] dark:text-purple-400"
+                className="h-8 gap-2 border-indigo-500/20 hover:bg-indigo-50 text-[#4B0082] font-bold text-[10px] uppercase tracking-widest px-4 shadow-sm"
             >
               <Edit className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Update Profile</span>
@@ -211,12 +221,12 @@ export default function DashboardLayout({
                 onClick={() => router.push("/dashboard/messages")} 
                 variant="outline" 
                 size="icon" 
-                className="h-8 w-8 border-[#4B0082]/20 hover:bg-[#4B0082]/10 text-[#4B0082] dark:text-purple-400 group relative"
+                className="h-8 w-8 border-indigo-500/20 hover:bg-indigo-50 text-[#4B0082] group relative rounded-full"
                 title="Messages"
             >
               <MessageSquare className="h-4 w-4" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white dark:ring-gray-800">
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#FF1493] text-[8px] font-bold text-white shadow-lg">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
@@ -225,12 +235,12 @@ export default function DashboardLayout({
                 onClick={() => router.push("/dashboard/settings")} 
                 size="icon" 
                 variant="ghost"
-                className="h-8 w-8 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full"
+                className="h-8 w-8 hover:bg-indigo-50 rounded-full"
                 title="Profile Settings"
             >
-              <Settings className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+              <Settings className="h-4 w-4 text-[#4B0082]/60" />
             </Button>
-            <Button onClick={handleLogout} size="sm" className="h-8 bg-red-400 hover:bg-red-500 text-white border-0 shadow-sm transition-all active:scale-95">
+            <Button onClick={handleLogout} size="sm" className="h-8 bg-[#4B0082] hover:bg-[#1F4068] text-white border-0 shadow-sm transition-all active:scale-95 font-bold text-[10px] uppercase tracking-widest px-4 rounded-full">
               <LogOut className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Logout</span>
               <span className="sm:hidden text-[10px]">Logout</span>

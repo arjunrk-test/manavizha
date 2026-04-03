@@ -24,8 +24,8 @@ export function SocialHabitsStep({ formData, onChange }: SocialHabitsStepProps) 
             <span className="text-[#4B0082] font-black text-xs">S1</span>
           </div>
           <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Lifestyle Protocol</h4>
-            <h3 className="text-xl font-light text-gray-900 tracking-tight">Social Habits Matrix</h3>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Lifestyle</h4>
+            <h3 className="text-xl font-light text-gray-900 tracking-tight">Social Habits</h3>
           </div>
           <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
         </div>

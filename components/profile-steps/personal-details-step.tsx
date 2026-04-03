@@ -49,15 +49,15 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         
-        {/* Identity & Birth Section */}
+        {/* Birth Details Section */}
         <div className="space-y-8 md:col-span-2">
           <div className="flex items-center gap-4 mb-2">
             <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
               <span className="text-[#4B0082] font-black text-xs">01</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Primary Node</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Identity & Birth Details</h3>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Basic Details</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">Personal Information</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
           </div>
@@ -69,7 +69,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
                 id="name"
                 value={formData.name}
                 onChange={(e) => onChange("name", e.target.value)}
-                placeholder="Official Identity"
+                placeholder="Enter your full name"
                 required
                 className="sds-input w-full"
               />
@@ -104,19 +104,19 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="age" className="sds-label">Age Index</Label>
+              <Label htmlFor="age" className="sds-label">Age</Label>
               <Input
                 id="age"
                 value={formData.age || ""}
                 readOnly
                 disabled
-                placeholder="Auto-calculated"
+                placeholder="Calculated"
                 className="sds-input w-full bg-black/[0.02] border-indigo-50/30 opacity-60 cursor-not-allowed font-medium text-gray-500"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="createdBy" className="sds-label">Profile Authority *</Label>
+              <Label htmlFor="createdBy" className="sds-label">Created By *</Label>
               <Select value={formData.createdBy} onValueChange={(value) => onChange("createdBy", value)}>
                 <SelectTrigger id="createdBy" className="sds-input w-full h-14 border-indigo-50/50">
                   <SelectValue placeholder="Select Creator" />
@@ -131,7 +131,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
 
             <SelectDropdown
               id="sex"
-              label="Gender Designation *"
+              label="Gender *"
               value={formData.sex}
               onChange={(value) => onChange("sex", value)}
               options={genderOptions}
@@ -149,15 +149,15 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
           </div>
         </div>
 
-        {/* Physical Matrix Section */}
+        {/* Physical Section */}
         <div className="space-y-8 md:col-span-2">
           <div className="flex items-center gap-4 mb-2">
             <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
               <span className="text-[#4B0082] font-black text-xs">02</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Physical Matrix</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Anatomic Specifications</h3>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Physical</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">Appearance & Build</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
           </div>
@@ -218,29 +218,29 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
             />
 
             <div className="space-y-2 md:col-span-4">
-              <Label htmlFor="physicalStatus" className="sds-label">Functional Status *</Label>
+              <Label htmlFor="physicalStatus" className="sds-label">Physical Status *</Label>
               <Select value={formData.physicalStatus} onValueChange={(value) => onChange("physicalStatus", value)}>
                 <SelectTrigger id="physicalStatus" className="sds-input w-full h-14 border-indigo-50/50">
-                  <SelectValue placeholder="Specify Physical Status" />
+                  <SelectValue placeholder="Are you physically challenged?" />
                 </SelectTrigger>
                 <SelectContent className="sds-glass rounded-2xl border-indigo-50/50 shadow-2xl p-2 z-[100] backdrop-blur-2xl">
-                  <SelectItem value="Normal" className="rounded-xl p-3 focus:bg-[#4B0082] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">Normal</SelectItem>
-                  <SelectItem value="Physically Challenged" className="rounded-xl p-3 focus:bg-[#4B0082] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">Physically Challenged</SelectItem>
+                  <SelectItem value="Normal" className="rounded-xl p-3 focus:bg-[#4B0082] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">No</SelectItem>
+                  <SelectItem value="Physically Challenged" className="rounded-xl p-3 focus:bg-[#4B0082] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">Yes</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
         </div>
 
-        {/* Life Preferences Section */}
+        {/* Lifestyle Section */}
         <div className="space-y-8 md:col-span-2">
           <div className="flex items-center gap-4 mb-2">
             <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
               <span className="text-[#4B0082] font-black text-xs">03</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Preference Logic</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Cultural & Language</h3>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Culture</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">Languages & Food</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
           </div>
@@ -258,43 +258,43 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
             <div className="space-y-2 md:col-span-2">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <LanguageDropdown
-                  label="Indian Languages *"
+                  label="Languages you speak *"
                   languages={indianLanguages}
                   selectedLanguages={formData.languages || []}
                   onToggle={toggleLanguage}
-                  placeholder="Select Shared Dialects"
+                  placeholder="Select languages"
                 />
 
                 <LanguageDropdown
-                  label="International Languages *"
+                  label="International Languages"
                   languages={internationalLanguages}
                   selectedLanguages={formData.languages || []}
                   onToggle={toggleLanguage}
-                  placeholder="Select Global Dialects"
+                  placeholder="Select international languages"
                 />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Narrative Section */}
+        {/* About Me Section */}
         <div className="space-y-8 md:col-span-2">
           <div className="flex items-center gap-4 mb-2">
             <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
               <span className="text-[#4B0082] font-black text-xs">04</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Narrative Layer</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Personal Abstract</h3>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Description</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">About Yourself</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
           </div>
 
           <div className="space-y-4">
             <div className="flex items-center justify-between px-2">
-              <Label htmlFor="about" className="sds-label">Establish your narrative *</Label>
+              <Label htmlFor="about" className="sds-label">About me *</Label>
               <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${formData.about.length < 100 ? "text-[#4B0082]/40 border-[#4B0082]/10" : formData.about.length > 550 ? "text-rose-500 border-rose-100 bg-rose-50/50" : "text-emerald-500 border-emerald-100 bg-emerald-50/50"}`}>
-                {formData.about.length} / 600 {formData.about.length < 100 && "(MIN 100 REQUIRED)"}
+                {formData.about.length} / 600 {formData.about.length < 100 && "(MIN 100 CHARS)"}
               </span>
             </div>
             <textarea
@@ -304,7 +304,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
                 const value = e.target.value
                 if (value.length <= 600) onChange("about", value)
               }}
-              placeholder="Describe your essence, values, and vision for the future..."
+              placeholder="Write a few lines about yourself, your hobbies, and what you are looking for in a partner..."
               rows={6}
               maxLength={600}
               required

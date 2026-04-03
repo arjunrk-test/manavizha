@@ -207,8 +207,8 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
               <span className="text-[#4B0082] font-black text-xs">U1</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Visual Identity</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Your Portfolio *</h3>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Photos</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">Personal Photos *</h3>
             </div>
           </div>
           <div className={`px-4 py-2 rounded-full border text-[10px] font-black uppercase tracking-widest transition-all duration-500 ${
@@ -218,7 +218,7 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
             ? "bg-amber-50 border-amber-100 text-amber-600" 
             : "bg-emerald-50 border-emerald-100 text-emerald-600"
           }`}>
-            {userPhotos.length} / {maxPhotos} Nodes Synchronized
+            {userPhotos.length} / {maxPhotos} Photos Uploaded
           </div>
         </div>
 
@@ -232,7 +232,7 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
         {userPhotos.length < minPhotos && (
           <div className="flex items-center gap-3 text-[#4B0082] text-xs font-bold uppercase tracking-widest bg-[#4B0082]/5 border border-[#4B0082]/10 p-4 rounded-2xl">
             <AlertCircle className="h-4 w-4" />
-            <span>Protocol requires at least {minPhotos} personal captures</span>
+            <span>Please upload at least {minPhotos} personal photos</span>
           </div>
         )}
 
@@ -275,7 +275,7 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
                   <Upload className="h-8 w-8" />
                 </div>
                 <div className="text-center px-4">
-                  <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-[#4B0082] mb-1">Upload Archive</span>
+                  <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-[#4B0082] mb-1">Add Photo</span>
                   <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">PNG, JPG &lt; 5MB</p>
                 </div>
               </label>
@@ -291,8 +291,8 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
             <span className="text-[#4B0082] font-black text-xs">F2</span>
           </div>
           <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Familial Context</h4>
-            <h3 className="text-xl font-light text-gray-900 tracking-tight">Family Archive *</h3>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Family</h4>
+            <h3 className="text-xl font-light text-gray-900 tracking-tight">Family Photo *</h3>
           </div>
           <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
         </div>
@@ -339,9 +339,9 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
                   <Upload className="h-10 w-10" />
                 </div>
                 <div className="text-center">
-                  <span className="block text-[12px] font-black uppercase tracking-[0.4em] text-[#4B0082] mb-2">Synchronize Family Portrait</span>
+                  <span className="block text-[12px] font-black uppercase tracking-[0.4em] text-[#4B0082] mb-2">Upload Family Photo</span>
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest px-4 py-2 rounded-full bg-white/40 border border-indigo-50/50 w-fit mx-auto">
-                    Mandatory Visual Requirement
+                    Required for Profile
                   </p>
                 </div>
               </label>
@@ -357,8 +357,8 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
             <span className="text-[#4B0082] font-black text-xs">V3</span>
           </div>
           <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Security Protocol</h4>
-            <h3 className="text-xl font-light text-gray-900 tracking-tight">Identity Validation *</h3>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Verification</h4>
+            <h3 className="text-xl font-light text-gray-900 tracking-tight">ID Proof (Aadhar) *</h3>
           </div>
           <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
         </div>
@@ -366,7 +366,7 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           {/* Aadhar Front */}
           <div className="space-y-4">
-            <Label className="sds-label ml-2">Aadhar Obverse (Front) *</Label>
+            <Label className="sds-label ml-2">Aadhar Front *</Label>
             {formData.aadharFront ? (
               <div className="relative group overflow-hidden rounded-[2rem] border-4 border-white shadow-xl">
                 <img src={formData.aadharFront} alt="Aadhar front" className="w-full h-auto" />
@@ -388,7 +388,7 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
                   className="flex flex-col items-center justify-center h-48 cursor-pointer sds-glass border-2 border-dashed border-indigo-100 rounded-[2rem] transition-all duration-500 hover:border-[#4B0082]/40"
                 >
                   <Upload className="h-8 w-8 text-[#4B0082]/30 mb-4 group-hover:scale-110 transition-transform" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#4B0082]/60">Upload Obverse</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#4B0082]/60">Upload Front</span>
                 </label>
               </div>
             )}
@@ -396,7 +396,7 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
 
           {/* Aadhar Back */}
           <div className="space-y-4">
-            <Label className="sds-label ml-2">Aadhar Reverse (Back) *</Label>
+            <Label className="sds-label ml-2">Aadhar Back *</Label>
             {formData.aadharBack ? (
               <div className="relative group overflow-hidden rounded-[2rem] border-4 border-white shadow-xl">
                 <img src={formData.aadharBack} alt="Aadhar back" className="w-full h-auto" />
@@ -418,7 +418,7 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
                   className="flex flex-col items-center justify-center h-48 cursor-pointer sds-glass border-2 border-dashed border-indigo-100 rounded-[2rem] transition-all duration-500 hover:border-[#4B0082]/40"
                 >
                   <Upload className="h-8 w-8 text-[#4B0082]/30 mb-4 group-hover:scale-110 transition-transform" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#4B0082]/60">Upload Reverse</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#4B0082]/60">Upload Back</span>
                 </label>
               </div>
             )}
@@ -439,10 +439,10 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
                 <ShieldCheck className="h-12 w-12 text-[#4B0082] fill-[#4B0082]/10" />
               </div>
               <div className="flex-1 text-center md:text-left">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/40 mb-2">Trust Calibration</h4>
-                <h3 className="text-2xl font-light text-gray-900 tracking-tight mb-3">Optimize Interest Vectors</h3>
+                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/40 mb-2">Verify Profile</h4>
+                <h3 className="text-2xl font-light text-gray-900 tracking-tight mb-3">Increase your visibility</h3>
                 <p className="text-gray-500 text-sm leading-relaxed max-w-xl">
-                  Profiles with verified signatures achieve <span className="text-[#4B0082] font-black">300% higher engagement</span>. Complete live biometric synchronization to authorize your presence.
+                  Profiles with verified profiles achieve <span className="text-[#4B0082] font-black">much faster matches</span>. Complete identity verification to verify your account.
                 </p>
               </div>
               <Button
@@ -450,7 +450,7 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
                 onClick={() => setShowVerificationDialog(true)}
                 className="h-16 px-12 rounded-[1.25rem] bg-[#4B0082] hover:bg-indigo-900 text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(75,0,130,0.4)] transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
               >
-                Initiate Verification
+                Start Verification
               </Button>
             </div>
           </div>
