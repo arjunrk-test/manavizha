@@ -400,7 +400,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 // 1. Get current user gender
                 const { data: userData } = await supabase
                     .from("personal_details")
-                    .select("sex")
+                    .select("sex, food_preference")
                     .eq("user_id", userId)
                     .maybeSingle()
 
