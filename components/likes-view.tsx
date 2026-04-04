@@ -222,7 +222,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
         if (!res.ok) {
             toast.error("Failed to unlike profile.")
         } else {
-            toast.success("Profile unliked.")
+            toast.success("Interest retracted.")
             setILikedIds(prev => prev.filter(id => id !== profileId))
             setProfiles(prev => ({
                 ...prev,
@@ -244,10 +244,10 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
         })
         const data = await res.json()
         if (!res.ok) {
-            if (data.error === "already_liked") toast.error("You have already liked this profile.")
-            else toast.error("Failed to like profile.")
+            if (data.error === "already_liked") toast.error("Interest already sent to this profile.")
+            else toast.error("Failed to send interest.")
         } else {
-            toast.success("Profile liked! 💜")
+            toast.success("Interest sent! 💜")
             setILikedIds(prev => prev.includes(profileId) ? prev : [...prev, profileId])
             setProfiles(prev => ({
                 ...prev,
@@ -293,9 +293,9 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
         ids.map(id => profiles[id]).filter(Boolean)
 
     const tabs: { key: Tab; label: string; icon: React.ReactNode; ids: string[] }[] = [
-        { key: "mutual", label: "Mutual Matches", icon: <HeartHandshake className="h-4 w-4" />, ids: mutualIds },
-        { key: "liked", label: "I Liked", icon: <Heart className="h-4 w-4" />, ids: onlyILikedIds },
-        { key: "likedme", label: "Liked Me", icon: <Sparkles className="h-4 w-4" />, ids: onlyLikedMeIds },
+        { key: "mutual", label: "Mutual Interest", icon: <HeartHandshake className="h-4 w-4" />, ids: mutualIds },
+        { key: "liked", label: "Interest Expressed", icon: <Heart className="h-4 w-4" />, ids: onlyILikedIds },
+        { key: "likedme", label: "Interest Received", icon: <Sparkles className="h-4 w-4" />, ids: onlyLikedMeIds },
     ]
 
     const currentTab = tabs.find(t => t.key === activeTab)!
@@ -336,7 +336,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                         )}
                         {isMutual && (
                             <div className="absolute top-4 left-4 bg-[#FEF9C3]/90 text-[#854d0e] text-[8px] font-black px-4 py-2 rounded-full flex items-center gap-2 shadow-xl border border-yellow-200 tracking-[0.2em] uppercase backdrop-blur-md z-10">
-                                <Sparkles className="h-3.5 w-3.5 animate-pulse" /> Mutual Match
+                                <Sparkles className="h-3.5 w-3.5 animate-pulse" /> Mutual Interest
                             </div>
                         )}
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-8 pt-24">
@@ -408,7 +408,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                 <div>
                     <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#4B0082]/40 mb-2">Connection Matrix</h4>
                     <h2 className="text-5xl font-light text-gray-900 tracking-tight flex items-center gap-4">
-                        Likes <span className="text-[#4B0082] font-black">&</span> Matches
+                        Interests <span className="text-[#4B0082] font-black">&</span> Matches
                     </h2>
                 </div>
                 <div className="text-right hidden md:block">
@@ -461,14 +461,14 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                                     <Sparkles className="h-8 w-8 text-gray-400" />}
                         </div>
                         <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-                            {activeTab === "mutual" ? "No mutual matches yet" :
-                                activeTab === "liked" ? "You haven't liked anyone yet" :
-                                    "No one has liked you yet"}
+                            {activeTab === "mutual" ? "No mutual interest yet" :
+                                activeTab === "liked" ? "No interest expressed yet" :
+                                    "No interest received yet"}
                         </h3>
                         <p className="text-gray-500 mt-2 text-sm">
-                            {activeTab === "mutual" ? "Like profiles to get mutual matches!" :
-                                activeTab === "liked" ? "Browse profiles and express interest!" :
-                                    "Complete your profile to attract more matches."}
+                            {activeTab === "mutual" ? "Express interest to find more mutual interest!" :
+                                activeTab === "liked" ? "Browse profiles and express your interest!" :
+                                    "Complete your profile to receive more interests."}
                         </p>
                     </motion.div>
                 ) : (
@@ -569,7 +569,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                                                 {selectedProfile.name}{selectedProfile.age && <span className="text-gray-500 font-normal">, {selectedProfile.age}</span>}
                                                 {isMutual && (
                                                     <span className="ml-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800 align-middle -translate-y-1">
-                                                        <HeartHandshake className="h-3.5 w-3.5" /> Mutual Match
+                                                        <HeartHandshake className="h-3.5 w-3.5" /> Mutual Interest
                                                     </span>
                                                 )}
                                             </h2>

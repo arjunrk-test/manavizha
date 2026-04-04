@@ -28,8 +28,16 @@ import {
   Star,
   Crown,
   Gem,
-  Shield
+  Shield,
+  Bell
 } from "lucide-react"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Badge } from "@/components/ui/badge"
+import { formatDistanceToNow } from "date-fns"
 import { ProfileCarousel } from "./profile-carousel"
 import {
   MarriedConfirmationDialog
@@ -86,6 +94,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
   const [newMatches, setNewMatches] = useState<any[]>([])
   const [whoViewedMe, setWhoViewedMe] = useState<any[]>([])
   const [profilesIViewed, setProfilesIViewed] = useState<any[]>([])
+  const [whoExpressedInterest, setWhoExpressedInterest] = useState<any[]>([])
   
   // Dual Core Compatibility states
   const [showBreakdown, setShowBreakdown] = useState(false)
@@ -427,17 +436,18 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
         const viewsData = await viewsRes.json()
         const likesData = await likesRes.json()
 
-        const likedIds = likesData.iLikedIds || []
-        const likedByMeIds = likesData.likedMeIds || []
+        const likedIds = (likesData.iLiked || []).map((l: any) => l.id)
+        const likedMeDataList = likesData.likedMe || []
+        const likedMeIds = likedMeDataList.map((l: any) => l.id)
         
         const viewedIds = (viewsData.iViewed || []).map((v: any) => v.viewed_user_id)
         const viewedByMeIds = (viewsData.viewedMe || []).map((v: any) => v.viewer_user_id)
         
         setILikedCount(likedIds.length)
-        setLikedMeCount(likedByMeIds.length)
+        setLikedMeCount(likedMeIds.length)
         
         // Calculate Mutual Count
-        const mutuals = likedIds.filter((id: string) => likedByMeIds.includes(id))
+        const mutuals = likedIds.filter((id: string) => likedMeIds.includes(id))
         setMutualCount(mutuals.length)
 
         // 4. Fetch all potential matches (opposite gender, not married)
@@ -566,7 +576,24 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
         setNewMatches(combined.filter(p => new Date(p.created_at) > thirtyDaysAgo))
 
-        setWhoViewedMe(combined.filter(p => viewedByMeIds.includes(p.user_id)))
+        const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+
+        const recentViews = (viewsData.viewedMe || []).filter((v: any) => new Date(v.created_at) > oneMonthAgo && !v.is_read)
+        const recentViewedIds = recentViews.map((v: any) => v.viewer_user_id)
+        
+        const recentInterests = (likedMeDataList || []).filter((l: any) => new Date(l.created_at) > oneMonthAgo && !l.is_read)
+        const recentInterestIds = recentInterests.map((l: any) => l.id)
+
+        setWhoViewedMe(recentViews.map((rv: any) => {
+            const p = combined.find(c => c.user_id === rv.viewer_user_id)
+            return p ? { ...p, interaction_at: rv.created_at } : null
+        }).filter(Boolean))
+
+        setWhoExpressedInterest(recentInterests.map((ri: any) => {
+            const p = combined.find(c => c.user_id === ri.id)
+            return p ? { ...p, interaction_at: ri.created_at } : null
+        }).filter(Boolean))
+        
         setProfilesIViewed(combined.filter(p => viewedIds.includes(p.user_id)))
 
       } catch (err) {
@@ -605,6 +632,27 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
     }
   }
 
+  const handleNotificationClick = async (type: 'view' | 'interest', targetId: string) => {
+    // Optimistic Update
+    if (type === 'view') {
+        setWhoViewedMe(prev => prev.filter(p => p.user_id !== targetId))
+        fetch('/api/views', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ viewerId: targetId, viewedUserId: userId })
+        })
+    } else {
+        setWhoExpressedInterest(prev => prev.filter(p => p.user_id !== targetId))
+        fetch('/api/likes', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: targetId, likedUserId: userId })
+        })
+    }
+    // Navigate
+    onNavigateToBrowse()
+  }
+
   const isMarried = profile?.maritalStatus === "Married"
 
   const getPremiumBadge = () => {
@@ -627,6 +675,23 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Left Sidebar - Sticky */}
         <aside className="w-full lg:w-[15rem] xl:w-[16rem] lg:sticky lg:top-16 space-y-3 flex-shrink-0">
+          {/* Quick Search */}
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.05 }}
+            className="sds-glass rounded-[1.5rem] p-1.5 flex items-center gap-2 border-indigo-100/50 hover:bg-white/90 transition-all shadow-lg shadow-indigo-900/5 mb-2"
+          >
+            <div className="w-10 h-10 bg-[#4B0082] rounded-xl flex items-center justify-center shadow-md shadow-indigo-900/10 shrink-0">
+              <Search className="h-4 w-4 text-white" />
+            </div>
+            <input 
+              type="text" 
+              placeholder="Search by ID..." 
+              className="bg-transparent border-none outline-none text-[9px] font-black uppercase tracking-widest text-[#4B0082] placeholder:text-gray-300 w-full"
+            />
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -652,7 +717,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               >
                 <HeartHandshake className="h-4 w-4 mr-3 text-[#4B0082] group-hover:scale-110 transition-transform" />
                 <div className="flex-1 flex items-center justify-between">
-                  <div className="font-bold text-[10px] uppercase tracking-wider">Mutual Matches</div>
+                  <div className="font-bold text-[10px] uppercase tracking-wider">Mutual Interest</div>
                   <span className="bg-[#4B0082] text-white text-[9px] px-2.5 py-1 rounded-full font-black shadow-lg shadow-indigo-500/20">{mutualCount}</span>
                 </div>
               </Button>
@@ -664,7 +729,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               >
                 <Heart className="h-4 w-4 mr-3 text-[#FF1493] group-hover:scale-110 transition-transform" />
                 <div className="flex-1 flex items-center justify-between">
-                  <div className="font-bold text-[10px] uppercase tracking-wider">I Liked</div>
+                  <div className="font-bold text-[10px] uppercase tracking-wider">Interest Expressed</div>
                   <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[9px] px-2.5 py-1 rounded-full font-black">{iLikedCount}</span>
                 </div>
               </Button>
@@ -676,7 +741,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               >
                 <Sparkles className="h-4 w-4 mr-3 text-[#4B0082] group-hover:scale-110 transition-transform" />
                 <div className="flex-1 flex items-center justify-between">
-                  <div className="font-bold text-[10px] uppercase tracking-wider">Who Liked Me</div>
+                  <div className="font-bold text-[10px] uppercase tracking-wider">Interest Received</div>
                   <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[9px] px-2.5 py-1 rounded-full font-black">{likedMeCount}</span>
                 </div>
               </Button>
@@ -751,17 +816,97 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 </>
               )}
               
-              <div className="mt-8 p-6 bg-[#4B0082] rounded-[2rem] text-white shadow-xl shadow-indigo-900/30 relative overflow-hidden group/card">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12 blur-2xl group-hover/card:scale-150 transition-transform duration-700" />
-                <h5 className="text-[9px] font-black uppercase tracking-widest text-white/50 mb-4">Safety Tip</h5>
-                <p className="text-[11px] font-bold leading-relaxed">Never share your bank details with anyone you meet online. Stay safe!</p>
-              </div>
             </div>
           </motion.div>
           </aside>
   
           {/* Right Main Content */}
           <main className="flex-1 w-full min-w-0 space-y-5 pb-24">
+            {/* Header with Notifications */}
+            <div className="flex items-center justify-between px-4 md:px-0">
+               <div></div>
+               <Popover>
+                 <PopoverTrigger asChild>
+                   <Button variant="ghost" size="icon" className="relative h-12 w-12 rounded-2xl bg-white/50 backdrop-blur-md shadow-sm border border-indigo-100/50 hover:bg-white transition-all">
+                     <Bell className="h-5 w-5 text-[#4B0082]" />
+                     {(whoViewedMe.length + whoExpressedInterest.length) > 0 && (
+                       <Badge className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center bg-rose-500 text-white rounded-full p-0 text-[10px] border-2 border-white">
+                         {whoViewedMe.length + whoExpressedInterest.length}
+                       </Badge>
+                     )}
+                   </Button>
+                 </PopoverTrigger>
+                 <PopoverContent align="end" className="w-[320px] rounded-[2rem] p-4 sds-glass border-indigo-100/30 shadow-2xl backdrop-blur-3xl z-50">
+                    <div className="space-y-4">
+                      <div className="px-2 py-1">
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#4B0082]">Notifications</h4>
+                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">Activity from last 30 days</p>
+                      </div>
+
+                      <div className="space-y-6 max-h-[400px] overflow-y-auto px-1 pr-2 custom-scrollbar">
+                        {/* Section 1: Interests */}
+                        {whoExpressedInterest.length > 0 && (
+                          <div className="space-y-2">
+                             <div className="px-2 text-[9px] font-black text-rose-500 uppercase tracking-widest">Interest Received</div>
+                             {whoExpressedInterest.slice(0, 5).map(p => (
+                               <div key={p.user_id} className="group p-3 rounded-2xl hover:bg-white/60 transition-all flex items-center gap-3 cursor-pointer" onClick={() => handleNotificationClick('interest', p.user_id)}>
+                                  <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100">
+                                    <img src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}`} className="w-full h-full object-cover" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div className="text-[11px] font-bold text-gray-900 truncate">{p.name || 'Anonymous Member'} expressed interest</div>
+                                      <div className="text-[8px] text-indigo-400 font-bold whitespace-nowrap">{formatDistanceToNow(new Date(p.interaction_at), { addSuffix: true })}</div>
+                                    </div>
+                                    <div className="text-[9px] text-gray-400 font-medium">{p.age} yrs • {p.profession?.split(' at ')[0] || 'Member'}</div>
+                                  </div>
+                               </div>
+                             ))}
+                          </div>
+                        )}
+
+                        {/* Section 2: Visitors */}
+                        {whoViewedMe.length > 0 && (
+                          <div className="space-y-2">
+                             <div className="px-2 text-[9px] font-black text-indigo-500 uppercase tracking-widest">Profile Visitors</div>
+                             {whoViewedMe.slice(0, 5).map(p => (
+                               <div key={p.user_id} className="group p-3 rounded-2xl hover:bg-white/60 transition-all flex items-center gap-3 cursor-pointer" onClick={() => handleNotificationClick('view', p.user_id)}>
+                                  <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100">
+                                    <img src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}`} className="w-full h-full object-cover" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div className="text-[11px] font-bold text-gray-900 truncate">{p.name || 'Anonymous Member'} viewed your profile</div>
+                                      <div className="text-[8px] text-indigo-400 font-bold whitespace-nowrap">{formatDistanceToNow(new Date(p.interaction_at), { addSuffix: true })}</div>
+                                    </div>
+                                    <div className="text-[9px] text-gray-400 font-medium">{p.age} yrs • {p.location?.split(',')[0]}</div>
+                                  </div>
+                               </div>
+                             ))}
+                          </div>
+                        )}
+
+                        {whoViewedMe.length === 0 && whoExpressedInterest.length === 0 && (
+                          <div className="py-8 text-center">
+                            <Bell className="h-8 w-8 text-indigo-100 mx-auto mb-2" />
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No new activity</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full rounded-xl text-[10px] font-black uppercase tracking-widest text-[#4B0082] hover:bg-indigo-50"
+                        onClick={() => onNavigateToBrowse()}
+                      >
+                        See All Activity
+                      </Button>
+                    </div>
+                 </PopoverContent>
+               </Popover>
+            </div>
+
             {/* Welcome Banner */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
@@ -799,16 +944,6 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               </div>
 
               <div className="relative z-10 w-full md:w-auto">
-                 <div className="bg-white/60 backdrop-blur-xl p-2 rounded-[2rem] border border-white flex items-center gap-3 shadow-2xl shadow-indigo-900/10 max-w-sm ml-auto">
-                    <div className="w-12 h-12 bg-[#4B0082] rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-900/20 shrink-0">
-                        <Search className="h-5 w-5 text-white" />
-                    </div>
-                    <input 
-                        type="text" 
-                        placeholder="Search by ID or Name..." 
-                        className="bg-transparent border-none outline-none text-xs font-bold uppercase tracking-widest text-[#4B0082] placeholder:text-gray-300 w-full"
-                    />
-                 </div>
               </div>
             </motion.div>
 

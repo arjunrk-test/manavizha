@@ -100,8 +100,7 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
     // For dropdown fields, use the exact value from the option to ensure perfect matching
     // The CustomSelectDropdown passes option.value directly, so we should store it as-is
     // Only trim text input fields
-    const isDropdownField = field === "education" || field === "degree" || field === "status"
-    const processedValue = isDropdownField ? (value || "") : (value || "").trim()
+    const processedValue = value || ""
 
     // If education level changes, reset the degree field and educationOther
     if (field === "education") {

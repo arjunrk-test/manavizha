@@ -16,7 +16,6 @@ interface ProfessionalDetailsStepProps {
 
 export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDetailsStepProps) {
   const [payslipError, setPayslipError] = useState<string>("")
-  const [itrError, setItrError] = useState<string>("")
 
   // Fetch employment type from master_employment_type table using the common hook
   const { data: employmentTypeOptions } = useMasterData({ tableName: "master_employment_type" })
@@ -102,32 +101,6 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
     setPayslipError("")
   }
 
-  const handleItrUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    const error = validateFile(file)
-    if (error) {
-      setItrError(error)
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      const result = reader.result as string
-      onChange("itrDocument", result)
-      setItrError("")
-    }
-    reader.readAsDataURL(file)
-
-    // Reset input
-    e.target.value = ""
-  }
-
-  const removeItr = () => {
-    onChange("itrDocument", "")
-    setItrError("")
-  }
 
   // Check employment type (case-insensitive comparison)
   const employmentTypeValue = (formData.employmentType || "").toLowerCase()
@@ -391,78 +364,6 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
             </div>
           </div>
 
-          {/* ITR Document Upload */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-6 mb-4">
-              <Label htmlFor="itrDocument" className="sds-label !mb-0 whitespace-nowrap">Upload ITR Document</Label>
-              <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent" />
-            </div>
-
-            {itrError && (
-              <div className="text-rose-500 text-[10px] font-black uppercase tracking-widest bg-rose-50/50 p-4 rounded-2xl border border-rose-100/50 animate-in shake-in duration-300">
-                {itrError}
-              </div>
-            )}
-
-            <div className="max-w-md">
-              {formData.itrDocument ? (
-                <div className="relative group">
-                  <div className="sds-glass rounded-3xl overflow-hidden border-2 border-indigo-50/50 shadow-lg p-2 bg-white/20">
-                    {formData.itrDocument.startsWith("data:image/") ? (
-                      <img
-                        src={formData.itrDocument}
-                        alt="ITR Document"
-                        className="w-full h-auto rounded-2xl"
-                      />
-                    ) : (
-                      <div className="p-8 flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600">
-                          <Upload className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700">ITR Document Uploaded</p>
-                          <p className="text-[9px] text-amber-500/60 font-bold uppercase tracking-widest mt-1 text-xs">File Securely Stored</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    onClick={removeItr}
-                    className="absolute -top-3 -right-3 h-8 w-8 rounded-full shadow-xl bg-rose-500 hover:bg-rose-600 border-2 border-white"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="sds-glass rounded-3xl border-2 border-dashed border-indigo-100 bg-indigo-50/10 relative group hover:border-[#4B0082]/30 transition-all duration-500 overflow-hidden">
-                  <input
-                    type="file"
-                    accept="image/*,application/pdf"
-                    onChange={handleItrUpload}
-                    className="hidden"
-                    id="itr-upload"
-                  />
-                  <label
-                    htmlFor="itr-upload"
-                    className="cursor-pointer flex flex-col items-center justify-center p-12 text-center"
-                  >
-                    <div className="h-16 w-16 rounded-[2rem] bg-[#4B0082]/5 flex items-center justify-center text-[#4B0082]/40 mb-4 transition-all duration-500 group-hover:scale-110 group-hover:bg-[#4B0082]/10 group-hover:text-[#4B0082]">
-                      <Upload className="h-8 w-8" />
-                    </div>
-                    <span className="text-[11px] font-black uppercase tracking-[0.3em] text-indigo-400 group-hover:text-[#4B0082] transition-colors mb-2">
-                       Upload ITR (Optional)
-                    </span>
-                    <span className="text-[9px] text-black/20 font-bold uppercase tracking-tighter">
-                      Image or PDF up to 5MB
-                    </span>
-                  </label>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       )}
 

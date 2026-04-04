@@ -19,6 +19,7 @@ import { MatchBreakdownDialog } from "@/components/match-breakdown-dialog"
 import { MessageDialog } from "@/components/message-dialog"
 import { calculateLifestyleScore } from "@/lib/matching"
 import { CompatibilitySheet } from "./compatibility-sheet"
+import { MatchScoreBadge } from "@/components/match-score-badge"
 
 interface BrowseProfilesProps {
     userId: string
@@ -635,7 +636,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         const isMutual = childLikedThisProfile && thisProfileLikedChild
 
                         if (!isMutual) {
-                            location = "Location hidden (Requires mutual match)"
+                            location = "Location hidden (Requires mutual interest)"
                         }
                     }
 
@@ -726,7 +727,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         }
 
                         if (preferences.location && preferences.location.length > 0) {
-                            if (profile.location && profile.location !== "Location not specified" && profile.location !== "Location hidden (Requires mutual match)") {
+                            if (profile.location && profile.location !== "Location not specified" && profile.location !== "Location hidden (Requires mutual interest)") {
                                 const locMatches = preferences.location.some((loc: string) =>
                                     profile.location.toLowerCase().includes(loc.toLowerCase())
                                 )
@@ -853,7 +854,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
             parts.push(typeof edu === 'string' ? edu : edu.education)
         }
         if (profile.profession && profile.profession !== "Not specified") parts.push(profile.profession)
-        if (profile.location && profile.location !== "Location not specified" && profile.location !== "Location hidden (Requires mutual match)") {
+        if (profile.location && profile.location !== "Location not specified" && profile.location !== "Location hidden (Requires mutual interest)") {
             const city = profile.location.split(',')[0]
             parts.push(city)
         }
@@ -1015,12 +1016,13 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                         <DropdownMenuItem
                                             onClick={(e) => { 
                                                 e.stopPropagation(); 
+                                                const isMutual = likedIds.includes(profile.user_id) && likedMeIds.includes(profile.user_id);
                                                 if (isPremium || isMutual) {
                                                     setMessageTarget({ id: profile.user_id, name: profile.name });
                                                     setIsMessageDialogOpen(true);
                                                 } else {
                                                     toast.error('Premium Required', { 
-                                                        description: 'Upgrade to Premium for direct messaging, or wait for a mutual match.' 
+                                                        description: 'Upgrade to Premium for direct messaging, or wait for mutual interest.' 
                                                     });
                                                 }
                                             }}
@@ -1234,7 +1236,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                             {/* Mutual match header */}
                             <div className="bg-amber-50/50 px-6 py-4 flex items-center gap-3 border-b border-amber-100">
                                 <SparklesIcon className="h-5 w-5 text-amber-500 animate-pulse" />
-                                <span className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Mutual Match Found</span>
+                                <span className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Mutual Interest Found</span>
                             </div>
 
                             <div className="flex flex-col md:flex-row">
@@ -1381,7 +1383,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         {mutualSection.length > 0 && (
                             <div>
                                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                    <Star className="h-5 w-5 text-amber-500" /> Mutual Matches 🎉
+                                    <Star className="h-5 w-5 text-amber-500" /> Mutual Interest 🎉
                                     <span className="text-sm font-normal text-gray-500">({mutualSection.length})</span>
                                 </h3>
                                 <div className="space-y-6">
