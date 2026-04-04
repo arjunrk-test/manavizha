@@ -698,9 +698,10 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             transition={{ duration: 0.5, delay: 0.1 }}
             className="sds-glass rounded-[2rem] overflow-hidden p-2"
           >
-            <div className="py-3 px-3 border-b border-black/5 dark:border-white/5 mb-1">
-                <Sparkles className="h-3.5 w-3.5" />
-                My Activity
+            <div className="py-2.5 px-4 mb-1">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-900/40">
+                  Quick Actions
+                </h4>
             </div>
             
             <div className="space-y-0.5">
@@ -711,110 +712,110 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               ) : null}
               <Button
                 variant="ghost"
-                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
                 onClick={onNavigateToMutualMatches}
                 disabled={completionPercentage === 0}
               >
-                <HeartHandshake className="h-4 w-4 mr-3 text-[#4B0082] group-hover:scale-110 transition-transform" />
+                <HeartHandshake className="h-4 w-4 mr-3 text-[#4B0082]" />
                 <div className="flex-1 flex items-center justify-between">
-                  <div className="font-bold text-[9px] uppercase tracking-wider">Mutual Interest</div>
-                  <span className="bg-[#4B0082] text-white text-[8px] px-2 py-0.5 rounded-full font-black shadow-lg shadow-indigo-500/20">{mutualCount}</span>
+                  <div className="font-bold text-[11px] text-gray-700">Mutual Matches</div>
+                  <span className="bg-[#4B0082] text-white text-[8px] px-1.5 py-0.5 rounded-md font-black">{mutualCount}</span>
                 </div>
               </Button>
               <Button
                 variant="ghost"
-                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
                 onClick={onNavigateToILiked}
                 disabled={completionPercentage === 0}
               >
-                <Heart className="h-4 w-4 mr-3 text-[#FF1493] group-hover:scale-110 transition-transform" />
+                <Heart className="h-4 w-4 mr-3 text-rose-400" />
                 <div className="flex-1 flex items-center justify-between">
-                  <div className="font-bold text-[9px] uppercase tracking-wider">Interest Expressed</div>
-                  <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[8px] px-2 py-0.5 rounded-full font-black">{iLikedCount}</span>
+                  <div className="font-bold text-[11px] text-gray-700">I Liked</div>
+                  <span className="text-gray-400 text-[8px] font-black">{iLikedCount}</span>
                 </div>
               </Button>
               <Button
                 variant="ghost"
-                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
                 onClick={onNavigateToLikedMe}
                 disabled={completionPercentage === 0}
               >
-                <Sparkles className="h-4 w-4 mr-3 text-[#4B0082] group-hover:scale-110 transition-transform" />
+                <Sparkles className="h-4 w-4 mr-3 text-indigo-400" />
                 <div className="flex-1 flex items-center justify-between">
-                  <div className="font-bold text-[9px] uppercase tracking-wider">Interest Received</div>
-                  <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[8px] px-2 py-0.5 rounded-full font-black">{likedMeCount}</span>
+                  <div className="font-bold text-[11px] text-gray-700">Liked Me</div>
+                  <span className="text-gray-400 text-[8px] font-black">{likedMeCount}</span>
                 </div>
               </Button>
+
+              <Button
+                variant="ghost"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
+                onClick={onNavigateToPartnerPreferences}
+                disabled={completionPercentage === 0}
+              >
+                <Search className="h-4 w-4 mr-3 text-indigo-400" />
+                <div className="font-bold text-[11px] text-gray-700">Preferences</div>
+              </Button>
+
+              <Button
+                variant="ghost"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
+                onClick={onNavigateToBrowse}
+                disabled={completionPercentage === 0}
+              >
+                <Users2 className="h-4 w-4 mr-3 text-indigo-400" />
+                <div className="font-bold text-[11px] text-gray-700">Browse</div>
+              </Button>
+
+              <Button
+                variant="ghost"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
+                onClick={() => setShowSubscriptionDialog(true)}
+              >
+                <Star className="h-4 w-4 mr-3 text-amber-500" />
+                <div className="font-bold text-[11px] text-gray-700">Generate Horoscope</div>
+              </Button>
               
-              <div className="h-px bg-black/5 dark:bg-white/5 my-2 mx-4" />
-              
-              <div className="py-2 px-5 mb-1">
-                <h4 className="text-[11px] uppercase tracking-[0.2em] flex items-center gap-2 font-black text-indigo-900/40">
-                  <UserCircle2 className="h-3.5 w-3.5" />
-                  Parents
+              <div className="py-2.5 px-4 mt-2">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-900/40">
+                  Parental Access
                 </h4>
               </div>
 
               <Button
                 variant="ghost"
-                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
                 onClick={onNavigateToSelections}
                 disabled={completionPercentage === 0}
               >
-                <Users2 className="h-4 w-4 mr-3 text-[#4B0082]/60 group-hover:scale-110 transition-transform" />
-                <div className="font-bold text-[10px] uppercase tracking-wider">Chosen by Parents</div>
+                <Heart className="h-4 w-4 mr-3 text-rose-400" />
+                <div className="font-bold text-[11px] text-gray-700">Selections</div>
               </Button>
               
               <Button
                 variant="ghost"
-                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
                 onClick={onNavigateToParents}
                 disabled={completionPercentage === 0}
               >
-                <ShieldCheck className="h-4 w-4 mr-3 text-[#4B0082]/60 group-hover:scale-110 transition-transform" />
-                <div className="font-bold text-[10px] uppercase tracking-wider">Parents Access</div>
+                <UserCircle2 className="h-4 w-4 mr-3 text-indigo-400" />
+                <div className="font-bold text-[11px] text-gray-700">Parents</div>
               </Button>
-              
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/10 hover:text-[#4B0082] group transition-all"
-                onClick={onNavigateToPartnerPreferences}
-                disabled={completionPercentage === 0}
-              >
-                <Search className="h-4 w-4 mr-3 text-[#4B0082]" />
-                <div className="font-bold text-[10px] uppercase tracking-wider">Partner Preference</div>
-              </Button>
-              <div className="h-px bg-black/5 dark:bg-white/5 my-2 mx-4" />
-              
-              <div className="py-2 px-5 mb-1">
-                <h4 className="text-[11px] uppercase tracking-[0.2em] flex items-center gap-2 font-black text-indigo-900/40">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  Account
+
+              <div className="py-2.5 px-4 mt-2">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-900/40">
+                  Profile Status
                 </h4>
               </div>
-              
-              {!isMarried && (
-                <>
-                  {!profile?.photo_verified && (
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start h-12 px-4 rounded-xl hover:bg-emerald-500/5 hover:text-emerald-600 transition-all font-bold text-[10px] uppercase tracking-wider"
-                      onClick={() => setShowVerificationDialog(true)}
-                    >
-                      <ShieldCheck className="h-4 w-4 mr-3 text-emerald-500" />
-                      Verify Identity
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start h-12 px-4 rounded-xl hover:bg-[#4B0082]/10 hover:text-[#4B0082] transition-all font-bold text-[10px] uppercase tracking-wider"
-                    onClick={() => setShowMarriedConfirmDialog(true)}
-                  >
-                    <HeartHandshake className="h-4 w-4 mr-3 text-[#4B0082]" />
-                    Hide Profile
-                  </Button>
-                </>
-              )}
+
+              <Button
+                variant="ghost"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
+                onClick={() => setShowMarriedConfirmDialog(true)}
+              >
+                <HeartHandshake className="h-4 w-4 mr-3 text-rose-400" />
+                <div className="font-bold text-[11px] text-gray-700">Mark as Married</div>
+              </Button>
               
             </div>
           </motion.div>
@@ -822,140 +823,59 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
   
           {/* Right Main Content */}
           <main className="flex-1 w-full min-w-0 space-y-8 pb-24 mt-4">
-            {/* Header with Notifications */}
-            <div className="flex items-center justify-between px-4 md:px-0 min-h-[48px]">
-               <div></div>
-               <Popover>
-                 <PopoverTrigger asChild>
-                   <Button variant="ghost" size="icon" className="relative h-12 w-12 rounded-2xl bg-white/50 backdrop-blur-md shadow-sm border border-indigo-100/50 hover:bg-white transition-all">
-                     <Bell className="h-5 w-5 text-[#4B0082]" />
-                     {(whoViewedMe.length + whoExpressedInterest.length) > 0 && (
-                       <Badge className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center bg-rose-500 text-white rounded-full p-0 text-[10px] border-2 border-white">
-                         {whoViewedMe.length + whoExpressedInterest.length}
-                       </Badge>
-                     )}
-                   </Button>
-                 </PopoverTrigger>
-                 <PopoverContent align="end" className="w-[320px] rounded-[2rem] p-4 sds-glass border-indigo-100/30 shadow-2xl backdrop-blur-3xl z-50">
-                    <div className="space-y-4">
-                      <div className="px-2 py-1">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#4B0082]">Notifications</h4>
-                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">Activity from last 30 days</p>
-                      </div>
 
-                      <div className="space-y-6 max-h-[400px] overflow-y-auto px-1 pr-2 custom-scrollbar">
-                        {/* Section 1: Interests */}
-                        {whoExpressedInterest.length > 0 && (
-                          <div className="space-y-2">
-                             <div className="px-2 text-[9px] font-black text-rose-500 uppercase tracking-widest">Interest Received</div>
-                             {whoExpressedInterest.slice(0, 5).map(p => (
-                               <div key={p.user_id} className="group p-3 rounded-2xl hover:bg-white/60 transition-all flex items-center gap-3 cursor-pointer" onClick={() => handleNotificationClick('interest', p.user_id)}>
-                                  <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100">
-                                    <img src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}`} className="w-full h-full object-cover" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between gap-2">
-                                      <div className="text-[11px] font-bold text-gray-900 truncate">{p.name || 'Anonymous Member'} expressed interest</div>
-                                      <div className="text-[8px] text-indigo-400 font-bold whitespace-nowrap">{formatDistanceToNow(new Date(p.interaction_at), { addSuffix: true })}</div>
-                                    </div>
-                                    <div className="text-[9px] text-gray-400 font-medium">{p.age} yrs • {p.profession?.split(' at ')[0] || 'Member'}</div>
-                                  </div>
-                               </div>
-                             ))}
-                          </div>
-                        )}
-
-                        {/* Section 2: Visitors */}
-                        {whoViewedMe.length > 0 && (
-                          <div className="space-y-2">
-                             <div className="px-2 text-[9px] font-black text-indigo-500 uppercase tracking-widest">Profile Visitors</div>
-                             {whoViewedMe.slice(0, 5).map(p => (
-                               <div key={p.user_id} className="group p-3 rounded-2xl hover:bg-white/60 transition-all flex items-center gap-3 cursor-pointer" onClick={() => handleNotificationClick('view', p.user_id)}>
-                                  <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100">
-                                    <img src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}`} className="w-full h-full object-cover" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between gap-2">
-                                      <div className="text-[11px] font-bold text-gray-900 truncate">{p.name || 'Anonymous Member'} viewed your profile</div>
-                                      <div className="text-[8px] text-indigo-400 font-bold whitespace-nowrap">{formatDistanceToNow(new Date(p.interaction_at), { addSuffix: true })}</div>
-                                    </div>
-                                    <div className="text-[9px] text-gray-400 font-medium">{p.age} yrs • {p.location?.split(',')[0]}</div>
-                                  </div>
-                               </div>
-                             ))}
-                          </div>
-                        )}
-
-                        {whoViewedMe.length === 0 && whoExpressedInterest.length === 0 && (
-                          <div className="py-8 text-center">
-                            <Bell className="h-8 w-8 text-indigo-100 mx-auto mb-2" />
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No new activity</p>
-                          </div>
-                        )}
-                      </div>
-
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="w-full rounded-xl text-[10px] font-black uppercase tracking-widest text-[#4B0082] hover:bg-indigo-50"
-                        onClick={() => onNavigateToBrowse()}
-                      >
-                        See All Activity
-                      </Button>
-                    </div>
-                 </PopoverContent>
-               </Popover>
-            </div>
 
             {/* Welcome Banner */}
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="p-8 md:p-12 rounded-[3rem] sds-glass group relative overflow-hidden shadow-2xl border-indigo-100/30 flex flex-col md:flex-row justify-between items-center gap-10 min-h-[320px]"
+              className="p-8 rounded-[2rem] sds-glass relative overflow-hidden shadow-xl border-indigo-100/30 flex items-center justify-between gap-6"
             >
-              <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-indigo-500/5 rounded-full blur-[100px] -mr-48 -mt-48 group-hover:bg-indigo-500/10 transition-colors duration-1000" />
-              
-              <div className="relative z-10 flex-1">
-                <div className="flex flex-wrap items-center gap-3 mb-8">
-                  {getPremiumBadge()}
-                  {profile?.photo_verified && (
-                    <span className="flex items-center gap-1.5 text-[9px] font-black text-emerald-700 bg-emerald-50 px-4 py-1.5 rounded-full uppercase tracking-widest border border-emerald-100 shadow-sm">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Verified
-                    </span>
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-2xl overflow-hidden bg-indigo-50 border-2 border-white shadow-md">
+                    <img src={profile?.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || '')}`} className="w-full h-full object-cover" />
+                  </div>
+                  {profile?.isPremium && (
+                    <div className="absolute -top-2 -right-2 bg-indigo-600 p-1.5 rounded-lg shadow-lg">
+                      <Crown className="w-3 h-3 text-white" />
+                    </div>
                   )}
-                  <span className="flex items-center gap-1.5 text-[9px] font-black text-indigo-700 bg-indigo-50 px-4 py-1.5 rounded-full uppercase tracking-widest border border-indigo-100 shadow-sm">
-                    <ShieldCheck className="h-3.5 w-3.5" /> Trust Score {calculateTrustScore(
-                        !!profile?.photo_verified, 
-                        completionPercentage, 
-                        profile?.photos?.length || 0,
-                        !!profile?.familyPhoto
-                    )}
-                  </span>
                 </div>
-                
-                <h1 className="text-4xl md:text-6xl font-black text-gray-900 tracking-tighter mb-4 leading-none lowercase">
-                   hello, <span className="text-[#4B0082]">{userName?.split(' ')[0]}</span><span className="text-[#FF1493]">.</span>
-                </h1>
-                
-                <p className="text-gray-500 text-lg md:text-xl font-medium max-w-2xl leading-relaxed">
-                  You have <span className="text-[#4B0082] font-black">{allMatches.length || 0} potential soulmates</span> waiting to be discovered today.
-                </p>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h1 className="text-xl md:text-2xl font-black text-indigo-900">
+                      Welcome back, {userName?.split(' ')[0]}! 👋
+                    </h1>
+                    {profile?.photo_verified && (
+                      <div className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border border-emerald-100">
+                        Verified
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-gray-500 text-[11px] font-bold uppercase tracking-widest">
+                    We're excited to help you find your perfect match
+                  </p>
+                </div>
               </div>
 
-              <div className="relative z-10 w-full md:w-auto">
-                <div className="flex flex-col gap-4">
-                  <Button 
-                    onClick={onNavigateToProfileSetup}
-                    className="h-12 px-8 rounded-2xl bg-white text-[#4B0082] font-black text-[10px] uppercase tracking-[0.1em] hover:scale-105 transition-all shadow-xl shadow-indigo-500/10 border-none group/btn"
-                  >
-                    Quick Setup <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
-                  </Button>
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest text-center">Profiles with setup get 3x more interest</p>
-                  </div>
+              <div className="hidden md:flex items-center gap-4">
+                <div className="text-right">
+                  <p className="text-[9px] font-black text-indigo-900/40 uppercase tracking-widest">Trust Score</p>
+                  <p className="text-xl font-black text-indigo-900 tracking-tighter">
+                    {calculateTrustScore(!!profile?.photo_verified, completionPercentage, profile?.photos?.length || 0, !!profile?.familyPhoto)}
+                  </p>
                 </div>
+                <div className="h-10 w-px bg-indigo-100" />
+                <Button 
+                   onClick={onNavigateToProfileSetup}
+                   variant="ghost" 
+                   size="sm" 
+                   className="h-10 px-4 rounded-xl text-indigo-600 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50"
+                >
+                  Edit Profile
+                </Button>
               </div>
             </motion.div>
 
