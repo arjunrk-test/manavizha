@@ -69,7 +69,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
                 id="name"
                 value={formData.name}
                 onChange={(e) => onChange("name", e.target.value)}
-                placeholder="Enter your full name"
+                placeholder="e.g., Arjun Ramakrishnan"
                 required
                 className="sds-input w-full"
               />
@@ -304,7 +304,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
                 const value = e.target.value
                 if (value.length <= 600) onChange("about", value)
               }}
-              placeholder="Write a few lines about yourself, your hobbies, and what you are looking for in a partner..."
+              placeholder="Example: I am a software engineer who loves trekking and classical music. I value family traditions and am looking for someone with similar interests..."
               rows={6}
               maxLength={600}
               required

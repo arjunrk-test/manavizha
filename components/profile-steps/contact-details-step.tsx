@@ -288,7 +288,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                     e.preventDefault()
                   }
                 }}
-                placeholder="Enter phone number"
+                placeholder="e.g., 9876543210"
                 maxLength={10}
                 required
                 className="sds-input pl-16 w-full"
@@ -332,7 +332,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                     e.preventDefault()
                   }
                 }}
-                placeholder="Enter WhatsApp number"
+                placeholder="e.g., 9876543210"
                 maxLength={10}
                 required
                 disabled={isWhatsappSameAsPhone}
@@ -364,7 +364,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                 id="permanentAddressLine1"
                 value={formData.permanentAddressLine1}
                 onChange={(e) => onChange("permanentAddressLine1", e.target.value)}
-                placeholder="Building number, street name"
+                placeholder="e.g., Flat No. 402, Sunshine Apartments"
                 required
                 className="sds-input w-full px-6"
               />
@@ -375,7 +375,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                 id="permanentAddressLine2"
                 value={formData.permanentAddressLine2}
                 onChange={(e) => onChange("permanentAddressLine2", e.target.value)}
-                placeholder="Apartment, suite, unit (optional)"
+                placeholder="e.g., 123, Green Street, Apartment 4B"
                 className="sds-input w-full px-6"
               />
             </div>
@@ -392,7 +392,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                       onChange("permanentPincode", value)
                     }
                   }}
-                  placeholder="6 Digit PIN"
+                  placeholder="e.g., 600017"
                   maxLength={6}
                   required
                   className={`sds-input w-full px-6 font-black tracking-widest ${isLoadingPermanentAddress ? "pr-14" : ""}`}
@@ -464,7 +464,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                 id="permanentLandmark"
                 value={formData.permanentLandmark}
                 onChange={(e) => onChange("permanentLandmark", e.target.value)}
-                placeholder="Identify a notable static feature"
+                placeholder="e.g., Near City Hospital / Opp. Post Office"
                 className="sds-input w-full px-6"
               />
             </div>
@@ -520,7 +520,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                 id="currentAddressLine1"
                 value={formData.currentAddressLine1}
                 onChange={(e) => onChange("currentAddressLine1", e.target.value)}
-                placeholder="Current residence street details"
+                placeholder="e.g., Plot No. 12, Rose Villa"
                 required
                 disabled={isCurrentAddressSameAsPermanent}
                 className="sds-input w-full px-6"
@@ -539,7 +539,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                       onChange("currentPincode", value)
                     }
                   }}
-                  placeholder="6 Digit PIN"
+                  placeholder="e.g., 600028"
                   maxLength={6}
                   required
                   disabled={isCurrentAddressSameAsPermanent}

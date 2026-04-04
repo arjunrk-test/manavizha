@@ -218,7 +218,7 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
             id="placeOfBirth"
             value={formData.placeOfBirth || ""}
             onChange={(e) => onChange("placeOfBirth", e.target.value)}
-            placeholder="Enter City Name"
+            placeholder="e.g., Madurai, Tamil Nadu"
             required
             className="sds-input w-full"
           />
@@ -259,7 +259,7 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
               id="dhosham"
               value={formData.dhosham || ""}
               onChange={(e) => onChange("dhosham", e.target.value)}
-              placeholder="Enter Dhosham details (if any)"
+              placeholder="e.g., No Dhosham / Chevvai Dhosham"
               required
               className="sds-input w-full"
             />

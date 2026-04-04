@@ -173,7 +173,7 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
                   id={`educationOther-${index}`}
                   value={edu.educationOther || ""}
                   onChange={(e) => updateEducation(index, "educationOther", e.target.value)}
-                  placeholder="Enter Education Level"
+                  placeholder="e.g., Higher Secondary, Diploma"
                   required
                   className="sds-input w-full"
                 />
@@ -195,7 +195,7 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
                   id={`degreeOther-${index}`}
                   value={edu.degreeOther || ""}
                   onChange={(e) => updateEducation(index, "degreeOther", e.target.value)}
-                  placeholder="Enter Degree Name"
+                  placeholder="e.g., B.Sc. Visual Communication"
                   required
                   className="sds-input w-full"
                 />
@@ -217,7 +217,7 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
                 id={`institution-${index}`}
                 value={edu.institution || ""}
                 onChange={(e) => updateEducation(index, "institution", e.target.value)}
-                placeholder="Enter College Name"
+                placeholder="e.g., Loyola College, Chennai"
                 className="sds-input w-full"
               />
             </div>
@@ -235,9 +235,9 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
                 }}
                 placeholder="YYYY"
                 min="1950"
-                max={new Date().getFullYear() + 5}
+                max={new Date().getFullYear() + 10}
                 className="sds-input w-full"
-                disabled={edu.status === "ongoing" || edu.status === "pursuing"}
+                disabled={edu.status?.toLowerCase().includes("pursuing") || edu.status?.toLowerCase().includes("ongoing") || edu.status?.toLowerCase().includes("studying")}
               />
             </div>
             <SelectDropdown

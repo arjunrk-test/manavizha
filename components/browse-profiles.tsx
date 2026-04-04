@@ -20,6 +20,7 @@ import { MessageDialog } from "@/components/message-dialog"
 import { calculateLifestyleScore } from "@/lib/matching"
 import { CompatibilitySheet } from "./compatibility-sheet"
 import { MatchScoreBadge } from "@/components/match-score-badge"
+import { formatToDDMMYYYY } from "@/lib/utils/date-utils"
 
 interface BrowseProfilesProps {
     userId: string
@@ -1727,7 +1728,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                                             <Heart className="h-5 w-5 mr-2 text-pink-500" /> Personal Details
                                                         </h3>
                                                         <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm bg-pink-50 dark:bg-pink-900/10 p-4 rounded-xl">
-                                                            {selectedProfile.date_of_birth && <div><span className="block text-gray-500 mb-1">Date of Birth</span><span className="font-medium text-gray-900 dark:text-white">{selectedProfile.date_of_birth}</span></div>}
+                                                            {selectedProfile.date_of_birth && <div><span className="block text-gray-500 mb-1">Date of Birth</span><span className="font-medium text-gray-900 dark:text-white">{formatToDDMMYYYY(selectedProfile.date_of_birth)}</span></div>}
                                                             {selectedProfile.sex && <div><span className="block text-gray-500 mb-1">Gender</span><span className="font-medium text-gray-900 dark:text-white">{selectedProfile.sex}</span></div>}
                                                             {selectedProfile.height && <div><span className="block text-gray-500 mb-1">Height (cm)</span><span className="font-medium text-gray-900 dark:text-white">{selectedProfile.height}</span></div>}
                                                             {selectedProfile.weight && <div><span className="block text-gray-500 mb-1">Weight (kg)</span><span className="font-medium text-gray-900 dark:text-white">{selectedProfile.weight}</span></div>}

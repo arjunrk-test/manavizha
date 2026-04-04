@@ -1201,10 +1201,22 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         missingFields.push(`Education ${entryNum}: Status`)
       }
 
-      // Year of graduation is required only if status is completed or discontinued
-      if ((edu.status === "completed" || edu.status === "discontinued") &&
-        (!edu.yearOfGraduation || edu.yearOfGraduation.trim() === "")) {
-        missingFields.push(`Education ${entryNum}: Year of Graduation`)
+      // Year of graduation is required only if status is completed, graduated, or discontinued
+      const status = edu.status?.toLowerCase() || ""
+      const isFinished = status.includes("complete") || status.includes("graduated") || status.includes("discontinued")
+      
+      if (isFinished) {
+        if (!edu.yearOfGraduation || edu.yearOfGraduation.trim() === "") {
+          missingFields.push(`Education ${entryNum}: Year of Graduation`)
+        } else if (!/^\d{4}$/.test(edu.yearOfGraduation.trim())) {
+          missingFields.push(`Education ${entryNum}: Year of Graduation (must be a 4-digit number)`)
+        } else {
+          const year = parseInt(edu.yearOfGraduation.trim())
+          const currentYear = new Date().getFullYear()
+          if (year < 1950 || year > currentYear + 10) {
+            missingFields.push(`Education ${entryNum}: Year of Graduation (must be between 1950 and ${currentYear + 10})`)
+          }
+        }
       }
     })
 
@@ -3385,14 +3397,14 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
   return (
     <div className="min-h-screen py-8">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="max-w-full mx-auto px-4 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Sidebar Navigation */}
-          <div className="lg:col-span-1">
-            <div className="sds-glass rounded-[2.5rem] p-3 border-2 border-indigo-50 sticky top-24 overflow-hidden">
-              <div className="p-5 border-b border-black/5 mb-4">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#4B0082]/40">System Onboarding</h4>
-                <h3 className="text-xl font-light text-gray-900 tracking-tight">Setup Matrix</h3>
+          <div className="lg:col-span-3">
+            <div className="sds-glass rounded-[2.5rem] p-4 border-2 border-indigo-50 sticky top-24 overflow-hidden shadow-[0_20px_50px_rgba(75,0,130,0.05)]">
+              <div className="p-6 border-b border-black/5 mb-6">
+                <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-[#4B0082]/50 mb-1">Profile Journey</h4>
+                <h3 className="text-2xl font-light text-gray-900 tracking-tight">Step Breakdown</h3>
               </div>
 
               <div className="space-y-1">
@@ -3424,8 +3436,8 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                           )}
                         </div>
                         <div className="min-w-0">
-                          <div className="text-[10px] font-black uppercase tracking-widest truncate">{step.title}</div>
-                          {isCompleted && !isActive && <span className="text-[8px] font-black text-emerald-500/60 uppercase tracking-tighter">Verified</span>}
+                          <div className="text-[11px] font-black uppercase tracking-widest truncate group-hover:text-[#4B0082] transition-colors">{step.title}</div>
+                          {isCompleted && !isActive && <span className="text-[9px] font-black text-emerald-500/80 uppercase tracking-tighter">Verified</span>}
                         </div>
                       </div>
                       {isActive && <div className="w-1.5 h-1.5 rounded-full bg-white opacity-40 shadow-sm" />}
@@ -3437,8 +3449,8 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-3">
-            <div className="sds-glass rounded-[3rem] p-8 md:p-12 border-2 border-indigo-50 shadow-2xl shadow-indigo-100/20 relative overflow-hidden">
+          <div className="lg:col-span-9">
+            <div className="sds-glass rounded-[3rem] p-10 md:p-16 border-2 border-indigo-50 shadow-2xl shadow-indigo-100/20 relative overflow-hidden">
               {/* Header logic */}
               <div className="flex items-end justify-between mb-12 border-b border-black/5 pb-8">
                 <div>
