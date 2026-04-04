@@ -16,7 +16,7 @@ export interface CompatibilityResult {
 /**
  * Calculates the Lifestyle Compatibility Score between two profiles.
  */
-export function calculateLifestyleScore(user: FormData, partner: FormData): CompatibilityResult {
+export function calculateLifestyleScore(user: Partial<FormData>, partner: Partial<FormData>): CompatibilityResult {
   const breakdown: MatchBreakdown[] = []
   
   // --- Tier 1: Dealbreakers (50%) ---

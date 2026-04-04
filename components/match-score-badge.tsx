@@ -1,5 +1,6 @@
 "use client"
 
+import type { MouseEventHandler } from "react"
 import { ShieldCheck, Lock, Sparkles } from "lucide-react"
 import { motion } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
@@ -9,7 +10,7 @@ interface MatchScoreBadgeProps {
   lifestyleScore: number;
   poruthamScore: number;
   isPremium: boolean;
-  onClick?: () => void;
+  onClick?: MouseEventHandler<HTMLDivElement>;
 }
 
 export function MatchScoreBadge({ lifestyleScore, poruthamScore, isPremium, onClick }: MatchScoreBadgeProps) {

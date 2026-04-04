@@ -410,7 +410,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 // 1. Get current user gender
                 const { data: userData } = await supabase
                     .from("personal_details")
-                    .select("sex")
+                    .select("sex, food_preference")
                     .eq("user_id", userId)
                     .maybeSingle()
 
@@ -595,8 +595,8 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 ] = await Promise.all([
                     supabase.from("photos").select("user_id, user_photos, family_photo").in("user_id", targetUserIds),
                     supabase.from("contact_details").select("user_id, current_district, current_state, phone, whatsapp_number").in("user_id", targetUserIds),
-                    supabase.from("profession_employee").select("user_id, designation, company, sector, salary").in("user_id", targetUserIds),
-                    supabase.from("profession_business").select("user_id, designation, business_name, business_type, annual_returns").in("user_id", targetUserIds),
+                    supabase.from("profession_employee").select("user_id, designation, company, sector, salary, work_location").in("user_id", targetUserIds),
+                    supabase.from("profession_business").select("user_id, designation, business_name, business_type, annual_returns, business_location").in("user_id", targetUserIds),
                     supabase.from("profession_student").select("user_id, course, institution").in("user_id", targetUserIds),
                     supabase.from("education_details").select("user_id, education, institution").in("user_id", targetUserIds),
                     supabase.from("interests").select("*").in("user_id", targetUserIds),

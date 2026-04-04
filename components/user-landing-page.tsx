@@ -390,7 +390,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
         // 1. Get my gender preference
         const { data: userData } = await supabase
           .from("personal_details")
-          .select("sex")
+          .select("sex, food_preference")
           .eq("user_id", userId)
           .maybeSingle()
 
