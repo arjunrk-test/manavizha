@@ -674,7 +674,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
     <div className="max-w-[105rem] mx-auto px-4 sm:px-8 py-4">
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Left Sidebar - Sticky */}
-        <aside className="w-full lg:w-[15rem] xl:w-[16rem] lg:sticky lg:top-16 space-y-3 flex-shrink-0">
+        <aside className="w-full lg:w-[16rem] xl:w-[17rem] lg:sticky lg:top-16 space-y-3 flex-shrink-0">
           {/* Quick Search */}
           <motion.div
             initial={{ opacity: 0, x: -10 }}
@@ -717,8 +717,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               >
                 <HeartHandshake className="h-4 w-4 mr-3 text-[#4B0082] group-hover:scale-110 transition-transform" />
                 <div className="flex-1 flex items-center justify-between">
-                  <div className="font-bold text-[10px] uppercase tracking-wider">Mutual Interest</div>
-                  <span className="bg-[#4B0082] text-white text-[9px] px-2.5 py-1 rounded-full font-black shadow-lg shadow-indigo-500/20">{mutualCount}</span>
+                  <div className="font-bold text-[9px] uppercase tracking-wider">Mutual Interest</div>
+                  <span className="bg-[#4B0082] text-white text-[8px] px-2 py-0.5 rounded-full font-black shadow-lg shadow-indigo-500/20">{mutualCount}</span>
                 </div>
               </Button>
               <Button
@@ -729,8 +729,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               >
                 <Heart className="h-4 w-4 mr-3 text-[#FF1493] group-hover:scale-110 transition-transform" />
                 <div className="flex-1 flex items-center justify-between">
-                  <div className="font-bold text-[10px] uppercase tracking-wider">Interest Expressed</div>
-                  <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[9px] px-2.5 py-1 rounded-full font-black">{iLikedCount}</span>
+                  <div className="font-bold text-[9px] uppercase tracking-wider">Interest Expressed</div>
+                  <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[8px] px-2 py-0.5 rounded-full font-black">{iLikedCount}</span>
                 </div>
               </Button>
               <Button
@@ -741,8 +741,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               >
                 <Sparkles className="h-4 w-4 mr-3 text-[#4B0082] group-hover:scale-110 transition-transform" />
                 <div className="flex-1 flex items-center justify-between">
-                  <div className="font-bold text-[10px] uppercase tracking-wider">Interest Received</div>
-                  <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[9px] px-2.5 py-1 rounded-full font-black">{likedMeCount}</span>
+                  <div className="font-bold text-[9px] uppercase tracking-wider">Interest Received</div>
+                  <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[8px] px-2 py-0.5 rounded-full font-black">{likedMeCount}</span>
                 </div>
               </Button>
               
@@ -912,7 +912,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="p-12 md:p-16 rounded-[3.5rem] sds-glass group relative overflow-hidden shadow-2xl border-indigo-100/30 flex flex-col md:flex-row justify-between items-center gap-10 min-h-[420px]"
+              className="p-8 md:p-12 rounded-[3rem] sds-glass group relative overflow-hidden shadow-2xl border-indigo-100/30 flex flex-col md:flex-row justify-between items-center gap-10 min-h-[320px]"
             >
               <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-indigo-500/5 rounded-full blur-[100px] -mr-48 -mt-48 group-hover:bg-indigo-500/10 transition-colors duration-1000" />
               
@@ -934,7 +934,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                   </span>
                 </div>
                 
-                <h1 className="text-5xl md:text-8xl font-black text-gray-900 tracking-tighter mb-4 leading-none lowercase">
+                <h1 className="text-4xl md:text-6xl font-black text-gray-900 tracking-tighter mb-4 leading-none lowercase">
                    hello, <span className="text-[#4B0082]">{userName?.split(' ')[0]}</span><span className="text-[#FF1493]">.</span>
                 </h1>
                 
@@ -947,9 +947,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 <div className="flex flex-col gap-4">
                   <Button 
                     onClick={onNavigateToProfileSetup}
-                    className="h-16 px-10 rounded-[2rem] bg-white text-[#4B0082] font-black text-xs uppercase tracking-[0.2em] hover:scale-105 transition-all shadow-2xl shadow-indigo-500/20 border-none group/btn"
+                    className="h-12 px-8 rounded-2xl bg-white text-[#4B0082] font-black text-[10px] uppercase tracking-[0.1em] hover:scale-105 transition-all shadow-xl shadow-indigo-500/10 border-none group/btn"
                   >
-                    Quick Setup <ArrowRight className="ml-3 h-5 w-5 group-hover/btn:translate-x-1 transition-transform" />
+                    Quick Setup <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
                   </Button>
                   <div className="flex items-center justify-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
