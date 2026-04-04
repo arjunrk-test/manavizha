@@ -2,8 +2,12 @@
 
 import axios from "axios"
 import * as https from "https"
-import * as fs from 'fs'
 import * as dns from 'dns'
+
+/** Serverless (e.g. Vercel) has a read-only FS — never write debug.txt here; use logs. */
+function adminDebugLog(message: string) {
+    console.log(`[admin] ${message}`)
+}
 
 // Force Node to prefer IPv4 DNS resolution
 dns.setDefaultResultOrder('ipv4first')
@@ -56,8 +60,7 @@ export async function createAdminAccount(data: {
     role: AdminRole
     password?: string
 }) {
-    const logFile = 'debug.txt'
-    fs.appendFileSync(logFile, `[${new Date().toISOString()}] createAdminAccount: ${data.email}\n`)
+    adminDebugLog(`${new Date().toISOString()} createAdminAccount: ${data.email}`)
 
     try {
         const ax = await getAxios()
@@ -72,7 +75,7 @@ export async function createAdminAccount(data: {
 
         if (!authData?.id) throw new Error("No user ID returned from auth")
         const userId = authData.id
-        fs.appendFileSync(logFile, `[${new Date().toISOString()}] Auth user created: ${userId}\n`)
+        adminDebugLog(`${new Date().toISOString()} Auth user created: ${userId}`)
 
         // Step 2: Insert into admins table via REST API
         const { data: adminRow, status: adminStatus } = await ax.post(
@@ -86,27 +89,27 @@ export async function createAdminAccount(data: {
             },
             { headers: { 'Prefer': 'return=representation' } }
         )
-        fs.appendFileSync(logFile, `[${new Date().toISOString()}] Admins table insert status: ${adminStatus}\n`)
+        adminDebugLog(`${new Date().toISOString()} Admins table insert status: ${adminStatus}`)
 
         // Step 3: Insert into personal_details (best-effort)
         try {
             await ax.post('/rest/v1/personal_details', { user_id: userId, name: data.name })
         } catch (e: any) {
-            fs.appendFileSync(logFile, `[${new Date().toISOString()}] personal_details insert failed (non-fatal): ${e.message}\n`)
+            adminDebugLog(`${new Date().toISOString()} personal_details insert failed (non-fatal): ${e.message}`)
         }
 
         // Step 4: Insert into contact_details (best-effort)
         try {
             await ax.post('/rest/v1/contact_details', { user_id: userId, phone: data.phone, email: data.email })
         } catch (e: any) {
-            fs.appendFileSync(logFile, `[${new Date().toISOString()}] contact_details insert failed (non-fatal): ${e.message}\n`)
+            adminDebugLog(`${new Date().toISOString()} contact_details insert failed (non-fatal): ${e.message}`)
         }
 
-        fs.appendFileSync(logFile, `[${new Date().toISOString()}] createAdminAccount SUCCESS\n`)
+        adminDebugLog(`${new Date().toISOString()} createAdminAccount SUCCESS`)
         return { success: true, user: authData }
     } catch (error: any) {
         const errorMsg = error?.response?.data?.message || error?.response?.data || error?.message || "Unknown error"
-        fs.appendFileSync(logFile, `[${new Date().toISOString()}] ERROR: ${JSON.stringify(errorMsg)}\nSTACK: ${error?.stack}\n`)
+        adminDebugLog(`${new Date().toISOString()} ERROR: ${JSON.stringify(errorMsg)} STACK: ${error?.stack}`)
         console.error("Error creating admin:", errorMsg)
         return { success: false, error: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg) }
     }
@@ -118,8 +121,7 @@ export async function createReferralPartnerAccount(data: {
     phone: string
     password?: string
 }) {
-    const logFile = 'debug.txt'
-    fs.appendFileSync(logFile, `[${new Date().toISOString()}] createReferralPartnerAccount: ${data.email}\n`)
+    adminDebugLog(`${new Date().toISOString()} createReferralPartnerAccount: ${data.email}`)
 
     try {
         const ax = await getAxios()
@@ -134,7 +136,7 @@ export async function createReferralPartnerAccount(data: {
 
         if (!authData?.id) throw new Error("No user ID returned from auth")
         const userId = authData.id
-        fs.appendFileSync(logFile, `[${new Date().toISOString()}] Auth user created (Partner): ${userId}\n`)
+        adminDebugLog(`${new Date().toISOString()} Auth user created (Partner): ${userId}`)
 
         // Step 2: Insert into referral_partners table
         const { data: partnerRow, status: partnerStatus } = await ax.post(
@@ -148,27 +150,27 @@ export async function createReferralPartnerAccount(data: {
             },
             { headers: { 'Prefer': 'return=representation' } }
         )
-        fs.appendFileSync(logFile, `[${new Date().toISOString()}] referral_partners insert status: ${partnerStatus}\n`)
+        adminDebugLog(`${new Date().toISOString()} referral_partners insert status: ${partnerStatus}`)
 
         // Step 3: Insert into personal_details
         try {
             await ax.post('/rest/v1/personal_details', { user_id: userId, name: data.name })
         } catch (e: any) {
-            fs.appendFileSync(logFile, `[${new Date().toISOString()}] personal_details insert failed (Partner): ${e.message}\n`)
+            adminDebugLog(`${new Date().toISOString()} personal_details insert failed (Partner): ${e.message}`)
         }
 
         // Step 4: Insert into contact_details
         try {
             await ax.post('/rest/v1/contact_details', { user_id: userId, phone: data.phone, email: data.email })
         } catch (e: any) {
-            fs.appendFileSync(logFile, `[${new Date().toISOString()}] contact_details insert failed (Partner): ${e.message}\n`)
+            adminDebugLog(`${new Date().toISOString()} contact_details insert failed (Partner): ${e.message}`)
         }
 
-        fs.appendFileSync(logFile, `[${new Date().toISOString()}] createReferralPartnerAccount SUCCESS\n`)
+        adminDebugLog(`${new Date().toISOString()} createReferralPartnerAccount SUCCESS`)
         return { success: true, user: authData }
     } catch (error: any) {
         const errorMsg = error?.response?.data?.message || error?.response?.data || error?.message || "Unknown error"
-        fs.appendFileSync(logFile, `[${new Date().toISOString()}] ERROR (Partner): ${JSON.stringify(errorMsg)}\nSTACK: ${error?.stack}\n`)
+        adminDebugLog(`${new Date().toISOString()} ERROR (Partner): ${JSON.stringify(errorMsg)} STACK: ${error?.stack}`)
         console.error("Error creating partner:", errorMsg)
         return { success: false, error: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg) }
     }
@@ -217,40 +219,38 @@ export async function revokeAdminAccess(userId: string) {
 }
 
 export async function getAllParentIds() {
-    const logFile = 'debug.txt'
-    fs.appendFileSync(logFile, `[${new Date().toISOString()}] getAllParentIds called\n`)
+    adminDebugLog(`${new Date().toISOString()} getAllParentIds called`)
     try {
         const ax = await getAxios()
         const { data } = await ax.get('/rest/v1/parents?select=id')
         const { data: usersData } = await ax.get('/rest/v1/users?select=id,email,name')
-        fs.appendFileSync(logFile, `[${new Date().toISOString()}] USERS DUMP: ${JSON.stringify(usersData)}\nPARENT DUMP: ${JSON.stringify(data)}\n`)
-        fs.appendFileSync(logFile, `[${new Date().toISOString()}] getAllParentIds SUCCESS: ${data.length} parents\n`)
+        adminDebugLog(`${new Date().toISOString()} getAllParentIds USERS/PARENT dump (truncated in prod logs)`)
+        adminDebugLog(`${new Date().toISOString()} getAllParentIds SUCCESS: ${data.length} parents`)
         return { success: true, ids: data.map((p: any) => p.id) }
     } catch (error: any) {
         const errorMsg = error?.response?.data || error?.message
-        fs.appendFileSync(logFile, `[${new Date().toISOString()}] getAllParentIds ERROR: ${JSON.stringify(errorMsg)}\n`)
+        adminDebugLog(`${new Date().toISOString()} getAllParentIds ERROR: ${JSON.stringify(errorMsg)}`)
         console.error("Error fetching parent IDs:", errorMsg)
         return { success: false, ids: [] }
     }
 }
 
 export async function cleanupData() {
-    const logFile = 'debug.txt'
     try {
         const ax = await getAxios()
         const emailsToDelete = ['tls-test2@test.com', 'tls-test@test.com', 'edge2@test.com']
         // Get users by email from the admin auth API
         const { data: allUsers } = await ax.get('/auth/v1/admin/users?page=1&per_page=200')
         const usersToDelete = (allUsers?.users || []).filter((u: any) => emailsToDelete.includes(u.email))
-        fs.appendFileSync(logFile, `[${new Date().toISOString()}] CLEANUP: Found ${usersToDelete.length} users to delete\n`)
+        adminDebugLog(`${new Date().toISOString()} CLEANUP: Found ${usersToDelete.length} users to delete`)
         for (const u of usersToDelete) {
             await ax.delete(`/auth/v1/admin/users/${u.id}`)
-            fs.appendFileSync(logFile, `[${new Date().toISOString()}] CLEANUP: Deleted ${u.email} (${u.id})\n`)
+            adminDebugLog(`${new Date().toISOString()} CLEANUP: Deleted ${u.email} (${u.id})`)
         }
         return { success: true, deleted: usersToDelete.length }
     } catch (e: any) {
         const errorMsg = e?.response?.data || e?.message
-        fs.appendFileSync(logFile, `[${new Date().toISOString()}] CLEANUP ERROR: ${JSON.stringify(errorMsg)}\n`)
+        adminDebugLog(`${new Date().toISOString()} CLEANUP ERROR: ${JSON.stringify(errorMsg)}`)
         return { success: false, error: String(errorMsg) }
     }
 }
@@ -260,8 +260,7 @@ export async function updateUserPremiumSubscription(data: {
     plan: string | null
     expiresAt: string | null
 }) {
-    const logFile = 'debug.txt'
-    fs.appendFileSync(logFile, `[${new Date().toISOString()}] updateUserPremiumSubscription: ${data.userId} to ${data.plan}\n`)
+    adminDebugLog(`${new Date().toISOString()} updateUserPremiumSubscription: ${data.userId} to ${data.plan}`)
 
     try {
         const ax = await getAxios()
@@ -285,11 +284,11 @@ export async function updateUserPremiumSubscription(data: {
             await ax.post('/rest/v1/user_settings', payload)
         }
 
-        fs.appendFileSync(logFile, `[${new Date().toISOString()}] updateUserPremiumSubscription SUCCESS\n`)
+        adminDebugLog(`${new Date().toISOString()} updateUserPremiumSubscription SUCCESS`)
         return { success: true }
     } catch (error: any) {
         const errorMsg = error?.response?.data?.message || error?.message || "Unknown error"
-        fs.appendFileSync(logFile, `[${new Date().toISOString()}] ERROR: ${JSON.stringify(errorMsg)}\n`)
+        adminDebugLog(`${new Date().toISOString()} updateUserPremiumSubscription ERROR: ${JSON.stringify(errorMsg)}`)
         console.error("Error updating subscription:", errorMsg)
         return { success: false, error: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg) }
     }
