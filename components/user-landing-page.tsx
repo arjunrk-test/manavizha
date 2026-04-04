@@ -821,9 +821,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           </aside>
   
           {/* Right Main Content */}
-          <main className="flex-1 w-full min-w-0 space-y-5 pb-24">
+          <main className="flex-1 w-full min-w-0 space-y-8 pb-24 mt-4">
             {/* Header with Notifications */}
-            <div className="flex items-center justify-between px-4 md:px-0">
+            <div className="flex items-center justify-between px-4 md:px-0 min-h-[48px]">
                <div></div>
                <Popover>
                  <PopoverTrigger asChild>
@@ -912,7 +912,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="p-10 md:p-14 rounded-[3.5rem] sds-glass group relative overflow-hidden shadow-2xl border-indigo-100/30 flex flex-col md:flex-row justify-between items-end gap-8"
+              className="p-12 md:p-16 rounded-[3.5rem] sds-glass group relative overflow-hidden shadow-2xl border-indigo-100/30 flex flex-col md:flex-row justify-between items-center gap-10 min-h-[420px]"
             >
               <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-indigo-500/5 rounded-full blur-[100px] -mr-48 -mt-48 group-hover:bg-indigo-500/10 transition-colors duration-1000" />
               
@@ -944,6 +944,18 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               </div>
 
               <div className="relative z-10 w-full md:w-auto">
+                <div className="flex flex-col gap-4">
+                  <Button 
+                    onClick={onNavigateToProfileSetup}
+                    className="h-16 px-10 rounded-[2rem] bg-white text-[#4B0082] font-black text-xs uppercase tracking-[0.2em] hover:scale-105 transition-all shadow-2xl shadow-indigo-500/20 border-none group/btn"
+                  >
+                    Quick Setup <ArrowRight className="ml-3 h-5 w-5 group-hover/btn:translate-x-1 transition-transform" />
+                  </Button>
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest text-center">Profiles with setup get 3x more interest</p>
+                  </div>
+                </div>
               </div>
             </motion.div>
 
