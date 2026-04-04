@@ -33,7 +33,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
                 type="number"
                 value={formData.preferredAgeMin}
                 onChange={(e) => onChange("preferredAgeMin", e.target.value)}
-                placeholder="Min"
+                placeholder="e.g., 24"
                 min="18"
                 className="sds-input flex-1 text-center font-black"
               />
@@ -42,7 +42,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
                 type="number"
                 value={formData.preferredAgeMax}
                 onChange={(e) => onChange("preferredAgeMax", e.target.value)}
-                placeholder="Max"
+                placeholder="e.g., 29"
                 min="18"
                 className="sds-input flex-1 text-center font-black"
               />
@@ -56,7 +56,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
                 type="number"
                 value={formData.preferredHeightMin}
                 onChange={(e) => onChange("preferredHeightMin", e.target.value)}
-                placeholder="Min"
+                placeholder="e.g., 160"
                 className="sds-input flex-1 text-center font-black"
               />
               <span className="text-[10px] font-black text-indigo-200 uppercase tracking-widest px-2">to</span>
@@ -64,7 +64,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
                 type="number"
                 value={formData.preferredHeightMax}
                 onChange={(e) => onChange("preferredHeightMax", e.target.value)}
-                placeholder="Max"
+                placeholder="e.g., 180"
                 className="sds-input flex-1 text-center font-black"
               />
             </div>
@@ -276,13 +276,13 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
               <Input
                 value={formData.preferredCountry}
                 onChange={(e) => onChange("preferredCountry", e.target.value)}
-                placeholder="Country"
+                placeholder="e.g., India"
                 className="sds-input px-6 h-14"
               />
               <Input
                 value={formData.preferredState}
                 onChange={(e) => onChange("preferredState", e.target.value)}
-                placeholder="State"
+                placeholder="e.g., Tamil Nadu"
                 className="sds-input px-6 h-14"
               />
             </div>

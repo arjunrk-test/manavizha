@@ -147,7 +147,7 @@ export function ReferralStep({ formData, onChange, onPartnerNameChange }: Referr
                 id="referralPartnerId"
                 value={formData.referralPartnerId || ""}
                 onChange={handleInputChange}
-                placeholder="AB1234CD567"
+                placeholder="e.g., AB1234CD567"
                 maxLength={11}
                 className={`sds-input w-full uppercase font-black tracking-widest h-16 px-6 text-lg transition-all duration-500 ${
                   isValidPattern && partnerName ? "border-emerald-200 bg-emerald-50/20" : 

@@ -147,7 +147,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                 id="company"
                 value={formData.company || ""}
                 onChange={(e) => onChange("company", e.target.value)}
-                placeholder="Enter Company Name"
+                placeholder="e.g., Google India / TCS"
                 required
                 className="sds-input w-full"
               />
@@ -158,7 +158,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                 id="designation"
                 value={formData.designation || ""}
                 onChange={(e) => onChange("designation", e.target.value)}
-                placeholder="e.g. Software Engineer, Manager"
+                placeholder="e.g., Senior Software Engineer"
                 required
                 className="sds-input w-full"
               />
@@ -194,7 +194,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                 id="workLocation"
                 value={formData.workLocation || ""}
                 onChange={(e) => onChange("workLocation", e.target.value)}
-                placeholder="City, State, Country"
+                placeholder="e.g., Bengaluru, Karnataka"
                 required
                 className="sds-input w-full"
               />
@@ -298,7 +298,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                 id="businessName"
                 value={formData.businessName || ""}
                 onChange={(e) => onChange("businessName", e.target.value)}
-                placeholder="Enter Business Name"
+                placeholder="e.g., Green Earth Solutions"
                 required
                 className="sds-input w-full"
               />
@@ -321,7 +321,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                 id="designation"
                 value={formData.designation || ""}
                 onChange={(e) => onChange("designation", e.target.value)}
-                placeholder="e.g., Executive Director"
+                placeholder="e.g., Founder & CEO"
                 required
                 className="sds-input w-full"
               />
@@ -357,7 +357,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                 id="businessLocation"
                 value={formData.businessLocation || ""}
                 onChange={(e) => onChange("businessLocation", e.target.value)}
-                placeholder="City, State, Country"
+                placeholder="e.g., Coimbatore, Tamil Nadu"
                 required
                 className="sds-input w-full"
               />
@@ -377,7 +377,7 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                 id="institution"
                 value={formData.institution || ""}
                 onChange={(e) => onChange("institution", e.target.value)}
-                placeholder="Official Institution Name"
+                placeholder="e.g., Indian Institute of Technology, Madras"
                 required
                 className="sds-input w-full"
               />

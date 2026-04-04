@@ -147,7 +147,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                 id="fatherName"
                 value={formData.fatherName || ""}
                 onChange={(e) => onChange("fatherName", e.target.value)}
-                placeholder="Enter Father's Name"
+                placeholder="e.g., S. Ramaswamy"
                 required
                 className="sds-input w-full"
               />
@@ -158,7 +158,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                 id="fatherOccupation"
                 value={formData.fatherOccupation || ""}
                 onChange={(e) => onChange("fatherOccupation", e.target.value)}
-                placeholder="Occupation / Designation"
+                placeholder="e.g., Retired Bank Manager"
                 required
                 className="sds-input w-full"
               />
@@ -169,7 +169,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                 id="motherName"
                 value={formData.motherName || ""}
                 onChange={(e) => onChange("motherName", e.target.value)}
-                placeholder="Enter Mother's Name"
+                placeholder="e.g., R. Lakshmi"
                 required
                 className="sds-input w-full"
               />
@@ -180,7 +180,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                 id="motherOccupation"
                 value={formData.motherOccupation || ""}
                 onChange={(e) => onChange("motherOccupation", e.target.value)}
-                placeholder="Occupation / Designation"
+                placeholder="e.g., Homemaker / Teacher"
                 required
                 className="sds-input w-full"
               />
@@ -208,7 +208,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                 id="parentsAddressLine1"
                 value={formData.parentsAddressLine1 || ""}
                 onChange={(e) => onChange("parentsAddressLine1", e.target.value)}
-                placeholder="Building number, street name"
+                placeholder="e.g., 45, Temple View Street"
                 required
                 className="sds-input w-full"
               />
@@ -236,7 +236,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                       onChange("parentsPincode", value)
                     }
                   }}
-                  placeholder="6 Digit PIN"
+                  placeholder="e.g., 625001"
                   maxLength={6}
                   required
                   className={`sds-input w-full ${isLoadingParentsAddress ? "pr-14" : ""}`}
@@ -308,7 +308,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                 id="parentsLandmark"
                 value={formData.parentsLandmark || ""}
                 onChange={(e) => onChange("parentsLandmark", e.target.value)}
-                placeholder="Identify a notable nearby feature"
+                placeholder="e.g., Near Meenakshi Temple / Pillayar Kovil"
                 className="sds-input w-full"
               />
             </div>
@@ -367,7 +367,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                 id="ancestralOrigin"
                 value={formData.ancestralOrigin || ""}
                 onChange={(e) => onChange("ancestralOrigin", e.target.value)}
-                placeholder="Birthplace / Native Town"
+                placeholder="e.g., Madurai / Thanjavur"
                 required
                 className="sds-input w-full"
               />
@@ -394,7 +394,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                 id="siblings"
                 value={formData.siblings || ""}
                 onChange={(e) => onChange("siblings", e.target.value)}
-                placeholder="e.g. 1 Brother, 1 Sister"
+                placeholder="e.g., 1 Younger Brother (Unmarried)"
                 required
                 className="sds-input w-full"
               />
@@ -409,7 +409,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
             id="familyDescription"
             value={formData.familyDescription || ""}
             onChange={(e) => onChange("familyDescription", e.target.value)}
-            placeholder="Describe your family background, values, and traditions..."
+            placeholder="Example: We are a traditional middle-class family from Madurai. My father is retired, and my mother is a homemaker. We value education and family unity..."
             rows={4}
             className="sds-input w-full resize-none min-h-[160px] py-6 px-6 leading-relaxed"
             required
