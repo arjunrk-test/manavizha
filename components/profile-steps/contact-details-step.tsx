@@ -251,114 +251,136 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
   ])
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="flex flex-col">
-          <Label htmlFor="phone" className="mb-3.5">Phone Number *</Label>
-          <div className="relative">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none z-10">
-              +91
-            </div>
-            <Input
-              id="phone"
-              type="tel"
-              value={formData.phone.startsWith("+91") ? formData.phone.slice(3) : formData.phone}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9]/g, "")
-                // Limit to 10 digits
-                if (value.length <= 10) {
-                  onChange("phone", value ? `+91${value}` : "+91")
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Backspace" && formData.phone === "+91") {
-                  e.preventDefault()
-                }
-              }}
-              placeholder="Enter your phone number"
-              maxLength={10}
-              required
-              className="pl-12"
-            />
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      
+      {/* Communication Section */}
+      <div className="space-y-8">
+        <div className="flex items-center gap-4 mb-2">
+          <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
+            <span className="text-[#4B0082] font-black text-xs">01</span>
           </div>
+          <div>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Contact</h4>
+            <h3 className="text-xl font-light text-gray-900 tracking-tight">Phone & WhatsApp</h3>
+          </div>
+          <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
         </div>
 
-        <div className="flex flex-col">
-          <div className="flex items-center justify-between mb-2">
-            <Label htmlFor="whatsappNumber">WhatsApp Number *</Label>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="isWhatsappSameAsPhone"
-                checked={isWhatsappSameAsPhone}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50 shadow-[0_20px_50px_-20px_rgba(75,0,130,0.05)]">
+          <div className="flex flex-col space-y-3">
+            <Label htmlFor="phone" className="sds-label ml-1">Phone Number *</Label>
+            <div className="relative group">
+              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#4B0082]/40 font-black text-[11px] pointer-events-none z-10 transition-colors group-focus-within:text-[#4B0082] tracking-widest">
+                +91
+              </div>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone.startsWith("+91") ? formData.phone.slice(3) : formData.phone}
                 onChange={(e) => {
-                  setIsWhatsappSameAsPhone(e.target.checked)
-                  if (e.target.checked) {
-                    onChange("whatsappNumber", formData.phone)
-                  } else {
-                    onChange("whatsappNumber", "")
+                  const value = e.target.value.replace(/[^0-9]/g, "")
+                  if (value.length <= 10) {
+                    onChange("phone", value ? `+91${value}` : "+91")
                   }
                 }}
-                className="rounded border-gray-300"
+                onKeyDown={(e) => {
+                  if (e.key === "Backspace" && formData.phone === "+91") {
+                    e.preventDefault()
+                  }
+                }}
+                placeholder="Enter phone number"
+                maxLength={10}
+                required
+                className="sds-input pl-16 w-full"
               />
-              <Label htmlFor="isWhatsappSameAsPhone" className="text-sm font-normal cursor-pointer">
-                Same as phone number
-              </Label>
             </div>
           </div>
-          <div className="relative">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none z-10">
-              +91
+
+          <div className="flex flex-col space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <Label htmlFor="whatsappNumber" className="sds-label">WhatsApp Number *</Label>
+              <div 
+                className="flex items-center gap-2 cursor-pointer group/toggle"
+                onClick={() => {
+                  const newVal = !isWhatsappSameAsPhone;
+                  setIsWhatsappSameAsPhone(newVal);
+                  if (newVal) onChange("whatsappNumber", formData.phone);
+                }}
+              >
+                <div className={`w-8 h-4 rounded-full transition-all duration-300 relative ${isWhatsappSameAsPhone ? "bg-emerald-500" : "bg-gray-200"}`}>
+                  <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all duration-300 ${isWhatsappSameAsPhone ? "left-4.5" : "left-0.5"}`} />
+                </div>
+                <span className="text-[8px] font-black uppercase tracking-widest text-[#4B0082]/40 group-hover/toggle:text-[#4B0082] transition-colors">Same as Phone</span>
+              </div>
             </div>
-            <Input
-              id="whatsappNumber"
-              type="tel"
-              value={formData.whatsappNumber.startsWith("+91") ? formData.whatsappNumber.slice(3) : formData.whatsappNumber}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9]/g, "")
-                // Limit to 10 digits
-                if (value.length <= 10) {
-                  onChange("whatsappNumber", value ? `+91${value}` : "+91")
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Backspace" && formData.whatsappNumber === "+91") {
-                  e.preventDefault()
-                }
-              }}
-              placeholder="Enter your WhatsApp number"
-              maxLength={10}
-              required
-              disabled={isWhatsappSameAsPhone}
-              className={`pl-12 ${isWhatsappSameAsPhone ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : ""}`}
-            />
+            <div className="relative group">
+              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#4B0082]/40 font-black text-[11px] pointer-events-none z-10 transition-colors group-focus-within:text-[#4B0082] tracking-widest">
+                +91
+              </div>
+              <Input
+                id="whatsappNumber"
+                type="tel"
+                value={formData.whatsappNumber.startsWith("+91") ? formData.whatsappNumber.slice(3) : formData.whatsappNumber}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, "")
+                  if (value.length <= 10) {
+                    onChange("whatsappNumber", value ? `+91${value}` : "+91")
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Backspace" && formData.whatsappNumber === "+91") {
+                    e.preventDefault()
+                  }
+                }}
+                placeholder="Enter WhatsApp number"
+                maxLength={10}
+                required
+                disabled={isWhatsappSameAsPhone}
+                className={`sds-input pl-16 w-full ${isWhatsappSameAsPhone ? "opacity-40 grayscale cursor-not-allowed border-dashed bg-black/[0.02]" : ""}`}
+              />
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="space-y-4 md:col-span-2">
-          <Label>Permanent Address *</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="permanentAddressLine1">Address Line 1 *</Label>
+      {/* Permanent Address Section */}
+      <div className="space-y-8">
+        <div className="flex items-center gap-4 mb-2">
+          <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
+            <span className="text-[#4B0082] font-black text-xs">02</span>
+          </div>
+          <div>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Permanent Address</h4>
+            <h3 className="text-xl font-light text-gray-900 tracking-tight">Where you live permanently</h3>
+          </div>
+          <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
+        </div>
+
+        <div className="sds-glass rounded-[2.5rem] p-10 border-indigo-50/50 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-3 md:col-span-2">
+              <Label htmlFor="permanentAddressLine1" className="sds-label ml-1">Address Line 1 *</Label>
               <Input
                 id="permanentAddressLine1"
                 value={formData.permanentAddressLine1}
                 onChange={(e) => onChange("permanentAddressLine1", e.target.value)}
-                placeholder="Enter address line 1"
+                placeholder="Building number, street name"
                 required
+                className="sds-input w-full px-6"
               />
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="permanentAddressLine2">Address Line 2</Label>
+            <div className="space-y-3 md:col-span-2">
+              <Label htmlFor="permanentAddressLine2" className="sds-label ml-1">Address Line 2</Label>
               <Input
                 id="permanentAddressLine2"
                 value={formData.permanentAddressLine2}
                 onChange={(e) => onChange("permanentAddressLine2", e.target.value)}
-                placeholder="Enter address line 2 (optional)"
+                placeholder="Apartment, suite, unit (optional)"
+                className="sds-input w-full px-6"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="permanentPincode">Pincode *</Label>
+            <div className="space-y-3">
+              <Label htmlFor="permanentPincode" className="sds-label ml-1">Pincode *</Label>
               <div className="relative">
                 <Input
                   id="permanentPincode"
@@ -370,47 +392,44 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                       onChange("permanentPincode", value)
                     }
                   }}
-                  placeholder="Enter pincode"
+                  placeholder="6 Digit PIN"
                   maxLength={6}
                   required
-                  className={isLoadingPermanentAddress ? "pr-10" : ""}
+                  className={`sds-input w-full px-6 font-black tracking-widest ${isLoadingPermanentAddress ? "pr-14" : ""}`}
                 />
                 {isLoadingPermanentAddress && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  <div className="absolute right-5 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#4B0082]/20 border-t-[#4B0082]"></div>
                   </div>
                 )}
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="permanentArea">Area Name *</Label>
+            <div className="space-y-3">
+              <Label htmlFor="permanentArea" className="sds-label ml-1">Area / Colony *</Label>
               <div className="relative" ref={permanentAreaRef}>
                 <button
                   type="button"
                   onClick={() => permanentAreas.length > 0 && setIsPermanentAreaOpen(!isPermanentAreaOpen)}
                   disabled={isLoadingPermanentAddress || permanentAreas.length === 0}
-                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem] disabled:bg-gray-100 disabled:dark:bg-gray-800 disabled:cursor-not-allowed"
+                  className="sds-input w-full h-14 px-6 flex items-center justify-between text-left disabled:opacity-50 disabled:cursor-not-allowed group transition-all"
                 >
-                  <span className={formData.permanentArea ? "" : "text-gray-500"}>
-                    {formData.permanentArea || (isLoadingPermanentAddress ? "Loading areas..." : permanentAreas.length === 0 ? "Enter pincode first" : "Select Area")}
+                  <span className={`text-[11px] font-bold tracking-widest uppercase ${formData.permanentArea ? "text-gray-900" : "text-gray-300"}`}>
+                    {formData.permanentArea || (isLoadingPermanentAddress ? "Scanning..." : "Select Area")}
                   </span>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${isPermanentAreaOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-4 w-4 text-[#4B0082]/40 transition-transform duration-500 ${isPermanentAreaOpen ? "rotate-180" : ""}`} />
                 </button>
-                {isLoadingPermanentAddress && (
-                  <div className="absolute right-8 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
-                  </div>
-                )}
                 {isPermanentAreaOpen && permanentAreas.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden">
-                    <div className="overflow-y-auto language-dropdown-scroll" style={{ maxHeight: '250px' }}>
+                  <div className="absolute z-50 w-full mt-3 sds-glass rounded-3xl shadow-2xl border-indigo-50/50 backdrop-blur-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                    <div className="overflow-y-auto max-h-[250px] p-2 space-y-1 custom-scrollbar">
                       {permanentAreas.map((postOffice, index) => (
                         <button
                           key={index}
                           type="button"
                           onClick={() => handleAreaSelect(postOffice, "permanent")}
-                          className={`w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-left transition-colors ${
-                            formData.permanentArea === postOffice.Name ? "bg-gray-100 dark:bg-gray-800" : ""
+                          className={`w-full px-5 py-3.5 rounded-2xl text-left text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                            formData.permanentArea === postOffice.Name 
+                            ? "bg-[#4B0082] text-white shadow-lg shadow-indigo-900/20" 
+                            : "hover:bg-indigo-50/50 text-gray-500 hover:text-[#4B0082]"
                           }`}
                         >
                           {postOffice.Name}
@@ -421,201 +440,94 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                 )}
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="permanentTaluk">Taluk *</Label>
-              <div className="relative">
-                <Input
-                  id="permanentTaluk"
-                  value={formData.permanentTaluk || ""}
-                  onChange={(e) => onChange("permanentTaluk", e.target.value)}
-                  placeholder="Taluk (auto-filled)"
-                  required
-                  readOnly
-                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
-                />
-                {isLoadingPermanentAddress && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
-                  </div>
-                )}
-              </div>
+            <div className="space-y-3">
+              <Label htmlFor="permanentDistrict" className="sds-label ml-1">District</Label>
+              <Input
+                id="permanentDistrict"
+                value={formData.permanentDistrict}
+                readOnly
+                className="sds-input w-full px-6 bg-black/[0.02] border-none opacity-40 grayscale cursor-not-allowed font-medium italic"
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="permanentDistrict">District *</Label>
-              <div className="relative">
-                <Input
-                  id="permanentDistrict"
-                  value={formData.permanentDistrict}
-                  onChange={(e) => onChange("permanentDistrict", e.target.value)}
-                  placeholder="District (auto-filled)"
-                  required
-                  readOnly
-                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
-                />
-                {isLoadingPermanentAddress && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
-                  </div>
-                )}
-              </div>
+            <div className="space-y-3">
+              <Label htmlFor="permanentState" className="sds-label ml-1">State</Label>
+              <Input
+                id="permanentState"
+                value={formData.permanentState}
+                readOnly
+                className="sds-input w-full px-6 bg-black/[0.02] border-none opacity-40 grayscale cursor-not-allowed font-medium italic"
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="permanentDivision">Division *</Label>
-              <div className="relative">
-                <Input
-                  id="permanentDivision"
-                  value={formData.permanentDivision}
-                  onChange={(e) => onChange("permanentDivision", e.target.value)}
-                  placeholder="Division (auto-filled)"
-                  required
-                  readOnly
-                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
-                />
-                {isLoadingPermanentAddress && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="permanentRegion">Region *</Label>
-              <div className="relative">
-                <Input
-                  id="permanentRegion"
-                  value={formData.permanentRegion}
-                  onChange={(e) => onChange("permanentRegion", e.target.value)}
-                  placeholder="Region (auto-filled)"
-                  required
-                  readOnly
-                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
-                />
-                {isLoadingPermanentAddress && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="permanentState">State *</Label>
-              <div className="relative">
-                <Input
-                  id="permanentState"
-                  value={formData.permanentState}
-                  onChange={(e) => onChange("permanentState", e.target.value)}
-                  placeholder="State (auto-filled)"
-                  required
-                  readOnly
-                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
-                />
-                {isLoadingPermanentAddress && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="permanentCountry">Country *</Label>
-              <div className="relative">
-                <Input
-                  id="permanentCountry"
-                  value={formData.permanentCountry}
-                  onChange={(e) => onChange("permanentCountry", e.target.value)}
-                  placeholder="Country (auto-filled)"
-                  required
-                  readOnly
-                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
-                />
-                {isLoadingPermanentAddress && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="permanentLandmark">Landmark</Label>
+            <div className="space-y-3 md:col-span-2">
+              <Label htmlFor="permanentLandmark" className="sds-label ml-1">Landmark</Label>
               <Input
                 id="permanentLandmark"
                 value={formData.permanentLandmark}
                 onChange={(e) => onChange("permanentLandmark", e.target.value)}
-                placeholder="Enter landmark (optional)"
+                placeholder="Identify a notable static feature"
+                className="sds-input w-full px-6"
               />
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="space-y-4 md:col-span-2">
-          <div className="flex items-center justify-between">
-            <Label>Current Address of Residence *</Label>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="isCurrentAddressSameAsPermanent"
-                checked={isCurrentAddressSameAsPermanent}
-                onChange={(e) => {
-                  setIsCurrentAddressSameAsPermanent(e.target.checked)
-                  if (e.target.checked) {
-                    onChange("currentAddressLine1", formData.permanentAddressLine1)
-                    onChange("currentAddressLine2", formData.permanentAddressLine2)
-                    onChange("currentPincode", formData.permanentPincode)
-                    onChange("currentArea", formData.permanentArea)
-                    onChange("currentTaluk", formData.permanentTaluk)
-                    onChange("currentDistrict", formData.permanentDistrict)
-                    onChange("currentDivision", formData.permanentDivision)
-                    onChange("currentRegion", formData.permanentRegion)
-                    onChange("currentState", formData.permanentState)
-                    onChange("currentCountry", formData.permanentCountry)
-                    onChange("currentLandmark", formData.permanentLandmark)
-                  } else {
-                    onChange("currentAddressLine1", "")
-                    onChange("currentAddressLine2", "")
-                    onChange("currentPincode", "")
-                    onChange("currentArea", "")
-                    onChange("currentTaluk", "")
-                    onChange("currentDistrict", "")
-                    onChange("currentDivision", "")
-                    onChange("currentRegion", "")
-                    onChange("currentState", "")
-                    onChange("currentCountry", "")
-                    onChange("currentLandmark", "")
-                  }
-                }}
-                className="rounded border-gray-300"
-              />
-              <Label htmlFor="isCurrentAddressSameAsPermanent" className="text-sm font-normal cursor-pointer">
-                Same as permanent address
-              </Label>
+      {/* Current Address Section */}
+      <div className="space-y-8">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
+              <span className="text-[#4B0082] font-black text-xs">03</span>
+            </div>
+            <div>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Current Location</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">Where you live now</h3>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="currentAddressLine1">Address Line 1 *</Label>
+          
+          <div 
+            className="group flex items-center gap-3 cursor-pointer select-none"
+            onClick={() => {
+              const newVal = !isCurrentAddressSameAsPermanent;
+              setIsCurrentAddressSameAsPermanent(newVal);
+              if (newVal) {
+                onChange("currentAddressLine1", formData.permanentAddressLine1);
+                onChange("currentAddressLine2", formData.permanentAddressLine2);
+                onChange("currentPincode", formData.permanentPincode);
+                onChange("currentArea", formData.permanentArea);
+                onChange("currentTaluk", formData.permanentTaluk);
+                onChange("currentDistrict", formData.permanentDistrict);
+                onChange("currentDivision", formData.permanentDivision);
+                onChange("currentRegion", formData.permanentRegion);
+                onChange("currentState", formData.permanentState);
+                onChange("currentCountry", formData.permanentCountry);
+                onChange("currentLandmark", formData.permanentLandmark);
+              }
+            }}
+          >
+            <div className={`w-10 h-5 rounded-full transition-all duration-300 relative ${isCurrentAddressSameAsPermanent ? "bg-[#4B0082]" : "bg-gray-200"}`}>
+              <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${isCurrentAddressSameAsPermanent ? "left-6" : "left-1"}`} />
+            </div>
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#4B0082]/60 group-hover:text-[#4B0082] transition-colors">Same as Permanent</span>
+          </div>
+        </div>
+
+        <div className={`sds-glass rounded-[2.5rem] p-10 border-indigo-50/50 space-y-8 transition-all duration-700 ${isCurrentAddressSameAsPermanent ? "opacity-30 grayscale pointer-events-none scale-[0.98]" : ""}`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-3 md:col-span-2">
+              <Label htmlFor="currentAddressLine1" className="sds-label ml-1">Address Line 1 *</Label>
               <Input
                 id="currentAddressLine1"
                 value={formData.currentAddressLine1}
                 onChange={(e) => onChange("currentAddressLine1", e.target.value)}
-                placeholder="Enter address line 1"
+                placeholder="Current residence street details"
                 required
                 disabled={isCurrentAddressSameAsPermanent}
-                className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : ""}
+                className="sds-input w-full px-6"
               />
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="currentAddressLine2">Address Line 2</Label>
-              <Input
-                id="currentAddressLine2"
-                value={formData.currentAddressLine2}
-                onChange={(e) => onChange("currentAddressLine2", e.target.value)}
-                placeholder="Enter address line 2 (optional)"
-                disabled={isCurrentAddressSameAsPermanent}
-                className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : ""}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="currentPincode">Pincode *</Label>
+            <div className="space-y-3">
+              <Label htmlFor="currentPincode" className="sds-label ml-1">Pincode *</Label>
               <div className="relative">
                 <Input
                   id="currentPincode"
@@ -627,50 +539,45 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                       onChange("currentPincode", value)
                     }
                   }}
-                  placeholder="Enter pincode"
+                  placeholder="6 Digit PIN"
                   maxLength={6}
                   required
                   disabled={isCurrentAddressSameAsPermanent}
-                  className={`${isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : ""} ${isLoadingCurrentAddress ? "pr-10" : ""}`}
+                  className={`sds-input w-full px-6 font-black tracking-widest ${isLoadingCurrentAddress ? "pr-14" : ""}`}
                 />
                 {isLoadingCurrentAddress && !isCurrentAddressSameAsPermanent && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
+                  <div className="absolute right-5 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-amber-400/20 border-t-amber-500"></div>
                   </div>
                 )}
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="currentArea">Area Name *</Label>
+            <div className="space-y-3">
+              <Label htmlFor="currentArea" className="sds-label ml-1">Area / Colony *</Label>
               <div className="relative" ref={currentAreaRef}>
                 <button
                   type="button"
                   onClick={() => !isCurrentAddressSameAsPermanent && currentAreas.length > 0 && setIsCurrentAreaOpen(!isCurrentAreaOpen)}
                   disabled={isCurrentAddressSameAsPermanent || isLoadingCurrentAddress || currentAreas.length === 0}
-                  className={`w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem] ${
-                    isCurrentAddressSameAsPermanent || isLoadingCurrentAddress || currentAreas.length === 0 ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : ""
-                  }`}
+                  className="sds-input w-full h-14 px-6 flex items-center justify-between text-left disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
-                  <span className={formData.currentArea ? "" : "text-gray-500"}>
-                    {formData.currentArea || (isCurrentAddressSameAsPermanent ? "Same as permanent" : isLoadingCurrentAddress ? "Loading areas..." : currentAreas.length === 0 ? "Enter pincode first" : "Select Area")}
+                  <span className={`text-[11px] font-bold tracking-widest uppercase ${formData.currentArea ? "text-gray-900" : "text-gray-300"}`}>
+                    {formData.currentArea || (isLoadingCurrentAddress ? "Syncing..." : "Select Area")}
                   </span>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${isCurrentAreaOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-4 w-4 text-[#4B0082]/40 transition-transform duration-500 ${isCurrentAreaOpen ? "rotate-180" : ""}`} />
                 </button>
-                {isLoadingCurrentAddress && !isCurrentAddressSameAsPermanent && (
-                  <div className="absolute right-8 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
-                  </div>
-                )}
                 {isCurrentAreaOpen && !isCurrentAddressSameAsPermanent && currentAreas.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden">
-                    <div className="overflow-y-auto language-dropdown-scroll" style={{ maxHeight: '250px' }}>
+                  <div className="absolute z-50 w-full mt-3 sds-glass rounded-3xl shadow-2xl border-amber-50/50 backdrop-blur-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                    <div className="overflow-y-auto max-h-[250px] p-2 space-y-1 custom-scrollbar">
                       {currentAreas.map((postOffice, index) => (
                         <button
                           key={index}
                           type="button"
                           onClick={() => handleAreaSelect(postOffice, "current")}
-                          className={`w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-left transition-colors ${
-                            formData.currentArea === postOffice.Name ? "bg-gray-100 dark:bg-gray-800" : ""
+                          className={`w-full px-5 py-3.5 rounded-2xl text-left text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                            formData.currentArea === postOffice.Name 
+                            ? "bg-amber-500 text-white shadow-lg shadow-amber-900/20" 
+                            : "hover:bg-amber-50/50 text-gray-500 hover:text-amber-700"
                           }`}
                         >
                           {postOffice.Name}
@@ -680,137 +587,6 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                   </div>
                 )}
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="currentTaluk">Taluk *</Label>
-              <div className="relative">
-                <Input
-                  id="currentTaluk"
-                  value={formData.currentTaluk || ""}
-                  onChange={(e) => onChange("currentTaluk", e.target.value)}
-                  placeholder="Taluk (auto-filled)"
-                  required
-                  readOnly
-                  disabled={isCurrentAddressSameAsPermanent}
-                  className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : "bg-gray-100 dark:bg-gray-800 cursor-not-allowed"}
-                />
-                {isLoadingCurrentAddress && !isCurrentAddressSameAsPermanent && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="currentDistrict">District *</Label>
-              <div className="relative">
-                <Input
-                  id="currentDistrict"
-                  value={formData.currentDistrict}
-                  onChange={(e) => onChange("currentDistrict", e.target.value)}
-                  placeholder="District (auto-filled)"
-                  required
-                  readOnly
-                  disabled={isCurrentAddressSameAsPermanent}
-                  className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : "bg-gray-100 dark:bg-gray-800 cursor-not-allowed"}
-                />
-                {isLoadingCurrentAddress && !isCurrentAddressSameAsPermanent && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
-                  </div>
-                )}
-              </div>        
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="currentDivision">Division *</Label>
-              <div className="relative">
-                <Input
-                  id="currentDivision"
-                  value={formData.currentDivision}
-                  onChange={(e) => onChange("currentDivision", e.target.value)}
-                  placeholder="Division (auto-filled)"
-                  required
-                  readOnly
-                  disabled={isCurrentAddressSameAsPermanent}
-                  className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : "bg-gray-100 dark:bg-gray-800 cursor-not-allowed"}
-                />
-                {isLoadingCurrentAddress && !isCurrentAddressSameAsPermanent && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="currentRegion">Region *</Label>
-              <div className="relative">
-                <Input
-                  id="currentRegion"
-                  value={formData.currentRegion}
-                  onChange={(e) => onChange("currentRegion", e.target.value)}
-                  placeholder="Region (auto-filled)"
-                  required
-                  readOnly
-                  disabled={isCurrentAddressSameAsPermanent}
-                  className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : "bg-gray-100 dark:bg-gray-800 cursor-not-allowed"}
-                />
-                {isLoadingCurrentAddress && !isCurrentAddressSameAsPermanent && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="currentState">State *</Label>
-              <div className="relative">
-                <Input
-                  id="currentState"
-                  value={formData.currentState}
-                  onChange={(e) => onChange("currentState", e.target.value)}
-                  placeholder="State (auto-filled)"
-                  required
-                  readOnly
-                  disabled={isCurrentAddressSameAsPermanent}
-                  className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : "bg-gray-100 dark:bg-gray-800 cursor-not-allowed"}
-                />
-                {isLoadingCurrentAddress && !isCurrentAddressSameAsPermanent && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="currentCountry">Country *</Label>
-              <div className="relative">
-                <Input
-                  id="currentCountry"
-                  value={formData.currentCountry}
-                  onChange={(e) => onChange("currentCountry", e.target.value)}
-                  placeholder="Country (auto-filled)"
-                  required
-                  readOnly
-                  disabled={isCurrentAddressSameAsPermanent}
-                  className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : "bg-gray-100 dark:bg-gray-800 cursor-not-allowed"}
-                />
-                {isLoadingCurrentAddress && !isCurrentAddressSameAsPermanent && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4B0082]"></div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="currentLandmark">Landmark</Label>
-              <Input
-                id="currentLandmark"
-                value={formData.currentLandmark}
-                onChange={(e) => onChange("currentLandmark", e.target.value)}
-                placeholder="Enter landmark (optional)"
-                disabled={isCurrentAddressSameAsPermanent}
-                className={isCurrentAddressSameAsPermanent ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : ""}
-              />
             </div>
           </div>
         </div>

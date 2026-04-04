@@ -26,46 +26,52 @@ export function LanguageDropdown({
   const selectedCount = selectedLanguages.filter((lang) => languages.includes(lang)).length
 
   return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium">{label}</Label>
+    <div className="space-y-3">
+      <Label className="sds-label ml-1">{label}</Label>
       <div className="relative" ref={dropdownRef}>
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem]"
+          className="sds-input w-full h-14 px-6 flex items-center justify-between text-left group transition-all"
         >
           <div className="flex items-center gap-2 flex-wrap">
             {selectedCount > 0 ? (
-              <span className="text-sm">{selectedCount} selected</span>
+              <span className="text-[11px] font-black uppercase tracking-widest text-[#4B0082]">
+                {selectedCount} DESIGNATED
+              </span>
             ) : (
-              <span className="text-gray-500">{placeholder}</span>
+              <span className="text-gray-400 text-xs font-medium tracking-tight">{placeholder}</span>
             )}
           </div>
-          <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+          <ChevronDown className={`h-4 w-4 text-[#4B0082]/40 transition-transform duration-500 ${isOpen ? "rotate-180" : ""}`} />
         </button>
         {isOpen && (
-          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden max-h-60 overflow-y-auto language-dropdown-scroll">
-            {languages.map((lang) => (
-              <button
-                key={lang}
-                type="button"
-                onClick={() => {
-                  onToggle(lang)
-                }}
-                className={`w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 text-left transition-colors ${
-                  selectedLanguages.includes(lang) ? "bg-gray-100 dark:bg-gray-800" : ""
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedLanguages.includes(lang)}
-                  onChange={() => {}}
-                  className="rounded border-gray-300"
-                  readOnly
-                />
-                <span>{lang}</span>
-              </button>
-            ))}
+          <div className="absolute z-[100] w-full mt-3 sds-glass rounded-3xl shadow-2xl border-indigo-50/50 backdrop-blur-3xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="max-h-64 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+              {languages.map((lang) => (
+                <button
+                  key={lang}
+                  type="button"
+                  onClick={() => onToggle(lang)}
+                  className={`w-full px-5 py-3.5 rounded-2xl flex items-center gap-4 text-left transition-all duration-300 group ${
+                    selectedLanguages.includes(lang) 
+                    ? "bg-[#4B0082] text-white shadow-lg shadow-indigo-900/10" 
+                    : "hover:bg-indigo-50/50 text-gray-500 hover:text-[#4B0082]"
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${
+                    selectedLanguages.includes(lang) 
+                    ? "border-white/40 bg-white/20" 
+                    : "border-indigo-100 group-hover:border-indigo-300"
+                  }`}>
+                    {selectedLanguages.includes(lang) && (
+                      <div className="w-1.5 h-1.5 rounded-full bg-white opacity-100" />
+                    )}
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest">{lang}</span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>

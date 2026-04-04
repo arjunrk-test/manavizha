@@ -171,9 +171,9 @@ export default function AdminPage() {
             const baseX = 5 + (i * 13) % 82
             const baseY = 8 + (i * 15) % 75
             const size = 280 + (i % 3) * 80
-            const fadeDuration = 8 + Math.random() * 4
+            const fadeDuration = 8 + (i % 4)
             const rotateDuration = 60 + i * 8
-            const moveDuration = 12 + Math.random() * 6
+            const moveDuration = 12 + (i % 6)
             
             return (
               <motion.div

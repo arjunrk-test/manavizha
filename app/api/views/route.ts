@@ -43,8 +43,8 @@ export async function GET(request: Request) {
         }
 
         const [{ data: iViewedData, error: e1 }, { data: viewedMeData, error: e2 }] = await Promise.all([
-            supabaseAdmin.from('profile_views').select('viewed_user_id, created_at').eq('viewer_user_id', userId).order('created_at', { ascending: false }),
-            supabaseAdmin.from('profile_views').select('viewer_user_id, created_at').eq('viewed_user_id', userId).order('created_at', { ascending: false }),
+            supabaseAdmin.from('profile_views').select('viewed_user_id, created_at, is_read').eq('viewer_user_id', userId).order('created_at', { ascending: false }),
+            supabaseAdmin.from('profile_views').select('viewer_user_id, created_at, is_read').eq('viewed_user_id', userId).order('created_at', { ascending: false }),
         ])
 
         if (e1 || e2) {
@@ -59,6 +59,37 @@ export async function GET(request: Request) {
             iViewed: uniqueIViewed,
             viewedMe: uniqueViewedMe,
         })
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+}
+
+// PATCH /api/views — mark a profile view as read
+export async function PATCH(request: Request) {
+    try {
+        const { viewerId, viewedUserId } = await request.json()
+
+        if (!viewerId || !viewedUserId) {
+            return NextResponse.json({ error: 'viewerId and viewedUserId are required' }, { status: 400 })
+        }
+
+        // Attempt to mark as read (if is_read column exists)
+        const { error } = await supabaseAdmin
+            .from('profile_views')
+            .update({ is_read: true })
+            .eq('viewer_user_id', viewerId)
+            .eq('viewed_user_id', viewedUserId)
+
+        if (error) {
+            // Silently ignore if column doesn't exist to prevent crash, 
+            // but return error if it's something else
+            if (error.message.includes('column "is_read" of relation "profile_views" does not exist')) {
+                return NextResponse.json({ success: false, error: 'column_missing' })
+            }
+            return NextResponse.json({ error: error.message }, { status: 500 })
+        }
+
+        return NextResponse.json({ success: true })
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 })
     }

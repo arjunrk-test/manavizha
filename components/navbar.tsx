@@ -2,16 +2,29 @@
 
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Menu, X } from "lucide-react"
+import { Menu, X, User } from "lucide-react"
 import { useState, useEffect } from "react"
 import { AuthDialog } from "@/components/auth-dialog"
+import { supabase } from "@/lib/supabase"
 import Image from "next/image"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [isLoginOpen, setIsLoginOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,7 +41,7 @@ export function Navbar() {
       transition={{ duration: 0.5 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg border-b border-gray-200/60 dark:border-gray-800/60"
+          ? "bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-lg border-b border-gray-200/60 dark:border-gray-800/60"
           : "bg-transparent"
       }`}
     >
@@ -38,6 +51,7 @@ export function Navbar() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-3 group cursor-pointer"
+            onClick={() => window.location.href = '/'}
           >
             <motion.div
               whileHover={{ scale: 1.05 }}
@@ -52,7 +66,7 @@ export function Navbar() {
                 className="h-10 w-auto object-contain"
                 priority
               />
-              <span className="text-xl font-bold bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+              <span className="text-xl font-black tracking-tighter bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
                 Manavizha
               </span>
             </motion.div>
@@ -66,29 +80,51 @@ export function Navbar() {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="text-gray-700 dark:text-gray-300 hover:text-[#1F4068] transition-colors font-medium relative group"
+                className="text-gray-700 dark:text-gray-300 hover:text-[#4B0082] transition-colors font-bold uppercase tracking-widest text-[10px] relative group"
               >
                 {item}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#1F4068] to-[#4B0082] group-hover:w-full transition-all duration-300" />
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#1F4068] to-[#4B0082] group-hover:w-full transition-all duration-300" />
               </motion.a>
             ))}
+            
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.4 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, delay: 0.4 }}
+              className="flex items-center gap-3"
             >
-              <Button
-                size="sm"
-                className="rounded-full bg-red-500 hover:bg-white text-white hover:text-black border-0 shadow-sm hover:shadow-md transition-all px-6 py-2"
-                onClick={() => setIsLoginOpen(true)}
-              >
-                Login
-              </Button>
+              {user ? (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-full border-indigo-500/20 bg-white/40 hover:bg-indigo-50 text-[#4B0082] font-bold text-[10px] uppercase tracking-widest px-6 h-9 backdrop-blur-sm"
+                    onClick={() => window.location.href = `/dashboard/profile/${user.id}`}
+                  >
+                    Profile Preview
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="rounded-full bg-[#4B0082] hover:bg-[#1F4068] text-white shadow-lg hover:shadow-indigo-500/20 transition-all px-6 h-9 font-bold text-[10px] uppercase tracking-widest"
+                    onClick={() => window.location.href = '/dashboard'}
+                  >
+                    Dashboard
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  size="sm"
+                  className="rounded-full bg-[#4B0082] hover:bg-[#1F4068] text-white shadow-lg hover:shadow-indigo-500/20 transition-all px-8 h-9 font-bold text-[10px] uppercase tracking-widest"
+                  onClick={() => setIsLoginOpen(true)}
+                >
+                  Login
+                </Button>
+              )}
             </motion.div>
           </div>
 
           <button
-            className="md:hidden p-2"
+            className="md:hidden p-2 text-[#4B0082]"
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle menu"
           >
@@ -124,29 +160,55 @@ export function Navbar() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="md:hidden py-4 space-y-4 border-t border-gray-200 dark:border-gray-800 mt-4"
+              className="md:hidden py-6 space-y-4 border-t border-gray-100 dark:border-gray-800 mt-2"
             >
               {["Features", "Testimonials", "About", "Contact"].map((item) => (
                 <a
                   key={item}
                   href={`#${item.toLowerCase()}`}
-                  className="block text-gray-700 dark:text-gray-300 hover:text-[#1F4068] transition-colors font-medium py-2"
+                  className="block text-[#4B0082] font-bold text-[10px] uppercase tracking-widest py-2"
                   onClick={() => setIsOpen(false)}
                 >
                   {item}
                 </a>
               ))}
-              <div className="pt-2">
-                <Button
-                  size="sm"
-                  className="w-full rounded-full bg-red-500 hover:bg-white text-white hover:text-black border-0 shadow-sm hover:shadow-md transition-all py-2"
-                  onClick={() => {
-                    setIsLoginOpen(true)
-                    setIsOpen(false)
-                  }}
-                >
-                  Login
-                </Button>
+              <div className="pt-4 flex flex-col gap-3">
+                {user ? (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full rounded-full border-indigo-500/20 text-[#4B0082] font-bold text-[10px] uppercase tracking-widest"
+                      onClick={() => {
+                        window.location.href = `/dashboard/profile/${user.id}`
+                        setIsOpen(false)
+                      }}
+                    >
+                      Profile Preview
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="w-full rounded-full bg-[#4B0082] text-white font-bold text-[10px] uppercase tracking-widest"
+                      onClick={() => {
+                        window.location.href = '/dashboard'
+                        setIsOpen(false)
+                      }}
+                    >
+                      Dashboard
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    size="sm"
+                    className="w-full rounded-full bg-[#4B0082] text-white font-bold text-[10px] uppercase tracking-widest"
+                    onClick={() => {
+                      setIsLoginOpen(true)
+                      setIsOpen(false)
+                    }}
+                  >
+                    Login
+                  </Button>
+                )}
               </div>
             </motion.div>
           )}

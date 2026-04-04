@@ -51,8 +51,8 @@ export async function GET(request: Request) {
 
         const admin = getSupabaseAdmin()
         const [{ data: iLikedData, error: e1 }, { data: likedMeData, error: e2 }] = await Promise.all([
-            admin.from('likes').select('liked_user_id').eq('user_id', userId),
-            admin.from('likes').select('user_id').eq('liked_user_id', userId),
+            admin.from('likes').select('liked_user_id, created_at, is_read').eq('user_id', userId).order('created_at', { ascending: false }),
+            admin.from('likes').select('user_id, created_at, is_read').eq('liked_user_id', userId).order('created_at', { ascending: false }),
         ])
 
         if (e1 || e2) {
@@ -60,9 +60,49 @@ export async function GET(request: Request) {
         }
 
         return NextResponse.json({
-            iLikedIds: (iLikedData || []).map((r: any) => r.liked_user_id),
-            likedMeIds: (likedMeData || []).map((r: any) => r.user_id),
+            iLiked: (iLikedData || []).map((r: any) => ({
+                id: r.liked_user_id,
+                created_at: r.created_at,
+                is_read: r.is_read
+            })),
+            likedMe: (likedMeData || []).map((r: any) => ({
+                id: r.user_id,
+                created_at: r.created_at,
+                is_read: r.is_read
+            })),
         })
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+}
+
+// PATCH /api/likes — mark a like as read
+export async function PATCH(request: Request) {
+    try {
+        const { userId, likedUserId } = await request.json()
+
+        if (!userId || !likedUserId) {
+            return NextResponse.json({ error: 'userId and likedUserId are required' }, { status: 400 })
+        }
+
+        const admin = getSupabaseAdmin()
+        // Attempt to mark as read (if is_read column exists)
+        const { error } = await admin
+            .from('likes')
+            .update({ is_read: true })
+            .eq('user_id', userId)
+            .eq('liked_user_id', likedUserId)
+
+        if (error) {
+            // Silently ignore if column doesn't exist to prevent crash, 
+            // but return error if it's something else
+            if (error.message.includes('column "is_read" of relation "likes" does not exist')) {
+                return NextResponse.json({ success: false, error: 'column_missing' })
+            }
+            return NextResponse.json({ error: error.message }, { status: 500 })
+        }
+
+        return NextResponse.json({ success: true })
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 })
     }

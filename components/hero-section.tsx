@@ -168,47 +168,47 @@ export function HeroSection() {
               </div>
 
               {/* Search Form */}
-              <form className="space-y-4 sm:space-y-5">
+              <form className="space-y-6">
                 {/* Row 1: Looking for & Location */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-1.5">
+                    <label className="sds-label ml-1">
                       I'm looking for a
                     </label>
                     <Select value={searchType} onValueChange={setSearchType}>
-                      <SelectTrigger className="h-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 rounded-lg">
+                      <SelectTrigger className="sds-input w-full border-indigo-100/50 bg-white/80">
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Bride">Bride</SelectItem>
-                        <SelectItem value="Groom">Groom</SelectItem>
+                      <SelectContent className="rounded-xl border-indigo-100 shadow-xl">
+                        <SelectItem value="Bride" className="focus:bg-indigo-50">Bride</SelectItem>
+                        <SelectItem value="Groom" className="focus:bg-indigo-50">Groom</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <div className="space-y-1.5">
+                    <label className="sds-label ml-1">
                       Location/Community
                     </label>
                     <Select value={location} onValueChange={setLocation}>
-                      <SelectTrigger className="h-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 rounded-lg">
+                      <SelectTrigger className="sds-input w-full border-indigo-100/50 bg-white/80">
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Any">Any</SelectItem>
-                        <SelectItem value="Mumbai">Mumbai</SelectItem>
-                        <SelectItem value="Delhi">Delhi</SelectItem>
-                        <SelectItem value="Bangalore">Bangalore</SelectItem>
-                        <SelectItem value="Chennai">Chennai</SelectItem>
-                        <SelectItem value="Hyderabad">Hyderabad</SelectItem>
+                      <SelectContent className="rounded-xl border-indigo-100 shadow-xl">
+                        <SelectItem value="Any" className="focus:bg-indigo-50">Any</SelectItem>
+                        <SelectItem value="Mumbai" className="focus:bg-indigo-50">Mumbai</SelectItem>
+                        <SelectItem value="Delhi" className="focus:bg-indigo-50">Delhi</SelectItem>
+                        <SelectItem value="Bangalore" className="focus:bg-indigo-50">Bangalore</SelectItem>
+                        <SelectItem value="Chennai" className="focus:bg-indigo-50">Chennai</SelectItem>
+                        <SelectItem value="Hyderabad" className="focus:bg-indigo-50">Hyderabad</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
                 {/* Row 2: Min Age & Max Age */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-1.5">
+                    <label className="sds-label ml-1">
                       Min Age (21+)
                     </label>
                     <Input
@@ -217,11 +217,11 @@ export function HeroSection() {
                       max="45"
                       value={minAge}
                       onChange={(e) => setMinAge(e.target.value)}
-                      className="h-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 rounded-lg"
+                      className="sds-input w-full"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <div className="space-y-1.5">
+                    <label className="sds-label ml-1">
                       Max Age (45)
                     </label>
                     <Input
@@ -230,7 +230,7 @@ export function HeroSection() {
                       max="45"
                       value={maxAge}
                       onChange={(e) => setMaxAge(e.target.value)}
-                      className="h-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 rounded-lg"
+                      className="sds-input w-full"
                     />
                   </div>
                 </div>
@@ -238,18 +238,19 @@ export function HeroSection() {
                 {/* Search Button */}
                 <Button
                   type="submit"
-                  className="w-full h-14 rounded-lg bg-gradient-to-r from-[#4B0082] to-[#1F4068] hover:from-[#4B0082]/90 hover:to-[#1F4068]/90 text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="w-full h-14 rounded-xl bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#1F4068] bg-[length:200%_auto] animate-gradient text-white font-bold uppercase tracking-[0.2em] text-sm shadow-xl hover:shadow-indigo-500/20 transition-all active:scale-[0.98]"
                 >
-                  Search Matches ({searchType}s)
+                  <Search className="h-4 w-4 mr-2" />
+                  Search {searchType}s
                 </Button>
 
                 {/* Footer Link */}
                 <div className="text-center pt-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
                     Need a profile?{" "}
                     <a
                       href="#"
-                      className="text-[#4B0082] dark:text-[#FF1493] font-semibold underline hover:text-[#1F4068] dark:hover:text-[#FF1493]/80 transition-colors"
+                      className="text-[#4B0082] hover:text-[#1F4068] transition-colors border-b border-[#4B0082]/30"
                     >
                       Create a Free Profile
                     </a>
