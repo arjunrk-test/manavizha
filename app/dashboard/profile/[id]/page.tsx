@@ -15,6 +15,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { MessageDialog } from "@/components/message-dialog"
+import { formatToDDMMYYYY } from "@/lib/utils/date-utils"
 
 export default function ProfileViewPage() {
     const router = useRouter()
@@ -33,7 +34,8 @@ export default function ProfileViewPage() {
     const [isLikeProcessing, setIsLikeProcessing] = useState(false)
     const [isShortlistProcessing, setIsShortlistProcessing] = useState(false)
     const [viewerProfile, setViewerProfile] = useState<any>(null)
-    const [matchScore, setMatchScore] = useState<{ matches: number, total: number }>({ matches: 18, total: 21 })
+    const [matchScore, setMatchScore] = useState<{ matches: number, total: number }>({ matches: 0, total: 21 })
+    const [matchResults, setMatchResults] = useState<Record<string, boolean>>({})
     
     // Premium & Messaging states
     const [isViewerPremium, setIsViewerPremium] = useState(false)
@@ -240,8 +242,30 @@ export default function ProfileViewPage() {
                                 contact?.citizenship === prefs.preferred_citizenship) matches++
 
                             setMatchScore({ matches, total })
+
+                            setMatchResults({
+                                age: !!(viewerRes.data.age >= (prefs.preferred_age_min || 18) && viewerRes.data.age <= (prefs.preferred_age_max || 70)),
+                                height: !!(viewerRes.data.height >= (prefs.preferred_height_min || 120) && viewerRes.data.height <= (prefs.preferred_height_max || 220)),
+                                marital: !!(prefs.preferred_marital_status === "Any" || viewerRes.data.marital_status === prefs.preferred_marital_status),
+                                motherTongue: !!(!prefs.preferred_mother_tongue || viewerRes.data.mother_tongue === prefs.preferred_mother_tongue),
+                                physical: !!(prefs.preferred_physical_status === "Any" || viewerRes.data.physical_status === prefs.preferred_physical_status),
+                                eating: !!(prefs.preferred_eating_habits === "Any" || viewerRes.data.food_preference === prefs.preferred_eating_habits),
+                                smoking: !!(prefs.preferred_smoking_habits === "Any" || soc?.smoking === prefs.preferred_smoking_habits),
+                                drinking: !!(prefs.preferred_drinking_habits === "Any" || soc?.drinking === prefs.preferred_drinking_habits),
+                                religion: !!(!prefs.preferred_religion || personal.religion === prefs.preferred_religion),
+                                caste: !!(!prefs.preferred_caste || personal.caste === prefs.preferred_caste),
+                                subcaste: !!(!prefs.preferred_subcaste || personal.subcaste === prefs.preferred_subcaste),
+                                star: !!(!prefs.preferred_star || horo?.star === prefs.preferred_star),
+                                dosham: !!(prefs.preferred_dosham === "Any" || horo?.dhosham === prefs.preferred_dosham),
+                                education: !!(!prefs.preferred_education || edu?.some((e: any) => e.education === prefs.preferred_education)),
+                                employment: !!(prefs.preferred_employment_type === "Any" || (emp && prefs.preferred_employment_type === "employee") || (bus && prefs.preferred_employment_type === "business") || (stu && prefs.preferred_employment_type === "student")),
+                                occupation: !!(!prefs.preferred_occupation || emp?.designation === prefs.preferred_occupation || bus?.designation === prefs.preferred_occupation),
+                                income: !!(!prefs.preferred_annual_income || (emp?.salary && parseInt(emp.salary.replace(/[^\d]/g, '')) >= parseInt(prefs.preferred_annual_income))),
+                                location: !!((!prefs.preferred_city || prefs.preferred_city === "Any") && (!prefs.preferred_state || prefs.preferred_state === "Any")),
+                                citizenship: !!(!prefs.preferred_citizenship || prefs.preferred_citizenship === "Any" || contact?.citizenship === prefs.preferred_citizenship)
+                            })
                         } else {
-                            setMatchScore({ matches: 15, total: 21 }) // Default fallback
+                            setMatchScore({ matches: 0, total: 21 })
                         }
                     }
                 }
@@ -579,7 +603,7 @@ export default function ProfileViewPage() {
                                     Personal Details
                                 </h2>
                                 <div className="space-y-6 sds-glass p-8 rounded-[2.5rem] shadow-2xl border-white/50">
-                                    <DetailRow label="Date of Birth" value={profile.date_of_birth} />
+                                    <DetailRow label="Date of Birth" value={formatToDDMMYYYY(profile.date_of_birth)} />
                                     <DetailRow label="Marital Status" value={profile.marital_status} />
                                     <DetailRow label="Physical Status" value={profile.physical_status || "Normal"} />
                                     <DetailRow label="Body Type" value={profile.body_type} />
@@ -672,34 +696,68 @@ export default function ProfileViewPage() {
                                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl" />
                                     <div className="absolute bottom-0 left-0 w-48 h-48 bg-pink-500/10 rounded-full -ml-16 -mb-16 blur-2xl" />
 
-                                    <div className="relative z-10 flex flex-col md:flex-row gap-10 items-start">
-                                        <div className="space-y-4 max-w-sm">
-                                            <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20">
-                                                <Target className="h-6 w-6 text-pink-300" />
+                                    <div className="relative z-10 space-y-12">
+                                        <div className="flex flex-col md:flex-row gap-8 items-start md:items-center justify-between border-b border-white/10 pb-10">
+                                            <div className="flex items-center gap-6">
+                                                <div className="h-16 w-16 rounded-[1.5rem] bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20 shadow-2xl">
+                                                    <Target className="h-8 w-8 text-pink-300" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <h2 className="text-4xl font-black tracking-tight">Ideal Partner Preferences</h2>
+                                                    <p className="text-white/40 text-sm font-bold uppercase tracking-widest">
+                                                        Seeking a potential life partner with these values
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <h2 className="text-3xl font-black">Ideal Partner Preferences</h2>
-                                            <p className="text-white/60 text-sm leading-relaxed">
-                                                Here is a detailed look at who {profile.name || "this member"} is looking for as a potential life partner.
+                                            <p className="text-white/60 text-sm max-w-md md:text-right leading-relaxed font-medium">
+                                                Here is a detailed look at who {profile.name || "this member"} is looking for as a potential life match.
                                             </p>
                                         </div>
 
-                                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6 bg-white/5 backdrop-blur-sm p-8 sm:p-10 rounded-[2.5rem]">
-                                            <PrefRow label="Preferred Age" value={`${profile.partner_preferences.preferred_age_min || 18} to ${profile.partner_preferences.preferred_age_max || 70} years`} />
-                                            <PrefRow label="Preferred Height" value={`${profile.partner_preferences.preferred_height_min ? Math.floor(parseInt(profile.partner_preferences.preferred_height_min) / 30.48) + "'" + Math.round((parseInt(profile.partner_preferences.preferred_height_min) / 2.54) % 12) + "\"" : 'Any'} - ${profile.partner_preferences.preferred_height_max ? Math.floor(parseInt(profile.partner_preferences.preferred_height_max) / 30.48) + "'" + Math.round((parseInt(profile.partner_preferences.preferred_height_max) / 2.54) % 12) + "\"" : 'Any'}`} />
-                                            <PrefRow label="Marital Status" value={profile.partner_preferences.preferred_marital_status} />
-                                            <PrefRow label="Mother Tongue" value={profile.partner_preferences.preferred_mother_tongue} />
-                                            <PrefRow label="Physical Status" value={profile.partner_preferences.preferred_physical_status} />
-                                            <PrefRow label="Religion / Caste" value={profile.partner_preferences.preferred_religion === 'Any' ? 'Open to any' : `${profile.partner_preferences.preferred_religion || 'Any'} / ${profile.partner_preferences.preferred_caste || 'Any'}`} />
-                                            <PrefRow label="Subcaste" value={profile.partner_preferences.preferred_subcaste} />
-                                            <PrefRow label="Star / Dosham" value={`${profile.partner_preferences.preferred_star || 'Any'} / ${profile.partner_preferences.preferred_dosham || 'Any'}`} />
-                                            <PrefRow label="Education" value={profile.partner_preferences.preferred_education} />
-                                            <PrefRow label="Employment" value={profile.partner_preferences.preferred_employment_type} />
-                                            <PrefRow label="Occupation" value={profile.partner_preferences.preferred_occupation} />
-                                            <PrefRow label="Eating Habits" value={profile.partner_preferences.preferred_eating_habits} />
-                                            <PrefRow label="Lifestyle" value={`${profile.partner_preferences.preferred_smoking_habits || 'Any'} / ${profile.partner_preferences.preferred_drinking_habits || 'Any'}`} />
-                                            <PrefRow label="Location" value={`${profile.partner_preferences.preferred_city || 'Any'}, ${profile.partner_preferences.preferred_state || 'Any'}`} />
-                                            <PrefRow label="Citizenship" value={profile.partner_preferences.preferred_citizenship} />
-                                        </div>
+                                        <div className="bg-white/5 backdrop-blur-sm p-8 sm:p-14 rounded-[3.5rem] border border-white/10 flex flex-col gap-12">
+                                             {/* Sub-section 1: Basic Compatibility */}
+                                             <div className="space-y-4">
+                                                 <h4 className="px-4 text-[11px] font-black uppercase tracking-[0.3em] text-pink-300/60">Basic Consistency</h4>
+                                                 <div className="grid grid-cols-1 gap-2">
+                                                     <PrefRow label="Preferred Age" value={`${profile.partner_preferences.preferred_age_min || 18} to ${profile.partner_preferences.preferred_age_max || 70} years`} isMatch={matchResults.age} />
+                                                     <PrefRow label="Preferred Height" value={`${profile.partner_preferences.preferred_height_min ? Math.floor(parseInt(profile.partner_preferences.preferred_height_min) / 30.48) + "'" + Math.round((parseInt(profile.partner_preferences.preferred_height_min) / 2.54) % 12) + "\"" : 'Any'} - ${profile.partner_preferences.preferred_height_max ? Math.floor(parseInt(profile.partner_preferences.preferred_height_max) / 30.48) + "'" + Math.round((parseInt(profile.partner_preferences.preferred_height_max) / 2.54) % 12) + "\"" : 'Any'}`} isMatch={matchResults.height} />
+                                                     <PrefRow label="Marital Status" value={profile.partner_preferences.preferred_marital_status} isMatch={matchResults.marital} />
+                                                     <PrefRow label="Physical Status" value={profile.partner_preferences.preferred_physical_status} isMatch={matchResults.physical} />
+                                                 </div>
+                                             </div>
+
+                                             {/* Sub-section 2: Religious & Background */}
+                                             <div className="space-y-4 pt-4 border-t border-white/5">
+                                                 <h4 className="px-4 text-[11px] font-black uppercase tracking-[0.3em] text-indigo-300/60">Religious & Background</h4>
+                                                 <div className="grid grid-cols-1 gap-2">
+                                                     <PrefRow label="Religion / Caste" value={profile.partner_preferences.preferred_religion === 'Any' || !profile.partner_preferences.preferred_religion ? 'Open / Any' : `${profile.partner_preferences.preferred_religion} / ${profile.partner_preferences.preferred_caste || 'Any'}`} isMatch={matchResults.religion} />
+                                                     <PrefRow label="Subcaste" value={profile.partner_preferences.preferred_subcaste} isMatch={matchResults.subcaste} />
+                                                     <PrefRow label="Mother Tongue" value={profile.partner_preferences.preferred_mother_tongue} isMatch={matchResults.motherTongue} />
+                                                     <PrefRow label="Star / Dosham" value={`${profile.partner_preferences.preferred_star || 'Any'} / ${profile.partner_preferences.preferred_dosham || 'Any'}`} isMatch={matchResults.star} />
+                                                 </div>
+                                             </div>
+
+                                             {/* Sub-section 3: Career & Lifestlye */}
+                                             <div className="space-y-4 pt-4 border-t border-white/5">
+                                                 <h4 className="px-4 text-[11px] font-black uppercase tracking-[0.3em] text-emerald-300/60">Professional & Lifestyle</h4>
+                                                 <div className="grid grid-cols-1 gap-2">
+                                                     <PrefRow label="Education" value={profile.partner_preferences.preferred_education} isMatch={matchResults.education} />
+                                                     <PrefRow label="Employment Type" value={profile.partner_preferences.preferred_employment_type} isMatch={matchResults.employment} />
+                                                     <PrefRow label="Occupation" value={profile.partner_preferences.preferred_occupation} isMatch={matchResults.occupation} />
+                                                     <PrefRow label="Eating Habits" value={profile.partner_preferences.preferred_eating_habits} isMatch={matchResults.eating} />
+                                                     <PrefRow label="Smoking / Drinking" value={`${profile.partner_preferences.preferred_smoking_habits || 'Any'} / ${profile.partner_preferences.preferred_drinking_habits || 'Any'}`} isMatch={matchResults.smoking} />
+                                                 </div>
+                                             </div>
+
+                                             {/* Sub-section 4: Location */}
+                                             <div className="space-y-4 pt-4 border-t border-white/5">
+                                                 <h4 className="px-4 text-[11px] font-black uppercase tracking-[0.3em] text-amber-300/60">Geography</h4>
+                                                 <div className="grid grid-cols-1 gap-2">
+                                                     <PrefRow label="Location" value={`${profile.partner_preferences.preferred_city || 'Any'}, ${profile.partner_preferences.preferred_state || 'Any'}`} isMatch={matchResults.location} />
+                                                     <PrefRow label="Citizenship" value={profile.partner_preferences.preferred_citizenship} isMatch={matchResults.citizenship} />
+                                                 </div>
+                                             </div>
+                                         </div>
                                     </div>
                                 </div>
                             </section>
@@ -748,11 +806,26 @@ function SummaryRow({ label, value }: { label: string, value?: string | null }) 
     )
 }
 
-function PrefRow({ label, value }: { label: string, value?: string | number | null }) {
+function PrefRow({ label, value, isMatch }: { label: string, value?: string | number | null, isMatch?: boolean }) {
+    const isUnspecified = !value || value === "Open / Any" || value === "Any" || value === "Any / Any" || value === "Any, Any" || value.toString().includes("Any") || value.toString().includes("Open");
+
     return (
-        <div className="space-y-1">
-            <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{label}</p>
-            <p className="text-sm font-bold text-white leading-tight">{value || "Open / Any"}</p>
+        <div className="flex items-center justify-between py-5 border-b border-white/5 last:border-0 group/pref hover:bg-white/5 px-6 rounded-2xl transition-all duration-300">
+            <div className="flex items-center gap-6">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-lg ${
+                    isUnspecified ? 'bg-indigo-500/10 text-indigo-300/40' : 
+                    isMatch ? 'bg-emerald-500/20 text-emerald-400 shadow-emerald-500/10' : 
+                    'bg-rose-500/20 text-rose-400 shadow-rose-500/10'
+                }`}>
+                    {isUnspecified ? <Info className="h-4 w-4" /> : 
+                     isMatch ? <CheckCircle2 className="h-5 w-5" /> : 
+                     <UserX className="h-5 w-5" />}
+                </div>
+                <span className="text-[12px] font-black text-white/40 uppercase tracking-[0.2em] group-hover/pref:text-pink-300 transition-colors">{label}</span>
+            </div>
+            <span className={`text-[15px] font-black text-white leading-relaxed tracking-tight text-right ${isMatch ? '' : ''}`}>
+                {value || "Open / Any"}
+            </span>
         </div>
     )
 }
