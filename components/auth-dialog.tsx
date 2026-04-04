@@ -247,7 +247,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
         <div className="grid lg:grid-cols-[1.1fr,1fr] overflow-hidden rounded-2xl bg-[#080b16] text-white">
           <div className="relative flex flex-col gap-6 p-8 sm:p-10 overflow-hidden">
             {/* Animated gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1F4068] via-[#4B0082] to-[#8A2BE2] bg-[length:200%_auto] animate-gradient" />
 
             {/* Overlay pattern */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
@@ -348,9 +348,9 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                className={`flex-1 rounded-full transition-all ${authMode === "login"
-                  ? "bg-gray-900 text-white dark:bg-white dark:text-black"
-                  : "text-gray-500 dark:text-gray-300"
+                className={`flex-1 rounded-full transition-all font-bold uppercase tracking-widest text-[10px] ${authMode === "login"
+                  ? "bg-[#4B0082] text-white shadow-lg"
+                  : "text-gray-500 hover:text-[#4B0082]"
                   }`}
                 onClick={() => {
                   setAuthMode("login")
@@ -366,9 +366,9 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                className={`flex-1 rounded-full transition-all ${authMode === "signup"
-                  ? "bg-gray-900 text-white dark:bg-white dark:text-black"
-                  : "text-gray-500 dark:text-gray-300"
+                className={`flex-1 rounded-full transition-all font-bold uppercase tracking-widest text-[10px] ${authMode === "signup"
+                  ? "bg-[#4B0082] text-white shadow-lg"
+                  : "text-gray-500 hover:text-[#4B0082]"
                   }`}
                 onClick={() => {
                   setAuthMode("signup")
@@ -405,7 +405,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
             <form className="space-y-4" onSubmit={handleAuthSubmit} autoComplete="off">
               <div className="space-y-2">
-                <Label htmlFor="auth-email">Email</Label>
+                <Label htmlFor="auth-email" className="sds-label">Email Address</Label>
                 <Input
                   id="auth-email"
                   type="email"
@@ -416,14 +416,14 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   autoComplete="off"
                   data-1p-ignore
                   data-lpignore="true"
-                  className="rounded-2xl border-gray-200 bg-gray-50 focus-visible:ring-gray-900 dark:bg-gray-900 dark:border-gray-800"
+                  className="sds-input w-full"
                 />
               </div>
 
               {authMode === "signup" && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="auth-name">Full Name</Label>
+                    <Label htmlFor="auth-name" className="sds-label">Full Name</Label>
                     <Input
                       id="auth-name"
                       type="text"
@@ -438,12 +438,12 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="auth-phone">Phone Number</Label>
+                    <Label htmlFor="auth-phone" className="sds-label">Phone Number</Label>
                     <div className="flex gap-2">
                       <select
                         value={countryCode}
                         onChange={(e) => setCountryCode(e.target.value)}
-                        className="shrink-0 w-28 rounded-2xl border border-gray-200 bg-gray-50 px-2 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:bg-gray-900 dark:border-gray-800 dark:text-gray-100"
+                        className="shrink-0 w-28 h-11 rounded-xl border-2 border-indigo-100/50 bg-white/80 px-2 py-2 text-[12px] font-bold text-gray-900 focus:outline-none focus:border-[#4B0082] dark:bg-gray-900 dark:border-gray-800 dark:text-gray-100"
                       >
                         {COUNTRY_CODES.map(c => (
                           <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
@@ -468,7 +468,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label htmlFor="auth-password">Password</Label>
+                  <Label htmlFor="auth-password" className="sds-label">Password</Label>
                   <div className="relative">
                     <Input
                       id="auth-password"
@@ -549,7 +549,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               </div>
               {authMode === "signup" && (
                 <div className="space-y-2">
-                  <Label htmlFor="auth-confirm">Confirm Password</Label>
+                  <Label htmlFor="auth-confirm" className="sds-label">Confirm Password</Label>
                   <div className="relative">
                     <Input
                       id="auth-confirm"
@@ -595,7 +595,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               )}
               <Button
                 type="submit"
-                className="w-full rounded-full bg-gray-900 text-white hover:bg-white hover:text-gray-900 border-0 shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full h-12 rounded-full bg-gradient-to-r from-[#1F4068] to-[#4B0082] text-white hover:opacity-90 border-0 shadow-lg hover:shadow-indigo-500/20 transition-all font-bold uppercase tracking-[0.2em] text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={
                   isLoading ||
                   (authMode === "signup" && (!passwordsMatch || !passwordStrength.isValid))

@@ -6,27 +6,19 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
-    --primary: 214 52% 27%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 271 100% 25%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 328 100% 54%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 214 52% 27%;
     --radius: 0.5rem;
+
+    /* Premium & Saturated Palette - SDS v2 */
+    --female: 330 90% 55%; /* Richer Pink */
+    --male: 211 100% 45%; /* Deeper Blue */
+    --marriage-light: 48 100% 85%; /* Vibrant Cream */
+    --marriage: 45 100% 45%; /* Saturated Gold */
+    --glass-white: 0 0% 100% / 0.85; /* More Opaque Glass */
+    --glass-border: 0 0% 100% / 0.4; /* Stronger Borders */
+    --primary: 275 100% 25%; /* Deep Royal Indigo */
+    --primary-foreground: 0 0% 100%;
   }
+
 
   .dark {
     --background: 0 0% 9%;
@@ -48,15 +40,49 @@
     --border: 0 0% 20%;
     --input: 0 0% 20%;
     --ring: 214 52% 27%;
+    
+    /* Dark Mode Glass */
+    --glass-white: 0 0% 100% / 0.05;
+    --glass-border: 0 0% 100% / 0.1;
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
+@layer components {
+  /* SDS Premium Glass - Enhanced Polish */
+  .sds-glass {
+    @apply backdrop-blur-[40px] border border-white/50 shadow-[0_16px_48px_0_rgba(75,0,130,0.12)];
+    background: rgba(255, 255, 255, 0.85); /* Solidified for contrast */
   }
-  body {
-    @apply bg-background text-foreground;
+
+  .dark .sds-glass {
+    @apply border-white/20 shadow-[0_16px_48px_0_rgba(0,0,0,0.4)];
+    background: rgba(10, 10, 15, 0.9);
+  }
+
+  .sds-card {
+    @apply rounded-[1.5rem] p-6 sds-glass transition-all duration-500 hover:shadow-2xl hover:-translate-y-1;
+  }
+
+  .sds-label {
+    @apply text-[10px] font-black uppercase tracking-[0.2em] text-[#4B0082] mb-2 block opacity-70;
+  }
+
+  .sds-input {
+    @apply h-12 rounded-2xl border-2 border-indigo-100/80 bg-white px-5 text-[14px] font-bold text-gray-900 transition-all focus:border-[#4B0082] focus:ring-8 focus:ring-indigo-500/10 placeholder:text-gray-300 shadow-sm;
+  }
+
+  .sds-grain::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.02;
+    z-index: 9999;
+    pointer-events: none;
+    background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+    filter: contrast(150%) brightness(150%);
   }
 }
 
@@ -77,10 +103,17 @@ body {
   display: none;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
+/* Root scaling for high-density 75% visual layout */
 html {
+  font-size: 75%; /* Base 12px */
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
+}
+
+@media (max-width: 768px) {
+  html {
+    font-size: 100%; /* Keep mobile at 100% for accessibility */
+  }
 }
 
 body {

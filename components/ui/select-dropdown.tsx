@@ -1,4 +1,5 @@
 import { Label } from "@/components/ui/label"
+import { ChevronDown } from "lucide-react"
 
 interface SelectDropdownProps {
   id: string
@@ -10,8 +11,6 @@ interface SelectDropdownProps {
   className?: string
 }
 
-const SELECT_BASE_CLASSES = "w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B0082] dark:bg-gray-900 dark:border-gray-800"
-
 export function SelectDropdown({
   id,
   label,
@@ -22,38 +21,30 @@ export function SelectDropdown({
   className = "",
 }: SelectDropdownProps) {
   return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
-      <select
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`${SELECT_BASE_CLASSES} whitespace-normal break-words max-w-full ${className}`}
-        required={required}
-        style={{ 
-          wordWrap: "break-word", 
-          overflowWrap: "break-word",
-          maxWidth: "100%",
-          width: "100%"
-        }}
-      >
-        <option value="" disabled>Select</option>
-        {options.map((option) => (
-          <option 
-            key={option.id} 
-            value={option.value} 
-            style={{ 
-              whiteSpace: "normal", 
-              wordWrap: "break-word",
-              maxWidth: "100%",
-              overflowWrap: "break-word"
-            }}
-          >
-            {option.value}
-          </option>
-        ))}
-      </select>
+    <div className={`space-y-2 flex flex-col ${className}`}>
+      <Label htmlFor={id} className="sds-label">{label}</Label>
+      <div className="relative group">
+        <select
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="sds-input w-full appearance-none pr-12 cursor-pointer transition-all duration-300 active:scale-[0.99] focus:ring-0"
+          required={required}
+        >
+          <option value="" disabled>Select Position / Value</option>
+          {options.map((option) => (
+            <option 
+              key={option.id} 
+              value={option.value}
+            >
+              {option.value}
+            </option>
+          ))}
+        </select>
+        <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-[#4B0082]/40 transition-transform group-focus-within:rotate-180 duration-500">
+          <ChevronDown className="h-4 w-4" />
+        </div>
+      </div>
     </div>
   )
 }
-

@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
-import { LogOut, ArrowLeft, Edit, Settings, MessageSquare } from "lucide-react"
-import { motion } from "framer-motion"
+import { LogOut, ArrowLeft, Edit, Settings, MessageSquare, User, Bell, HeartHandshake, Eye, Sparkles } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Badge } from "@/components/ui/badge"
+import { formatDistanceToNow } from "date-fns"
 
 export default function DashboardLayout({
   children,
@@ -17,6 +20,9 @@ export default function DashboardLayout({
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [whoViewedMe, setWhoViewedMe] = useState<any[]>([])
+  const [whoExpressedInterest, setWhoExpressedInterest] = useState<any[]>([])
+  const [isNotificationsLoading, setIsNotificationsLoading] = useState(false)
 
   useEffect(() => {
     const checkUser = async () => {
@@ -87,7 +93,45 @@ export default function DashboardLayout({
       if (!error) setUnreadCount(count || 0)
     }
 
+    const fetchNotifications = async () => {
+      if (!user?.id) return
+      setIsNotificationsLoading(true)
+      try {
+        const [vRes, lRes, pRes] = await Promise.all([
+          fetch(`/api/views?userId=${user.id}`),
+          fetch(`/api/likes?userId=${user.id}`),
+          fetch("/api/profiles")
+        ])
+
+        if (vRes.ok && lRes.ok && pRes.ok) {
+          const viewsData = await vRes.json()
+          const likesData = await lRes.json()
+          const profiles = await pRes.json()
+
+          const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+
+          const recentViews = (viewsData.viewedMe || []).filter((v: any) => !v.is_read && new Date(v.created_at) > thirtyDaysAgo)
+          const recentLikes = (likesData.received || []).filter((l: any) => !l.is_read && new Date(l.created_at) > thirtyDaysAgo)
+
+          setWhoViewedMe(recentViews.map((rv: any) => {
+            const p = profiles.find((c: any) => c.user_id === rv.viewer_user_id)
+            return p ? { ...p, interaction_at: rv.created_at, interaction_type: 'view' } : null
+          }).filter(Boolean))
+
+          setWhoExpressedInterest(recentLikes.map((rl: any) => {
+            const p = profiles.find((c: any) => c.user_id === rl.user_id)
+            return p ? { ...p, interaction_at: rl.created_at, interaction_type: 'interest' } : null
+          }).filter(Boolean))
+        }
+      } catch (err) {
+        console.error("Error fetching header notifications:", err)
+      } finally {
+        setIsNotificationsLoading(false)
+      }
+    }
+
     fetchUnreadCount()
+    fetchNotifications()
 
     const channel = supabase
       .channel(`unread-messages-${user.id}`)
@@ -98,10 +142,36 @@ export default function DashboardLayout({
       )
       .subscribe()
 
+    // Refresh notifications every 2 minutes
+    const notifInterval = setInterval(fetchNotifications, 120000)
+
     return () => {
       supabase.removeChannel(channel)
+      clearInterval(notifInterval)
     }
   }, [user?.id])
+
+  const handleNotificationClick = async (type: 'view' | 'interest', targetUserId: string) => {
+    if (!user?.id) return
+
+    // Optimistic update
+    if (type === 'view') {
+      setWhoViewedMe(prev => prev.filter(p => p.user_id !== targetUserId))
+    } else {
+      setWhoExpressedInterest(prev => prev.filter(p => p.user_id !== targetUserId))
+    }
+
+    try {
+      await fetch(`/api/${type === 'view' ? 'views' : 'likes'}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, targetUserId, isRead: true })
+      })
+      router.push(`/dashboard/browse?userId=${targetUserId}`)
+    } catch (err) {
+      console.error("Error marking notification as read:", err)
+    }
+  }
 
   const handleLogout = async () => {
     setIsLoading(true)
@@ -165,9 +235,9 @@ export default function DashboardLayout({
               initial={{ opacity: 0.15 }}
               animate={{ opacity: [0.1, 0.25, 0.15, 0.25, 0.1], rotate: [0, 360], x: [-40, 40, -40] }}
               transition={{
-                opacity: { duration: 8 + Math.random() * 4, repeat: Infinity, ease: "easeInOut" },
+                opacity: { duration: 8 + (i % 4), repeat: Infinity, ease: "easeInOut" },
                 rotate: { duration: 60 + i * 8, repeat: Infinity, ease: "linear" },
-                x: { duration: 12 + Math.random() * 6, repeat: Infinity, ease: "easeInOut", delay: i * 0.7 }
+                x: { duration: 12 + (i % 6), repeat: Infinity, ease: "easeInOut", delay: i * 0.7 }
               }}
             >
               <img src={imagePath} alt="" className="w-full h-full object-contain brightness-0 invert opacity-20" />
@@ -198,10 +268,20 @@ export default function DashboardLayout({
               </Button>
             )}
             <Button 
+                onClick={() => router.push(`/dashboard/profile/${user.id}`)} 
+                variant="outline" 
+                size="sm" 
+                className="h-8 gap-2 border-indigo-500/20 hover:bg-indigo-50 text-[#4B0082] font-bold text-[10px] uppercase tracking-widest px-4 shadow-sm"
+            >
+              <User className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Preview Profile</span>
+              <span className="sm:hidden">Preview</span>
+            </Button>
+            <Button 
                 onClick={() => router.push("/dashboard/setup")} 
                 variant="outline" 
                 size="sm" 
-                className="h-8 gap-2 border-[#4B0082]/20 hover:bg-[#4B0082]/10 text-[#4B0082] dark:text-purple-400"
+                className="h-8 gap-2 border-indigo-500/20 hover:bg-indigo-50 text-[#4B0082] font-bold text-[10px] uppercase tracking-widest px-4 shadow-sm"
             >
               <Edit className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Update Profile</span>
@@ -211,26 +291,112 @@ export default function DashboardLayout({
                 onClick={() => router.push("/dashboard/messages")} 
                 variant="outline" 
                 size="icon" 
-                className="h-8 w-8 border-[#4B0082]/20 hover:bg-[#4B0082]/10 text-[#4B0082] dark:text-purple-400 group relative"
+                className="h-8 w-8 border-indigo-500/20 hover:bg-indigo-50 text-[#4B0082] group relative rounded-full"
                 title="Messages"
             >
               <MessageSquare className="h-4 w-4" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white dark:ring-gray-800">
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#FF1493] text-[8px] font-bold text-white shadow-lg">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
             </Button>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 border-indigo-500/20 hover:bg-indigo-50 text-[#4B0082] group relative rounded-full"
+                    title="Notifications"
+                >
+                  <Bell className="h-4 w-4" />
+                  {(whoViewedMe.length + whoExpressedInterest.length) > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[8px] font-bold text-white shadow-lg">
+                      {whoViewedMe.length + whoExpressedInterest.length}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-[320px] rounded-[2rem] p-4 bg-white/95 backdrop-blur-3xl shadow-2xl border-indigo-100/50 z-[60]">
+                  <div className="space-y-4">
+                    <div className="px-2 py-1">
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#4B0082]">Notifications</h4>
+                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">Activity from last 30 days</p>
+                    </div>
+
+                    <div className="space-y-6 max-h-[400px] overflow-y-auto px-1 pr-2 custom-scrollbar">
+                      {/* Section 1: Interests */}
+                      {whoExpressedInterest.length > 0 && (
+                        <div className="space-y-2">
+                           <div className="px-2 text-[9px] font-black text-rose-500 uppercase tracking-widest">Interest Received</div>
+                           {whoExpressedInterest.slice(0, 5).map(p => (
+                             <div key={p.user_id} className="group p-3 rounded-2xl hover:bg-indigo-50/50 transition-all flex items-center gap-3 cursor-pointer" onClick={() => handleNotificationClick('interest', p.user_id)}>
+                                <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100">
+                                  <img src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}`} className="w-full h-full object-cover" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="text-[11px] font-bold text-gray-900 truncate">{p.name || 'Member'} expressed interest</div>
+                                    <div className="text-[8px] text-indigo-400 font-bold whitespace-nowrap">{formatDistanceToNow(new Date(p.interaction_at), { addSuffix: true })}</div>
+                                  </div>
+                                  <div className="text-[9px] text-gray-400 font-medium">{p.age} yrs • {p.profession?.split(' at ')[0]}</div>
+                                </div>
+                             </div>
+                           ))}
+                        </div>
+                      )}
+
+                      {/* Section 2: Visitors */}
+                      {whoViewedMe.length > 0 && (
+                        <div className="space-y-2">
+                           <div className="px-2 text-[9px] font-black text-indigo-500 uppercase tracking-widest">Profile Visitors</div>
+                           {whoViewedMe.slice(0, 5).map(p => (
+                             <div key={p.user_id} className="group p-3 rounded-2xl hover:bg-indigo-50/50 transition-all flex items-center gap-3 cursor-pointer" onClick={() => handleNotificationClick('view', p.user_id)}>
+                                <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100">
+                                  <img src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}`} className="w-full h-full object-cover" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="text-[11px] font-bold text-gray-900 truncate">{p.name || 'Member'} viewed you</div>
+                                    <div className="text-[8px] text-indigo-400 font-bold whitespace-nowrap">{formatDistanceToNow(new Date(p.interaction_at), { addSuffix: true })}</div>
+                                  </div>
+                                  <div className="text-[9px] text-gray-400 font-medium">{p.age} yrs • {p.address?.split(',')[0]}</div>
+                                </div>
+                             </div>
+                           ))}
+                        </div>
+                      )}
+
+                      {whoViewedMe.length === 0 && whoExpressedInterest.length === 0 && (
+                        <div className="py-8 text-center">
+                          <Bell className="h-8 w-8 text-indigo-100 mx-auto mb-2" />
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No new activity</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="w-full rounded-xl text-[10px] font-black uppercase tracking-widest text-[#4B0082] hover:bg-indigo-50"
+                      onClick={() => router.push("/dashboard/browse")}
+                    >
+                      See All Activity
+                    </Button>
+                  </div>
+              </PopoverContent>
+            </Popover>
             <Button 
                 onClick={() => router.push("/dashboard/settings")} 
                 size="icon" 
                 variant="ghost"
-                className="h-8 w-8 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full"
+                className="h-8 w-8 hover:bg-indigo-50 rounded-full"
                 title="Profile Settings"
             >
-              <Settings className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+              <Settings className="h-4 w-4 text-[#4B0082]/60" />
             </Button>
-            <Button onClick={handleLogout} size="sm" className="h-8 bg-red-400 hover:bg-red-500 text-white border-0 shadow-sm transition-all active:scale-95">
+            <Button onClick={handleLogout} size="sm" className="h-8 bg-[#4B0082] hover:bg-[#1F4068] text-white border-0 shadow-sm transition-all active:scale-95 font-bold text-[10px] uppercase tracking-widest px-4 rounded-full">
               <LogOut className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Logout</span>
               <span className="sm:hidden text-[10px]">Logout</span>

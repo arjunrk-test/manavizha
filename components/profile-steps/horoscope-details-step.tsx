@@ -112,37 +112,51 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="jaadhagam">Jaadhagam *</Label>
-          <div className="space-y-4 flex justify-center">
+    <div className="space-y-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+        <div className="space-y-6 md:col-span-2">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
+              <span className="text-[#4B0082] font-black text-xs">A1</span>
+            </div>
+            <div>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Horoscope</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">Jaadhagam / Photo</h3>
+            </div>
+            <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
+          </div>
+
+          <div className="space-y-4 flex justify-center w-full">
             {preview ? (
-              <div className="relative w-full max-w-md mx-auto">
+              <div className="relative w-full max-w-lg mx-auto group">
+                <div className="absolute -inset-4 bg-gradient-to-br from-[#4B0082]/5 to-transparent rounded-[3rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                 <img
                   src={preview}
                   alt="Jaadhagam preview"
-                  className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
+                  className="relative w-full h-auto rounded-[2.5rem] border-8 border-white shadow-[0_30px_60px_-15px_rgba(75,0,130,0.15)] transition-all duration-700 group-hover:scale-[1.02] group-hover:-translate-y-2"
                 />
                 <Button
                   type="button"
                   variant="destructive"
-                  size="sm"
+                  size="icon"
                   onClick={handleRemoveImage}
-                  className="absolute top-2 right-2"
+                  className="absolute -top-4 -right-4 h-12 w-12 rounded-full shadow-2xl border-4 border-white bg-rose-500 hover:bg-rose-600 transition-transform group-hover:scale-110 active:scale-90"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-6 w-6 text-white" />
                 </Button>
               </div>
             ) : (
-              <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center w-full max-w-md mx-auto">
-                <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <Label htmlFor="jaadhagam-upload" className="cursor-pointer">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Click to upload Jaadhagam image
+              <div className="sds-glass border-2 border-dashed border-indigo-100 rounded-[3rem] p-16 text-center w-full max-w-xl mx-auto group hover:border-[#4B0082]/30 transition-all duration-700 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#4B0082]/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                <div className="h-24 w-24 rounded-[2rem] bg-[#4B0082]/5 flex items-center justify-center text-[#4B0082]/20 mx-auto mb-8 group-hover:scale-110 group-hover:bg-[#4B0082]/10 group-hover:rotate-6 transition-all duration-700">
+                  <Upload className="h-10 w-10" />
+                </div>
+                <Label htmlFor="jaadhagam-upload" className="cursor-pointer flex flex-col gap-4 relative z-10">
+                  <span className="text-[14px] font-black uppercase tracking-[0.4em] text-[#4B0082] group-hover:tracking-[0.5em] transition-all duration-700">
+                    Upload Horoscope Image
                   </span>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    PNG, JPG, GIF up to 5MB
+                  <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest bg-white/40 px-4 py-2 rounded-full border border-indigo-50/50 w-fit mx-auto">
+                    PNG, JPG, BMP / Max 5MB
                   </p>
                 </Label>
                 <input
@@ -159,85 +173,97 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
           </div>
         </div>
 
-        <div className="md:col-span-2 bg-gradient-to-r from-[#4B0082]/5 to-[#FF1493]/5 p-4 rounded-xl border border-[#4B0082]/10 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm">
-              <Zap className="h-5 w-5 text-amber-500" />
+        {/* Computation Engine Banner */}
+        <div className="md:col-span-2 sds-glass p-8 rounded-[3rem] border-2 border-amber-100/50 bg-gradient-to-br from-amber-50/30 to-white/40 flex flex-col md:flex-row items-center justify-between gap-8 overflow-hidden relative group shadow-[0_20px_40px_-10px_rgba(251,191,36,0.1)]">
+          <div className="absolute -top-10 -right-10 p-12 opacity-5 group-hover:opacity-10 transition-all duration-1000 group-hover:rotate-45 group-hover:scale-150">
+            <Zap className="h-48 w-48 text-amber-500" />
+          </div>
+          <div className="flex items-center gap-6 relative z-10">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-amber-500/10 flex items-center justify-center shadow-inner border border-amber-500/20 group-hover:rotate-[360deg] transition-transform duration-1000">
+              <Zap className="h-8 w-8 text-amber-600 fill-amber-500/20" />
             </div>
             <div>
-              <p className="font-bold text-sm">Traditional Horoscope Generator</p>
-              <p className="text-[10px] text-gray-500">Auto-fill Star, Rashi, and Lagnam from birth details</p>
+              <p className="font-black text-[10px] uppercase tracking-[0.4em] text-amber-600/60 mb-1">Traditional Method</p>
+              <p className="font-light text-2xl tracking-tight text-gray-900">Calculate Details</p>
+              <p className="text-[9px] text-amber-500 font-bold uppercase tracking-widest mt-1">Instant details from Birth Time</p>
             </div>
           </div>
           <Button
             type="button"
             onClick={handleAutoGenerate}
             disabled={isGenerating}
-            className="bg-[#4B0082] hover:bg-[#3B0062] text-white gap-2 font-bold"
+            className="relative z-10 h-14 px-10 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_15px_30px_-10px_rgba(245,158,11,0.5)] transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:grayscale group"
           >
-            {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-            {isGenerating ? "Generating..." : "Generate from Birth Details"}
+            {isGenerating ? <Loader2 className="h-5 w-5 animate-spin mr-3" /> : <Zap className="h-5 w-5 mr-3 transition-transform group-hover:scale-125" />}
+            {isGenerating ? "Calculating..." : "Start Calculation"}
           </Button>
         </div>
 
+        {/* Input Fields Pair */}
         <div className="space-y-2">
-          <Label htmlFor="timeOfBirth">Time of Birth *</Label>
+          <Label htmlFor="timeOfBirth" className="sds-label">Time of Birth *</Label>
           <Input
             id="timeOfBirth"
             type="time"
             value={formData.timeOfBirth || ""}
             onChange={(e) => onChange("timeOfBirth", e.target.value)}
             required
+            className="sds-input w-full"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="placeOfBirth">Place of Birth *</Label>
+          <Label htmlFor="placeOfBirth" className="sds-label">Place of Birth *</Label>
           <Input
             id="placeOfBirth"
             value={formData.placeOfBirth || ""}
             onChange={(e) => onChange("placeOfBirth", e.target.value)}
-            placeholder="Enter place of birth"
+            placeholder="Enter City Name"
             required
+            className="sds-input w-full"
           />
         </div>
 
-        <SelectDropdown
-          id="zodiacSign"
-          label="Zodiac or Moon Sign *"
-          value={formData.zodiacSign || ""}
-          onChange={(value) => onChange("zodiacSign", value)}
-          options={zodiacSignOptions}
-          required
-        />
-
-        <SelectDropdown
-          id="star"
-          label="Star *"
-          value={formData.star || ""}
-          onChange={(value) => onChange("star", value)}
-          options={starOptions}
-          required
-        />
-
-        <SelectDropdown
-          id="lagnam"
-          label="Lagnam *"
-          value={formData.lagnam || ""}
-          onChange={(value) => onChange("lagnam", value)}
-          options={lagnamOptions}
-          required
-        />
-
-        <div className="space-y-2">
-          <Label htmlFor="dhosham">Dhosham *</Label>
-          <Input
-            id="dhosham"
-            value={formData.dhosham || ""}
-            onChange={(e) => onChange("dhosham", e.target.value)}
-            placeholder="Enter Dhosham"
+        {/* Selection Matrix */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:col-span-2">
+          <SelectDropdown
+            id="zodiacSign"
+            label="Zodiac (Rashi) *"
+            value={formData.zodiacSign || ""}
+            onChange={(value) => onChange("zodiacSign", value)}
+            options={zodiacSignOptions}
             required
           />
+
+          <SelectDropdown
+            id="star"
+            label="Star (Nakshatra) *"
+            value={formData.star || ""}
+            onChange={(value) => onChange("star", value)}
+            options={starOptions}
+            required
+          />
+
+          <SelectDropdown
+            id="lagnam"
+            label="Lagnam *"
+            value={formData.lagnam || ""}
+            onChange={(value) => onChange("lagnam", value)}
+            options={lagnamOptions}
+            required
+          />
+
+          <div className="space-y-2">
+            <Label htmlFor="dhosham" className="sds-label">Dhosham Details *</Label>
+            <Input
+              id="dhosham"
+              value={formData.dhosham || ""}
+              onChange={(e) => onChange("dhosham", e.target.value)}
+              placeholder="Enter Dhosham details (if any)"
+              required
+              className="sds-input w-full"
+            />
+          </div>
         </div>
       </div>
     </div>

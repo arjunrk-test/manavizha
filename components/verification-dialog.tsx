@@ -139,23 +139,23 @@ export function VerificationDialog({ isOpen, onClose, userId, existingPhotos = [
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-4xl bg-white dark:bg-gray-900 border-none shadow-2xl overflow-hidden p-0">
+      <DialogContent className="sm:max-w-4xl sds-glass border-none shadow-2xl overflow-hidden p-0 rounded-[3rem]">
         <AnimatePresence>
           {step !== 2 && (
             <motion.div 
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="bg-[#4B0082] py-2 px-6 text-white overflow-hidden border-b border-white/10"
+              className="bg-[#4B0082] py-4 px-8 text-white overflow-hidden border-b border-white/10"
             >
                 <div className="flex items-center gap-4">
                     <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/20 shrink-0 shadow-lg">
                         <ShieldCheck className="h-5 w-5 text-pink-300" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <DialogTitle className="text-lg font-bold leading-tight truncate">Identity Verification</DialogTitle>
+                        <DialogTitle className="text-lg font-bold leading-tight truncate">Verify your Identity</DialogTitle>
                         <DialogDescription className="text-white/60 text-[10px] line-clamp-1">
-                          Secure your profile and build trust with others.
+                          Build trust with other members by verifying your profile.
                         </DialogDescription>
                     </div>
                 </div>
@@ -175,7 +175,7 @@ export function VerificationDialog({ isOpen, onClose, userId, existingPhotos = [
                 className="space-y-6"
               >
                 <div className="text-center">
-                    <div className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">Step 1: Choose Comparison Photo</div>
+                    <div className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">Step 1: Select your profile photo</div>
                     <div className="grid grid-cols-3 gap-3">
                         {existingPhotos.length > 0 ? (
                             existingPhotos.map((url, i) => (
@@ -208,11 +208,11 @@ export function VerificationDialog({ isOpen, onClose, userId, existingPhotos = [
                     </div>
                 </div>
                 <Button 
-                    className="w-full h-12 bg-gradient-to-r from-[#4B0082] to-[#6A5ACD] hover:opacity-90 font-bold"
+                    className="w-full h-14 rounded-2xl bg-[#4B0082] hover:bg-[#380062] text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-95"
                     disabled={!selectedPhoto}
                     onClick={() => setStep(2)}
                 >
-                    Continue to Camera →
+                    Next: Take a Selfie →
                 </Button>
               </motion.div>
             )}
@@ -233,9 +233,9 @@ export function VerificationDialog({ isOpen, onClose, userId, existingPhotos = [
                         <ShieldCheck className="h-6 w-6 text-[#4B0082] dark:text-purple-400" />
                       </div>
                       <div>
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Identity Verification</h2>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Verify Identity</h2>
                         <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm leading-relaxed">
-                          To protect our community, we require a real-time selfie. This helps us confirm you're the same person shown in your profile photos.
+                          We use a live selfie to verify that your profile is genuine. This helps build trust with other members.
                         </p>
                       </div>
                     </div>
@@ -258,7 +258,7 @@ export function VerificationDialog({ isOpen, onClose, userId, existingPhotos = [
                     <div className="pt-4">
                         <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Current Step</div>
                         <div className="inline-flex items-center px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-900/20 text-xs font-medium text-[#4B0082] dark:text-purple-400 border border-purple-100 dark:border-purple-800/50">
-                            Step 2: Live Selfie Capture
+                            Step 2: Take a Selfie
                         </div>
                     </div>
                   </div>
@@ -301,7 +301,7 @@ export function VerificationDialog({ isOpen, onClose, userId, existingPhotos = [
 
                 <div className="flex justify-between items-center pt-4 mt-6 border-t border-gray-100 dark:border-gray-800">
                     <Button variant="ghost" onClick={() => { setIsCameraActive(false); setStep(1); }} className="font-medium text-gray-500 hover:text-red-500 transition-colors">
-                      <X className="h-4 w-4 mr-2" /> Cancel Choice
+                      <X className="h-4 w-4 mr-2" /> Change Photo
                     </Button>
                     <div className="text-[10px] text-gray-400 font-medium">Position your face within the frame</div>
                 </div>
@@ -317,7 +317,7 @@ export function VerificationDialog({ isOpen, onClose, userId, existingPhotos = [
                 className="space-y-4"
               >
                 <div className="text-center">
-                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Final Step: Review & Submit</div>
+                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Final Step: Submit for Review</div>
                     <div className="flex gap-4 justify-center items-stretch max-w-xl mx-auto">
                       <div className="space-y-1 flex-1 flex flex-col">
                           <p className="text-[9px] font-bold text-gray-400 uppercase">Profile Photo</p>
@@ -364,7 +364,7 @@ export function VerificationDialog({ isOpen, onClose, userId, existingPhotos = [
                         onClick={handleUpload}
                         disabled={isUploading}
                     >
-                        {isUploading ? "Verifying..." : "Confirm & Submit"}
+                        {isUploading ? "Uploading..." : "Verify Now"}
                     </Button>
                 </div>
               </motion.div>

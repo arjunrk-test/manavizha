@@ -46,24 +46,37 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Full Name, Date of Birth, and Age in a single row */}
-        <div className="space-y-2 md:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Full Name *</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => onChange("name", e.target.value)}
-            placeholder="Enter your full name"
-            required
-          />
-        </div>
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+        
+        {/* Birth Details Section */}
+        <div className="space-y-8 md:col-span-2">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
+              <span className="text-[#4B0082] font-black text-xs">01</span>
+            </div>
+            <div>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Basic Details</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">Personal Information</h3>
+            </div>
+            <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
+          </div>
 
-        <div className="space-y-2">
-              <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50">
+            <div className="space-y-2 md:col-span-1">
+              <Label htmlFor="name" className="sds-label">Full Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => onChange("name", e.target.value)}
+                placeholder="Enter your full name"
+                required
+                className="sds-input w-full"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dateOfBirth" className="sds-label">Date of Birth *</Label>
               <Input
                 id="dateOfBirth"
                 type="date"
@@ -76,8 +89,6 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
                     const age = today.getFullYear() - birthDate.getFullYear()
                     const monthDiff = today.getMonth() - birthDate.getMonth()
                     const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age
-                    
-                    // Set both dateOfBirth and calculate age for backward compatibility
                     onChange("dateOfBirth", selectedDate)
                     onChange("age", actualAge.toString())
                   } else {
@@ -88,215 +99,220 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
                 max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
                 min={new Date(new Date().setFullYear(new Date().getFullYear() - 100)).toISOString().split('T')[0]}
                 required
-                className="w-full"
+                className="sds-input w-full"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="age">Age</Label>
-            <Input
-              id="age"
-              type="number"
+              <Label htmlFor="age" className="sds-label">Age</Label>
+              <Input
+                id="age"
                 value={formData.age || ""}
                 readOnly
                 disabled
-                placeholder="Auto-calculated"
-                className="w-full bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-75"
+                placeholder="Calculated"
+                className="sds-input w-full bg-black/[0.02] border-indigo-50/30 opacity-60 cursor-not-allowed font-medium text-gray-500"
               />
             </div>
-          </div>
-          {formData.dateOfBirth && formData.age && Number(formData.age) > 50 && (
-            <p className="text-sm text-red-500 dark:text-red-400">
-                Currently we accept profiles with age less than or equal to 50
-            </p>
-          )}
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
-          <div className="space-y-2">
-            <Label htmlFor="createdBy">Profile Created By *</Label>
-            <Select value={formData.createdBy} onValueChange={(value) => onChange("createdBy", value)}>
-              <SelectTrigger id="createdBy" className="rounded-2xl border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                <SelectValue placeholder="Select who is creating this profile" />
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl border-gray-200 dark:border-gray-800 shadow-xl">
-                <SelectItem value="Self">Self</SelectItem>
-                <SelectItem value="Parents">Parents</SelectItem>
-                <SelectItem value="Sibling">Sibling</SelectItem>
-                <SelectItem value="Relative">Relative</SelectItem>
-                <SelectItem value="Friend">Friend</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="createdBy" className="sds-label">Created By *</Label>
+              <Select value={formData.createdBy} onValueChange={(value) => onChange("createdBy", value)}>
+                <SelectTrigger id="createdBy" className="sds-input w-full h-14 border-indigo-50/50">
+                  <SelectValue placeholder="Select Creator" />
+                </SelectTrigger>
+                <SelectContent className="sds-glass rounded-2xl border-indigo-50/50 shadow-2xl p-2 z-[100] backdrop-blur-2xl">
+                  {["Self", "Parents", "Sibling", "Relative", "Friend"].map(val => (
+                    <SelectItem key={val} value={val} className="rounded-xl p-3 focus:bg-[#4B0082] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">{val}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="physicalStatus">Physical Status *</Label>
-            <Select value={formData.physicalStatus} onValueChange={(value) => onChange("physicalStatus", value)}>
-              <SelectTrigger id="physicalStatus" className="rounded-2xl border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                <SelectValue placeholder="Select physical status" />
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl border-gray-200 dark:border-gray-800 shadow-xl">
-                <SelectItem value="Normal">Normal</SelectItem>
-                <SelectItem value="Physically Challenged">Physically Challenged</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <SelectDropdown
-          id="sex"
-          label="Gender *"
-          value={formData.sex}
-          onChange={(value) => onChange("sex", value)}
-          options={genderOptions}
-          required
-        />
-
-        <div className="space-y-2">
-          <Label htmlFor="height">Height (cm) *</Label>
-          <div className="relative">
-            <Input
-              id="height"
-              type="number"
-              value={formData.height}
-              onChange={(e) => {
-                const value = e.target.value
-                // Restrict to 3 digits only
-                if (value === "" || (value.length <= 3 && /^\d+$/.test(value))) {
-                  onChange("height", value)
-                }
-              }}
-              placeholder="Enter height in cm"
-              maxLength={3}
+            <SelectDropdown
+              id="sex"
+              label="Gender *"
+              value={formData.sex}
+              onChange={(value) => onChange("sex", value)}
+              options={genderOptions}
               required
-              className={formData.height && (Number(formData.height) > 251 || formData.height.length > 3) ? "border-red-500 focus-visible:ring-red-500" : ""}
             />
-            {formData.height && (Number(formData.height) > 251 || formData.height.length > 3) && (
-              <div className="absolute left-0 top-full mt-1 z-10 px-3 py-2 bg-gray-900 dark:bg-gray-800 text-white text-sm rounded-lg shadow-lg max-w-xs">
-                Height cannot exceed 251cm (tallest person's height ever recorded)
-                <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900 dark:bg-gray-800 transform rotate-45"></div>
+
+            <SelectDropdown
+              id="maritalStatus"
+              label="Marital Status *"
+              value={formData.maritalStatus}
+              onChange={(value) => onChange("maritalStatus", value)}
+              options={maritalStatusOptions}
+              required
+            />
+          </div>
+        </div>
+
+        {/* Physical Section */}
+        <div className="space-y-8 md:col-span-2">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
+              <span className="text-[#4B0082] font-black text-xs">02</span>
+            </div>
+            <div>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Physical</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">Appearance & Build</h3>
+            </div>
+            <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50">
+            <div className="space-y-2">
+              <Label htmlFor="height" className="sds-label">Height (cm) *</Label>
+              <Input
+                id="height"
+                type="number"
+                value={formData.height}
+                onChange={(e) => {
+                  const value = e.target.value
+                  if (value === "" || (value.length <= 3 && /^\d+$/.test(value))) {
+                    onChange("height", value)
+                  }
+                }}
+                placeholder="e.g., 170"
+                maxLength={3}
+                required
+                className="sds-input w-full"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="weight" className="sds-label">Weight (kg) *</Label>
+              <Input
+                id="weight"
+                type="number"
+                value={formData.weight}
+                onChange={(e) => {
+                  const value = e.target.value
+                  if (value === "" || (value.length <= 3 && /^\d+$/.test(value))) {
+                    onChange("weight", value)
+                  }
+                }}
+                placeholder="e.g., 65"
+                maxLength={3}
+                required
+                className="sds-input w-full"
+              />
+            </div>
+
+            <SelectDropdown
+              id="bodyType"
+              label="Body Type *"
+              value={formData.bodyType}
+              onChange={(value) => onChange("bodyType", value)}
+              options={bodyTypeOptions}
+              required
+            />
+
+            <SkinColorDropdown
+              value={formData.skinColor}
+              onChange={(value) => onChange("skinColor", value)}
+              options={skinColorOptions}
+              required
+            />
+
+            <div className="space-y-2 md:col-span-4">
+              <Label htmlFor="physicalStatus" className="sds-label">Physical Status *</Label>
+              <Select value={formData.physicalStatus} onValueChange={(value) => onChange("physicalStatus", value)}>
+                <SelectTrigger id="physicalStatus" className="sds-input w-full h-14 border-indigo-50/50">
+                  <SelectValue placeholder="Are you physically challenged?" />
+                </SelectTrigger>
+                <SelectContent className="sds-glass rounded-2xl border-indigo-50/50 shadow-2xl p-2 z-[100] backdrop-blur-2xl">
+                  <SelectItem value="Normal" className="rounded-xl p-3 focus:bg-[#4B0082] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">No</SelectItem>
+                  <SelectItem value="Physically Challenged" className="rounded-xl p-3 focus:bg-[#4B0082] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">Yes</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* Lifestyle Section */}
+        <div className="space-y-8 md:col-span-2">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
+              <span className="text-[#4B0082] font-black text-xs">03</span>
+            </div>
+            <div>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Culture</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">Languages & Food</h3>
+            </div>
+            <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50">
+            <SelectDropdown
+              id="foodPreference"
+              label="Food Preference *"
+              value={formData.foodPreference}
+              onChange={(value) => onChange("foodPreference", value)}
+              options={foodPreferenceOptions}
+              required
+            />
+
+            <div className="space-y-2 md:col-span-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <LanguageDropdown
+                  label="Languages you speak *"
+                  languages={indianLanguages}
+                  selectedLanguages={formData.languages || []}
+                  onToggle={toggleLanguage}
+                  placeholder="Select languages"
+                />
+
+                <LanguageDropdown
+                  label="International Languages"
+                  languages={internationalLanguages}
+                  selectedLanguages={formData.languages || []}
+                  onToggle={toggleLanguage}
+                  placeholder="Select international languages"
+                />
               </div>
-            )}
+            </div>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="weight">Weight (kg) *</Label>
-          <Input
-            id="weight"
-            type="number"
-            value={formData.weight}
-            onChange={(e) => {
-              const value = e.target.value
-              // Restrict to 3 digits only
-              if (value === "" || (value.length <= 3 && /^\d+$/.test(value))) {
-                onChange("weight", value)
-              }
-            }}
-            placeholder="Enter weight in kg"
-            maxLength={3}
-            required
-          />
-        </div>
-
-        <SkinColorDropdown
-          value={formData.skinColor}
-          onChange={(value) => onChange("skinColor", value)}
-          options={skinColorOptions}
-          required
-        />
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:col-span-2">
-          <SelectDropdown
-            id="bodyType"
-            label="Body Type *"
-            value={formData.bodyType}
-            onChange={(value) => onChange("bodyType", value)}
-            options={bodyTypeOptions}
-            required
-          />
-
-          <SelectDropdown
-            id="maritalStatus"
-            label="Marital Status *"
-            value={formData.maritalStatus}
-            onChange={(value) => onChange("maritalStatus", value)}
-            options={maritalStatusOptions}
-            required
-          />
-
-          <SelectDropdown
-            id="foodPreference"
-            label="Food Preference *"
-            value={formData.foodPreference}
-            onChange={(value) => onChange("foodPreference", value)}
-            options={foodPreferenceOptions}
-            required
-          />
-        </div>
-
-        <div className="space-y-2 md:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <LanguageDropdown
-              label="Indian Languages *"
-              languages={indianLanguages}
-              selectedLanguages={formData.languages || []}
-              onToggle={toggleLanguage}
-              placeholder="Select Indian languages"
-            />
-
-            <LanguageDropdown
-              label="International Languages *"
-              languages={internationalLanguages}
-              selectedLanguages={formData.languages || []}
-              onToggle={toggleLanguage}
-              placeholder="Select International languages"
-            />
+        {/* About Me Section */}
+        <div className="space-y-8 md:col-span-2">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
+              <span className="text-[#4B0082] font-black text-xs">04</span>
+            </div>
+            <div>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Description</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">About Yourself</h3>
+            </div>
+            <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
           </div>
-        </div>
 
-        <div className="space-y-2 md:col-span-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="about">About Yourself *</Label>
-            <span className={`text-sm ${formData.about.length < 100 ? "text-gray-500" : formData.about.length > 600 ? "text-red-500" : "text-gray-600"}`}>
-              {formData.about.length} / 600 {formData.about.length < 100 && "(min 100)"}
-            </span>
-          </div>
-          <div className="relative">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-2">
+              <Label htmlFor="about" className="sds-label">About me *</Label>
+              <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${formData.about.length < 100 ? "text-[#4B0082]/40 border-[#4B0082]/10" : formData.about.length > 550 ? "text-rose-500 border-rose-100 bg-rose-50/50" : "text-emerald-500 border-emerald-100 bg-emerald-50/50"}`}>
+                {formData.about.length} / 600 {formData.about.length < 100 && "(MIN 100 CHARS)"}
+              </span>
+            </div>
             <textarea
               id="about"
               value={formData.about}
               onChange={(e) => {
                 const value = e.target.value
-                // Prevent typing if already at max limit
-                if (value.length <= 600) {
-                  onChange("about", value)
-                }
+                if (value.length <= 600) onChange("about", value)
               }}
-              placeholder="Tell us about yourself... (minimum 100 characters)"
-              rows={4}
+              placeholder="Write a few lines about yourself, your hobbies, and what you are looking for in a partner..."
+              rows={6}
               maxLength={600}
               required
-              className={`w-full rounded-2xl border px-3 py-2 focus:outline-none focus:ring-2 dark:bg-gray-900 ${
-                formData.about.length > 600
-                  ? "border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-900/10"
-                  : formData.about.length < 100 && formData.about.length > 0
-                  ? "border-yellow-500 focus:ring-yellow-500 bg-yellow-50 dark:bg-yellow-900/10"
-                  : "border-gray-200 focus:ring-[#4B0082] bg-gray-50 dark:border-gray-800"
+              className={`sds-input w-full resize-none py-6 px-6 leading-relaxed transition-all duration-500 min-h-[160px] ${
+                formData.about.length < 100 && formData.about.length > 0 ? "border-[#4B0082]/20" : ""
               }`}
             />
-            {formData.about.length >= 600 && (
-              <div className="absolute left-0 top-full mt-1 z-10 px-3 py-2 bg-gray-900 dark:bg-gray-800 text-white text-sm rounded-lg shadow-lg max-w-xs">
-                Maximum character limit reached (600 characters)
-                <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900 dark:bg-gray-800 transform rotate-45"></div>
-              </div>
-            )}
           </div>
-          {formData.about.length > 0 && formData.about.length < 100 && (
-            <p className="text-sm text-yellow-600 dark:text-yellow-400">
-              Please enter at least 100 characters (currently {formData.about.length} characters)
-            </p>
-          )}
         </div>
       </div>
     </div>

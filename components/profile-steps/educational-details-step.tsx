@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { FormData } from "@/types/profile"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus, Trash2, GraduationCap } from "lucide-react"
 import { useMasterData } from "@/hooks/use-master-data"
 import { SelectDropdown } from "@/components/ui/select-dropdown"
 
@@ -100,8 +100,7 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
     // For dropdown fields, use the exact value from the option to ensure perfect matching
     // The CustomSelectDropdown passes option.value directly, so we should store it as-is
     // Only trim text input fields
-    const isDropdownField = field === "education" || field === "degree" || field === "status"
-    const processedValue = isDropdownField ? (value || "") : (value || "").trim()
+    const processedValue = value || ""
 
     // If education level changes, reset the degree field and educationOther
     if (field === "education") {
@@ -128,30 +127,38 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {educationDetails.map((edu, index) => (
-        <div key={`education-${index}`} className="border border-gray-200 dark:border-gray-700 rounded-2xl p-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Education {index + 1}
-            </h3>
+        <div key={`education-${index}`} className="sds-glass rounded-[2.5rem] p-10 border-2 border-indigo-50/50 space-y-10 relative overflow-hidden group shadow-[0_20px_50px_rgba(75,0,130,0.05)] bg-gradient-to-br from-white/40 to-transparent">
+          <div className="flex items-center justify-between border-b border-black/[0.03] pb-8">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
+                <GraduationCap className="h-6 w-6 text-[#4B0082]" />
+              </div>
+              <div>
+                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-1">Education</h4>
+                <h3 className="text-2xl font-light text-gray-900 tracking-tight">
+                  Qualification <span className="font-bold text-[#4B0082]/40">{index + 1}</span>
+                </h3>
+              </div>
+            </div>
             {educationDetails.length > 1 && (
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => removeEducation(index)}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="h-12 px-6 rounded-2xl text-rose-500 hover:bg-rose-50/80 font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border border-transparent hover:border-rose-100"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Remove
               </Button>
             )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <SelectDropdown
               id={`education-${index}`}
-              label="Education Level *"
+              label="Education Category *"
               value={edu.education || ""}
               onChange={(value) => {
                 updateEducation(index, "education", value)
@@ -161,78 +168,81 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
             />
             {educationLevelOptions.some(opt => opt.value.toLowerCase() === "other") && edu.education?.toLowerCase() === "other" && (
               <div className="space-y-2">
-                <Label htmlFor={`educationOther-${index}`}>Please specify education level</Label>
+                <Label htmlFor={`educationOther-${index}`} className="sds-label">Specify Level *</Label>
                 <Input
                   id={`educationOther-${index}`}
                   value={edu.educationOther || ""}
                   onChange={(e) => updateEducation(index, "educationOther", e.target.value)}
-                  placeholder="Please specify education level"
+                  placeholder="Enter Education Level"
                   required
+                  className="sds-input w-full"
                 />
               </div>
             )}
             <SelectDropdown
               id={`degree-${index}`}
-              label="Degree/Qualification *"
+              label="Degree / Qualification *"
               value={edu.degree || ""}
               onChange={(value) => updateEducation(index, "degree", value)}
               options={getQualificationsForLevel(edu.education || "")}
-              className={!edu.education ? "opacity-50 pointer-events-none" : ""}
+              className={!edu.education ? "opacity-40 grayscale pointer-events-none" : ""}
               required
             />
             {getQualificationsForLevel(edu.education || "").some(opt => opt.value.toLowerCase() === "other") && edu.degree?.toLowerCase() === "other" && (
               <div className="space-y-2">
-                <Label htmlFor={`degreeOther-${index}`}>Please specify degree/qualification</Label>
+                <Label htmlFor={`degreeOther-${index}`} className="sds-label">Specify Degree *</Label>
                 <Input
                   id={`degreeOther-${index}`}
                   value={edu.degreeOther || ""}
                   onChange={(e) => updateEducation(index, "degreeOther", e.target.value)}
-                  placeholder="Please specify degree/qualification"
+                  placeholder="Enter Degree Name"
                   required
+                  className="sds-input w-full"
                 />
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor={`branch-${index}`}>Branch/Specialization</Label>
+              <Label htmlFor={`branch-${index}`} className="sds-label">Major / Subject</Label>
               <Input
                 id={`branch-${index}`}
                 value={edu.branch || ""}
                 onChange={(e) => updateEducation(index, "branch", e.target.value)}
-                placeholder="e.g., Electronics and Instrumentation Engineering, Computer Science, etc."
+                placeholder="e.g. Computer Science, Commerce"
+                className="sds-input w-full"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor={`institution-${index}`}>Institution/University</Label>
+              <Label htmlFor={`institution-${index}`} className="sds-label">Academy / University</Label>
               <Input
                 id={`institution-${index}`}
                 value={edu.institution || ""}
                 onChange={(e) => updateEducation(index, "institution", e.target.value)}
-                placeholder="Enter institution name"
+                placeholder="Enter College Name"
+                className="sds-input w-full"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor={`yearOfGraduation-${index}`}>Year of Graduation</Label>
+              <Label htmlFor={`yearOfGraduation-${index}`} className="sds-label">Graduation Year</Label>
               <Input
                 id={`yearOfGraduation-${index}`}
                 type="number"
                 value={edu.yearOfGraduation || ""}
                 onChange={(e) => {
                   const value = e.target.value.replace(/[^0-9]/g, "")
-                  // Limit to 4 digits
                   if (value.length <= 4) {
                     updateEducation(index, "yearOfGraduation", value)
                   }
                 }}
-                placeholder="e.g., 2020"
+                placeholder="YYYY"
                 min="1950"
-                max={new Date().getFullYear()}
-                maxLength={4}
+                max={new Date().getFullYear() + 5}
+                className="sds-input w-full"
                 disabled={edu.status === "ongoing" || edu.status === "pursuing"}
               />
             </div>
             <SelectDropdown
               id={`status-${index}`}
-              label="Status *"
+              label="Education Status *"
               value={edu.status || ""}
               onChange={(value) => updateEducation(index, "status", value)}
               options={statusOptions}
@@ -245,11 +255,10 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
       <Button
         type="button"
         onClick={addEducation}
-        variant="outline"
-        className="w-full border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-[#4B0082] hover:bg-[#4B0082]/10"
+        className="h-24 w-full rounded-[2.5rem] bg-[#4B0082]/[0.02] text-[#4B0082] border-2 border-dashed border-indigo-100 hover:bg-indigo-50/50 hover:border-indigo-300 transition-all duration-500 font-black text-[11px] uppercase tracking-[0.4em] group"
       >
-        <Plus className="h-4 w-4 mr-2" />
-        Add Another Education
+        <Plus className="h-6 w-6 mr-4 transition-transform group-hover:rotate-90 group-hover:scale-110" />
+        Add More Education
       </Button>
     </div>
   )
