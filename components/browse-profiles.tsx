@@ -861,11 +861,9 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
         }
         return parts.join(" • ")
     }
-
     const HorizontalProfileCard = ({ profile, index }: { profile: any, index: number }) => {
         const [cardPhotoIndex, setCardPhotoIndex] = useState(0)
         const hasMultiplePhotos = profile.photos && profile.photos.length > 1
-        const genderColor = profile.sex?.toLowerCase() === 'female' ? 'border-pink-200' : 'border-blue-200'
 
         const handleContactClick = (type: string) => {
             if (!isPremium) {
@@ -889,56 +887,73 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
 
         return (
             <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
+                initial={{ opacity: 0, scale: 0.95, y: 30 }}
+                whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ 
+                    duration: 0.8, 
+                    delay: index * 0.05,
+                    ease: [0.16, 1, 0.3, 1]
+                }}
                 className="w-full"
             >
                 <div
-                    className={`sds-glass rounded-[3rem] overflow-hidden hover:shadow-[0_40px_80px_rgba(75,0,130,0.15)] transition-all duration-700 cursor-pointer group flex flex-col md:flex-row h-auto md:min-h-[260px] border-2 border-indigo-100/30 hover:border-indigo-400 group-hover:bg-white/95`}
+                    className="sds-glass rounded-3xl overflow-hidden hover:shadow-[0_40px_80px_-20px_rgba(75,0,130,0.15)] transition-all duration-700 cursor-pointer group flex flex-col md:flex-row h-auto md:min-h-[200px] border-2 border-indigo-100/20 hover:border-[#4B0082]/30 active:scale-[0.99] bg-white/95"
                     onClick={(e) => handleOpenProfile(profile, e)}
                 >
                     {/* Left: Image Section */}
-                    <div className="w-full md:w-56 h-72 md:h-auto relative overflow-hidden bg-gray-50/30 shrink-0">
+                    <div className="w-full md:w-56 h-72 md:h-auto relative overflow-hidden bg-gray-100/50 shrink-0">
                         {profile.photos && profile.photos.length > 0 ? (
                             <>
                                 <img
                                     src={profile.photos[cardPhotoIndex]}
                                     alt={profile.name}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-[cubic-bezier(0.33,1,0.68,1)]"
                                 />
                                 {hasMultiplePhotos && (
-                                    <div className="absolute bottom-4 right-4 sds-glass text-[10px] px-4 py-2 rounded-full z-10 font-black tracking-[0.2em] text-[#4B0082] bg-white/80 shadow-md">
+                                    <div className="absolute bottom-4 right-4 sds-glass text-[9px] px-3 py-1.5 rounded-full z-10 font-black tracking-[0.2em] text-[#4B0082] bg-white/90 shadow-xl border-indigo-50/50">
                                         {cardPhotoIndex + 1} / {profile.photos.length}
+                                    </div>
+                                )}
+                                
+                                {/* Photo Progress Bars */}
+                                {hasMultiplePhotos && (
+                                    <div className="absolute top-6 inset-x-6 flex gap-1.5 z-10">
+                                        {profile.photos.map((_: any, i: number) => (
+                                            <div 
+                                                key={i} 
+                                                className={`h-0.5 flex-1 rounded-full transition-all duration-500 ${i === cardPhotoIndex ? 'bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]' : 'bg-white/30'}`} 
+                                            />
+                                        ))}
                                     </div>
                                 )}
                             </>
                         ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-200">
-                                <User className="h-16 w-16 opacity-10" />
-                                <span className="text-[10px] mt-2 font-black uppercase tracking-[0.3em] opacity-30">No Photo Uploaded</span>
+                            <div className="w-full h-full flex flex-col items-center justify-center text-indigo-900/10 bg-indigo-50/30">
+                                <User className="h-24 w-24 opacity-50" />
+                                <span className="text-[9px] mt-4 font-black uppercase tracking-[0.4em] opacity-40">Profile Image Restricted</span>
                             </div>
                         )}
                         
                         {profile.photo_verified && (
-                            <div className="absolute bottom-4 left-4 bg-emerald-500/90 text-white px-3 py-1.5 rounded-full text-[8px] font-black flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 uppercase tracking-[0.2em] backdrop-blur-md">
-                                <CheckCircle2 className="h-3 w-3" /> Verified
+                            <div className="absolute bottom-4 left-4 bg-emerald-500 text-white px-3 py-1.5 rounded-full text-[8px] font-black flex items-center gap-1.5 shadow-2xl shadow-emerald-500/40 uppercase tracking-[0.2em] backdrop-blur-xl border border-emerald-400/30">
+                                <Shield className="h-3 w-3 shadow-sm" /> Verified
                             </div>
                         )}
 
                         {profile.isPremium && (
-                            <div className="absolute top-4 left-4 z-30 flex flex-col gap-2">
-                                <span className="bg-gradient-to-r from-indigo-600 to-indigo-400 text-white text-[8px] uppercase font-black px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-xl shadow-indigo-500/30 tracking-[0.2em] backdrop-blur-md">
-                                    <Crown className="h-3 w-3" /> Premium
-                                </span>
+                            <div className="absolute top-4 left-4 z-30">
+                                <div className="bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-white p-1 rounded-xl shadow-2xl shadow-amber-500/40 border border-white/20">
+                                    <Crown className="h-3.5 w-3.5" />
+                                </div>
                             </div>
                         )}
                     </div>
 
                     {/* Right: Content Section */}
-                    <div className="p-6 md:p-8 flex-1 flex flex-col relative bg-gradient-to-br from-white/40 to-transparent">
-                        {/* Compatibility Score - DUAL CORE */}
-                        <div className="absolute top-6 right-6 z-20">
+                    <div className="p-6 md:p-8 flex-1 flex flex-col relative bg-gradient-to-br from-white/60 via-white/40 to-transparent">
+                        {/* Compatibility Score */}
+                        <div className="absolute top-6 right-6 z-20 scale-100">
                             <MatchScoreBadge 
                                 lifestyleScore={profile.lifestyleMatch?.totalScore || 0}
                                 poruthamScore={profile.compatibility?.score || 0}
@@ -948,72 +963,82 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         </div>
 
                         <div className="mb-4">
-                            <h3 className="text-2xl font-light text-gray-900 tracking-tight leading-none mb-2 group-hover:text-[#4B0082] transition-colors duration-300">
-                                {profile.name || "Unknown"}<span className="font-bold text-[#4B0082]/30 ml-2">{profile.age && `, ${profile.age}`}</span>
-                            </h3>
-                            <div className="flex flex-wrap items-center gap-5 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                                <div className="flex items-center gap-1.5">
-                                    <MapPin className="h-3.5 w-3.5 text-indigo-400" />
+                            <div className="flex items-center gap-3 mb-2">
+                                <h3 className="text-2xl font-light text-gray-900 tracking-tighter leading-none group-hover:text-[#4B0082] transition-colors duration-500">
+                                    {profile.name || "Unknown"}
+                                </h3>
+                                <span className="text-lg font-black text-[#4B0082]/20 tracking-tighter">{profile.age && `${profile.age}`}</span>
+                                {profile.isPremium && (
+                                    <span className="text-[8px] font-black uppercase tracking-[0.3em] text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-100/50">Elite</span>
+                                )}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-4">
+                                <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-900/60">
+                                    <MapPin className="h-3 w-3 text-indigo-500/40" />
                                     {profile.location.split(',')[0]}
                                 </div>
-                                <div className="w-1.5 h-1.5 bg-indigo-100 rounded-full" />
-                                <div className="flex items-center gap-1.5 text-emerald-600/60 transition-opacity group-hover:opacity-100">
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                    Trust Score {calculateTrustScore(
+                                <div className="h-1 w-1 bg-indigo-100 rounded-full" />
+                                <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600">
+                                    <Shield className="h-3 w-3 opacity-60" />
+                                    Trust Vector {calculateTrustScore(
                                         profile.photo_verified, 
                                         profile.completion_percentage || 80, 
                                         profile.photos?.length || 0,
                                         !!profile.family_photo
-                                    )}
+                                    )}% Approved
                                 </div>
                             </div>
                         </div>
 
-                        <p className="text-gray-500/80 text-sm font-medium leading-relaxed mb-6 max-w-2xl line-clamp-2 italic">
-                            "{getAgeHeightCasteEducationProfessionCityStr(profile)}"
-                        </p>
+                        <div className="flex flex-wrap gap-2 mb-6">
+                            {getAgeHeightCasteEducationProfessionCityStr(profile).split(" • ").slice(2).map((tag, i) => (
+                                <span key={i} className="px-3.5 py-1.5 rounded-full bg-indigo-50/30 text-indigo-900/70 text-[8px] font-bold tracking-widest uppercase border border-indigo-100/30 group-hover:bg-white group-hover:border-indigo-200 transition-all">
+                                    {tag}
+                                </span>
+                            ))}
+                        </div>
 
-                        <div className="mt-auto flex flex-wrap items-center justify-between pt-8 border-t border-black/[0.03]">
-                            <div className="flex items-center gap-4">
+                        <div className="mt-auto flex flex-wrap items-center justify-between pt-8 border-t border-black/[0.04]">
+                            <div className="flex items-center gap-5">
                                 <Button
                                     size="sm"
-                                    className={`h-12 px-10 rounded-2xl font-black text-[9px] uppercase tracking-[0.3em] transition-all duration-500 ${
+                                    className={`h-14 px-12 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.4em] transition-all duration-700 ${
                                         likedIds.includes(profile.user_id)
-                                        ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-xl shadow-rose-500/30 ring-4 ring-rose-500/10'
-                                        : 'bg-[#4B0082] text-white hover:bg-indigo-700 shadow-xl shadow-indigo-900/20 hover:shadow-indigo-900/30'
+                                        ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-[0_20px_40px_rgba(244,63,94,0.3)] ring-offset-4 ring-2 ring-rose-500/20'
+                                        : 'bg-[#4B0082] text-white hover:bg-indigo-700 shadow-[0_20px_40px_rgba(75,0,130,0.25)] hover:shadow-[0_25px_50px_rgba(75,0,130,0.35)]'
                                     }`}
                                     onClick={(e) => handleCustomerLike(e, profile.user_id)}
                                     disabled={actionLoadingId === profile.user_id}
                                 >
-                                    {likedIds.includes(profile.user_id) ? 'Interest Sent' : 'Send Interest'}
+                                    {likedIds.includes(profile.user_id) ? 'Interest Logged' : 'Send Interest'}
                                 </Button>
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className={`h-12 w-12 p-0 rounded-2xl transition-all duration-300 ${shortlistedIds.includes(profile.user_id) ? 'text-amber-500 hover:text-amber-600 bg-amber-50/50 shadow-inner' : 'text-gray-300 hover:text-amber-400 hover:bg-amber-50/30'}`}
+                                    className={`h-14 w-14 p-0 rounded-3xl transition-all duration-500 border-2 ${shortlistedIds.includes(profile.user_id) ? 'text-amber-500 border-amber-100 bg-amber-50/30' : 'text-gray-200 border-transparent hover:text-amber-400 hover:bg-amber-50'}`}
                                     onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleShortlist(e, profile.user_id); }}
                                     disabled={shortlistLoadingId === profile.user_id}
                                 >
-                                    <Star className={`h-5 w-5 ${shortlistedIds.includes(profile.user_id) ? 'fill-amber-500 text-amber-500' : ''}`} />
+                                    <Star className={`h-6 w-6 ${shortlistedIds.includes(profile.user_id) ? 'fill-amber-500' : ''}`} />
                                 </Button>
                             </div>
                             
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-4">
                                 <Button 
                                     variant="ghost"
-                                    className="h-12 px-6 rounded-2xl font-black text-[9px] uppercase tracking-[0.3em] text-gray-400 hover:text-indigo-600 hover:bg-indigo-50/30 transition-all duration-300"
+                                    className="h-14 px-8 rounded-3xl font-black text-[10px] uppercase tracking-[0.3em] text-gray-400 hover:text-[#4B0082] hover:bg-indigo-50/50 transition-all duration-500"
                                     onClick={(e) => handleOpenProfile(profile, e)}
                                 >
-                                    View Profile
-                                    <ArrowRight className="h-3.5 w-3.5 ml-2 transition-transform group-hover:translate-x-1" />
+                                    Full Details
+                                    <ArrowRight className="h-4 w-4 ml-3 transition-transform group-hover:translate-x-2" />
                                 </Button>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-12 w-12 rounded-2xl text-gray-300 hover:text-gray-900 border border-black/[0.03] hover:bg-white/50 transition-all">
-                                            <MoreVertical className="h-5 w-5" />
+                                        <Button variant="ghost" size="sm" className="h-14 w-14 rounded-3xl text-gray-200 hover:text-gray-900 border-2 border-transparent hover:border-black/[0.05] hover:bg-white transition-all">
+                                            <MoreVertical className="h-6 w-6" />
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-64 sds-glass rounded-3xl p-2 z-50 overflow-hidden border-indigo-50/30 shadow-2xl backdrop-blur-2xl" onClick={(e) => e.stopPropagation()}>
+                                    <DropdownMenuContent align="end" className="w-72 sds-glass rounded-[2rem] p-3 z-50 border-white/50 shadow-[0_40px_80px_rgba(0,0,0,0.15)]" onClick={(e) => e.stopPropagation()}>
                                         <DropdownMenuItem
                                             onClick={(e) => { 
                                                 e.stopPropagation(); 
@@ -1023,27 +1048,27 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                                     setIsMessageDialogOpen(true);
                                                 } else {
                                                     toast.error('Premium Required', { 
-                                                        description: 'Upgrade to Premium for direct messaging, or wait for mutual interest.' 
+                                                        description: 'Upgrade for instant secure messaging.' 
                                                     });
                                                 }
                                             }}
-                                            className="gap-4 cursor-pointer rounded-2xl p-5 focus:bg-[#4B0082] focus:text-white font-black text-[10px] uppercase tracking-[0.2em] transition-all duration-300"
+                                            className="gap-5 cursor-pointer rounded-2xl p-6 focus:bg-[#4B0082] focus:text-white font-black text-[11px] uppercase tracking-[0.2em] transition-all"
                                         >
-                                            <MessageCircle className="h-5 w-5 opacity-60" /> Send Message
-                                            {!isPremium && <Crown className="h-3.5 w-3.5 ml-auto text-amber-500/80" />}
+                                            <MessageCircle className="h-5 w-5 opacity-50" /> Secure Message
+                                            {!isPremium && <Crown className="h-3.5 w-3.5 ml-auto text-amber-500" />}
                                         </DropdownMenuItem>
-                                        <div className="h-px bg-black/[0.03] my-1" />
+                                        <div className="h-px bg-black/[0.03] my-2" />
                                         <DropdownMenuItem
                                             onClick={(e) => { e.stopPropagation(); handleIgnore(e, profile.user_id); }}
-                                            className="gap-4 cursor-pointer rounded-2xl p-5 focus:bg-gray-50/80 text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] transition-all"
+                                            className="gap-5 cursor-pointer rounded-2xl p-6 focus:bg-gray-50 text-gray-400 font-bold text-[11px] uppercase tracking-[0.2em] transition-all"
                                         >
-                                            <UserMinus className="h-5 w-5 opacity-40" /> Skip for Now
+                                            <UserMinus className="h-5 w-5 opacity-40" /> Archive Profile
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                             onClick={(e) => { e.stopPropagation(); handleBlock(e, profile.user_id); }}
-                                            className="gap-4 cursor-pointer rounded-2xl p-5 focus:bg-rose-50/80 focus:text-rose-600 text-rose-400/60 font-bold text-[10px] uppercase tracking-[0.2em] transition-all"
+                                            className="gap-5 cursor-pointer rounded-2xl p-6 focus:bg-rose-50 focus:text-rose-600 text-rose-400/50 font-bold text-[11px] uppercase tracking-[0.2em] transition-all"
                                         >
-                                            <UserX className="h-5 w-5 opacity-40" /> Block Profile
+                                            <UserX className="h-5 w-5 opacity-40" /> Block Entity
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -1054,6 +1079,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
             </motion.div>
         )
     }
+
 
     if (isLoading) {
         return (
@@ -1075,25 +1101,32 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
             ]
         },
         {
+            title: "Astrology",
+            items: [
+                { id: "horoscope-matches", label: "Horoscope Matches", description: "High compatibility based on Porutham", icon: SparklesIcon },
+                { id: "star-matches", label: "Star Matches", description: "Profiles with defined birth stars", icon: Star },
+            ]
+        },
+        {
             title: "Activity",
             items: [
-                { id: "shortlisted-by-you", label: "Shortlisted", description: "Matches you have shortlisted", icon: Star },
+                { id: "shortlisted-by-you", label: "Shortlisted", description: "Matches you have saved", icon: Star },
                 { id: "viewed-you", label: "Who viewed me", description: "Matches who have viewed your profile", icon: Filter },
                 { id: "shortlisted-you", label: "Who shortlisted me", description: "Matches who have shortlisted your profile", icon: User },
                 { id: "viewed-by-you", label: "Profiles I viewed", description: "Matches you have viewed", icon: Filter },
             ]
         },
         {
-            title: "Local",
+            title: "Local Discovery",
             items: [
-                { id: "newly-joined", label: "New Members", description: "Matches who joined within the last 30 days", icon: User },
-                { id: "nearby-matches", label: "Matches near me", description: "Matches near your location", icon: MapPin },
+                { id: "newly-joined", label: "New Members", description: "Recently joined profiles", icon: User },
+                { id: "nearby-matches", label: "Matches near me", description: "Matches in your district/city", icon: MapPin },
             ]
         },
         {
-            title: "Profile Details",
+            title: "Content",
             items: [
-                { id: "matches-with-photos", label: "With Photos", description: "Matches that have added photos", icon: User },
+                { id: "matches-with-photos", label: "With Photos", description: "Matches with visible profile photos", icon: User },
             ]
         }
     ]
@@ -1109,40 +1142,41 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
     }
 
     return (
-        <div className="w-full min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
+        <div className="w-full min-h-screen bg-transparent">
             <div className="max-w-[100rem] mx-auto px-4 py-6">
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Sidebar */}
-                    <aside className="w-full lg:w-[18rem] shrink-0 space-y-6 lg:sticky lg:top-24">
-                        <div className="sds-glass rounded-[3rem] overflow-hidden p-4 border-2 border-indigo-100/50 shadow-[0_32px_64px_-12px_rgba(75,0,130,0.12)]">
+                    <aside className="w-full lg:w-[19rem] shrink-0 space-y-8 lg:sticky lg:top-24">
+                        <div className="sds-glass rounded-[2.5rem] overflow-hidden p-6 border-2 border-indigo-100/30 shadow-[0_32px_64px_-12px_rgba(75,0,130,0.12)]">
                             <div className="p-4 border-b border-black/[0.03] mb-4">
-                                <h4 className="text-xs font-black uppercase tracking-[0.4em] text-[#4B0082]">Filter Matches</h4>
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.5em] text-[#4B0082] opacity-50">Filter Results</h4>
                             </div>
-                            <div className="space-y-4 p-2">
+                            <div className="space-y-6 p-2">
                                 {menuGroups.map((group) => (
-                                    <div key={group.title} className="space-y-3 mb-10 last:mb-0">
-                                        <div className="px-4 py-1 text-[11px] font-black uppercase tracking-[0.4em] text-indigo-900/40 font-josefin">{group.title}</div>
-                                        <div className="space-y-2">
+                                    <div key={group.title} className="space-y-2">
+                                        <div className="px-4 py-1 text-[8px] font-black uppercase tracking-[0.4em] text-[#4B0082]/60">{group.title}</div>
+                                        <div className="space-y-1.5">
                                             {group.items.map((item) => (
                                                 <button
                                                     key={item.id}
                                                     onClick={() => setActiveCategory(item.id)}
-                                                    className={`w-full group text-left px-6 py-5 rounded-[2rem] transition-all duration-500 flex items-center gap-4 relative overflow-hidden ${
+                                                    className={`w-full group text-left px-4 py-3 rounded-2xl transition-all duration-500 flex items-center gap-4 relative overflow-hidden ${
                                                         activeCategory === item.id 
-                                                        ? "bg-[#4B0082] text-white shadow-2xl shadow-indigo-900/40 scale-[1.05] z-10 font-black" 
-                                                        : "hover:bg-indigo-50 text-indigo-900/80 hover:text-[#4B0082] font-bold"
+                                                        ? "bg-[#4B0082] text-white shadow-lg shadow-indigo-900/20 z-10" 
+                                                        : "hover:bg-indigo-50/50 text-indigo-950/70 hover:text-[#4B0082]"
                                                     }`}
                                                 >
-                                                    <item.icon className={`h-5 w-5 transition-transform duration-500 ${activeCategory === item.id ? "text-white scale-110" : "text-indigo-900/20 group-hover:text-[#4B0082] group-hover:scale-110"}`} />
+                                                    <div className={`p-2 rounded-xl transition-all duration-300 ${activeCategory === item.id ? "bg-white/10 text-white" : "bg-indigo-50 text-indigo-300 group-hover:bg-white group-hover:text-[#4B0082]"}`}>
+                                                        <item.icon className="h-4 w-4" />
+                                                    </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <div className={`text-[12px] font-black uppercase tracking-[0.16em] truncate transition-colors duration-300 ${activeCategory === item.id ? "text-white" : "group-hover:text-[#4B0082]"}`}>
+                                                        <div className={`text-[10px] font-black uppercase tracking-[0.1em] truncate transition-colors duration-300 ${activeCategory === item.id ? "text-white" : "group-hover:text-[#4B0082]"}`}>
                                                             {item.label}
                                                         </div>
                                                     </div>
                                                     {isMounted && activeCategory === item.id && (
-                                                        <motion.div layoutId="active-pill" className="absolute left-0 w-1 h-8 bg-indigo-300 rounded-r-full" />
+                                                        <motion.div layoutId="active-indicator" className="absolute right-0 w-1 h-6 bg-indigo-300 rounded-l-full" />
                                                     )}
-                                                    {activeCategory === item.id && <ArrowRight className="h-3.5 w-3.5 text-white/40" />}
                                                 </button>
                                             ))}
                                         </div>
@@ -1154,27 +1188,39 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
 
 
                     {/* Main Content */}
-                    <div className="flex-1 space-y-10">
-                        <div className="flex items-end justify-between pb-10 border-b border-black/[0.04]">
-                            <div>
-                                <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-[#4B0082]/40 mb-3">Discovery</h4>
-                                <h2 className="text-6xl font-light text-gray-900 tracking-tighter">
+                    <div className="flex-1 space-y-6">
+                        <div className="flex items-end justify-between pb-6 border-b border-black/[0.06]">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-px w-8 bg-[#4B0082]/20" />
+                                    <h4 className="text-[10px] font-black uppercase tracking-[0.6em] text-[#4B0082]/40">Verified Match Discovery</h4>
+                                </div>
+                                <h2 className="text-5xl font-light text-[#4B0082] tracking-tighter leading-none">
                                     {menuGroups.flatMap(g => g.items).find(i => i.id === activeCategory)?.label || "Discover Matches"}
                                 </h2>
+                                <p className="text-indigo-900/40 text-sm font-medium tracking-tight">
+                                    {menuGroups.flatMap(g => g.items).find(i => i.id === activeCategory)?.description || "Curated life partner matches for you."}
+                                </p>
                             </div>
                             {hasPreferences && (
-                                <Button
-                                    variant="ghost"
-                                    onClick={() => setApplyPreferences(!applyPreferences)}
-                                    className={`h-12 px-6 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
-                                        applyPreferences 
-                                        ? "bg-rose-50 text-rose-600 hover:bg-rose-100" 
-                                        : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-                                    }`}
-                                >
-                                    {applyPreferences ? <X className="h-4 w-4 mr-2" /> : <Filter className="h-4 w-4 mr-2" />}
-                                    {applyPreferences ? "Clear Filters" : "Apply Filters"}
-                                </Button>
+                                <div className="flex items-center gap-4">
+                                    <Button
+                                        variant="ghost"
+                                        onClick={() => setApplyPreferences(!applyPreferences)}
+                                        className={`h-12 px-8 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all duration-500 border-2 ${
+                                            applyPreferences 
+                                            ? "bg-indigo-50 border-indigo-200 text-[#4B0082] shadow-lg shadow-indigo-500/10" 
+                                            : "bg-white border-indigo-50 text-indigo-300 hover:border-indigo-200 hover:text-[#4B0082]"
+                                        }`}
+                                    >
+                                        {applyPreferences ? (
+                                            <SparklesIcon className="h-4 w-4 mr-3 text-indigo-400 animate-pulse" />
+                                        ) : (
+                                            <Filter className="h-4 w-4 mr-3" />
+                                        )}
+                                        {applyPreferences ? "Applied Filter" : "Auto-Matches Off"}
+                                    </Button>
+                                </div>
                             )}
                         </div>
                         {isProfileIncomplete ? (
@@ -1897,7 +1943,6 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     isPremium={isPremium}
                 />
             )}
-            {/* Compatibility Sheet - Detailed Breakdown */}
             <CompatibilitySheet 
                 isOpen={showBreakdown}
                 onClose={() => setShowBreakdown(false)}
@@ -1906,6 +1951,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 poruthamScore={activeBreakdown?.horoscope?.score || 0}
                 breakdown={activeBreakdown?.lifestyle?.breakdown || []}
                 poruthamDetails={activeBreakdown?.horoscope?.breakdown}
+                isPremium={isPremium}
             />
         </div>
     )

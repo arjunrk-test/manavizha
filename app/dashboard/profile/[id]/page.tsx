@@ -2,11 +2,11 @@
 
 import { supabase } from "@/lib/supabase"
 import { useRouter, useParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { 
-    ArrowLeft, MapPin, Briefcase, User, GraduationCap, 
-    Heart, Star, CheckCircle2, Phone, MessageCircle,
-    Calendar, Coffee, Eye, Info, Users, Shield, Sparkles,
+    ArrowLeft, MapPin, Briefcase, User, GraduationCap, ArrowRight,
+    Heart, Star, CheckCircle2, Phone, MessageCircle, Lock,
+    Calendar, Coffee, Eye, Info, Users, Shield, Sparkles, XCircle, Home,
     Search, Target, Award, HeartHandshake, MoreVertical, UserX, UserMinus, Crown, Gem
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,8 @@ export default function ProfileViewPage() {
     const params = useParams()
     const targetUserId = params.id as string
     const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+    const isOwnProfile = currentUserId === targetUserId;
+
 
     const [isLoading, setIsLoading] = useState(true)
     const [profile, setProfile] = useState<any>(null)
@@ -591,176 +593,277 @@ export default function ProfileViewPage() {
                     </div>
 
                     {/* Right: Comprehensive Info Area */}
-                    <div className="lg:col-span-8 space-y-12">
+                    <div className="lg:col-span-8 space-y-6">
 
-                        {/* Detailed Grid System */}
-                            {/* Personal & Social */}
-                            <section className="space-y-8">
-                                <h2 className="text-2xl font-black flex items-center gap-4 text-gray-900 dark:text-white uppercase tracking-widest">
-                                    <div className="w-12 h-12 rounded-2xl bg-pink-100 flex items-center justify-center text-pink-600 shadow-lg shadow-pink-200">
-                                        <User className="h-6 w-6" />
-                                    </div>
-                                    Personal Details
-                                </h2>
-                                <div className="space-y-6 sds-glass p-8 rounded-[2.5rem] shadow-2xl border-white/50">
-                                    <DetailRow label="Date of Birth" value={formatToDDMMYYYY(profile.date_of_birth)} />
-                                    <DetailRow label="Marital Status" value={profile.marital_status} />
-                                    <DetailRow label="Physical Status" value={profile.physical_status || "Normal"} />
-                                    <DetailRow label="Body Type" value={profile.body_type} />
-                                    <DetailRow label="Skin Color" value={profile.skin_color} />
-                                    <DetailRow label="Weight" value={profile.weight ? `${profile.weight} kg` : null} />
-                                    <DetailRow label="Food Preference" value={profile.food_preference} />
-                                    <DetailRow label="Languages" value={Array.isArray(profile.languages) ? profile.languages.join(", ") : profile.languages} />
+                        {/* Personal Information Card */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-50 bg-gradient-to-r from-rose-50/60 to-white">
+                                <div className="w-8 h-8 rounded-full border border-rose-200 flex items-center justify-center shrink-0 text-rose-500 bg-white shadow-sm">
+                                    <User className="h-4 w-4" />
                                 </div>
-                            </section>
+                                <h2 className="text-sm font-bold text-gray-900 tracking-tight">Personal Information</h2>
+                            </div>
+                            <div className="px-6 py-4 space-y-0 text-sm">
+                                <DetailRow label="Age" value={detailedAge} />
+                                <DetailRow label="Height" value={detailedHeight} />
+                                <DetailRow label="Weight" value={profile.weight ? `${profile.weight} Kg` : null} />
+                                <DetailRow label="Body Type" value={profile.body_type} />
+                                <DetailRow label="Mother Tongue" value={profile.mother_tongue || (profile.religion === 'Christian' ? 'Malayalam' : 'Tamil')} />
+                                <DetailRow label="Spoken Language" value={Array.isArray(profile.languages) ? profile.languages.join(", ") : profile.languages} />
+                                <DetailRow label="Profile Created By" value={profile.created_by || "Self"} />
+                                <DetailRow label="Marital Status" value={profile.marital_status} />
+                                <DetailRow label="Lives In" value={profile.location} />
+                                <DetailRow label="Eating Habits" value={profile.food_preference} />
+                                <DetailRow label="Religion" value={profile.religion || "Hindu"} />
+                                <DetailRow label="Caste" value={profile.family?.caste || profile.caste} />
+                                <DetailRow label="Subcaste" value={profile.subcaste} />
+                                <DetailRow label="Gothra(m)" value={profile.family?.gotram} />
+                                <DetailRow label="Dosha(m)" value={profile.horoscope?.dhosham || "No Dosham"} />
+                            </div>
+                        </div>
 
-                            {/* Family Details */}
-                            <section className="space-y-8">
-                                <h2 className="text-2xl font-black flex items-center gap-4 text-gray-900 dark:text-white uppercase tracking-widest">
-                                    <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 shadow-lg shadow-amber-200">
-                                        <Users className="h-6 w-6" />
+                        {/* Horoscope & Astrology Card — Premium Gated */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50 bg-gradient-to-r from-indigo-50/60 to-white">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full border border-indigo-200 flex items-center justify-center shrink-0 text-indigo-500 bg-white shadow-sm">
+                                        <Sparkles className="h-4 w-4" />
                                     </div>
-                                    Family Details
-                                </h2>
-                                <div className="space-y-6 sds-glass p-8 rounded-[2.5rem] shadow-2xl border-white/50">
-                                    <DetailRow label="Ancestral Origin" value={profile.family.ancestral_origin} />
-                                    <DetailRow label="Father Occupation" value={profile.family.father_occupation} />
-                                    <DetailRow label="Mother Occupation" value={profile.family.mother_occupation} />
-                                    <DetailRow label="Siblings Info" value={profile.family.siblings} />
-                                    <DetailRow label="Caste / Kulam" value={profile.family.caste && `${profile.family.caste} / ${profile.family.kulam || '—'}`} />
-                                    <DetailRow label="Gotram" value={profile.family.gotram} />
-                                    <DetailRow label="Family Type" value={profile.family.family_type} />
+                                    <h2 className="text-sm font-bold text-gray-900 tracking-tight">Horoscope & Astrology</h2>
                                 </div>
-                            </section>
+                                {!isViewerPremium && (
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full flex items-center gap-1">
+                                        <Crown className="h-2.5 w-2.5" /> Premium
+                                    </span>
+                                )}
+                                {isViewerPremium && (
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-yellow-700 bg-gradient-to-r from-yellow-100 to-amber-100 border border-yellow-200 px-2.5 py-1 rounded-full flex items-center gap-1">
+                                        <Crown className="h-2.5 w-2.5" /> Your Benefit
+                                    </span>
+                                )}
+                            </div>
+                            <div className="px-6 py-4 space-y-0 text-sm">
+                                <DetailRow label="Date Of Birth" value={formatToDDMMYYYY(profile.date_of_birth)} isLocked={true} isPremiumViewer={isViewerPremium} />
+                                <DetailRow label="Star" value={profile.horoscope?.star} isLocked={true} isPremiumViewer={isViewerPremium} />
+                                <DetailRow label="Raasi" value={profile.horoscope?.zodiac_sign} isLocked={true} isPremiumViewer={isViewerPremium} />
+                                <DetailRow label="Horoscope" value={profile.horoscope?.lagnam ? "Available" : null} isLocked={true} isPremiumViewer={isViewerPremium} />
+                            </div>
+                        </div>
 
-                            {/* Horoscope Area */}
-                            <section className="space-y-8">
-                                <h2 className="text-2xl font-black flex items-center gap-4 text-gray-900 dark:text-white uppercase tracking-widest">
-                                    <div className="w-12 h-12 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-600 shadow-lg shadow-indigo-200">
-                                        <Sparkles className="h-6 w-6" />
+                        {/* Education & Career Card — Premium Gated */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50 bg-gradient-to-r from-emerald-50/60 to-white">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full border border-emerald-200 flex items-center justify-center shrink-0 text-emerald-600 bg-white shadow-sm">
+                                        <GraduationCap className="h-4 w-4" />
                                     </div>
-                                    Horoscope Details
-                                </h2>
-                                <div className="space-y-6 sds-glass p-8 rounded-[2.5rem] shadow-2xl border-white/50">
-                                    <DetailRow label="Star" value={profile.horoscope.star} />
-                                    <DetailRow label="Raasi / Moon Sign" value={profile.horoscope.zodiac_sign} />
-                                    <DetailRow label="Birth Place" value={profile.horoscope.place_of_birth} />
-                                    <DetailRow label="Birth Time" value={profile.horoscope.time_of_birth} />
-                                    <DetailRow label="Lagnam" value={profile.horoscope.lagnam} />
-                                    <DetailRow label="Dhosham" value={profile.horoscope.dhosham || "None"} />
+                                    <h2 className="text-sm font-bold text-gray-900 tracking-tight">Education & Career</h2>
                                 </div>
-                            </section>
+                                {!isViewerPremium && (
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full flex items-center gap-1">
+                                        <Crown className="h-2.5 w-2.5" /> Premium
+                                    </span>
+                                )}
+                                {isViewerPremium && (
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-yellow-700 bg-gradient-to-r from-yellow-100 to-amber-100 border border-yellow-200 px-2.5 py-1 rounded-full flex items-center gap-1">
+                                        <Crown className="h-2.5 w-2.5" /> Your Benefit
+                                    </span>
+                                )}
+                            </div>
+                            <div className="px-6 py-4 space-y-0 text-sm">
+                                <DetailRow label="Employment" value={profile.professionType ? `Employed in ${profile.professionType}` : null} isLocked={true} isPremiumViewer={isViewerPremium} />
+                                <DetailRow label="Education" value={profile.education?.[0]?.education} isLocked={true} isPremiumViewer={isViewerPremium} />
+                                <DetailRow label="Occupation" value={profile.professionDetails?.designation || profile.professionType} isLocked={true} isPremiumViewer={isViewerPremium} />
+                                <DetailRow label="Studied at" value={profile.education?.[0]?.institution} isLocked={true} isPremiumViewer={isViewerPremium} />
+                            </div>
+                        </div>
 
-                            {/* Professional Area */}
-                            <section className="space-y-8">
-                                <h2 className="text-2xl font-black flex items-center gap-4 text-gray-900 dark:text-white uppercase tracking-widest">
-                                    <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 shadow-lg shadow-emerald-200">
-                                        <Award className="h-6 w-6" />
-                                    </div>
-                                    Work & Life
-                                </h2>
-                                <div className="space-y-6 sds-glass p-8 rounded-[2.5rem] shadow-2xl border-white/50">
-                                    <DetailRow label="Highest Education" value={profile.education?.[0]?.education} />
-                                    <DetailRow label="Occupation" value={profile.professionDetails?.designation || profile.professionType} />
-                                    <DetailRow label="Organization" value={profile.professionDetails?.company || profile.professionDetails?.business_name || profile.professionDetails?.institution} />
-                                    <DetailRow label="Income (Annual)" value={profile.professionDetails?.annual_income || profile.professionDetails?.salary} />
-                                    <DetailRow label="Hobbies" value={Array.isArray(profile.interests?.hobbies) ? profile.interests.hobbies.join(", ") : profile.interests?.hobbies} />
-                                    <DetailRow label="Drinking / Smoking" value={`${profile.social?.drinking || 'No'} / ${profile.social?.smoking || 'No'}`} />
+                        {/* Family Information Card */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-50 bg-gradient-to-r from-amber-50/50 to-white">
+                                <div className="w-8 h-8 rounded-full border border-amber-200 flex items-center justify-center shrink-0 text-amber-600 bg-white shadow-sm">
+                                    <Home className="h-4 w-4" />
                                 </div>
-                            </section>
+                                <h2 className="text-sm font-bold text-gray-900 tracking-tight">Family Information</h2>
+                            </div>
+                            <div className="px-6 py-4 space-y-0 text-sm">
+                                <DetailRow label="Parents" value={profile.family?.father_occupation ? `Father is a ${profile.family.father_occupation}${profile.family.mother_occupation ? `, Mother is a ${profile.family.mother_occupation}` : ''}` : null} />
+                                <DetailRow label="Siblings" value={profile.family?.siblings} />
+                                <DetailRow label="Ancestral Origin" value={profile.family?.ancestral_origin} />
+                                <DetailRow label="Family Type" value={profile.family?.family_type} />
+                            </div>
+                        </div>
+
+                        {/* Contact Information Card — Premium Gated */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50 bg-gradient-to-r from-sky-50/60 to-white">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full border border-sky-200 flex items-center justify-center shrink-0 text-sky-600 bg-white shadow-sm">
+                                        <Phone className="h-4 w-4" />
+                                    </div>
+                                    <h2 className="text-sm font-bold text-gray-900 tracking-tight">Contact Information</h2>
+                                </div>
+                                {!isViewerPremium && (
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full flex items-center gap-1">
+                                        <Crown className="h-2.5 w-2.5" /> Premium
+                                    </span>
+                                )}
+                                {isViewerPremium && (
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-yellow-700 bg-gradient-to-r from-yellow-100 to-amber-100 border border-yellow-200 px-2.5 py-1 rounded-full flex items-center gap-1">
+                                        <Crown className="h-2.5 w-2.5" /> Your Benefit
+                                    </span>
+                                )}
+                            </div>
+                            <div className="px-6 py-4 space-y-0 text-sm">
+                                <DetailRow label="Mobile Number" value={profile.contact?.mobile_phone || profile.phone} isLocked={true} isPremiumViewer={isViewerPremium} />
+                                <DetailRow label="Email" value={profile.email} isLocked={true} isPremiumViewer={isViewerPremium} />
+                            </div>
+                        </div>
+
+                        {/* About Myself Card */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-50 bg-gradient-to-r from-rose-50/60 to-white">
+                                <div className="w-8 h-8 rounded-full border border-rose-200 flex items-center justify-center shrink-0 text-rose-500 bg-white shadow-sm">
+                                    <User className="h-4 w-4" />
+                                </div>
+                                <h2 className="text-sm font-bold text-gray-900 tracking-tight">About Myself</h2>
+                            </div>
+                            <div className="px-6 py-4">
+                                <p className="text-[14px] leading-relaxed text-gray-700">
+                                    {profile.about || `I am making this profile for my ${(profile.created_by || 'relative').toLowerCase()}. They completed their education and currently work as a ${profile.professionDetails?.designation || 'professional'} in ${profile.location?.split(',')[0] || 'their city'}. We belong to a good family with traditional values.`}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Lifestyle Card */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-50 bg-gradient-to-r from-purple-50/50 to-white">
+                                <div className="w-8 h-8 rounded-full border border-purple-200 flex items-center justify-center shrink-0 text-purple-500 bg-white shadow-sm">
+                                    <Coffee className="h-4 w-4" />
+                                </div>
+                                <h2 className="text-sm font-bold text-gray-900 tracking-tight">Lifestyle</h2>
+                            </div>
+                            <div className="px-6 py-4 space-y-0 text-sm">
+                                <DetailRow label="Cuisine" value={profile.food_preference === 'Non-Vegetarian' ? 'Continental, South Indian, Non-Veg' : 'South Indian, Vegetarian'} />
+                                <DetailRow label="Hobbies" value={Array.isArray(profile.interests?.hobbies) ? profile.interests.hobbies.join(" / ") : profile.interests?.hobbies} />
+                                <DetailRow label="Movies" value={Array.isArray(profile.interests?.movies) ? profile.interests.movies.join(", ") : profile.interests?.movies} />
+                                <DetailRow label="Music" value={Array.isArray(profile.interests?.music) ? profile.interests.music.join(", ") : profile.interests?.music} />
+                                <DetailRow label="Sports" value={Array.isArray(profile.interests?.sports) ? profile.interests.sports.join(" / ") : profile.interests?.sports} />
+                                <DetailRow label="Smoking Habits" value={profile.social?.smoking} />
+                                <DetailRow label="Drinking Habits" value={profile.social?.drinking} />
+                            </div>
+                        </div>
 
                         {/* Dedicated Partner Preferences Section */}
                         {profile.partner_preferences && (
-                            <section className="pt-20 space-y-12">
-                                {/* Match Score Banner */}
-                                <div className="sds-glass p-10 rounded-[3rem] shadow-2xl flex flex-col md:flex-row items-center justify-between border-l-[12px] border-[#4B0082]">
-                                    <div className="flex items-center gap-8 mb-6 md:mb-0">
-                                        <div className="h-20 w-20 rounded-[2rem] bg-indigo-50 flex items-center justify-center shadow-inner">
-                                            <HeartHandshake className="h-10 w-10 text-[#4B0082]" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-3xl font-black text-gray-900 tracking-tight">Match Score</h3>
-                                            <p className="text-lg text-indigo-400 font-bold uppercase tracking-widest mt-1">How well you match</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col items-center md:items-end">
-                                        <div className="text-7xl font-black text-[#4B0082] tracking-tighter">
-                                            {Math.round((matchScore.matches / matchScore.total) * 100)}%
-                                        </div>
-                                        <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mt-2">Compatibility Score</p>
-                                    </div>
+                            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 sm:p-10">
+                                {/* Header */}
+                                <div className="text-center mb-8">
+                                    <h2 className="text-2xl font-black text-gray-900 tracking-tight">✨ {isOwnProfile ? 'My' : (profile.gender === 'Female' ? 'Her' : 'His')} Partner Preferences ✨</h2>
                                 </div>
 
-                                <div className="bg-gradient-to-br from-[#4B0082] to-[#3a0066] rounded-[3rem] p-8 sm:p-12 text-white shadow-2xl relative overflow-hidden">
-                                    {/* Abstract shapes for design */}
-                                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl" />
-                                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-pink-500/10 rounded-full -ml-16 -mb-16 blur-2xl" />
+                                {/* Match Banner */}
+                                {!isOwnProfile && (
+                                    <div className="rounded-2xl p-4 flex items-center justify-between mb-8 shadow-inner relative overflow-hidden"
+                                         style={{ background: 'linear-gradient(280deg, rgba(240,230,255,1) 0%, rgba(255,255,255,1) 100%)', border: '1px solid #7E22CE' }}>
 
-                                    <div className="relative z-10 space-y-12">
-                                        <div className="flex flex-col md:flex-row gap-8 items-start md:items-center justify-between border-b border-white/10 pb-10">
-                                            <div className="flex items-center gap-6">
-                                                <div className="h-16 w-16 rounded-[1.5rem] bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20 shadow-2xl">
-                                                    <Target className="h-8 w-8 text-pink-300" />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <h2 className="text-4xl font-black tracking-tight">Ideal Partner Preferences</h2>
-                                                    <p className="text-white/40 text-sm font-bold uppercase tracking-widest">
-                                                        Seeking a potential life partner with these values
-                                                    </p>
-                                                </div>
+                                    <div className="w-12 h-12 rounded-xl bg-gray-200 overflow-hidden border-2 border-white shadow-sm z-10">
+                                        {photos.length > 0 ? (
+                                            <img src={photos[0]} alt="Target Profile" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User className="w-full h-full p-2 text-gray-400" />
+                                        )}
+                                    </div>
+                                    <div className="flex-1 text-center z-10">
+                                        <p className="text-[14px] font-bold text-gray-800">
+                                            You match <span className="text-[#7E22CE]">{matchScore.matches}/{matchScore.total}</span> of {profile.gender === 'Female' ? 'her' : 'his'} preferences
+                                        </p>
+                                    </div>
+                                    <div className="w-12 h-12 rounded-xl bg-gray-200 overflow-hidden border-2 border-white shadow-sm z-10">
+                                        {viewerProfile?.photos?.[0] ? (
+                                            <img src={viewerProfile.photos[0]} alt="Viewer" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User className="w-full h-full p-2 text-gray-400" />
+                                        )}
+                                    </div>
+                                </div>
+                                )}
+
+                                <div className="space-y-6">
+                                    {/* Basic Preferences */}
+                                    <div>
+                                        <div className="bg-rose-50/80 px-4 py-2.5 rounded-xl flex justify-between items-center mb-2">
+                                            <h3 className="text-sm font-bold text-gray-900 tracking-tight">Basic Preferences</h3>
+                                            {!isOwnProfile && <span className="text-[11px] font-bold text-gray-500 uppercase">You match</span>}
+                                        </div>
+                                        <div className="px-2">
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Groom's Age" value={`${profile.partner_preferences.preferred_age_min || 18} - ${profile.partner_preferences.preferred_age_max || 70} yrs`} isMatch={matchResults.age} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Height" value={`${profile.partner_preferences.preferred_height_min ? Math.floor(parseInt(profile.partner_preferences.preferred_height_min) / 30.48) + "'" + Math.round((parseInt(profile.partner_preferences.preferred_height_min) / 2.54) % 12) + '"' : 'Any'} - ${profile.partner_preferences.preferred_height_max ? Math.floor(parseInt(profile.partner_preferences.preferred_height_max) / 30.48) + "'" + Math.round((parseInt(profile.partner_preferences.preferred_height_max) / 2.54) % 12) + '"' : 'Any'}`} isMatch={matchResults.height} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Marital Status" value={profile.partner_preferences.preferred_marital_status} isMatch={matchResults.marital} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Mother Tongue" value={profile.partner_preferences.preferred_mother_tongue} isMatch={matchResults.motherTongue} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Physical Status" value={profile.partner_preferences.preferred_physical_status} isMatch={matchResults.physical} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Eating Habits" value={profile.partner_preferences.preferred_eating_habits} isMatch={matchResults.eating} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Smoking Habits" value={profile.partner_preferences.preferred_smoking_habits} isMatch={matchResults.smoking} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Drinking Habits" value={profile.partner_preferences.preferred_drinking_habits} isMatch={matchResults.drinking} />
+                                        </div>
+                                    </div>
+
+                                    {/* Religious Preferences */}
+                                    <div>
+                                        <div className="bg-rose-50/80 px-4 py-2.5 rounded-xl mb-2">
+                                            <h3 className="text-sm font-bold text-gray-900 tracking-tight">Religious Preferences</h3>
+                                        </div>
+                                        <div className="px-2">
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Religion" value={profile.partner_preferences.preferred_religion} isMatch={matchResults.religion} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Caste" value={profile.partner_preferences.preferred_caste} isMatch={matchResults.caste} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Subcaste" value={profile.partner_preferences.preferred_subcaste} isMatch={matchResults.subcaste} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Star" value={profile.partner_preferences.preferred_star} isMatch={matchResults.star} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Dosham" value={profile.partner_preferences.preferred_dosham} isMatch={matchResults.dosham} />
+                                        </div>
+                                    </div>
+
+                                    {/* Professional Preferences */}
+                                    <div>
+                                        <div className="bg-rose-50/80 px-4 py-2.5 rounded-xl mb-2">
+                                            <h3 className="text-sm font-bold text-gray-900 tracking-tight">Professional Preferences</h3>
+                                        </div>
+                                        <div className="px-2">
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Education" value={profile.partner_preferences.preferred_education} isMatch={matchResults.education} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Employment Type" value={profile.partner_preferences.preferred_employment_type} isMatch={matchResults.employment} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Occupation" value={profile.partner_preferences.preferred_occupation} isMatch={matchResults.occupation} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Annual Income" value={profile.partner_preferences.preferred_annual_income ? `Rs. ${profile.partner_preferences.preferred_annual_income} Lakhs and above` : "Any"} isMatch={matchResults.income} />
+                                        </div>
+                                    </div>
+
+                                    {/* Location Preferences */}
+                                    <div>
+                                        <div className="bg-rose-50/80 px-4 py-2.5 rounded-xl mb-2">
+                                            <h3 className="text-sm font-bold text-gray-900 tracking-tight">Location Preferences</h3>
+                                        </div>
+                                        <div className="px-2">
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Country" value={profile.partner_preferences.preferred_country || "India"} isMatch={matchResults.citizenship} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Residing State" value={profile.partner_preferences.preferred_state} isMatch={matchResults.location} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Residing City" value={profile.partner_preferences.preferred_city} isMatch={matchResults.location} />
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Both of you like */}
+                                    {!isOwnProfile && (
+                                        <div className="pt-6">
+                                            <div className="bg-rose-50/80 px-4 py-2.5 rounded-xl mb-4 flex items-center gap-3">
+                                                <div className="bg-white rounded-md p-1 shadow-sm border border-rose-100"><Heart className="h-4 w-4 text-rose-400" fill="currentColor" /></div>
+                                                <h3 className="text-sm font-bold text-gray-900 tracking-tight">Both of you like</h3>
                                             </div>
-                                            <p className="text-white/60 text-sm max-w-md md:text-right leading-relaxed font-medium">
-                                                Here is a detailed look at who {profile.name || "this member"} is looking for as a potential life match.
-                                            </p>
+                                            <div className="px-2">
+                                                <DetailRow label="Cuisine" value={profile.food_preference === viewerProfile?.food_preference ? profile.food_preference : "South Indian"} />
+                                                <DetailRow label="Movies" value={Array.isArray(profile.interests?.movies) ? profile.interests.movies.join(", ") : "Action, Comedy, Horror"} />
+                                                <DetailRow label="Music" value={Array.isArray(profile.interests?.music) ? profile.interests.music.join(", ") : "Melodies"} />
+                                                <DetailRow label="Sports" value={Array.isArray(profile.interests?.sports) ? profile.interests.sports.join(", ") : "Cycling, Jogging / Walking"} />
+                                            </div>
                                         </div>
-
-                                        <div className="bg-white/5 backdrop-blur-sm p-8 sm:p-14 rounded-[3.5rem] border border-white/10 flex flex-col gap-12">
-                                             {/* Sub-section 1: Basic Compatibility */}
-                                             <div className="space-y-4">
-                                                 <h4 className="px-4 text-[11px] font-black uppercase tracking-[0.3em] text-pink-300/60">Basic Consistency</h4>
-                                                 <div className="grid grid-cols-1 gap-2">
-                                                     <PrefRow label="Preferred Age" value={`${profile.partner_preferences.preferred_age_min || 18} to ${profile.partner_preferences.preferred_age_max || 70} years`} isMatch={matchResults.age} />
-                                                     <PrefRow label="Preferred Height" value={`${profile.partner_preferences.preferred_height_min ? Math.floor(parseInt(profile.partner_preferences.preferred_height_min) / 30.48) + "'" + Math.round((parseInt(profile.partner_preferences.preferred_height_min) / 2.54) % 12) + "\"" : 'Any'} - ${profile.partner_preferences.preferred_height_max ? Math.floor(parseInt(profile.partner_preferences.preferred_height_max) / 30.48) + "'" + Math.round((parseInt(profile.partner_preferences.preferred_height_max) / 2.54) % 12) + "\"" : 'Any'}`} isMatch={matchResults.height} />
-                                                     <PrefRow label="Marital Status" value={profile.partner_preferences.preferred_marital_status} isMatch={matchResults.marital} />
-                                                     <PrefRow label="Physical Status" value={profile.partner_preferences.preferred_physical_status} isMatch={matchResults.physical} />
-                                                 </div>
-                                             </div>
-
-                                             {/* Sub-section 2: Religious & Background */}
-                                             <div className="space-y-4 pt-4 border-t border-white/5">
-                                                 <h4 className="px-4 text-[11px] font-black uppercase tracking-[0.3em] text-indigo-300/60">Religious & Background</h4>
-                                                 <div className="grid grid-cols-1 gap-2">
-                                                     <PrefRow label="Religion / Caste" value={profile.partner_preferences.preferred_religion === 'Any' || !profile.partner_preferences.preferred_religion ? 'Open / Any' : `${profile.partner_preferences.preferred_religion} / ${profile.partner_preferences.preferred_caste || 'Any'}`} isMatch={matchResults.religion} />
-                                                     <PrefRow label="Subcaste" value={profile.partner_preferences.preferred_subcaste} isMatch={matchResults.subcaste} />
-                                                     <PrefRow label="Mother Tongue" value={profile.partner_preferences.preferred_mother_tongue} isMatch={matchResults.motherTongue} />
-                                                     <PrefRow label="Star / Dosham" value={`${profile.partner_preferences.preferred_star || 'Any'} / ${profile.partner_preferences.preferred_dosham || 'Any'}`} isMatch={matchResults.star} />
-                                                 </div>
-                                             </div>
-
-                                             {/* Sub-section 3: Career & Lifestlye */}
-                                             <div className="space-y-4 pt-4 border-t border-white/5">
-                                                 <h4 className="px-4 text-[11px] font-black uppercase tracking-[0.3em] text-emerald-300/60">Professional & Lifestyle</h4>
-                                                 <div className="grid grid-cols-1 gap-2">
-                                                     <PrefRow label="Education" value={profile.partner_preferences.preferred_education} isMatch={matchResults.education} />
-                                                     <PrefRow label="Employment Type" value={profile.partner_preferences.preferred_employment_type} isMatch={matchResults.employment} />
-                                                     <PrefRow label="Occupation" value={profile.partner_preferences.preferred_occupation} isMatch={matchResults.occupation} />
-                                                     <PrefRow label="Eating Habits" value={profile.partner_preferences.preferred_eating_habits} isMatch={matchResults.eating} />
-                                                     <PrefRow label="Smoking / Drinking" value={`${profile.partner_preferences.preferred_smoking_habits || 'Any'} / ${profile.partner_preferences.preferred_drinking_habits || 'Any'}`} isMatch={matchResults.smoking} />
-                                                 </div>
-                                             </div>
-
-                                             {/* Sub-section 4: Location */}
-                                             <div className="space-y-4 pt-4 border-t border-white/5">
-                                                 <h4 className="px-4 text-[11px] font-black uppercase tracking-[0.3em] text-amber-300/60">Geography</h4>
-                                                 <div className="grid grid-cols-1 gap-2">
-                                                     <PrefRow label="Location" value={`${profile.partner_preferences.preferred_city || 'Any'}, ${profile.partner_preferences.preferred_state || 'Any'}`} isMatch={matchResults.location} />
-                                                     <PrefRow label="Citizenship" value={profile.partner_preferences.preferred_citizenship} isMatch={matchResults.citizenship} />
-                                                 </div>
-                                             </div>
-                                         </div>
-                                    </div>
+                                    )}
                                 </div>
-                            </section>
+                            </div>
                         )}
                         
                     </div>
@@ -780,19 +883,50 @@ export default function ProfileViewPage() {
     )
 }
 
-function DetailRow({ label, value }: { label: string, value?: string | number | null }) {
-    if (value === null || value === undefined || value === "" || value === "Not specified") {
+function DetailRow({ label, value, isLocked, isPremiumViewer }: { label: string, value?: string | number | null, isLocked?: boolean, isPremiumViewer?: boolean }) {
+    const [revealed, setRevealed] = useState(false)
+
+    if ((value === null || value === undefined || value === "" || value === "Not specified") && !isLocked) {
+        return null;
+    }
+
+    const renderValue = () => {
+        if (!isLocked) {
+            return <span className="text-[13px] font-bold text-gray-900">{value}</span>
+        }
+        if (isPremiumViewer) {
+            // Premium user — click to reveal
+            if (revealed) {
+                return (
+                    <span className="text-[13px] font-bold text-gray-900 flex items-center gap-1.5">
+                        {value}
+                        <button onClick={() => setRevealed(false)} className="text-[10px] text-gray-300 hover:text-gray-400 ml-1">(hide)</button>
+                    </span>
+                )
+            }
+            return (
+                <button
+                    onClick={() => setRevealed(true)}
+                    className="group/reveal flex items-center gap-2 text-[12px] font-bold px-3 py-1 rounded-lg border border-yellow-300 bg-gradient-to-r from-yellow-50 to-amber-50 text-yellow-700 hover:from-yellow-100 hover:to-amber-100 hover:border-yellow-400 transition-all shadow-sm cursor-pointer"
+                >
+                    <Crown className="h-3 w-3 text-yellow-500 group-hover/reveal:scale-110 transition-transform" />
+                    Tap to reveal
+                </button>
+            )
+        }
+        // Non-premium — upgrade CTA
         return (
-            <div className="flex justify-between items-center py-1 group/item">
-                <span className="text-xs font-bold text-gray-400/60 uppercase tracking-tighter">{label}</span>
-                <span className="text-xs font-medium text-gray-300 italic">—</span>
-            </div>
+            <span className="text-[13px] font-semibold text-amber-600 flex items-center cursor-pointer hover:text-amber-700 transition-colors">
+                <Lock className="h-3 w-3 mr-1.5" /> Upgrade to view <ArrowRight className="h-3 w-3 ml-1" />
+            </span>
         )
     }
+
     return (
-        <div className="flex justify-between items-center py-1 border-b border-gray-100/50 dark:border-gray-800/50 last:border-0 group/item">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-tighter">{label}</span>
-            <span className="text-sm font-semibold text-gray-900 dark:text-gray-200 text-right">{value}</span>
+        <div className="grid grid-cols-[140px_10px_auto] sm:grid-cols-[200px_10px_auto] items-center py-3 group/item">
+            <span className="text-[13px] font-medium text-gray-800">{label}</span>
+            <span className="text-[13px] font-bold text-gray-800 text-center">:</span>
+            {renderValue()}
         </div>
     )
 }
@@ -806,26 +940,24 @@ function SummaryRow({ label, value }: { label: string, value?: string | null }) 
     )
 }
 
-function PrefRow({ label, value, isMatch }: { label: string, value?: string | number | null, isMatch?: boolean }) {
+function PrefRow({ label, value, isMatch, isOwnProfile }: { label: string, value?: string | number | null, isMatch?: boolean, isOwnProfile?: boolean }) {
     const isUnspecified = !value || value === "Open / Any" || value === "Any" || value === "Any / Any" || value === "Any, Any" || value.toString().includes("Any") || value.toString().includes("Open");
 
     return (
-        <div className="flex items-center justify-between py-5 border-b border-white/5 last:border-0 group/pref hover:bg-white/5 px-6 rounded-2xl transition-all duration-300">
-            <div className="flex items-center gap-6">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-lg ${
-                    isUnspecified ? 'bg-indigo-500/10 text-indigo-300/40' : 
-                    isMatch ? 'bg-emerald-500/20 text-emerald-400 shadow-emerald-500/10' : 
-                    'bg-rose-500/20 text-rose-400 shadow-rose-500/10'
-                }`}>
-                    {isUnspecified ? <Info className="h-4 w-4" /> : 
-                     isMatch ? <CheckCircle2 className="h-5 w-5" /> : 
-                     <UserX className="h-5 w-5" />}
-                </div>
-                <span className="text-[12px] font-black text-white/40 uppercase tracking-[0.2em] group-hover/pref:text-pink-300 transition-colors">{label}</span>
+        <div className="grid grid-cols-[220px_1fr_40px] items-center py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors rounded-xl px-2">
+            <span className="text-[13px] font-bold text-gray-900">{label}</span>
+            <span className="text-[13px] font-semibold text-gray-700">{value || "Any"}</span>
+            <div className="flex justify-end pr-2">
+                {isOwnProfile ? (
+                    <div className="h-5 w-5" />
+                ) : isUnspecified ? (
+                    <div className="h-5 w-5 rounded-full border-2 border-gray-200" />
+                ) : isMatch ? (
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                ) : (
+                    <XCircle className="h-5 w-5 text-gray-300" />
+                )}
             </div>
-            <span className={`text-[15px] font-black text-white leading-relaxed tracking-tight text-right ${isMatch ? '' : ''}`}>
-                {value || "Open / Any"}
-            </span>
         </div>
     )
 }
