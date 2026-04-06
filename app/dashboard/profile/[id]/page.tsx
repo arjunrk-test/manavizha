@@ -593,6 +593,26 @@ export default function ProfileViewPage() {
                     </div>
 
                     {/* Right: Comprehensive Info Area */}
+                    <div className="lg:col-span-8 space-y-12">
+
+                        {/* Detailed Grid System */}
+                            {/* Personal & Social */}
+                            <section className="space-y-8">
+                                <h2 className="text-2xl font-black flex items-center gap-4 text-gray-900 dark:text-white uppercase tracking-widest">
+                                    <div className="w-12 h-12 rounded-2xl bg-pink-100 flex items-center justify-center text-pink-600 shadow-lg shadow-pink-200">
+                                        <User className="h-6 w-6" />
+                                    </div>
+                                    Personal Details
+                                </h2>
+                                <div className="space-y-6 sds-glass p-8 rounded-[2.5rem] shadow-2xl border-white/50">
+                                    <DetailRow label="Date of Birth" value={formatToDDMMYYYY(profile.date_of_birth)} />
+                                    <DetailRow label="Marital Status" value={profile.marital_status} />
+                                    <DetailRow label="Physical Status" value={profile.physical_status || "Normal"} />
+                                    <DetailRow label="Body Type" value={profile.body_type} />
+                                    <DetailRow label="Skin Color" value={profile.skin_color} />
+                                    <DetailRow label="Weight" value={profile.weight ? `${profile.weight} kg` : null} />
+                                    <DetailRow label="Food Preference" value={profile.food_preference} />
+                                    <DetailRow label="Languages" value={Array.isArray(profile.languages) ? profile.languages.join(", ") : profile.languages} />
                     <div className="lg:col-span-8 space-y-6">
 
                         {/* Personal Information Card */}
@@ -822,6 +842,27 @@ export default function ProfileViewPage() {
                                         </div>
                                     </div>
 
+                                <div className="bg-gradient-to-br from-[#4B0082] to-[#3a0066] rounded-[3rem] p-8 sm:p-12 text-white shadow-2xl relative overflow-hidden">
+                                    {/* Abstract shapes for design */}
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl" />
+                                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-pink-500/10 rounded-full -ml-16 -mb-16 blur-2xl" />
+
+                                    <div className="relative z-10 space-y-12">
+                                        <div className="flex flex-col md:flex-row gap-8 items-start md:items-center justify-between border-b border-white/10 pb-10">
+                                            <div className="flex items-center gap-6">
+                                                <div className="h-16 w-16 rounded-[1.5rem] bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20 shadow-2xl">
+                                                    <Target className="h-8 w-8 text-pink-300" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <h2 className="text-4xl font-black tracking-tight">Ideal Partner Preferences</h2>
+                                                    <p className="text-white/40 text-sm font-bold uppercase tracking-widest">
+                                                        Seeking a potential life partner with these values
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <p className="text-white/60 text-sm max-w-md md:text-right leading-relaxed font-medium">
+                                                Here is a detailed look at who {profile.name || "this member"} is looking for as a potential life match.
+                                            </p>
                                     {/* Professional Preferences */}
                                     <div>
                                         <div className="bg-rose-50/80 px-4 py-2.5 rounded-xl mb-2">
@@ -835,6 +876,50 @@ export default function ProfileViewPage() {
                                         </div>
                                     </div>
 
+                                        <div className="bg-white/5 backdrop-blur-sm p-8 sm:p-14 rounded-[3.5rem] border border-white/10 flex flex-col gap-12">
+                                             {/* Sub-section 1: Basic Compatibility */}
+                                             <div className="space-y-4">
+                                                 <h4 className="px-4 text-[11px] font-black uppercase tracking-[0.3em] text-pink-300/60">Basic Consistency</h4>
+                                                 <div className="grid grid-cols-1 gap-2">
+                                                     <PrefRow label="Preferred Age" value={`${profile.partner_preferences.preferred_age_min || 18} to ${profile.partner_preferences.preferred_age_max || 70} years`} isMatch={matchResults.age} />
+                                                     <PrefRow label="Preferred Height" value={`${profile.partner_preferences.preferred_height_min ? Math.floor(parseInt(profile.partner_preferences.preferred_height_min) / 30.48) + "'" + Math.round((parseInt(profile.partner_preferences.preferred_height_min) / 2.54) % 12) + "\"" : 'Any'} - ${profile.partner_preferences.preferred_height_max ? Math.floor(parseInt(profile.partner_preferences.preferred_height_max) / 30.48) + "'" + Math.round((parseInt(profile.partner_preferences.preferred_height_max) / 2.54) % 12) + "\"" : 'Any'}`} isMatch={matchResults.height} />
+                                                     <PrefRow label="Marital Status" value={profile.partner_preferences.preferred_marital_status} isMatch={matchResults.marital} />
+                                                     <PrefRow label="Physical Status" value={profile.partner_preferences.preferred_physical_status} isMatch={matchResults.physical} />
+                                                 </div>
+                                             </div>
+
+                                             {/* Sub-section 2: Religious & Background */}
+                                             <div className="space-y-4 pt-4 border-t border-white/5">
+                                                 <h4 className="px-4 text-[11px] font-black uppercase tracking-[0.3em] text-indigo-300/60">Religious & Background</h4>
+                                                 <div className="grid grid-cols-1 gap-2">
+                                                     <PrefRow label="Religion / Caste" value={profile.partner_preferences.preferred_religion === 'Any' || !profile.partner_preferences.preferred_religion ? 'Open / Any' : `${profile.partner_preferences.preferred_religion} / ${profile.partner_preferences.preferred_caste || 'Any'}`} isMatch={matchResults.religion} />
+                                                     <PrefRow label="Subcaste" value={profile.partner_preferences.preferred_subcaste} isMatch={matchResults.subcaste} />
+                                                     <PrefRow label="Mother Tongue" value={profile.partner_preferences.preferred_mother_tongue} isMatch={matchResults.motherTongue} />
+                                                     <PrefRow label="Star / Dosham" value={`${profile.partner_preferences.preferred_star || 'Any'} / ${profile.partner_preferences.preferred_dosham || 'Any'}`} isMatch={matchResults.star} />
+                                                 </div>
+                                             </div>
+
+                                             {/* Sub-section 3: Career & Lifestlye */}
+                                             <div className="space-y-4 pt-4 border-t border-white/5">
+                                                 <h4 className="px-4 text-[11px] font-black uppercase tracking-[0.3em] text-emerald-300/60">Professional & Lifestyle</h4>
+                                                 <div className="grid grid-cols-1 gap-2">
+                                                     <PrefRow label="Education" value={profile.partner_preferences.preferred_education} isMatch={matchResults.education} />
+                                                     <PrefRow label="Employment Type" value={profile.partner_preferences.preferred_employment_type} isMatch={matchResults.employment} />
+                                                     <PrefRow label="Occupation" value={profile.partner_preferences.preferred_occupation} isMatch={matchResults.occupation} />
+                                                     <PrefRow label="Eating Habits" value={profile.partner_preferences.preferred_eating_habits} isMatch={matchResults.eating} />
+                                                     <PrefRow label="Smoking / Drinking" value={`${profile.partner_preferences.preferred_smoking_habits || 'Any'} / ${profile.partner_preferences.preferred_drinking_habits || 'Any'}`} isMatch={matchResults.smoking} />
+                                                 </div>
+                                             </div>
+
+                                             {/* Sub-section 4: Location */}
+                                             <div className="space-y-4 pt-4 border-t border-white/5">
+                                                 <h4 className="px-4 text-[11px] font-black uppercase tracking-[0.3em] text-amber-300/60">Geography</h4>
+                                                 <div className="grid grid-cols-1 gap-2">
+                                                     <PrefRow label="Location" value={`${profile.partner_preferences.preferred_city || 'Any'}, ${profile.partner_preferences.preferred_state || 'Any'}`} isMatch={matchResults.location} />
+                                                     <PrefRow label="Citizenship" value={profile.partner_preferences.preferred_citizenship} isMatch={matchResults.citizenship} />
+                                                 </div>
+                                             </div>
+                                         </div>
                                     {/* Location Preferences */}
                                     <div>
                                         <div className="bg-rose-50/80 px-4 py-2.5 rounded-xl mb-2">
@@ -940,6 +1025,26 @@ function SummaryRow({ label, value }: { label: string, value?: string | null }) 
     )
 }
 
+function PrefRow({ label, value, isMatch }: { label: string, value?: string | number | null, isMatch?: boolean }) {
+    const isUnspecified = !value || value === "Open / Any" || value === "Any" || value === "Any / Any" || value === "Any, Any" || value.toString().includes("Any") || value.toString().includes("Open");
+
+    return (
+        <div className="flex items-center justify-between py-5 border-b border-white/5 last:border-0 group/pref hover:bg-white/5 px-6 rounded-2xl transition-all duration-300">
+            <div className="flex items-center gap-6">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-lg ${
+                    isUnspecified ? 'bg-indigo-500/10 text-indigo-300/40' : 
+                    isMatch ? 'bg-emerald-500/20 text-emerald-400 shadow-emerald-500/10' : 
+                    'bg-rose-500/20 text-rose-400 shadow-rose-500/10'
+                }`}>
+                    {isUnspecified ? <Info className="h-4 w-4" /> : 
+                     isMatch ? <CheckCircle2 className="h-5 w-5" /> : 
+                     <UserX className="h-5 w-5" />}
+                </div>
+                <span className="text-[12px] font-black text-white/40 uppercase tracking-[0.2em] group-hover/pref:text-pink-300 transition-colors">{label}</span>
+            </div>
+            <span className={`text-[15px] font-black text-white leading-relaxed tracking-tight text-right ${isMatch ? '' : ''}`}>
+                {value || "Open / Any"}
+            </span>
 function PrefRow({ label, value, isMatch, isOwnProfile }: { label: string, value?: string | number | null, isMatch?: boolean, isOwnProfile?: boolean }) {
     const isUnspecified = !value || value === "Open / Any" || value === "Any" || value === "Any / Any" || value === "Any, Any" || value.toString().includes("Any") || value.toString().includes("Open");
 
