@@ -1684,8 +1684,6 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       { key: "familyDescription", label: "Brief Description About Family" },
       { key: "caste", label: "Caste" },
       { key: "subcaste", label: "Subcaste" },
-      { key: "kulam", label: "Kulam" },
-      { key: "gotram", label: "Gotram" },
       { key: "familyType", label: "Family Type" },
       { key: "familyStatus", label: "Family Status" },
     ]

@@ -139,7 +139,7 @@ export const masterDataConfig: Record<string, {
     title: "Subcaste",
     addButtonText: "Add Subcaste",
     dialogTitle: "Add Subcaste",
-    dialogDescription: "Enter a new subcaste value to add to the list.",
+    dialogDescription: "Enter a subcaste value. Under 'Category', enter the EXACT Parent Caste name (e.g. 'Vanniyar').",
     inputPlaceholder: "Enter subcaste value",
   },
   "kulam": {

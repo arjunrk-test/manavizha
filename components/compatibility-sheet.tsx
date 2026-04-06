@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
 interface CompatibilityBreakdown {
   category: string;
@@ -22,6 +23,7 @@ interface CompatibilitySheetProps {
   poruthamScore: number;
   breakdown: CompatibilityBreakdown[];
   poruthamDetails?: Record<string, boolean>;
+  isPremium?: boolean;
 }
 
 const iconMap: Record<string, any> = {
@@ -38,11 +40,15 @@ export function CompatibilitySheet({
   lifestyleScore, 
   poruthamScore, 
   breakdown,
-  poruthamDetails 
+  poruthamDetails,
+  isPremium = false
 }: CompatibilitySheetProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden p-0 rounded-t-[3rem] sm:rounded-[3rem] sds-glass border-none shadow-2xl flex flex-col">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden p-0 rounded-t-[3rem] sm:rounded-[3rem] bg-gray-50 border-none shadow-2xl flex flex-col">
+        <VisuallyHidden>
+          <DialogTitle>AI Compatibility Breakdown</DialogTitle>
+        </VisuallyHidden>
         <div className="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-1 bg-gray-200/50 rounded-full z-50 sm:hidden" />
         
         <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -59,14 +65,20 @@ export function CompatibilitySheet({
 
             {/* Main Scores Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-8 bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-[2.5rem] text-white shadow-2xl shadow-indigo-900/20 text-center space-y-2 relative overflow-hidden group">
+              <div className="p-8 bg-gradient-to-br from-[#4B0082] to-indigo-800 rounded-[2.5rem] text-white shadow-2xl shadow-indigo-900/20 text-center space-y-2 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-150 transition-transform duration-1000" />
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/60">Lifestyle Match</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Lifestyle Match</p>
                 <div className="text-5xl font-black tracking-tighter">{lifestyleScore}%</div>
               </div>
-              <div className="p-8 bg-white/50 backdrop-blur-md rounded-[2.5rem] border border-indigo-100 text-center space-y-2 shadow-sm">
+              <div className="p-8 bg-white rounded-[2.5rem] border-2 border-indigo-100 text-center space-y-2 shadow-xl shadow-indigo-900/10 flex flex-col items-center justify-center">
                 <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Horoscope Porutham</p>
-                <div className="text-5xl font-black tracking-tighter text-[#4B0082]">{poruthamScore}/10</div>
+                {isPremium ? (
+                  <div className="text-5xl font-black tracking-tighter text-[#4B0082]">{poruthamScore}/10</div>
+                ) : (
+                  <div className="mt-2">
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] bg-amber-100 text-amber-700 px-3 py-1 rounded-full">Premium Only</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -112,8 +124,8 @@ export function CompatibilitySheet({
             </div>
 
             {/* Horoscope Section */}
-            {poruthamDetails && (
-              <div className="p-8 bg-indigo-50/50 rounded-[3rem] border border-indigo-100 space-y-6">
+            {poruthamDetails && isPremium && (
+              <div className="p-8 bg-indigo-50 rounded-[3rem] border-2 border-indigo-100/50 space-y-6 shadow-inner">
                 <div className="flex items-center gap-3">
                   <Shield className="h-5 w-5 text-[#4B0082]" />
                   <h3 className="text-sm font-black uppercase tracking-[0.1em] text-[#4B0082]">Traditional Porutham Analysis</h3>
@@ -135,7 +147,18 @@ export function CompatibilitySheet({
               </div>
             )}
 
-            <Button onClick={onClose} className="w-full h-14 rounded-2xl bg-gray-900 text-white font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all">
+            {poruthamDetails && !isPremium && (
+              <div className="p-8 bg-amber-50 rounded-[3rem] border-2 border-amber-100/50 space-y-4 shadow-inner text-center flex flex-col items-center">
+                 <Shield className="h-6 w-6 text-amber-500 mb-2" />
+                 <h3 className="text-sm font-black uppercase tracking-[0.1em] text-amber-700">Detailed Porutham Analysis</h3>
+                 <p className="text-xs font-medium text-amber-600/70 max-w-sm">Unlock full horoscope matching details to see how compatible your stars truly are.</p>
+                 <Button className="mt-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold uppercase tracking-widest text-[10px] rounded-xl hover:scale-105 transition-transform h-10 px-6 shadow-xl shadow-amber-500/20">
+                    Subscribe to See
+                 </Button>
+              </div>
+            )}
+
+            <Button onClick={onClose} className="w-full h-14 rounded-2xl bg-[#4B0082] text-white font-black text-[10px] uppercase tracking-widest hover:bg-indigo-900 transition-all shadow-xl shadow-indigo-900/20">
               Got it, thanks!
             </Button>
           </div>

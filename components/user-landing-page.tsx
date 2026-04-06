@@ -390,7 +390,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
         // 1. Get my gender preference
         const { data: userData } = await supabase
           .from("personal_details")
-          .select("sex")
+          .select("sex, food_preference")
           .eq("user_id", userId)
           .maybeSingle()
 
@@ -415,7 +415,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             supabase.from("profession_business").select("*").eq("user_id", userId).maybeSingle()
         ])
 
-        const viewerData = {
+        const viewerData: any = {
             ...userData,
             interests: myInterests?.interests || [],
             hobbies: myInterests?.hobbies || [],
@@ -516,7 +516,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 salary: emp?.salary || bus?.annual_returns
             }
 
-            const lifestyleMatch = viewerData ? calculateLifestyleScore(viewerData, targetProfileData) : null
+            const lifestyleMatch = viewerData ? calculateLifestyleScore(viewerData as any, targetProfileData as any) : null
             const horoscopeMatch = (myHoro?.star && targetHoro?.star) 
                 ? checkTamilPorutham(myHoro.star, myHoro.zodiac_sign || "", targetHoro.star, targetHoro.zodiac_sign || "")
                 : { score: 0, status: 'Athamam', breakdown: {} }

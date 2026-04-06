@@ -340,8 +340,8 @@ export default function ReferralPartnerMyProfilePage() {
                         <F label="Siblings" value={family.siblings} editing={canEdit && ed("family")} fieldKey="siblings" onChange={(k, v) => setFamily((p: any) => ({ ...p, [k]: v }))} />
                         <D label="Caste" id="caste" value={family.caste} options={casteOpts} editing={canEdit && ed("family")} fieldKey="caste" onChange={(k, v) => setFamily((p: any) => ({ ...p, [k]: v }))} />
                         <D label="Subcaste" id="subcaste" value={family.subcaste} options={subcasteOpts} editing={canEdit && ed("family")} fieldKey="subcaste" onChange={(k, v) => setFamily((p: any) => ({ ...p, [k]: v }))} />
-                        <D label="Kulam" id="kulam" value={family.kulam} options={kulamOpts} editing={canEdit && ed("family")} fieldKey="kulam" onChange={(k, v) => setFamily((p: any) => ({ ...p, [k]: v }))} />
-                        <D label="Gotram" id="gotram" value={family.gotram} options={gotramOpts} editing={canEdit && ed("family")} fieldKey="gotram" onChange={(k, v) => setFamily((p: any) => ({ ...p, [k]: v }))} />
+                        <F label="Kulam / Kilai (Optional)" value={family.kulam} editing={canEdit && ed("family")} fieldKey="kulam" onChange={(k, v) => setFamily((p: any) => ({ ...p, [k]: v }))} />
+                        <F label="Gotram (Optional)" value={family.gotram} editing={canEdit && ed("family")} fieldKey="gotram" onChange={(k, v) => setFamily((p: any) => ({ ...p, [k]: v }))} />
                         <D label="Family Type" id="familyType" value={family.family_type} options={familyTypeOpts} editing={canEdit && ed("family")} fieldKey="family_type" onChange={(k, v) => setFamily((p: any) => ({ ...p, [k]: v }))} />
                         <D label="Family Status" id="familyStatus" value={family.family_status} options={familyStatusOpts} editing={canEdit && ed("family")} fieldKey="family_status" onChange={(k, v) => setFamily((p: any) => ({ ...p, [k]: v }))} />
                     </Section>
