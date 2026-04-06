@@ -346,7 +346,7 @@ export default function AdminMasterDataPage() {
                                     isAddDialogOpen={isAddDialogOpen}
                                     onAddDialogChange={setIsAddDialogOpen}
                                     showColourCode={currentStep === "skin-colour"}
-                                    showCategory={currentStep === "education-level"}
+                                    showCategory={currentStep === "education-level" || currentStep === "subcaste"}
                                     refreshKey={refreshKey}
                                   />
                                 ) : null}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FormData } from "@/types/profile"
@@ -124,6 +124,14 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
 
   // Close dropdown when clicking outside
   useClickOutside<HTMLDivElement>(parentsAreaRef, () => setIsParentsAreaOpen(false))
+
+  const filteredSubcasteOptions = useMemo(() => {
+    if (!subcasteOptions) return [];
+    if (!formData.caste) return []; // Filter strictly if caste is unselected? Wait! If they haven't selected a caste, showing all options might be confusing. So returning [] is better.
+    // However, some subcastes might not have a category yet, we can choose to show them or hide them.
+    return subcasteOptions.filter((opt) => !opt.category || opt.category === formData.caste);
+  }, [subcasteOptions, formData.caste]);
+
   return (
     <div className="space-y-12">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -333,34 +341,42 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
               id="caste"
               label="Caste *"
               value={formData.caste || ""}
-              onChange={(value) => onChange("caste", value)}
+              onChange={(value) => {
+                onChange("caste", value)
+                onChange("subcaste", "") // Reset subcaste when caste changes
+              }}
               options={casteOptions}
               required
             />
             <SelectDropdown
               id="subcaste"
-              label="Subcaste *"
+              label={formData.caste ? "Subcaste *" : "Select Caste First *"}
               value={formData.subcaste || ""}
               onChange={(value) => onChange("subcaste", value)}
-              options={subcasteOptions}
+              options={filteredSubcasteOptions}
+              disabled={!formData.caste}
               required
             />
-            <SelectDropdown
-              id="kulam"
-              label="Kulam *"
-              value={formData.kulam || ""}
-              onChange={(value) => onChange("kulam", value)}
-              options={kulamOptions}
-              required
-            />
-            <SelectDropdown
-              id="gotram"
-              label="Gotram *"
-              value={formData.gotram || ""}
-              onChange={(value) => onChange("gotram", value)}
-              options={gotramOptions}
-              required
-            />
+            <div className="space-y-2">
+              <Label htmlFor="kulam" className="sds-label">Kulam / Kilai (Optional)</Label>
+              <Input
+                id="kulam"
+                value={formData.kulam || ""}
+                onChange={(e) => onChange("kulam", e.target.value)}
+                placeholder="Type your Kulam / Kilai"
+                className="sds-input w-full"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gotram" className="sds-label">Gotram (Optional)</Label>
+              <Input
+                id="gotram"
+                value={formData.gotram || ""}
+                onChange={(e) => onChange("gotram", e.target.value)}
+                placeholder="Type your Gotram"
+                className="sds-input w-full"
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="ancestralOrigin" className="sds-label">Native Place *</Label>
               <Input
