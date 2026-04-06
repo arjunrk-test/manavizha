@@ -157,15 +157,17 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     preferredCaste: "",
     preferredSubcaste: "",
     preferredStar: "",
+    preferredRaasi: "",
     preferredDosham: "",
-    preferredEducation: "",
+    preferredEducation: [],
     preferredEmploymentType: "",
-    preferredOccupation: "",
+    preferredEmployedIn: [],
+    preferredOccupation: [],
     preferredAnnualIncome: "",
-    preferredCountry: "Any",
-    preferredState: "Any",
-    preferredCity: "Any",
-    preferredCitizenship: "Any",
+    preferredAnnualIncomeMin: "",
+    preferredCountry: "",
+    preferredState: "",
+    preferredCity: "",
     preferredLocation: "",
     userPhotos: [],
     familyPhoto: "",
@@ -271,15 +273,17 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             preferredCaste: data.preferred_caste || "",
             preferredSubcaste: data.preferred_subcaste || "",
             preferredStar: data.preferred_star || "",
+            preferredRaasi: data.preferred_raasi || "",
             preferredDosham: data.preferred_dosham || "Any",
-            preferredEducation: data.preferred_education || "",
+            preferredEducation: Array.isArray(data.preferred_education) ? data.preferred_education : (data.preferred_education ? data.preferred_education.split(",").map((s: string) => s.trim()) : []),
             preferredEmploymentType: data.preferred_employment_type || "Any",
-            preferredOccupation: data.preferred_occupation || "",
+            preferredEmployedIn: Array.isArray(data.preferred_employed_in) ? data.preferred_employed_in : (data.preferred_employed_in ? data.preferred_employed_in.split(",").map((s: string) => s.trim()) : []),
+            preferredOccupation: Array.isArray(data.preferred_occupation) ? data.preferred_occupation : (data.preferred_occupation ? data.preferred_occupation.split(",").map((s: string) => s.trim()) : []),
             preferredAnnualIncome: data.preferred_annual_income || "",
+            preferredAnnualIncomeMin: data.preferred_annual_income_min || "",
             preferredCountry: data.preferred_country || "",
             preferredState: data.preferred_state || "",
             preferredCity: data.preferred_city || "",
-            preferredCitizenship: data.preferred_citizenship || "",
           }
           setOriginalPartnerPreferences(loadedData)
           setFormData((prev) => ({
@@ -945,7 +949,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       interests: ["hobbies", "interests"],
       social: ["smoking", "drinking", "parties", "pubs"],
       photos: ["userPhotos", "familyPhoto", "aadharFront", "aadharBack"],
-      preferences: ["preferredAgeMin", "preferredAgeMax", "preferredHeightMin", "preferredHeightMax", "preferredMaritalStatus", "preferredMotherTongue", "preferredPhysicalStatus", "preferredEatingHabits", "preferredSmokingHabits", "preferredDrinkingHabits", "preferredReligion", "preferredCaste", "preferredSubcaste", "preferredStar", "preferredDosham", "preferredEducation", "preferredEmploymentType", "preferredOccupation", "preferredAnnualIncome", "preferredCountry", "preferredState", "preferredCity", "preferredCitizenship"],
+      preferences: ["preferredAgeMin", "preferredAgeMax", "preferredHeightMin", "preferredHeightMax", "preferredMaritalStatus", "preferredMotherTongue", "preferredPhysicalStatus", "preferredEatingHabits", "preferredSmokingHabits", "preferredDrinkingHabits", "preferredReligion", "preferredCaste", "preferredSubcaste", "preferredStar", "preferredRaasi", "preferredDosham", "preferredEducation", "preferredEmployedIn", "preferredOccupation", "preferredAnnualIncomeMin", "preferredCountry", "preferredState", "preferredCity"],
       referral: ["referralPartnerId"],
     }
 
@@ -2006,9 +2010,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       "preferredAgeMin", "preferredAgeMax", "preferredHeightMin", "preferredHeightMax",
       "preferredMaritalStatus", "preferredMotherTongue", "preferredPhysicalStatus",
       "preferredEatingHabits", "preferredSmokingHabits", "preferredDrinkingHabits",
-      "preferredReligion", "preferredCaste", "preferredSubcaste", "preferredStar",
-      "preferredDosham", "preferredEducation", "preferredEmploymentType", "preferredOccupation",
-      "preferredAnnualIncome", "preferredCountry", "preferredState", "preferredCity", "preferredCitizenship"
+      "preferredReligion", "preferredCaste", "preferredSubcaste", "preferredStar", "preferredRaasi",
+      "preferredDosham", "preferredEducation", "preferredEmployedIn", "preferredOccupation",
+      "preferredAnnualIncomeMin",
+      "preferredCountry", "preferredState", "preferredCity"
     ]
 
     if (!originalPartnerPreferences) {
@@ -3286,15 +3291,16 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           preferred_caste: formData.preferredCaste || null,
           preferred_subcaste: formData.preferredSubcaste || null,
           preferred_star: formData.preferredStar || null,
+          preferred_raasi: formData.preferredRaasi || null,
           preferred_dosham: formData.preferredDosham || "Any",
-          preferred_education: formData.preferredEducation || null,
-          preferred_employment_type: formData.preferredEmploymentType || "Any",
-          preferred_occupation: formData.preferredOccupation || null,
+          preferred_education: formData.preferredEducation || [],
+          preferred_employed_in: formData.preferredEmployedIn || [],
+          preferred_occupation: formData.preferredOccupation || [],
           preferred_annual_income: formData.preferredAnnualIncome || null,
+          preferred_annual_income_min: formData.preferredAnnualIncomeMin || null,
           preferred_country: formData.preferredCountry || null,
           preferred_state: formData.preferredState || null,
           preferred_city: formData.preferredCity || null,
-          preferred_citizenship: formData.preferredCitizenship || null,
         }
 
         const { error } = await supabase
@@ -3321,15 +3327,17 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           preferredCaste: formData.preferredCaste,
           preferredSubcaste: formData.preferredSubcaste,
           preferredStar: formData.preferredStar,
+          preferredRaasi: formData.preferredRaasi,
           preferredDosham: formData.preferredDosham,
           preferredEducation: formData.preferredEducation,
           preferredEmploymentType: formData.preferredEmploymentType,
+          preferredEmployedIn: formData.preferredEmployedIn,
           preferredOccupation: formData.preferredOccupation,
           preferredAnnualIncome: formData.preferredAnnualIncome,
+          preferredAnnualIncomeMin: formData.preferredAnnualIncomeMin,
           preferredCountry: formData.preferredCountry,
           preferredState: formData.preferredState,
           preferredCity: formData.preferredCity,
-          preferredCitizenship: formData.preferredCitizenship,
         })
 
         toast.success("Partner preferences saved successfully!", {

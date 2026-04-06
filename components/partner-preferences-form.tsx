@@ -1,288 +1,345 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabase } from "@/lib/supabase"
-import { ArrowLeft, Save, Heart } from "lucide-react"
+import { ArrowLeft, Save, Heart, ChevronDown, ChevronUp, Search, Check } from "lucide-react"
 import { toast } from "sonner"
 import { motion } from "framer-motion"
+import { INDIAN_LANGUAGES, EMPLOYMENT_TYPES, OCCUPATIONS as OCCUPATIONS_FROM_LIB, EDUCATION_LEVELS } from "@/lib/profile-data"
 import { useMasterData } from "@/hooks/use-master-data"
-import { SelectDropdown } from "@/components/ui/select-dropdown"
-import { CustomSelectDropdown } from "@/components/ui/custom-select-dropdown"
 
 interface PartnerPreferencesFormProps {
-    userId: string
-    onBack: () => void
+  userId: string
+  onBack: () => void
 }
 
-export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFormProps) {
-    const [isLoading, setIsLoading] = useState(true)
-    const [isSaving, setIsSaving] = useState(false)
-    const [formData, setFormData] = useState({
-        minAge: "",
-        maxAge: "",
-        minHeight: "",
-        maxHeight: "",
-        maritalStatus: "",
-        education: "",
-        employmentType: "",
-        sector: "",
-        sectorOther: "",
-        location: "",
-        diet: "",
-        smoking: "",
-        drinking: "",
-    })
+// ─── Data ────────────────────────────────────────────────────────────────────
+const COUNTRIES = ["Any", "India", "USA", "UK", "Canada", "Australia", "Singapore", "UAE", "Kuwait", "Qatar", "Malaysia", "Germany", "France", "Italy", "Sri Lanka", "New Zealand", "Others"]
+const STATES = ["Any", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chandigarh", "Chhattisgarh", "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu & Kashmir", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "International / Abroad"]
+const CITIES = ["Any", "Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli", "Vellore", "Erode", "Tiruppur", "Thoothukkudi", "Kancheepuram", "Bangalore", "Mumbai", "Delhi", "Hyderabad", "Kolkata", "Pune", "Ahmedabad", "Surat", "Kochi", "Vishakhapatnam", "Jaipur", "Lucknow", "Singapore", "Dubai", "London", "Others"]
+const RELIGIONS = ["Any", "Hindu", "Christian", "Muslim", "Jain", "Sikh", "Buddhist", "Others"]
+const MOTHER_TONGUES = ["Any", ...INDIAN_LANGUAGES, "English", "Others"]
+const STARS = ["Any", "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra", "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha", "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishtha", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"]
+const RAASI = ["Any", "Mesham (Aries)", "Rishabam (Taurus)", "Mithunam (Gemini)", "Katakam (Cancer)", "Simmam (Leo)", "Kanni (Virgo)", "Tulam (Libra)", "Viruchigam (Scorpio)", "Dhanusu (Sagittarius)", "Makaram (Capricorn)", "Kumbam (Aquarius)", "Meenam (Pisces)"]
+const INCOME_OPTIONS = ["Any", "Less than Rs.50 thousand", "Rs.50 thousand", "Rs.1 Lakh", "Rs.2 Lakhs", "Rs.3 Lakhs", "Rs.4 Lakhs", "Rs.5 Lakhs", "Rs.6 Lakhs", "Rs.7 Lakhs", "Rs.8 Lakhs", "Rs.9 Lakhs", "Rs.10 Lakhs", "Rs.11 Lakhs", "Rs.12 Lakhs", "Rs.13 Lakhs", "Rs.14 Lakhs", "Rs.15 Lakhs", "Rs.20 Lakhs", "Rs.25 Lakhs", "Rs.30 Lakhs", "Rs.35 Lakhs", "Rs.40 Lakhs", "Rs.45 Lakhs", "Rs.50 Lakhs", "Rs.60 Lakhs", "Rs.70 Lakhs", "Rs.80 Lakhs", "Rs.90 Lakhs", "Rs.1 Crore", "Rs.1 Crore & Above"]
+const EMPLOYED_IN = ["Any", ...EMPLOYMENT_TYPES]
+const OCCUPATIONS = ["Any", ...OCCUPATIONS_FROM_LIB]
+const EDUCATION = ["Any", ...EDUCATION_LEVELS]
 
-    const { data: foodPreferenceOptions } = useMasterData({ tableName: "master_food_preferences" })
-    const { data: smokingOptions } = useMasterData({ tableName: "master_smoking" })
-    const { data: drinkingOptions } = useMasterData({ tableName: "master_drinking" })
-    const { data: maritalStatusOptions } = useMasterData({ tableName: "master_marital_status" })
-    const { data: employmentTypeOptions } = useMasterData({ tableName: "master_employment_type" })
-    const { data: sectorOptions } = useMasterData({ tableName: "master_sector" })
-
-    useEffect(() => {
-        const fetchPreferences = async () => {
-            try {
-                setIsLoading(true)
-                const { data, error } = await supabase
-                    .from("partner_preferences")
-                    .select("*")
-                    .eq("user_id", userId)
-                    .maybeSingle()
-
-                if (error && error.code !== "PGRST116") {
-                    console.error("Error fetching preferences:", error)
-                    return
-                }
-
-                if (data) {
-                    setFormData({
-                        minAge: data.min_age?.toString() || "",
-                        maxAge: data.max_age?.toString() || "",
-                        minHeight: data.min_height?.toString() || "",
-                        maxHeight: data.max_height?.toString() || "",
-                        maritalStatus: (data.marital_status || []).join(", "),
-                        education: (data.education || []).join(", "),
-                        employmentType: (data.employment_type || []).join(", "),
-                        sector: (data.sector || []).some((s: string) => !sectorOptions.map((opt: { value: string }) => opt.value.toLowerCase()).includes(s.toLowerCase())) && !data.sector.includes("Other") ? "Other" : (data.sector || []).join(", "),
-                        sectorOther: (data.sector || []).some((s: string) => !sectorOptions.map((opt: { value: string }) => opt.value.toLowerCase()).includes(s.toLowerCase())) && !data.sector.includes("Other") ? (data.sector || []).join(", ") : "",
-                        location: (data.location || []).join(", "),
-                        diet: (data.diet || []).join(", "),
-                        smoking: (data.smoking || []).join(", "),
-                        drinking: (data.drinking || []).join(", "),
-                    })
-                }
-            } catch (error) {
-                console.error("Error connecting to Supabase:", error)
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
-        fetchPreferences()
-    }, [userId])
-
-    const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setIsSaving(true)
-
-        try {
-            const dataToSave = {
-                user_id: userId,
-                min_age: formData.minAge ? parseInt(formData.minAge) : null,
-                max_age: formData.maxAge ? parseInt(formData.maxAge) : null,
-                min_height: formData.minHeight ? parseInt(formData.minHeight) : null,
-                max_height: formData.maxHeight ? parseInt(formData.maxHeight) : null,
-                marital_status: formData.maritalStatus ? formData.maritalStatus.split(",").map(s => s.trim()).filter(Boolean) : null,
-                education: formData.education ? formData.education.split(",").map(s => s.trim()).filter(Boolean) : null,
-                employment_type: formData.employmentType ? formData.employmentType.split(",").map(s => s.trim()).filter(Boolean) : null,
-                sector: formData.sector ? (formData.sector === "Other" && formData.sectorOther ? [formData.sectorOther.trim()] : formData.sector.split(",").map(s => s.trim()).filter(Boolean)) : null,
-                location: formData.location ? formData.location.split(",").map(s => s.trim()).filter(Boolean) : null,
-                diet: formData.diet ? formData.diet.split(",").map(s => s.trim()).filter(Boolean) : null,
-                smoking: formData.smoking ? formData.smoking.split(",").map(s => s.trim()).filter(Boolean) : null,
-                drinking: formData.drinking ? formData.drinking.split(",").map(s => s.trim()).filter(Boolean) : null,
-                updated_at: new Date().toISOString()
-            }
-
-            const { error } = await supabase
-                .from("partner_preferences")
-                .upsert(dataToSave, { onConflict: "user_id" })
-
-            if (error) {
-                throw error
-            }
-
-            toast.success("Partner preferences saved successfully!")
-            onBack()
-        } catch (error: any) {
-            console.error("Error saving preferences:", error)
-            toast.error("Failed to save preferences. Please try again.")
-        } finally {
-            setIsSaving(false)
-        }
-    }
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target
-        setFormData(prev => ({ ...prev, [name]: value }))
-    }
-
-    if (isLoading) {
-        return (
-            <div className="flex justify-center items-center py-20">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4B0082]"></div>
+// ─── Multi-select checkbox dropdown ──────────────────────────────────────────
+function MultiSelectDropdown({ label, options, selected, onChange, searchable = false, placeholder = "Any" }: {
+  label: string; options: string[]; selected: string[]
+  onChange: (v: string[]) => void; searchable?: boolean; placeholder?: string
+}) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState("")
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h)
+  }, [])
+  const filtered = searchable ? options.filter((o) => o.toLowerCase().includes(query.toLowerCase())) : options
+  const toggle = (val: string) => {
+    if (val === "Any") { onChange(["Any"]); return }
+    let next = selected.includes(val) ? selected.filter((s) => s !== val) : [...selected.filter((s) => s !== "Any"), val]
+    if (next.length === 0) next = ["Any"]
+    onChange(next)
+  }
+  const isChecked = (val: string) => val === "Any" ? selected.length === 0 || selected.includes("Any") : selected.includes(val)
+  const displayLabel = selected.length === 0 || selected.includes("Any") ? placeholder : selected.join(", ")
+  return (
+    <div ref={ref} className="relative">
+      <button type="button" onClick={() => setOpen((o) => !o)}
+        className="w-full h-11 px-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-all text-left">
+        <span className="text-sm text-gray-700 truncate max-w-[240px]">{displayLabel}</span>
+        {open ? <ChevronUp className="h-4 w-4 text-gray-400 flex-shrink-0" /> : <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />}
+      </button>
+      {open && (
+        <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-2xl overflow-hidden">
+          {searchable && (
+            <div className="p-2 border-b border-gray-100">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder={`Search ${label}`}
+                  className="w-full pl-9 pr-4 py-2 text-sm rounded-lg bg-gray-50 border border-gray-100 focus:outline-none placeholder:text-gray-300" />
+              </div>
             </div>
-        )
-    }
-
-    return (
-        <div className="w-full max-w-4xl mx-auto px-4 py-8">
-            <div className="mb-6 flex items-center justify-between">
-                <div>
-                    <Button onClick={onBack} variant="ghost" className="mb-2 -ml-4 hover:bg-transparent hover:text-[#4B0082]">
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Dashboard
-                    </Button>
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Heart className="h-8 w-8 text-[#FF1493]" />
-                        Partner Preferences
-                    </h2>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">
-                        Tell us what you are looking for in a partner. We'll use this to filter your matches.
-                    </p>
-                </div>
-            </div>
-
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-            >
-                <Card className="bg-white/95 dark:bg-gray-800/95 shadow-xl border-gray-200/60 dark:border-gray-700/60 backdrop-blur-sm">
-                    <form onSubmit={handleSave}>
-                        <CardHeader className="border-b border-gray-100 dark:border-gray-800 pb-6">
-                            <CardTitle className="text-xl text-[#4B0082] dark:text-[#a16ee8]">Set Your Criteria</CardTitle>
-                            <CardDescription>
-                                Leave fields empty if you don't have a specific preference. For multiple values, separate them with commas.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-8 pt-8 text-sm">
-
-                            {/* Age and Height */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-4">
-                                    <h4 className="font-semibold text-gray-900 dark:text-white border-b pb-2">Age Range</h4>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="minAge">Min Age</Label>
-                                            <Input id="minAge" name="minAge" type="number" placeholder="e.g. 24" value={formData.minAge} onChange={handleChange} min="18" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="maxAge">Max Age</Label>
-                                            <Input id="maxAge" name="maxAge" type="number" placeholder="e.g. 30" value={formData.maxAge} onChange={handleChange} min="18" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="space-y-4">
-                                    <h4 className="font-semibold text-gray-900 dark:text-white border-b pb-2">Height Range (cm)</h4>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="minHeight">Min Height</Label>
-                                            <Input id="minHeight" name="minHeight" type="number" placeholder="e.g. 150" value={formData.minHeight} onChange={handleChange} min="100" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="maxHeight">Max Height</Label>
-                                            <Input id="maxHeight" name="maxHeight" type="number" placeholder="e.g. 180" value={formData.maxHeight} onChange={handleChange} min="100" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Background & Location */}
-                            <div className="space-y-4">
-                                <h4 className="font-semibold text-gray-900 dark:text-white border-b pb-2">Background & Location</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <SelectDropdown
-                                        id="maritalStatus"
-                                        label="Marital Status"
-                                        value={formData.maritalStatus}
-                                        onChange={(value) => setFormData(prev => ({ ...prev, maritalStatus: value }))}
-                                        options={maritalStatusOptions}
-                                    />
-                                    <div className="space-y-2">
-                                        <Label htmlFor="location">Preferred Location(s)</Label>
-                                        <Input id="location" name="location" placeholder="e.g. Chennai, Bangalore" value={formData.location} onChange={handleChange} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="education">Education</Label>
-                                        <Input id="education" name="education" placeholder="e.g. BE, MBA" value={formData.education} onChange={handleChange} />
-                                    </div>
-                                    <SelectDropdown
-                                        id="employmentType"
-                                        label="Employment Type"
-                                        value={formData.employmentType}
-                                        onChange={(value) => setFormData(prev => ({ ...prev, employmentType: value }))}
-                                        options={employmentTypeOptions}
-                                    />
-                                    {formData.employmentType && (formData.employmentType.toLowerCase().includes('employee') || formData.employmentType.toLowerCase().includes('business')) && (
-                                        <CustomSelectDropdown
-                                            id="sector"
-                                            label="Sector"
-                                            value={formData.sector}
-                                            onChange={(value) => setFormData(prev => ({ ...prev, sector: value }))}
-                                            options={sectorOptions}
-                                            showOtherInput={sectorOptions.some(opt => opt.value.toLowerCase() === "other")}
-                                            otherValue={formData.sectorOther}
-                                            onOtherChange={(value) => setFormData(prev => ({ ...prev, sectorOther: value }))}
-                                            otherPlaceholder="Please specify sector"
-                                        />
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Lifestyle */}
-                            <div className="space-y-4">
-                                <h4 className="font-semibold text-gray-900 dark:text-white border-b pb-2">Lifestyle</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <SelectDropdown
-                                        id="diet"
-                                        label="Diet Preferences"
-                                        value={formData.diet}
-                                        onChange={(value) => setFormData(prev => ({ ...prev, diet: value }))}
-                                        options={foodPreferenceOptions}
-                                    />
-                                    <SelectDropdown
-                                        id="smoking"
-                                        label="Smoking Habits"
-                                        value={formData.smoking}
-                                        onChange={(value) => setFormData(prev => ({ ...prev, smoking: value }))}
-                                        options={smokingOptions}
-                                    />
-                                    <SelectDropdown
-                                        id="drinking"
-                                        label="Drinking Habits"
-                                        value={formData.drinking}
-                                        onChange={(value) => setFormData(prev => ({ ...prev, drinking: value }))}
-                                        options={drinkingOptions}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="pt-6 border-t border-gray-100 dark:border-gray-800 flex justify-end">
-                                <Button type="submit" disabled={isSaving} className="bg-gradient-to-r from-[#1F4068] to-[#4B0082] text-white hover:opacity-90 px-8 py-6 text-lg relative group overflow-hidden shadow-lg shadow-[#4B0082]/20 border-0">
-                                    <span className="relative z-10 flex items-center">
-                                        <Save className={`mr-2 h-5 w-5 ${isSaving ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'}`} />
-                                        {isSaving ? "Saving Preferences..." : "Save Preferences"}
-                                    </span>
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </form>
-                </Card>
-            </motion.div>
+          )}
+          <div className="max-h-60 overflow-y-auto p-1.5 space-y-0.5">
+            {filtered.map((opt) => {
+              const checked = isChecked(opt)
+              return (
+                <button key={opt} type="button" onClick={() => toggle(opt)}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#4B0082]/5 transition-colors text-left group">
+                  <div className={`h-4 w-4 rounded flex-shrink-0 border flex items-center justify-center transition-all ${checked ? "bg-emerald-500 border-emerald-500" : "bg-white border-gray-300"}`}>
+                    {checked && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
+                  </div>
+                  <span className="text-sm text-gray-700">{opt}</span>
+                </button>
+              )
+            })}
+          </div>
+          <div className="px-3 py-2 border-t border-gray-100 bg-gray-50/50">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+              {selected.length === 0 || selected.includes("Any") ? "Showing all" : `${selected.filter(s => s !== "Any").length} selected`}
+            </span>
+          </div>
         </div>
-    )
+      )}
+    </div>
+  )
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function SectionHeader({ num, sub, title }: { num: string; sub: string; title: string }) {
+  return (
+    <div className="flex items-center gap-4 mb-6">
+      <div className="w-9 h-9 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10 flex-shrink-0">
+        <span className="text-[#4B0082] font-black text-[10px]">{num}</span>
+      </div>
+      <div>
+        <p className="text-[9px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30">{sub}</p>
+        <h3 className="text-lg font-light text-gray-900 tracking-tight">{title}</h3>
+      </div>
+      <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-2" />
+    </div>
+  )
+}
+
+function Field({ label, children, wide }: { label: string; children: React.ReactNode; wide?: boolean }) {
+  return (
+    <div className={`space-y-2 ${wide ? "md:col-span-2" : ""}`}>
+      {label && <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500">{label}</Label>}
+      {children}
+    </div>
+  )
+}
+
+function PrefSelect({ label, value, options, onChange, wide, disabled }: { 
+  label: string; value: string; options: string[]; onChange: (v: string) => void; wide?: boolean; disabled?: boolean 
+}) {
+  return (
+    <Field label={label} wide={wide}>
+      <div className={`transition-opacity duration-300 ${disabled ? "opacity-40 cursor-not-allowed" : "opacity-100"}`}>
+        <Select value={value || "Any"} onValueChange={(v) => onChange(v === "Any" ? "" : v)} disabled={disabled}>
+          <SelectTrigger className="w-full h-11 px-4 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:border-[#4B0082]/30 transition-all">
+            <SelectValue placeholder="Any" />
+          </SelectTrigger>
+          <SelectContent className="sds-glass rounded-2xl border-indigo-50/50 shadow-2xl p-2 z-[100] max-h-72">
+            {options.map((opt) => (
+              <SelectItem key={opt} value={opt} className="rounded-xl p-3 focus:bg-[#4B0082] focus:text-white text-[10px] font-black uppercase tracking-widest">{opt}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </Field>
+  )
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFormProps) {
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [fd, setFd] = useState({
+    preferredAgeMin: "", preferredAgeMax: "",
+    preferredHeightMin: "", preferredHeightMax: "",
+    preferredMaritalStatus: "", preferredMotherTongue: "",
+    preferredPhysicalStatus: "", preferredEatingHabits: "",
+    preferredSmokingHabits: "", preferredDrinkingHabits: "",
+    preferredReligion: "", preferredCaste: "",
+    preferredSubcaste: "", preferredStar: "", preferredRaasi: "", preferredDosham: "",
+    preferredEducation: [] as string[],
+    preferredEmployedIn: [] as string[],
+    preferredOccupation: [] as string[],
+    preferredAnnualIncomeMin: "",
+    preferredCountry: "", preferredState: "", preferredCity: "",
+  })
+
+  // Fetch master data for Caste and Subcaste
+  const { data: dbCastes } = useMasterData({ tableName: "master_caste" })
+  const { data: dbSubcastes } = useMasterData({ tableName: "master_subcaste" })
+
+  const casteOptions = useMemo(() => ["Any", ...dbCastes.map(c => c.value)], [dbCastes])
+  
+  const filteredSubcastes = useMemo(() => {
+    if (!fd.preferredCaste || fd.preferredCaste === "Any") {
+      return ["Any"]
+    }
+    const filtered = dbSubcastes
+      .filter(s => !s.category || s.category === fd.preferredCaste)
+      .map(s => s.value)
+    return ["Any", ...filtered]
+  }, [dbSubcastes, fd.preferredCaste])
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setIsLoading(true)
+        const { data } = await supabase.from("partner_preferences").select("*").eq("user_id", userId).maybeSingle()
+        if (data) setFd({
+          preferredAgeMin: data.preferred_age_min?.toString() || "",
+          preferredAgeMax: data.preferred_age_max?.toString() || "",
+          preferredHeightMin: data.preferred_height_min?.toString() || "",
+          preferredHeightMax: data.preferred_height_max?.toString() || "",
+          preferredMaritalStatus: data.preferred_marital_status || "",
+          preferredMotherTongue: data.preferred_mother_tongue || "",
+          preferredPhysicalStatus: data.preferred_physical_status || "",
+          preferredEatingHabits: data.preferred_eating_habits || "",
+          preferredSmokingHabits: data.preferred_smoking_habits || "",
+          preferredDrinkingHabits: data.preferred_drinking_habits || "",
+          preferredReligion: data.preferred_religion || "",
+          preferredCaste: data.preferred_caste || "",
+          preferredSubcaste: data.preferred_subcaste || "",
+          preferredStar: data.preferred_star || "",
+          preferredRaasi: data.preferred_raasi || "",
+          preferredDosham: data.preferred_dosham || "",
+          preferredEducation: Array.isArray(data.preferred_education) ? data.preferred_education : [],
+          preferredEmployedIn: Array.isArray(data.preferred_employed_in) ? data.preferred_employed_in : [],
+          preferredOccupation: Array.isArray(data.preferred_occupation) ? data.preferred_occupation : [],
+          preferredAnnualIncomeMin: data.preferred_annual_income_min || "",
+          preferredCountry: data.preferred_country || "",
+          preferredState: data.preferred_state || "",
+          preferredCity: data.preferred_city || "",
+        })
+      } catch (e) { console.error(e) } finally { setIsLoading(false) }
+    }
+    load()
+  }, [userId])
+
+  const set = (k: string, v: any) => setFd((p) => ({ ...p, [k]: v }))
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault(); setIsSaving(true)
+    try {
+      const { error } = await supabase.from("partner_preferences").upsert({
+        user_id: userId,
+        preferred_age_min: fd.preferredAgeMin ? parseInt(fd.preferredAgeMin) : null,
+        preferred_age_max: fd.preferredAgeMax ? parseInt(fd.preferredAgeMax) : null,
+        preferred_height_min: fd.preferredHeightMin ? parseInt(fd.preferredHeightMin) : null,
+        preferred_height_max: fd.preferredHeightMax ? parseInt(fd.preferredHeightMax) : null,
+        preferred_marital_status: fd.preferredMaritalStatus || null,
+        preferred_mother_tongue: fd.preferredMotherTongue || null,
+        preferred_physical_status: fd.preferredPhysicalStatus || null,
+        preferred_eating_habits: fd.preferredEatingHabits || null,
+        preferred_smoking_habits: fd.preferredSmokingHabits || null,
+        preferred_drinking_habits: fd.preferredDrinkingHabits || null,
+        preferred_religion: fd.preferredReligion || null,
+        preferred_caste: fd.preferredCaste || null,
+        preferred_subcaste: fd.preferredSubcaste || null,
+        preferred_star: fd.preferredStar || null,
+        preferred_raasi: fd.preferredRaasi || null,
+        preferred_dosham: fd.preferredDosham || null,
+        preferred_education: fd.preferredEducation || [],
+        preferred_employed_in: fd.preferredEmployedIn || [],
+        preferred_occupation: fd.preferredOccupation || [],
+        preferred_annual_income_min: fd.preferredAnnualIncomeMin || null,
+        preferred_country: fd.preferredCountry || null,
+        preferred_state: fd.preferredState || null,
+        preferred_city: fd.preferredCity || null,
+      }, { onConflict: "user_id" })
+      if (error) throw error
+      toast.success("Partner preferences saved successfully!")
+      onBack()
+    } catch (err: any) { console.error(err); toast.error("Failed to save. Please try again.") }
+    finally { setIsSaving(false) }
+  }
+
+  if (isLoading) return <div className="flex justify-center items-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4B0082]" /></div>
+
+  const card = "sds-glass rounded-[2.5rem] p-8 border border-indigo-50/50 shadow-[0_20px_50px_-20px_rgba(75,0,130,0.05)] mb-10"
+
+  return (
+    <div className="w-full max-w-4xl mx-auto px-4 py-8">
+      <div className="mb-8">
+        <Button onClick={onBack} variant="ghost" className="mb-3 -ml-3 hover:bg-transparent hover:text-[#4B0082] text-gray-500">
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Dashboard
+        </Button>
+        <div className="flex items-center gap-3">
+          <Heart className="h-7 w-7 text-[#FF1493]" fill="currentColor" />
+          <div>
+            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Partner Preferences</h2>
+            <p className="text-sm text-gray-400">Set your criteria — we'll use this to find your best matches.</p>
+          </div>
+        </div>
+      </div>
+
+      <motion.form onSubmit={handleSave} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+
+        {/* P1: Basic */}
+        <SectionHeader num="P1" sub="Basics" title="Basic & Lifestyle Preferences" />
+        <div className={card}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Field label="Age Range">
+              <div className="flex items-center gap-2">
+                <input type="number" value={fd.preferredAgeMin} onChange={(e) => set("preferredAgeMin", e.target.value)} placeholder="Min (e.g. 24)" min="18" className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none bg-white" />
+                <span className="text-gray-300 flex-shrink-0">—</span>
+                <input type="number" value={fd.preferredAgeMax} onChange={(e) => set("preferredAgeMax", e.target.value)} placeholder="Max (e.g. 32)" min="18" className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none bg-white" />
+              </div>
+            </Field>
+            <Field label="Height Range (cm)">
+              <div className="flex items-center gap-2">
+                <input type="number" value={fd.preferredHeightMin} onChange={(e) => set("preferredHeightMin", e.target.value)} placeholder="Min" className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none bg-white" />
+                <span className="text-gray-300 flex-shrink-0">—</span>
+                <input type="number" value={fd.preferredHeightMax} onChange={(e) => set("preferredHeightMax", e.target.value)} placeholder="Max" className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none bg-white" />
+              </div>
+            </Field>
+            <PrefSelect label="Marital Status" value={fd.preferredMaritalStatus} options={["Any", "Never Married", "Divorced", "Widowed", "Awaiting Divorce"]} onChange={(v) => set("preferredMaritalStatus", v)} />
+            <PrefSelect label="Physical Status" value={fd.preferredPhysicalStatus} options={["Any", "Normal", "Physically Challenged"]} onChange={(v) => set("preferredPhysicalStatus", v)} />
+            <PrefSelect label="Mother Tongue" value={fd.preferredMotherTongue} options={MOTHER_TONGUES} onChange={(v) => set("preferredMotherTongue", v)} />
+            <PrefSelect label="Eating Habits" value={fd.preferredEatingHabits} options={["Any", "Vegetarian", "Non-Vegetarian", "Eggetarian"]} onChange={(v) => set("preferredEatingHabits", v)} />
+            <PrefSelect label="Smoking Habit" value={fd.preferredSmokingHabits} options={["Any", "Never", "Occasionally"]} onChange={(v) => set("preferredSmokingHabits", v)} />
+            <PrefSelect label="Drinking Habit" value={fd.preferredDrinkingHabits} options={["Any", "Never", "Occasionally"]} onChange={(v) => set("preferredDrinkingHabits", v)} />
+          </div>
+        </div>
+
+        {/* P2: Religion */}
+        <SectionHeader num="P2" sub="Religion" title="Religious & Horoscope Preferences" />
+        <div className={card}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <PrefSelect label="Religion" value={fd.preferredReligion} options={RELIGIONS} onChange={(v) => set("preferredReligion", v)} />
+            <PrefSelect label="Caste" value={fd.preferredCaste} options={casteOptions} onChange={(v) => {
+              set("preferredCaste", v)
+              set("preferredSubcaste", "Any") // Reset subcaste when caste changes
+            }} />
+            <PrefSelect label="Subcaste" value={fd.preferredSubcaste} options={filteredSubcastes} 
+              disabled={!fd.preferredCaste || fd.preferredCaste === "Any"}
+              onChange={(v) => set("preferredSubcaste", v)} />
+            <PrefSelect label="Star (Nakshatra)" value={fd.preferredStar} options={STARS} onChange={(v) => set("preferredStar", v)} />
+            <PrefSelect label="Raasi / Zodiac Sign" value={fd.preferredRaasi} options={RAASI} onChange={(v) => set("preferredRaasi", v)} />
+            <PrefSelect label="Dosham" value={fd.preferredDosham} options={["Any", "No", "Yes", "Doesn't Matter"]} onChange={(v) => set("preferredDosham", v)} />
+          </div>
+        </div>
+
+        {/* P3: Professional */}
+        <SectionHeader num="P3" sub="Professional" title="Professional & Location Preferences" />
+        <div className={card}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Field label="Preferred Education" wide>
+              <MultiSelectDropdown label="Education" options={EDUCATION} selected={fd.preferredEducation} onChange={(v) => set("preferredEducation", v)} searchable placeholder="Any" />
+            </Field>
+            <Field label="Preferred Employed In">
+              <MultiSelectDropdown label="Employed In" options={EMPLOYED_IN} selected={fd.preferredEmployedIn} onChange={(v) => set("preferredEmployedIn", v)} placeholder="Any" />
+            </Field>
+            <Field label="Preferred Occupation">
+              <MultiSelectDropdown label="Occupation" options={OCCUPATIONS} selected={fd.preferredOccupation} onChange={(v) => set("preferredOccupation", v)} searchable placeholder="Any" />
+            </Field>
+            <PrefSelect label="Preferred Annual Income (From)" value={fd.preferredAnnualIncomeMin} options={INCOME_OPTIONS} onChange={(v) => set("preferredAnnualIncomeMin", v)} wide />
+            <PrefSelect label="Country" value={fd.preferredCountry} options={COUNTRIES} onChange={(v) => set("preferredCountry", v)} />
+            <PrefSelect label="State" value={fd.preferredState} options={STATES} onChange={(v) => set("preferredState", v)} />
+            <PrefSelect label="City" value={fd.preferredCity} options={CITIES} onChange={(v) => set("preferredCity", v)} />
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <Button type="submit" disabled={isSaving} className="h-14 px-12 rounded-[2rem] bg-[#4B0082] text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all disabled:opacity-40">
+            <Save className={`mr-3 h-4 w-4 ${isSaving ? "animate-pulse" : ""}`} />
+            {isSaving ? "Saving…" : "Save Preferences"}
+          </Button>
+        </div>
+      </motion.form>
+    </div>
+  )
 }

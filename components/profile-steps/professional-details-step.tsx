@@ -8,6 +8,7 @@ import { Upload, X } from "lucide-react"
 import { FormData } from "@/types/profile"
 import { useMasterData } from "@/hooks/use-master-data"
 import { CustomSelectDropdown } from "@/components/ui/custom-select-dropdown"
+import { EMPLOYMENT_TYPES } from "@/lib/profile-data"
 
 interface ProfessionalDetailsStepProps {
   formData: FormData
@@ -17,8 +18,8 @@ interface ProfessionalDetailsStepProps {
 export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDetailsStepProps) {
   const [payslipError, setPayslipError] = useState<string>("")
 
-  // Fetch employment type from master_employment_type table using the common hook
-  const { data: employmentTypeOptions } = useMasterData({ tableName: "master_employment_type" })
+  // Transform EMPLOYMENT_TYPES to match the expected structure
+  const employmentTypeOptions = EMPLOYMENT_TYPES.map(type => ({ id: type, value: type }))
   
   // Fetch sector, business type, and year of study from master tables
   const { data: sectorOptions } = useMasterData({ tableName: "master_sector" })
@@ -105,13 +106,9 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
   // Check employment type (case-insensitive comparison)
   const employmentTypeValue = (formData.employmentType || "").toLowerCase()
   
-  // Find the selected option to check its value
-  const selectedOption = employmentTypeOptions.find(opt => opt.value.toLowerCase() === employmentTypeValue)
-  const selectedValue = selectedOption?.value.toLowerCase() || employmentTypeValue
-  
-  const isEmployee = selectedValue === "employee"
-  const isBusiness = selectedValue === "business" || selectedValue.includes("business") || selectedValue.includes("self-employed")
-  const isStudent = selectedValue === "student"
+  const isEmployee = ["private", "government/psu", "defence"].includes(employmentTypeValue)
+  const isBusiness = ["business", "self employed"].includes(employmentTypeValue)
+  const isStudent = employmentTypeValue === "student"
 
   return (
     <div className="space-y-12">

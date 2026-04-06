@@ -219,9 +219,11 @@ export default function ProfileViewPage() {
                                 (stu && prefs.preferred_employment_type === "student")) matches++
                                 
                             // 16. Occupation
-                            if (!prefs.preferred_occupation || 
-                                emp?.designation === prefs.preferred_occupation || 
-                                bus?.designation === prefs.preferred_occupation) matches++
+                            const prefOccArr: string[] = Array.isArray(prefs.preferred_occupation) ? prefs.preferred_occupation : []
+                            const occAny = prefOccArr.length === 0 || prefOccArr.includes("Any")
+                            if (occAny ||
+                                (emp?.designation && prefOccArr.some((o: string) => o.toLowerCase() === emp.designation?.toLowerCase())) ||
+                                (bus?.designation && prefOccArr.some((o: string) => o.toLowerCase() === bus.designation?.toLowerCase()))) matches++
                                 
                             // 17. Annual Income
                             if (!prefs.preferred_annual_income || 
@@ -261,7 +263,7 @@ export default function ProfileViewPage() {
                                 dosham: !!(prefs.preferred_dosham === "Any" || horo?.dhosham === prefs.preferred_dosham),
                                 education: !!(!prefs.preferred_education || edu?.some((e: any) => e.education === prefs.preferred_education)),
                                 employment: !!(prefs.preferred_employment_type === "Any" || (emp && prefs.preferred_employment_type === "employee") || (bus && prefs.preferred_employment_type === "business") || (stu && prefs.preferred_employment_type === "student")),
-                                occupation: !!(!prefs.preferred_occupation || emp?.designation === prefs.preferred_occupation || bus?.designation === prefs.preferred_occupation),
+                                occupation: occAny || !!(emp?.designation && prefOccArr.some((o: string) => o.toLowerCase() === emp.designation?.toLowerCase())) || !!(bus?.designation && prefOccArr.some((o: string) => o.toLowerCase() === bus.designation?.toLowerCase())),
                                 income: !!(!prefs.preferred_annual_income || (emp?.salary && parseInt(emp.salary.replace(/[^\d]/g, '')) >= parseInt(prefs.preferred_annual_income))),
                                 location: !!((!prefs.preferred_city || prefs.preferred_city === "Any") && (!prefs.preferred_state || prefs.preferred_state === "Any")),
                                 citizenship: !!(!prefs.preferred_citizenship || prefs.preferred_citizenship === "Any" || contact?.citizenship === prefs.preferred_citizenship)
@@ -871,8 +873,9 @@ export default function ProfileViewPage() {
                                         <div className="px-2">
                                             <PrefRow isOwnProfile={isOwnProfile} label="Preferred Education" value={profile.partner_preferences.preferred_education} isMatch={matchResults.education} />
                                             <PrefRow isOwnProfile={isOwnProfile} label="Preferred Employment Type" value={profile.partner_preferences.preferred_employment_type} isMatch={matchResults.employment} />
-                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Occupation" value={profile.partner_preferences.preferred_occupation} isMatch={matchResults.occupation} />
-                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Annual Income" value={profile.partner_preferences.preferred_annual_income ? `Rs. ${profile.partner_preferences.preferred_annual_income} Lakhs and above` : "Any"} isMatch={matchResults.income} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Employed In" value={Array.isArray(profile.partner_preferences.preferred_employed_in) ? profile.partner_preferences.preferred_employed_in.join(", ") : (profile.partner_preferences.preferred_employed_in || "Any")} isMatch={matchResults.employment} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Occupation" value={Array.isArray(profile.partner_preferences.preferred_occupation) ? profile.partner_preferences.preferred_occupation.join(", ") : (profile.partner_preferences.preferred_occupation || "Any")} isMatch={matchResults.occupation} />
+                                            <PrefRow isOwnProfile={isOwnProfile} label="Preferred Annual Income" value={profile.partner_preferences.preferred_annual_income_min || profile.partner_preferences.preferred_annual_income_max ? `${profile.partner_preferences.preferred_annual_income_min || "Any"} — ${profile.partner_preferences.preferred_annual_income_max || "Any"}` : (profile.partner_preferences.preferred_annual_income || "Any")} isMatch={matchResults.income} />
                                         </div>
                                     </div>
 

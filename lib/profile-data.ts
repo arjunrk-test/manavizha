@@ -1,0 +1,113 @@
+// Common data for profile creation and partner preferences
+
+export const INDIAN_LANGUAGES = [
+  "Tamil",
+  "Telugu",
+  "Kannada",
+  "Malayalam",
+  "Hindi",
+  "Marathi",
+  "Gujarati",
+  "Bengali",
+  "Punjabi",
+  "Urdu",
+  "Assamese",
+  "Bodo",
+  "Dogri",
+  "Kashmiri",
+  "Konkani",
+  "Maithili",
+  "Manipuri",
+  "Nepali",
+  "Odia",
+  "Sanskrit",
+  "Santali",
+  "Sindhi",
+  "Tulu",
+  "Kodava",
+  "Rajasthani",
+  "Bhojpuri",
+  "Haryanvi",
+  "Magahi",
+  "Marwari",
+  "Chhattisgarhi",
+  "Kutchi",
+  "Sourashtra",
+  "Beary",
+  "Gondi",
+  "Mundari",
+  "Rabha",
+  "Misings",
+  "Karbi"
+];
+
+export const INTERNATIONAL_LANGUAGES = [
+  "English",
+  "French",
+  "Spanish",
+  "German",
+  "Chinese",
+  "Japanese",
+  "Russian",
+  "Portuguese",
+  "Italian",
+  "Korean",
+  "Arabic",
+  "Other"
+];
+
+export const EMPLOYMENT_TYPES = [
+  "Private",
+  "Government/PSU",
+  "Business",
+  "Defence",
+  "Self Employed",
+  "Student",
+  "Not Working"
+];
+
+export const OCCUPATIONS = [
+  "Administration",
+  "Agriculture",
+  "Airline",
+  "Architecture & design",
+  "Banking & finance",
+  "Beauty & fashion",
+  "Bpo & customer service",
+  "Civil services",
+  "Corporate professionals",
+  "Defence",
+  "Doctor",
+  "Education & training",
+  "Engineering",
+  "Hospitality",
+  "It & software",
+  "Legal",
+  "Media & entertainment",
+  "Medical & healthcare-others",
+  "Merchant navy",
+  "Police / law enforcement",
+  "Scientist",
+  "Senior management",
+  "Other"
+];
+
+export const EDUCATION_LEVELS = [
+  "Bachelor's - Engineering / Computer Science",
+  "Master's - Engineering / Computer Science",
+  "Bachelor's - Arts / Science / Commerce",
+  "Master's - Arts / Science / Commerce",
+  "Bachelor's - Management",
+  "Master's - Management",
+  "Bachelor's - Medicine - General / Dental / Surgeon",
+  "Master's - Medicine - General / Dental / Surgeon",
+  "Bachelor's - Pharmacy / Nursing or Health Sciences",
+  "Master's - Pharmacy / Nursing or Health Sciences",
+  "Bachelor's - Legal",
+  "Master's - Legal",
+  "Finance - ICWAI / CA / CS / CFA",
+  "Civil Services",
+  "Doctorates",
+  "Diploma / Polytechnic",
+  "Higher Secondary / Secondary"
+];

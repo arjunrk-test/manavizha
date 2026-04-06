@@ -138,15 +138,17 @@ export interface FormData {
   preferredCaste: string
   preferredSubcaste: string
   preferredStar: string
+  preferredRaasi: string
   preferredDosham: string
-  preferredEducation: string
+  preferredEducation: string[]
   preferredEmploymentType: string
-  preferredOccupation: string
+  preferredEmployedIn: string[]
+  preferredOccupation: string[]
+  preferredAnnualIncomeMin: string
   preferredAnnualIncome: string
   preferredCountry: string
   preferredState: string
   preferredCity: string
-  preferredCitizenship: string
   preferredLocation: string // Keep for legacy/fallback
   
   // Photo Section

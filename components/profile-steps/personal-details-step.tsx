@@ -9,6 +9,7 @@ import { useMasterData } from "@/hooks/use-master-data"
 import { SelectDropdown } from "@/components/ui/select-dropdown"
 import { LanguageDropdown } from "@/components/ui/language-dropdown"
 import { SkinColorDropdown } from "@/components/ui/skin-color-dropdown"
+import { INDIAN_LANGUAGES, INTERNATIONAL_LANGUAGES } from "@/lib/profile-data"
 
 interface PersonalDetailsStepProps {
   formData: FormData
@@ -22,8 +23,9 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
   const { data: bodyTypeOptions } = useMasterData({ tableName: "master_body_type" })
   const { data: maritalStatusOptions } = useMasterData({ tableName: "master_marital_status" })
   const { data: foodPreferenceOptions } = useMasterData({ tableName: "master_food_preferences" })
-  const { data: indianLanguagesData } = useMasterData({ tableName: "master_indian_languages" })
-  const { data: internationalLanguagesData } = useMasterData({ tableName: "master_international_languages" })
+  
+  const indianLanguages = INDIAN_LANGUAGES
+  const internationalLanguages = INTERNATIONAL_LANGUAGES
   
   // Transform skin color data to match the expected structure
   const skinColorOptions = skinColorData.map((item) => ({
@@ -31,10 +33,6 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
     label: item.value,
     color: item.colour_code || "#000000", // Default to black if no colour_code
   }))
-  
-  // Transform languages data to arrays of language names
-  const indianLanguages = indianLanguagesData.map((item) => item.value)
-  const internationalLanguages = internationalLanguagesData.map((item) => item.value)
 
   const toggleLanguage = (lang: string) => {
     const currentLangs = formData.languages || []
