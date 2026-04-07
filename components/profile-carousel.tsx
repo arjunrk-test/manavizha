@@ -67,8 +67,8 @@ export function ProfileCarousel({
                     <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg" />
                 </div>
                 <div className="flex gap-4 px-4 overflow-hidden">
-                    {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="min-w-[11rem] sm:min-w-[13.5rem] aspect-[3/4] bg-gray-100 dark:bg-gray-700 animate-pulse rounded-[2rem]" />
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <div key={i} className="min-w-[12rem] sm:min-w-[15rem] aspect-[3/4.4] bg-gray-100 dark:bg-gray-700 animate-pulse rounded-[2rem]" />
                     ))}
                 </div>
             </div>
@@ -154,12 +154,16 @@ export function ProfileCarousel({
                             profiles.map((profile, index) => (
                                 <div
                                     key={profile.user_id || index}
-                                    className="w-[11rem] sm:w-[13.5rem] flex-none snap-start"
+                                    className="w-[12rem] sm:w-[15rem] flex-none snap-start"
                                 >
                                     <ProfilePreviewCard
                                         profile={profile}
                                         onClick={() => onProfileClick(profile)}
                                         priority={index < 4}
+                                        onScoreClick={profile.onScoreClick}
+                                        viewerIsPremium={profile.viewerIsPremium}
+                                        lifestyleScore={profile.lifestyleScore}
+                                        poruthamScore={profile.poruthamScore}
                                     />
                                 </div>
                             ))

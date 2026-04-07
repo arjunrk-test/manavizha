@@ -718,6 +718,20 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                             }
                         }
 
+                        // Religion Matching
+                        if (preferences.preferred_religion && preferences.preferred_religion !== "Any") {
+                            if (profile.religion && profile.religion !== preferences.preferred_religion) return false
+                        }
+
+                        // Languages Matching (Multi-select)
+                        if (preferences.preferred_languages && preferences.preferred_languages.length > 0 && !preferences.preferred_languages.includes("Any")) {
+                            const profileLangs = Array.isArray(profile.languages) ? profile.languages : []
+                            const hasMatch = preferences.preferred_languages.some((pl: string) => 
+                                profileLangs.includes(pl)
+                            )
+                            if (!hasMatch) return false
+                        }
+
                         if (preferences.diet && preferences.diet.length > 0) {
                             if (profile.food_preference) {
                                 const isMatch = preferences.diet.some((d: string) =>
@@ -736,13 +750,48 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                             }
                         }
 
-                        if (preferences.education && preferences.education.length > 0) {
-                            if (profile.education && profile.education.length > 0) {
-                                const eduMatches = profile.education.some((edu: any) =>
-                                    preferences.education.some((prefEdu: string) => (edu.education?.toLowerCase() || "").includes(prefEdu.toLowerCase()))
-                                )
-                                if (!eduMatches) return false
+                        // Education filtering
+                        const prefLevels = preferences.education || []
+                        const prefDegrees = preferences.preferred_degrees || []
+                        const prefBranches = preferences.preferred_branches || []
+
+                        const hasLevelPref = prefLevels.length > 0 && !prefLevels.includes("Any")
+                        const hasDegreePref = prefDegrees.length > 0 && !prefDegrees.includes("Any")
+                        const hasBranchPref = prefBranches.length > 0 && !prefBranches.includes("Any")
+
+                        if (hasLevelPref || hasDegreePref || hasBranchPref) {
+                            if (!profile.education || profile.education.length === 0) {
+                                return false // No education on profile, but preferences are set
                             }
+
+                            const hasAnyMatchingEdu = profile.education.some((edu: any) => {
+                                let levelMatch = true
+                                let degreeMatch = true
+                                let branchMatch = true
+
+                                if (hasLevelPref) {
+                                    levelMatch = prefLevels.some((pref: string) => 
+                                        (edu.education?.toLowerCase() || "").includes(pref.toLowerCase())
+                                    )
+                                }
+
+                                if (hasDegreePref) {
+                                    degreeMatch = prefDegrees.some((pref: string) => 
+                                        (edu.degree?.toLowerCase() || "").includes(pref.toLowerCase()) || 
+                                        (edu.degree_other?.toLowerCase() || "").includes(pref.toLowerCase())
+                                    )
+                                }
+
+                                if (hasBranchPref) {
+                                    branchMatch = prefBranches.some((pref: string) => 
+                                        (edu.branch?.toLowerCase() || "").includes(pref.toLowerCase())
+                                    )
+                                }
+
+                                return levelMatch && degreeMatch && branchMatch
+                            })
+
+                            if (!hasAnyMatchingEdu) return false
                         }
 
                         if (preferences.employment_type && preferences.employment_type.length > 0) {

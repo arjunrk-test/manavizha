@@ -116,11 +116,17 @@ function PrefSelect({ label, value, options, onChange, disabled }: { label: stri
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export function PartnerPreferencesStep({ formData, onChange }: PartnerPreferencesStepProps) {
-  // Fetch master data for Caste and Subcaste
+  // Fetch master data for Caste, Subcaste, Marital Status, Food, and Religion
   const { data: dbCastes } = useMasterData({ tableName: "master_caste" })
   const { data: dbSubcastes } = useMasterData({ tableName: "master_subcaste" })
+  const { data: dbMaritalStatus } = useMasterData({ tableName: "master_marital_status" })
+  const { data: dbFoodPreferences } = useMasterData({ tableName: "master_food_preferences" })
+  const { data: dbReligions } = useMasterData({ tableName: "master_religion" })
 
   const casteOptions = useMemo(() => ["Any", ...dbCastes.map(c => c.value)], [dbCastes])
+  const maritalOptions = useMemo(() => ["Any", ...dbMaritalStatus.map(m => m.value)], [dbMaritalStatus])
+  const foodOptions = useMemo(() => ["Any", ...dbFoodPreferences.map(f => f.value)], [dbFoodPreferences])
+  const religionOptions = useMemo(() => ["Any", ...dbReligions.map(r => r.value)], [dbReligions])
   
   const filteredSubcastes = useMemo(() => {
     if (!formData.preferredCaste || formData.preferredCaste === "Any") {
@@ -132,9 +138,45 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
     return ["Any", ...filtered]
   }, [dbSubcastes, formData.preferredCaste])
 
+  // Fetch education level data from master_education_level table
+  const { data: educationLevelData } = useMasterData({ tableName: "master_education_level" })
+
+  const educationLevelOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        educationLevelData
+          .map(item => item.category?.trim())
+          .filter((category): category is string => Boolean(category && category.length > 0))
+      )
+    ).sort()
+  }, [educationLevelData])
+
+  const degreeOptions = useMemo(() => {
+    let filteredData = educationLevelData
+    const selectedLevels = Array.isArray(formData.preferredEducation) ? formData.preferredEducation : []
+    
+    // If specific levels are selected (and it's not just "Any"), filter degrees by those levels
+    if (selectedLevels.length > 0 && !selectedLevels.includes("Any")) {
+      filteredData = educationLevelData.filter(item => 
+        selectedLevels.includes(item.category?.trim() || "")
+      )
+    }
+
+    return Array.from(
+      new Set(
+        filteredData
+          .map(item => item.value?.trim())
+          .filter((val): val is string => Boolean(val && val.length > 0))
+      )
+    ).sort()
+  }, [educationLevelData, formData.preferredEducation])
+
   const employedIn: string[] = Array.isArray(formData.preferredEmployedIn) ? formData.preferredEmployedIn : []
   const occupation: string[] = Array.isArray(formData.preferredOccupation) ? formData.preferredOccupation : []
   const education: string[] = Array.isArray(formData.preferredEducation) ? formData.preferredEducation : []
+  const degrees: string[] = Array.isArray(formData.preferredDegrees) ? formData.preferredDegrees : []
+  const branches: string[] = Array.isArray(formData.preferredBranches) ? formData.preferredBranches : []
+  const preferredLanguages: string[] = Array.isArray(formData.preferredLanguages) ? formData.preferredLanguages : []
 
   const SectionHead = ({ num, sub, title }: { num: string; sub: string; title: string }) => (
     <div className="flex items-center gap-4 mb-2">
@@ -182,10 +224,13 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
             </div>
           </div>
 
-          <PrefSelect label="Marital Status" value={formData.preferredMaritalStatus} options={["Any", "Never Married", "Divorced", "Widowed", "Awaiting Divorce"]} onChange={(v) => onChange("preferredMaritalStatus", v)} />
+          <PrefSelect label="Marital Status" value={formData.preferredMaritalStatus} options={maritalOptions} onChange={(v) => onChange("preferredMaritalStatus", v)} />
           <PrefSelect label="Physical Status" value={formData.preferredPhysicalStatus} options={["Any", "Normal", "Physically Challenged"]} onChange={(v) => onChange("preferredPhysicalStatus", v)} />
-          <PrefSelect label="Mother Tongue" value={formData.preferredMotherTongue} options={MOTHER_TONGUES} onChange={(v) => onChange("preferredMotherTongue", v)} />
-          <PrefSelect label="Eating Habits" value={formData.preferredEatingHabits} options={["Any", "Vegetarian", "Non-Vegetarian", "Eggetarian"]} onChange={(v) => onChange("preferredEatingHabits", v)} />
+          <div className="space-y-3">
+            <Label className="sds-label ml-1">Preferred Languages</Label>
+            <MultiSelectDropdown label="Languages" options={MOTHER_TONGUES} selected={preferredLanguages} onChange={(v) => onChange("preferredLanguages", v)} searchable placeholder="Any Language" />
+          </div>
+          <PrefSelect label="Eating Habits" value={formData.preferredEatingHabits} options={foodOptions} onChange={(v) => onChange("preferredEatingHabits", v)} />
 
           <div className="space-y-3 md:col-span-2">
             <Label className="sds-label ml-1">Social Habits</Label>
@@ -201,7 +246,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
       <div className="space-y-8">
         <SectionHead num="P2" sub="Religion" title="Religious & Horoscope Preferences" />
         <div className={card}>
-          <PrefSelect label="Religion" value={formData.preferredReligion} options={RELIGIONS} onChange={(v) => onChange("preferredReligion", v)} />
+          <PrefSelect label="Religion" value={formData.preferredReligion} options={religionOptions} onChange={(v) => onChange("preferredReligion", v)} />
           <PrefSelect label="Caste" value={formData.preferredCaste} options={casteOptions} onChange={(v) => {
             onChange("preferredCaste", v)
             onChange("preferredSubcaste", "Any") // Reset subcaste when caste changes
@@ -220,10 +265,22 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
         <SectionHead num="P3" sub="Professional" title="Professional & Location" />
         <div className={card}>
 
-          {/* Education — multi-select with search */}
+          {/* Education — Level */}
+          <div className="space-y-3">
+            <Label className="sds-label ml-1">Preferred Education Level</Label>
+            <MultiSelectDropdown label="Education Level" options={educationLevelOptions} selected={education} onChange={(v) => onChange("preferredEducation", v)} searchable placeholder="Any Level" />
+          </div>
+
+          {/* Education — Degree */}
+          <div className="space-y-3">
+            <Label className="sds-label ml-1">Preferred Degree</Label>
+            <MultiSelectDropdown label="Degree" options={degreeOptions} selected={degrees} onChange={(v) => onChange("preferredDegrees", v)} searchable placeholder="Any Degree" />
+          </div>
+
+          {/* Specialization */}
           <div className="space-y-3 md:col-span-2">
-            <Label className="sds-label ml-1">Preferred Education</Label>
-            <MultiSelectDropdown label="Education" options={EDUCATION_OPTIONS} selected={education} onChange={(v) => onChange("preferredEducation", v)} searchable placeholder="Any" />
+            <Label className="sds-label ml-1">Preferred Specialization</Label>
+            <MultiSelectDropdown label="Specialization" options={["Any", "Computer Science", "Engineering", "Commerce", "Arts", "Science", "Medicine", "Management", "Law", "Finance", "Others"]} selected={branches} onChange={(v) => onChange("preferredBranches", v)} searchable placeholder="Any Specialization" />
           </div>
 
           {/* Employed In — multi-select */}

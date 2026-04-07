@@ -23,6 +23,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
   const { data: bodyTypeOptions } = useMasterData({ tableName: "master_body_type" })
   const { data: maritalStatusOptions } = useMasterData({ tableName: "master_marital_status" })
   const { data: foodPreferenceOptions } = useMasterData({ tableName: "master_food_preferences" })
+  const { data: religionOptions } = useMasterData({ tableName: "master_religion" })
   
   const indianLanguages = INDIAN_LANGUAGES
   const internationalLanguages = INTERNATIONAL_LANGUAGES
@@ -142,6 +143,15 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
               value={formData.maritalStatus}
               onChange={(value) => onChange("maritalStatus", value)}
               options={maritalStatusOptions}
+              required
+            />
+
+            <SelectDropdown
+              id="religion"
+              label="Religion *"
+              value={formData.religion}
+              onChange={(value) => onChange("religion", value)}
+              options={religionOptions}
               required
             />
           </div>

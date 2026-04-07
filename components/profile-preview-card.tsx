@@ -34,11 +34,11 @@ export function ProfilePreviewCard({
             className="h-full"
         >
             <Card
-                className="overflow-hidden h-full max-w-[10rem] sm:max-w-[12rem] hover:shadow-[0_30px_60px_-15px_rgba(75,0,130,0.3)] transition-all duration-500 cursor-pointer group border-white/60 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl relative flex flex-col rounded-[2rem] shadow-2xl"
+                className="overflow-hidden h-full w-full hover:shadow-[0_30px_60px_-15px_rgba(75,0,130,0.3)] transition-all duration-500 cursor-pointer group border-white/60 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl relative flex flex-col rounded-[2rem] shadow-2xl"
                 onClick={onClick}
             >
                 {/* Image Section */}
-                <div className="aspect-[3/4.2] relative overflow-hidden bg-gray-100 dark:bg-gray-700 shrink-0">
+                <div className="aspect-[3/4.4] relative overflow-hidden bg-gray-100 dark:bg-gray-700 shrink-0">
                     {photoUrl ? (
                         <img
                             src={photoUrl}
@@ -101,7 +101,7 @@ export function ProfilePreviewCard({
                     {/* Bottom Info Overlay */}
                     <div className="absolute bottom-0 left-0 right-0 p-4 text-white z-10 transition-transform duration-500 group-hover:translate-y-[-2px]">
                         <div className="flex items-center justify-between gap-1 mb-1">
-                            <h3 className="font-bold text-[13px] sm:text-[15px] truncate drop-shadow-2xl leading-none tracking-tight">
+                            <h3 className="font-bold text-[12px] sm:text-[14px] truncate drop-shadow-2xl leading-none tracking-tight">
                                 {profile.name}{profile.age ? `, ${profile.age}` : ""}
                             </h3>
                             {profile.isVerified && (
@@ -129,7 +129,7 @@ export function ProfilePreviewCard({
                 </div>
 
                 {/* Content Section */}
-                <CardContent className="p-4 flex-1 flex flex-col justify-start gap-2.5 bg-white dark:bg-gray-800 group-hover:bg-indigo-50/10 transition-colors duration-500">
+                <CardContent className="p-3 flex-1 flex flex-col justify-start gap-2 bg-white dark:bg-gray-800 group-hover:bg-indigo-50/10 transition-colors duration-500">
                     <div className="flex items-start gap-2 text-[9px] text-gray-600 dark:text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
                         <Briefcase className="h-3.5 w-3.5 text-[#4B0082]/60 shrink-0" />
                         <span className="line-clamp-1">{profile.profession || "Not specified"}</span>

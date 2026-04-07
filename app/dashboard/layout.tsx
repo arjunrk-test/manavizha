@@ -248,7 +248,7 @@ export default function DashboardLayout({
 
       {/* Header */}
       <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
-        <div className="max-w-7xl mx-auto px-4 py-1.5 flex items-center justify-between">
+        <div className="w-full px-6 md:px-8 py-1.5 flex items-center justify-between">
           <div className="flex flex-col cursor-pointer hover:opacity-80 transition-opacity" onClick={() => router.push("/dashboard")}>
             <h1 className="text-xl md:text-2xl font-black tracking-tighter bg-gradient-to-r from-[#4B0082] via-[#FF1493] to-[#4B0082] bg-clip-text text-transparent">
               Manavizha
@@ -411,7 +411,7 @@ export default function DashboardLayout({
 
       {/* Footer */}
       <footer className="mt-auto sticky bottom-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-t border-gray-200/60 dark:border-gray-700/60 py-1">
-        <div className="max-w-7xl mx-auto px-4 py-2">
+        <div className="w-full px-6 md:px-8 py-2">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-600 dark:text-gray-400">
             <span>© 2024 Manavizha. All rights reserved.</span>
             <div className="flex items-center gap-6">

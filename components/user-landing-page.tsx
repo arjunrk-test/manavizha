@@ -43,6 +43,7 @@ import {
   MarriedConfirmationDialog
 } from "@/components/married-confirmation-dialog"
 import { SubscriptionDialog } from "./subscription-dialog"
+import { HoroscopeGeneratorDialog } from "./horoscope-generator-dialog"
 import { calculateTrustScore } from "@/lib/utils/profile-utils"
 import { checkTamilPorutham } from "@/lib/astrology"
 import { calculateLifestyleScore } from "@/lib/matching"
@@ -87,6 +88,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
   const [showMarriedConfirmDialog, setShowMarriedConfirmDialog] = useState(false)
   const [showVerificationDialog, setShowVerificationDialog] = useState(false)
   const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false)
+  const [showHoroscopeDialog, setShowHoroscopeDialog] = useState(false)
 
   // New states for match sections
   const [dailyRecs, setDailyRecs] = useState<any[]>([])
@@ -324,7 +326,6 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                         // If it's a full URL, check if it's a Supabase storage URL that needs re-signing
                         if (photo.startsWith("http")) {
                             if (photo.includes("/storage/v1/object/sign/user-photos/")) {
-                                // It's a signed URL for our bucket, extract the path after the bucket name
                                 const pathParts = photo.split("/user-photos/")
                                 if (pathParts.length > 1) {
                                     filePath = pathParts[1].split("?")[0]
@@ -394,7 +395,10 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           .eq("user_id", userId)
           .maybeSingle()
 
-        if (!userData) return
+        if (!userData) {
+          setIsSectionsLoading(false)
+          return
+        }
 
         const targetGender = (userData.sex || "").toLowerCase() === "male" ? "Female" : "Male"
 
@@ -534,9 +538,13 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 viewerIsPremium: profile?.isPremium,
                 onScoreClick: (e: any) => {
                     e.stopPropagation()
-                    setActiveBreakdown({ lifestyle: lifestyleMatch, horoscope: horoscopeMatch })
-                    setBreakdownName(p.name || "Unknown")
-                    setShowBreakdown(true)
+                    if (profile?.isPremium) {
+                        setActiveBreakdown({ lifestyle: lifestyleMatch, horoscope: horoscopeMatch })
+                        setBreakdownName(p.name || "Unknown")
+                        setShowBreakdown(true)
+                    } else {
+                        setShowSubscriptionDialog(true)
+                    }
                 }
             }
         })
@@ -671,10 +679,10 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
   return (
   <>
-    <div className="max-w-[105rem] mx-auto px-4 sm:px-8 py-4">
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
+    <div className="w-full px-6 md:px-10 py-4">
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
         {/* Left Sidebar - Sticky */}
-        <aside className="w-full lg:w-[16rem] xl:w-[17rem] lg:sticky lg:top-16 space-y-3 flex-shrink-0">
+        <aside className="w-full lg:w-[17rem] lg:sticky lg:top-16 space-y-4 flex-shrink-0">
           {/* Quick Search */}
           <motion.div
             initial={{ opacity: 0, x: -10 }}
@@ -696,7 +704,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="sds-glass rounded-[2rem] overflow-hidden p-2"
+            className="sds-glass rounded-[2rem] overflow-hidden p-3"
           >
             <div className="py-2.5 px-4 mb-1">
                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-900/40">
@@ -704,7 +712,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 </h4>
             </div>
             
-            <div className="space-y-0.5">
+            <div className="p-2 space-y-0.5">
               {completionPercentage === 0 ? (
                 <div className="text-[10px] text-amber-600 mb-2 bg-amber-50/50 p-3 rounded-2xl border border-amber-100 font-bold leading-relaxed text-center">
                   Complete your profile to see matches.
@@ -730,8 +738,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               >
                 <Heart className="h-4 w-4 mr-3 text-rose-400" />
                 <div className="flex-1 flex items-center justify-between">
-                  <div className="font-bold text-[11px] text-gray-700">I Liked</div>
-                  <span className="text-gray-400 text-[8px] font-black">{iLikedCount}</span>
+                  <div className="font-bold text-[11px] text-gray-700">Interests Sent</div>
+                  <span className="bg-[#4B0082] text-white text-[8px] px-1.5 py-0.5 rounded-md font-black">{iLikedCount}</span>
                 </div>
               </Button>
               <Button
@@ -742,8 +750,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               >
                 <Sparkles className="h-4 w-4 mr-3 text-indigo-400" />
                 <div className="flex-1 flex items-center justify-between">
-                  <div className="font-bold text-[11px] text-gray-700">Liked Me</div>
-                  <span className="text-gray-400 text-[8px] font-black">{likedMeCount}</span>
+                  <div className="font-bold text-[11px] text-gray-700">Interests Received</div>
+                  <span className="bg-[#4B0082] text-white text-[8px] px-1.5 py-0.5 rounded-md font-black">{likedMeCount}</span>
                 </div>
               </Button>
 
@@ -770,7 +778,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               <Button
                 variant="ghost"
                 className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
-                onClick={() => setShowSubscriptionDialog(true)}
+                onClick={() => setShowHoroscopeDialog(true)}
               >
                 <Star className="h-4 w-4 mr-3 text-amber-500" />
                 <div className="font-bold text-[11px] text-gray-700">Generate Horoscope</div>
@@ -822,14 +830,14 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           </aside>
   
           {/* Right Main Content */}
-          <main className="flex-1 w-full min-w-0 space-y-8 pb-24 mt-4">
+          <main className="flex-1 w-full min-w-0 space-y-6 pb-24 mt-0.5">
 
 
             {/* Welcome Banner */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-8 rounded-[2rem] sds-glass relative overflow-hidden shadow-xl border-indigo-100/30 flex items-center justify-between gap-6"
+              className="p-4 md:p-5 rounded-[2rem] sds-glass relative overflow-hidden shadow-xl border-indigo-100/30 flex items-center justify-between gap-6"
             >
               <div className="flex items-center gap-6">
                 <div className="relative">
@@ -845,7 +853,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <h1 className="text-xl md:text-2xl font-black text-indigo-900">
+                    <h1 className="text-xl md:text-2xl font-black text-indigo-900 leading-tight">
                       Welcome back, {userName?.split(' ')[0]}! 👋
                     </h1>
                     {profile?.photo_verified && (
@@ -1067,7 +1075,16 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
   <SubscriptionDialog 
     isOpen={showSubscriptionDialog} 
     onClose={() => setShowSubscriptionDialog(false)} 
-    featureName="Direct Horoscope Matching"
+    featureName="Horoscope Matching & Compatibility"
+  />
+
+  <HoroscopeGeneratorDialog
+    isOpen={showHoroscopeDialog}
+    onClose={() => setShowHoroscopeDialog(false)}
+    userId={userId}
+    onSave={() => {
+      // Refresh logic if needed
+    }}
   />
 
   <CompatibilitySheet 

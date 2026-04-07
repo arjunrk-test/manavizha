@@ -9,6 +9,7 @@ export interface FormData {
   phone: string
   whatsappNumber: string
   sex: string
+  religion: string
   height: string
   weight: string
   skinColor: string
@@ -130,6 +131,7 @@ export interface FormData {
   preferredHeightMax: string
   preferredMaritalStatus: string
   preferredMotherTongue: string
+  preferredLanguages: string[]
   preferredPhysicalStatus: string
   preferredEatingHabits: string
   preferredSmokingHabits: string
@@ -141,6 +143,8 @@ export interface FormData {
   preferredRaasi: string
   preferredDosham: string
   preferredEducation: string[]
+  preferredDegrees: string[]
+  preferredBranches: string[]
   preferredEmploymentType: string
   preferredEmployedIn: string[]
   preferredOccupation: string[]

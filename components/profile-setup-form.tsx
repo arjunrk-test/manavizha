@@ -42,6 +42,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     phone: "",
     whatsappNumber: "",
     sex: "",
+    religion: "",
     height: "",
     weight: "",
     skinColor: "",
@@ -160,6 +161,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     preferredRaasi: "",
     preferredDosham: "",
     preferredEducation: [],
+    preferredDegrees: [],
+    preferredBranches: [],
+    preferredLanguages: [],
     preferredEmploymentType: "",
     preferredEmployedIn: [],
     preferredOccupation: [],
@@ -215,6 +219,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             dateOfBirth: data.date_of_birth || "",
             age: data.age ? data.age.toString() : "",
             sex: data.sex || "",
+            religion: data.religion || "",
             height: data.height ? data.height.toString() : "",
             weight: data.weight ? data.weight.toString() : "",
             skinColor: data.skin_color || "",
@@ -276,6 +281,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             preferredRaasi: data.preferred_raasi || "",
             preferredDosham: data.preferred_dosham || "Any",
             preferredEducation: Array.isArray(data.preferred_education) ? data.preferred_education : (data.preferred_education ? data.preferred_education.split(",").map((s: string) => s.trim()) : []),
+            preferredDegrees: Array.isArray(data.preferred_degrees) ? data.preferred_degrees : (data.preferred_degrees ? data.preferred_degrees.split(",").map((s: string) => s.trim()) : []),
+            preferredBranches: Array.isArray(data.preferred_branches) ? data.preferred_branches : (data.preferred_branches ? data.preferred_branches.split(",").map((s: string) => s.trim()) : []),
+            preferredLanguages: Array.isArray(data.preferred_languages) ? data.preferred_languages : (data.preferred_languages ? data.preferred_languages.split(",").map((s: string) => s.trim()) : []),
             preferredEmploymentType: data.preferred_employment_type || "Any",
             preferredEmployedIn: Array.isArray(data.preferred_employed_in) ? data.preferred_employed_in : (data.preferred_employed_in ? data.preferred_employed_in.split(",").map((s: string) => s.trim()) : []),
             preferredOccupation: Array.isArray(data.preferred_occupation) ? data.preferred_occupation : (data.preferred_occupation ? data.preferred_occupation.split(",").map((s: string) => s.trim()) : []),
@@ -919,7 +927,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   // Calculate step progress
   const calculateStepProgress = (stepId: string) => {
     const stepFields: Record<string, (keyof FormData)[]> = {
-      personal: ["name", "dateOfBirth", "age", "sex", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"],
+      personal: ["name", "dateOfBirth", "age", "sex", "religion", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"],
       contact: [
         "phone",
         "whatsappNumber",
@@ -949,7 +957,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       interests: ["hobbies", "interests"],
       social: ["smoking", "drinking", "parties", "pubs"],
       photos: ["userPhotos", "familyPhoto", "aadharFront", "aadharBack"],
-      preferences: ["preferredAgeMin", "preferredAgeMax", "preferredHeightMin", "preferredHeightMax", "preferredMaritalStatus", "preferredMotherTongue", "preferredPhysicalStatus", "preferredEatingHabits", "preferredSmokingHabits", "preferredDrinkingHabits", "preferredReligion", "preferredCaste", "preferredSubcaste", "preferredStar", "preferredRaasi", "preferredDosham", "preferredEducation", "preferredEmployedIn", "preferredOccupation", "preferredAnnualIncomeMin", "preferredCountry", "preferredState", "preferredCity"],
+      preferences: ["preferredAgeMin", "preferredAgeMax", "preferredHeightMin", "preferredHeightMax", "preferredMaritalStatus", "preferredMotherTongue", "preferredPhysicalStatus", "preferredEatingHabits", "preferredSmokingHabits", "preferredDrinkingHabits", "preferredReligion", "preferredCaste", "preferredSubcaste", "preferredStar", "preferredRaasi", "preferredDosham", "preferredEducation", "preferredEmployedIn", "preferredOccupation", "preferredAnnualIncomeMin", "preferredCountry", "preferredState", "preferredCity", "preferredLanguages"],
       referral: ["referralPartnerId"],
     }
 
@@ -1070,6 +1078,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       { key: "name", label: "Full Name" },
       { key: "dateOfBirth", label: "Date of Birth" },
       { key: "sex", label: "Gender" },
+      { key: "religion", label: "Religion" },
       { key: "height", label: "Height" },
       { key: "weight", label: "Weight" },
       { key: "skinColor", label: "Skin Color" },
@@ -1130,7 +1139,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const hasPersonalDetailsChanged = (): boolean => {
     if (!originalPersonalDetails) {
       // If no original data exists, check if any field is filled
-      const personalFields = ["name", "dateOfBirth", "age", "sex", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"]
+      const personalFields = ["name", "dateOfBirth", "age", "sex", "religion", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"]
       return personalFields.some((field) => {
         const value = formData[field as keyof FormData]
         if (Array.isArray(value)) {
@@ -1141,7 +1150,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     }
 
     // Compare current form data with original saved data
-    const fieldsToCompare: (keyof FormData)[] = ["name", "dateOfBirth", "age", "sex", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"]
+    const fieldsToCompare: (keyof FormData)[] = ["name", "dateOfBirth", "age", "sex", "religion", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"]
 
     for (const field of fieldsToCompare) {
       const currentValue = formData[field]
@@ -2013,7 +2022,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       "preferredReligion", "preferredCaste", "preferredSubcaste", "preferredStar", "preferredRaasi",
       "preferredDosham", "preferredEducation", "preferredEmployedIn", "preferredOccupation",
       "preferredAnnualIncomeMin",
-      "preferredCountry", "preferredState", "preferredCity"
+      "preferredCountry", "preferredState", "preferredCity", "preferredLanguages"
     ]
 
     if (!originalPartnerPreferences) {
@@ -2077,6 +2086,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           date_of_birth: formData.dateOfBirth || null,
           age: formData.age ? parseInt(formData.age) : null,
           sex: formData.sex || null,
+          religion: formData.religion || null,
           height: formData.height ? parseInt(formData.height) : null,
           weight: formData.weight ? parseInt(formData.weight) : null,
           skin_color: formData.skinColor || null,
@@ -2105,6 +2115,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           dateOfBirth: formData.dateOfBirth,
           age: formData.age,
           sex: formData.sex,
+          religion: formData.religion,
           height: formData.height,
           weight: formData.weight,
           skinColor: formData.skinColor,
@@ -3294,6 +3305,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           preferred_raasi: formData.preferredRaasi || null,
           preferred_dosham: formData.preferredDosham || "Any",
           preferred_education: formData.preferredEducation || [],
+          preferred_degrees: formData.preferredDegrees || [],
+          preferred_branches: formData.preferredBranches || [],
+          preferred_languages: formData.preferredLanguages || [],
           preferred_employed_in: formData.preferredEmployedIn || [],
           preferred_occupation: formData.preferredOccupation || [],
           preferred_annual_income: formData.preferredAnnualIncome || null,
@@ -3330,6 +3344,8 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           preferredRaasi: formData.preferredRaasi,
           preferredDosham: formData.preferredDosham,
           preferredEducation: formData.preferredEducation,
+          preferredDegrees: formData.preferredDegrees,
+          preferredBranches: formData.preferredBranches,
           preferredEmploymentType: formData.preferredEmploymentType,
           preferredEmployedIn: formData.preferredEmployedIn,
           preferredOccupation: formData.preferredOccupation,

@@ -146,23 +146,35 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
   const [fd, setFd] = useState({
     preferredAgeMin: "", preferredAgeMax: "",
     preferredHeightMin: "", preferredHeightMax: "",
-    preferredMaritalStatus: "", preferredMotherTongue: "",
+    preferredMaritalStatus: "",
+    preferredLanguages: [] as string[],
     preferredPhysicalStatus: "", preferredEatingHabits: "",
     preferredSmokingHabits: "", preferredDrinkingHabits: "",
     preferredReligion: "", preferredCaste: "",
     preferredSubcaste: "", preferredStar: "", preferredRaasi: "", preferredDosham: "",
     preferredEducation: [] as string[],
+    preferredDegrees: [] as string[],
+    preferredBranches: [] as string[],
     preferredEmployedIn: [] as string[],
     preferredOccupation: [] as string[],
     preferredAnnualIncomeMin: "",
     preferredCountry: "", preferredState: "", preferredCity: "",
   })
 
-  // Fetch master data for Caste and Subcaste
+  // Fetch education level data from master_education_level table
+  const { data: educationLevelData } = useMasterData({ tableName: "master_education_level" })
+
+  // Fetch master data for Caste, Subcaste, Marital Status, Food, and Religion
   const { data: dbCastes } = useMasterData({ tableName: "master_caste" })
   const { data: dbSubcastes } = useMasterData({ tableName: "master_subcaste" })
+  const { data: dbMaritalStatus } = useMasterData({ tableName: "master_marital_status" })
+  const { data: dbFoodPreferences } = useMasterData({ tableName: "master_food_preferences" })
+  const { data: dbReligions } = useMasterData({ tableName: "master_religion" })
 
   const casteOptions = useMemo(() => ["Any", ...dbCastes.map(c => c.value)], [dbCastes])
+  const maritalOptions = useMemo(() => ["Any", ...dbMaritalStatus.map(m => m.value)], [dbMaritalStatus])
+  const foodOptions = useMemo(() => ["Any", ...dbFoodPreferences.map(f => f.value)], [dbFoodPreferences])
+  const religionOptions = useMemo(() => ["Any", ...dbReligions.map(r => r.value)], [dbReligions])
   
   const filteredSubcastes = useMemo(() => {
     if (!fd.preferredCaste || fd.preferredCaste === "Any") {
@@ -173,6 +185,36 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
       .map(s => s.value)
     return ["Any", ...filtered]
   }, [dbSubcastes, fd.preferredCaste])
+
+  // Process education levels and degrees
+  const educationLevelOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        educationLevelData
+          .map(item => item.category?.trim())
+          .filter((category): category is string => Boolean(category && category.length > 0))
+      )
+    ).sort()
+  }, [educationLevelData])
+
+  const degreeOptions = useMemo(() => {
+    let filteredData = educationLevelData
+    
+    // If specific levels are selected (and it's not just "Any"), filter degrees by those levels
+    if (fd.preferredEducation.length > 0 && !fd.preferredEducation.includes("Any")) {
+      filteredData = educationLevelData.filter(item => 
+        fd.preferredEducation.includes(item.category?.trim() || "")
+      )
+    }
+
+    return Array.from(
+      new Set(
+        filteredData
+          .map(item => item.value?.trim())
+          .filter((val): val is string => Boolean(val && val.length > 0))
+      )
+    ).sort()
+  }, [educationLevelData, fd.preferredEducation])
 
   useEffect(() => {
     const load = async () => {
@@ -185,7 +227,7 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
           preferredHeightMin: data.preferred_height_min?.toString() || "",
           preferredHeightMax: data.preferred_height_max?.toString() || "",
           preferredMaritalStatus: data.preferred_marital_status || "",
-          preferredMotherTongue: data.preferred_mother_tongue || "",
+          preferredLanguages: Array.isArray(data.preferred_languages) ? data.preferred_languages : [],
           preferredPhysicalStatus: data.preferred_physical_status || "",
           preferredEatingHabits: data.preferred_eating_habits || "",
           preferredSmokingHabits: data.preferred_smoking_habits || "",
@@ -197,6 +239,8 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
           preferredRaasi: data.preferred_raasi || "",
           preferredDosham: data.preferred_dosham || "",
           preferredEducation: Array.isArray(data.preferred_education) ? data.preferred_education : [],
+          preferredDegrees: Array.isArray(data.preferred_degrees) ? data.preferred_degrees : [],
+          preferredBranches: Array.isArray(data.preferred_branches) ? data.preferred_branches : [],
           preferredEmployedIn: Array.isArray(data.preferred_employed_in) ? data.preferred_employed_in : [],
           preferredOccupation: Array.isArray(data.preferred_occupation) ? data.preferred_occupation : [],
           preferredAnnualIncomeMin: data.preferred_annual_income_min || "",
@@ -221,7 +265,7 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
         preferred_height_min: fd.preferredHeightMin ? parseInt(fd.preferredHeightMin) : null,
         preferred_height_max: fd.preferredHeightMax ? parseInt(fd.preferredHeightMax) : null,
         preferred_marital_status: fd.preferredMaritalStatus || null,
-        preferred_mother_tongue: fd.preferredMotherTongue || null,
+        preferred_languages: fd.preferredLanguages || [],
         preferred_physical_status: fd.preferredPhysicalStatus || null,
         preferred_eating_habits: fd.preferredEatingHabits || null,
         preferred_smoking_habits: fd.preferredSmokingHabits || null,
@@ -233,6 +277,8 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
         preferred_raasi: fd.preferredRaasi || null,
         preferred_dosham: fd.preferredDosham || null,
         preferred_education: fd.preferredEducation || [],
+        preferred_degrees: fd.preferredDegrees || [],
+        preferred_branches: fd.preferredBranches || [],
         preferred_employed_in: fd.preferredEmployedIn || [],
         preferred_occupation: fd.preferredOccupation || [],
         preferred_annual_income_min: fd.preferredAnnualIncomeMin || null,
@@ -286,10 +332,12 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
                 <input type="number" value={fd.preferredHeightMax} onChange={(e) => set("preferredHeightMax", e.target.value)} placeholder="Max" className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none bg-white" />
               </div>
             </Field>
-            <PrefSelect label="Marital Status" value={fd.preferredMaritalStatus} options={["Any", "Never Married", "Divorced", "Widowed", "Awaiting Divorce"]} onChange={(v) => set("preferredMaritalStatus", v)} />
+            <PrefSelect label="Marital Status" value={fd.preferredMaritalStatus} options={maritalOptions} onChange={(v) => set("preferredMaritalStatus", v)} />
             <PrefSelect label="Physical Status" value={fd.preferredPhysicalStatus} options={["Any", "Normal", "Physically Challenged"]} onChange={(v) => set("preferredPhysicalStatus", v)} />
-            <PrefSelect label="Mother Tongue" value={fd.preferredMotherTongue} options={MOTHER_TONGUES} onChange={(v) => set("preferredMotherTongue", v)} />
-            <PrefSelect label="Eating Habits" value={fd.preferredEatingHabits} options={["Any", "Vegetarian", "Non-Vegetarian", "Eggetarian"]} onChange={(v) => set("preferredEatingHabits", v)} />
+            <Field label="Preferred Languages">
+              <MultiSelectDropdown label="Languages" options={MOTHER_TONGUES} selected={fd.preferredLanguages} onChange={(v) => set("preferredLanguages", v)} searchable placeholder="Any Language" />
+            </Field>
+            <PrefSelect label="Eating Habits" value={fd.preferredEatingHabits} options={foodOptions} onChange={(v) => set("preferredEatingHabits", v)} />
             <PrefSelect label="Smoking Habit" value={fd.preferredSmokingHabits} options={["Any", "Never", "Occasionally"]} onChange={(v) => set("preferredSmokingHabits", v)} />
             <PrefSelect label="Drinking Habit" value={fd.preferredDrinkingHabits} options={["Any", "Never", "Occasionally"]} onChange={(v) => set("preferredDrinkingHabits", v)} />
           </div>
@@ -299,7 +347,7 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
         <SectionHeader num="P2" sub="Religion" title="Religious & Horoscope Preferences" />
         <div className={card}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <PrefSelect label="Religion" value={fd.preferredReligion} options={RELIGIONS} onChange={(v) => set("preferredReligion", v)} />
+            <PrefSelect label="Religion" value={fd.preferredReligion} options={religionOptions} onChange={(v) => set("preferredReligion", v)} />
             <PrefSelect label="Caste" value={fd.preferredCaste} options={casteOptions} onChange={(v) => {
               set("preferredCaste", v)
               set("preferredSubcaste", "Any") // Reset subcaste when caste changes
@@ -317,8 +365,18 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
         <SectionHeader num="P3" sub="Professional" title="Professional & Location Preferences" />
         <div className={card}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Field label="Preferred Education" wide>
-              <MultiSelectDropdown label="Education" options={EDUCATION} selected={fd.preferredEducation} onChange={(v) => set("preferredEducation", v)} searchable placeholder="Any" />
+            <Field label="Preferred Education Level">
+              <MultiSelectDropdown label="Education Level" options={educationLevelOptions} selected={fd.preferredEducation} onChange={(v) => {
+                set("preferredEducation", v)
+                // If any degree was selected that's no longer in the filtered list, we could either keep it or clear it.
+                // Keeping it for now as users might want "Bachelor's" OR "A specific Master's degree".
+              }} searchable placeholder="Any Level" />
+            </Field>
+            <Field label="Preferred Degree / Qualification">
+              <MultiSelectDropdown label="Degree" options={degreeOptions} selected={fd.preferredDegrees} onChange={(v) => set("preferredDegrees", v)} searchable placeholder="Any Degree" />
+            </Field>
+            <Field label="Preferred Specialization" wide>
+              <MultiSelectDropdown label="Specialization" options={["Any", "Computer Science", "Engineering", "Commerce", "Arts", "Science", "Medicine", "Management", "Law", "Finance", "Others"]} selected={fd.preferredBranches} onChange={(v) => set("preferredBranches", v)} searchable placeholder="Any Specialization" />
             </Field>
             <Field label="Preferred Employed In">
               <MultiSelectDropdown label="Employed In" options={EMPLOYED_IN} selected={fd.preferredEmployedIn} onChange={(v) => set("preferredEmployedIn", v)} placeholder="Any" />

@@ -37,10 +37,10 @@ export function SubscriptionDialog({ isOpen, onClose, featureName = "Premium Fea
             <div className="mx-auto w-20 h-20 bg-gradient-to-br from-amber-400 to-rose-500 rounded-3xl flex items-center justify-center shadow-xl shadow-rose-500/20 mb-2 rotate-3 hover:rotate-0 transition-transform duration-500">
               <Crown className="h-10 w-10 text-white" />
             </div>
-            <DialogTitle className="text-3xl font-black text-gray-900 tracking-tight leading-tight">
+            <DialogTitle className="text-3xl font-black text-zinc-900 tracking-tight leading-tight">
               Upgrade to <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-rose-500">Tactical Premium</span>
             </DialogTitle>
-            <DialogDescription className="text-gray-500 font-medium text-sm px-4">
+            <DialogDescription className="text-zinc-600 font-bold text-sm px-4">
               Unlock {featureName} and experience the elite tier of match discovery on Manavizha.
             </DialogDescription>
           </DialogHeader>
@@ -52,13 +52,13 @@ export function SubscriptionDialog({ isOpen, onClose, featureName = "Premium Fea
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                className="flex items-center gap-4 p-4 rounded-2xl bg-white/40 border border-white/60 hover:bg-white/60 transition-all group"
+                className="flex items-center gap-4 p-4 rounded-2xl bg-white/95 border border-indigo-100 shadow-sm hover:bg-white transition-all group"
               >
-                <div className={`p-2.5 rounded-xl bg-white shadow-sm border border-gray-100 group-hover:scale-110 transition-transform ${benefit.color}`}>
+                <div className={`p-2.5 rounded-xl bg-indigo-50 shadow-sm border border-indigo-100 group-hover:scale-110 transition-transform ${benefit.color}`}>
                   <benefit.icon className="h-4 w-4" />
                 </div>
-                <span className="text-[11px] font-black uppercase tracking-[0.1em] text-gray-700">{benefit.text}</span>
-                <CheckCircle2 className="h-4 w-4 ml-auto text-emerald-500/40" />
+                <span className="text-[12px] font-black uppercase tracking-[0.1em] text-zinc-900">{benefit.text}</span>
+                <CheckCircle2 className="h-4 w-4 ml-auto text-indigo-500/60" />
               </motion.div>
             ))}
           </div>
@@ -75,7 +75,7 @@ export function SubscriptionDialog({ isOpen, onClose, featureName = "Premium Fea
             </Button>
             <Button 
               variant="ghost" 
-              className="w-full h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-600"
+              className="w-full h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest text-[#4B0082]/60 hover:text-[#4B0082] hover:bg-indigo-50"
               onClick={onClose}
             >
               Remind Me Later
@@ -83,7 +83,7 @@ export function SubscriptionDialog({ isOpen, onClose, featureName = "Premium Fea
           </div>
           
           <div className="mt-6 text-center">
-            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+            <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
               Trusted by 10k+ Serious Members
             </p>
           </div>
