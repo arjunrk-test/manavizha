@@ -824,13 +824,12 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 <HeartHandshake className="h-4 w-4 mr-3 text-rose-400" />
                 <div className="font-bold text-[11px] text-gray-700">Mark as Married</div>
               </Button>
-              
             </div>
           </motion.div>
-          </aside>
-  
-          {/* Right Main Content */}
-          <main className="flex-1 w-full min-w-0 space-y-6 pb-24 mt-0.5">
+        </aside>
+
+        {/* Right Main Content */}
+        <main className="flex-1 w-full min-w-0 space-y-6 pb-24 mt-0.5">
 
 
             {/* Welcome Banner */}
@@ -956,7 +955,6 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 onProfileClick={(p) => onNavigateToBrowse()}
                 onViewAll={onNavigateToBrowse}
                 isLoading={isSectionsLoading}
-                icon={<CalendarDays className="h-6 w-6" />}
             />
 
             <ProfileCarousel
@@ -966,7 +964,6 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 onProfileClick={(p) => onNavigateToBrowse()}
                 onViewAll={onNavigateToBrowse}
                 isLoading={isSectionsLoading}
-                icon={<Users2 className="h-6 w-6" />}
             />
 
             <ProfileCarousel
@@ -976,36 +973,26 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 onProfileClick={(p) => onNavigateToBrowse()}
                 onViewAll={onNavigateToBrowse}
                 isLoading={isSectionsLoading}
-                icon={<Clock className="h-6 w-6" />}
             />
 
-            {/* Secondary Sections Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <div className="sds-glass rounded-[3rem] p-8 border-indigo-100/30 hover:bg-white/60 transition-colors">
-                    <ProfileCarousel
-                        title="Who Viewed me"
-                        subtitle="Visitors to your profile"
-                        profiles={whoViewedMe}
-                        onProfileClick={(p) => onNavigateToBrowse()}
-                        onViewAll={onNavigateToBrowse}
-                        isLoading={isSectionsLoading}
-                        icon={<Eye className="h-5 w-5" />}
-                    />
-                </div>
-                <div className="sds-glass rounded-[3rem] p-8 border-indigo-100/30 hover:bg-white/60 transition-colors">
-                    <ProfileCarousel
-                        title="Profiles I Viewed"
-                        subtitle="Matches you visited"
-                        profiles={profilesIViewed}
-                        onProfileClick={(p) => onNavigateToBrowse()}
-                        onViewAll={onNavigateToBrowse}
-                        isLoading={isSectionsLoading}
-                        icon={<History className="h-5 w-5" />}
-                    />
-                </div>
-            </div>
+            <ProfileCarousel
+                title="Who Viewed me"
+                subtitle="Members who have viewed your profile"
+                profiles={whoViewedMe}
+                onProfileClick={(p) => onNavigateToBrowse()}
+                onViewAll={onNavigateToBrowse}
+                isLoading={isSectionsLoading}
+            />
 
-        </div>
+            <ProfileCarousel
+                title="Profiles I Viewed"
+                subtitle="Members whose profile you have visited"
+                profiles={profilesIViewed}
+                onProfileClick={(p) => onNavigateToBrowse()}
+                onViewAll={onNavigateToBrowse}
+                isLoading={isSectionsLoading}
+            />
+          </div>
           {/* Marriage/Success Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}

@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Heart, User, MapPin, Briefcase, Sparkles, HeartHandshake, X, GraduationCap, Star, Phone, MessageCircle, Coffee, ChevronLeft, ChevronRight } from "lucide-react"
+import { useEffect, useState, useMemo } from "react"
+import { Heart, User, MapPin, Briefcase, Sparkles, HeartHandshake, X, GraduationCap, Star, Phone, MessageCircle, Coffee, ChevronLeft, ChevronRight, Inbox, Send, Filter, CheckCircle2, XCircle, Clock, ArrowRight, Shield, Crown, Users2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog"
@@ -9,14 +9,23 @@ import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { MessageDialog } from "@/components/message-dialog"
 import { formatToDDMMYYYY } from "@/lib/utils/date-utils"
+import { cn } from "@/lib/utils"
 
 interface LikesViewProps {
     userId: string
     onBack?: () => void
-    initialTab?: Tab
+    initialTab?: string
 }
 
-type Tab = "liked" | "mutual" | "likedme"
+type Section = "mutual" | "received" | "sent"
+type StatusFilter = "all" | "pending" | "accepted" | "declined"
+
+interface LikeData {
+    id: string
+    created_at: string
+    is_read: boolean
+    status: string
+}
 
 interface ProfileCard {
     user_id: string
@@ -28,65 +37,180 @@ interface ProfileCard {
     photo: string | null
     photos: string[]
     iLiked: boolean
+    isPremium: boolean
+    interaction_status: string
 }
 
 export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
-    const [activeTab, setActiveTab] = useState<Tab>(initialTab || "mutual")
+    const [activeSection, setActiveSection] = useState<Section>(
+        initialTab === "mutual" ? "mutual" : 
+        initialTab === "liked" ? "sent" : 
+        "received"
+    )
+    const [activeStatus, setActiveStatus] = useState<StatusFilter>("all")
     const [isLoading, setIsLoading] = useState(true)
-    const [iLikedIds, setILikedIds] = useState<string[]>([])
-    const [likedMeIds, setLikedMeIds] = useState<string[]>([])
+    const [isPremium, setIsPremium] = useState(false)
+    
+    const [iLikedData, setILikedData] = useState<LikeData[]>([])
+    const [likedMeData, setLikedMeData] = useState<LikeData[]>([])
+    
     const [profiles, setProfiles] = useState<Record<string, ProfileCard>>({})
     const [selectedProfile, setSelectedProfile] = useState<ProfileCard | null>(null)
     const [actionLoadingId, setActionLoadingId] = useState("")
 
-    // Mutual Full Data States
+    // Messaging & Detailed Data States
     const [mutualFullData, setMutualFullData] = useState<any>(null)
     const [modalPhotoIndex, setModalPhotoIndex] = useState(0)
     const [isFetchingFull, setIsFetchingFull] = useState(false)
-    const [isPremium, setIsPremium] = useState(false)
-
-    // Messaging states
     const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false)
     const [messageTarget, setMessageTarget] = useState<{ id: string, name: string } | null>(null)
 
-    const nextModalPhoto = (e: React.MouseEvent, maxPhotos: number) => {
-        e.stopPropagation()
-        setModalPhotoIndex(prev => (prev + 1) % maxPhotos)
-    }
-
-    const prevModalPhoto = (e: React.MouseEvent, maxPhotos: number) => {
-        e.stopPropagation()
-        setModalPhotoIndex(prev => (prev - 1 + maxPhotos) % maxPhotos)
-    }
-
-    // Reset photo index when opening a profile
-    const handleOpenProfile = async (profile: ProfileCard) => {
-        setModalPhotoIndex(0)
-        setSelectedProfile(profile)
-
-        // Record the view
-        if (userId && profile.user_id) {
-            try {
-                fetch('/api/views', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ viewerId: userId, viewedUserId: profile.user_id })
-                })
-            } catch (e) {
-                console.error("Failed to record view:", e)
-            }
+    useEffect(() => {
+        if (initialTab) {
+            if (initialTab === "mutual") setActiveSection("mutual")
+            else if (initialTab === "liked") setActiveSection("sent")
+            else if (initialTab === "likedme") setActiveSection("received")
+            setActiveStatus("all")
         }
-    }
-
+    }, [initialTab])
 
     useEffect(() => {
         fetchLikes()
-        if (initialTab) {
-            setActiveTab(initialTab)
-        }
-    }, [userId, initialTab])
+        fetchStatus()
+    }, [userId])
 
-    // Fetch Full Profile Details when a profile is clicked
+    const fetchStatus = async () => {
+        const { data } = await supabase.from('user_settings').select('is_premium').eq('user_id', userId).maybeSingle()
+        if (data) setIsPremium(!!data.is_premium)
+    }
+
+    const fetchLikes = async () => {
+        setIsLoading(true)
+        try {
+            const res = await fetch(`/api/likes?userId=${userId}`)
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error)
+
+            const iLikeds: LikeData[] = data.iLiked || []
+            const likedMes: LikeData[] = data.likedMe || []
+
+            setILikedData(iLikeds)
+            setLikedMeData(likedMes)
+
+            const allIds = Array.from(new Set([...iLikeds.map(l => l.id), ...likedMes.map(l => l.id)]))
+            if (allIds.length === 0) {
+                setIsLoading(false)
+                return
+            }
+
+            // Fetch profile data
+            const [
+                { data: personalData },
+                { data: photosData },
+                { data: empData },
+                { data: busData },
+                { data: contactData },
+                { data: settingsData }
+            ] = await Promise.all([
+                supabase.from("personal_details").select("user_id, name, age, sex").in("user_id", allIds),
+                supabase.from("photos").select("user_id, user_photos").in("user_id", allIds),
+                supabase.from("profession_employee").select("user_id, designation, company").in("user_id", allIds),
+                supabase.from("profession_business").select("user_id, designation, business_name").in("user_id", allIds),
+                supabase.from("contact_details").select("user_id, current_district, current_state").in("user_id", allIds),
+                supabase.from("user_settings").select("user_id, is_premium").in("user_id", allIds)
+            ])
+
+            const buildCard = (uid: string): ProfileCard => {
+                const personal = personalData?.find(p => p.user_id === uid)
+                const photos = photosData?.find(p => p.user_id === uid)
+                const emp = empData?.find(p => p.user_id === uid)
+                const bus = busData?.find(p => p.user_id === uid)
+                const contact = contactData?.find(p => p.user_id === uid)
+                const settings = settingsData?.find(p => p.user_id === uid)
+
+                let profession = "Not specified"
+                if (emp?.designation && emp?.company) profession = `${emp.designation} at ${emp.company}`
+                else if (emp?.designation) profession = emp.designation
+                else if (bus?.designation && bus?.business_name) profession = `${bus.designation} at ${bus.business_name}`
+                else if (bus?.designation) profession = bus.designation
+
+                let location = "Location not specified"
+                if (contact?.current_district) {
+                    location = `${contact.current_district}${contact.current_state ? `, ${contact.current_state}` : ""}`
+                }
+
+                return {
+                    user_id: uid,
+                    name: personal?.name || "Unknown",
+                    age: personal?.age,
+                    sex: personal?.sex || "Not specified",
+                    profession,
+                    location,
+                    photo: photos?.user_photos?.[0] || null,
+                    photos: photos?.user_photos || [],
+                    iLiked: iLikeds.some(l => l.id === uid),
+                    isPremium: !!settings?.is_premium,
+                    interaction_status: "unknown" // Updated during filtering
+                }
+            }
+
+            const profileMap: Record<string, ProfileCard> = {}
+            allIds.forEach(id => { profileMap[id] = buildCard(id) })
+            setProfiles(profileMap)
+        } catch (err: any) {
+            toast.error("Failed to load likes.")
+            console.error(err)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleUpdateStatus = async (targetId: string, status: string, isReceived: boolean) => {
+        setActionLoadingId(targetId)
+        try {
+            const res = await fetch("/api/likes", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    userId: isReceived ? targetId : userId, 
+                    likedUserId: isReceived ? userId : targetId,
+                    status 
+                }),
+            })
+            if (!res.ok) throw new Error("Failed to update")
+            
+            toast.success(`Interest ${status === 'accepted' ? 'accepted' : 'declined'}`)
+            
+            // Refresh local state
+            if (isReceived) {
+                setLikedMeData(prev => prev.map(l => l.id === targetId ? { ...l, status } : l))
+            } else {
+                setILikedData(prev => prev.map(l => l.id === targetId ? { ...l, status } : l))
+            }
+
+            // Reciprocal like for mutual logic
+            if (isReceived && status === 'accepted') {
+                await fetch("/api/likes", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ userId, likedUserId: targetId }),
+                })
+                const res = await fetch(`/api/likes?userId=${userId}`)
+                const data = await res.json()
+                if (res.ok) setILikedData(data.iLiked || [])
+            }
+        } catch (e) {
+            toast.error("Action failed")
+        } finally {
+            setActionLoadingId("")
+        }
+    }
+
+    const handleOpenProfile = async (profile: ProfileCard) => {
+        setModalPhotoIndex(0)
+        setSelectedProfile(profile)
+    }
+
     useEffect(() => {
         if (!selectedProfile) {
             setMutualFullData(null)
@@ -126,712 +250,421 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
             setIsFetchingFull(false)
         }
         fetchFull()
-    }, [selectedProfile?.user_id, iLikedIds, likedMeIds])
+    }, [selectedProfile?.user_id])
 
-    const fetchLikes = async () => {
-        setIsLoading(true)
-        try {
-            // Fetch likes via API (bypasses RLS)
-            const res = await fetch(`/api/likes?userId=${userId}`)
-            const data = await res.json()
-            if (!res.ok) throw new Error(data.error)
-
-            const myLikedIds: string[] = data.iLikedIds || []
-            const theyLikedIds: string[] = data.likedMeIds || []
-
-            setILikedIds(myLikedIds)
-            setLikedMeIds(theyLikedIds)
-
-            // Fetch premium status
-            const settingsRes = await fetch(`/api/settings?userId=${userId}`)
-            if (settingsRes.ok) {
-                const settingsData = await settingsRes.json()
-                setIsPremium(settingsData.is_premium || true) // ALLOW FOR NOW
+    const filteredProfiles = useMemo(() => {
+        let list: { id: string, status: string }[] = []
+        
+        if (activeSection === "mutual") {
+            const iLikedOk = iLikedData.filter(l => l.status === "accepted").map(l => l.id)
+            const likedMeOk = likedMeData.filter(l => l.status === "accepted").map(l => l.id)
+            list = iLikedOk.filter(id => likedMeOk.includes(id)).map(id => ({ id, status: "accepted" }))
+        } else if (activeSection === "received") {
+            list = likedMeData.map(l => ({ id: l.id, status: l.status }))
+            if (activeStatus !== "all") {
+                list = list.filter(l => l.status === activeStatus)
             }
-
-            const allIds = Array.from(new Set([...myLikedIds, ...theyLikedIds]))
-            if (allIds.length === 0) {
-                setIsLoading(false)
-                return
-            }
-
-            // Fetch profile data for all users
-            const [
-                { data: personalData },
-                { data: photosData },
-                { data: empData },
-                { data: busData },
-                { data: contactData },
-            ] = await Promise.all([
-                supabase.from("personal_details").select("user_id, name, age, sex").in("user_id", allIds),
-                supabase.from("photos").select("user_id, user_photos").in("user_id", allIds),
-                supabase.from("profession_employee").select("user_id, designation, company").in("user_id", allIds),
-                supabase.from("profession_business").select("user_id, designation, business_name").in("user_id", allIds),
-                supabase.from("contact_details").select("user_id, current_district, current_state").in("user_id", allIds),
-            ])
-
-            const buildCard = (uid: string): ProfileCard => {
-                const personal = personalData?.find(p => p.user_id === uid)
-                const photos = photosData?.find(p => p.user_id === uid)
-                const emp = empData?.find(p => p.user_id === uid)
-                const bus = busData?.find(p => p.user_id === uid)
-                const contact = contactData?.find(p => p.user_id === uid)
-
-                let profession = "Not specified"
-                if (emp?.designation && emp?.company) profession = `${emp.designation} at ${emp.company}`
-                else if (emp?.designation) profession = emp.designation
-                else if (bus?.designation && bus?.business_name) profession = `${bus.designation} at ${bus.business_name}`
-                else if (bus?.designation) profession = bus.designation
-
-                let location = "Location not specified"
-                if (contact?.current_district) {
-                    location = `${contact.current_district}${contact.current_state ? `, ${contact.current_state}` : ""}`
-                }
-
-                return {
-                    user_id: uid,
-                    name: personal?.name || "Unknown",
-                    age: personal?.age,
-                    sex: personal?.sex || "Not specified",
-                    profession,
-                    location,
-                    photo: photos?.user_photos?.[0] || null,
-                    photos: photos?.user_photos || [],
-                    iLiked: myLikedIds.includes(uid),
-                }
-            }
-
-            const profileMap: Record<string, ProfileCard> = {}
-            allIds.forEach(id => { profileMap[id] = buildCard(id) })
-            setProfiles(profileMap)
-        } catch (err: any) {
-            toast.error("Failed to load likes.")
-            console.error(err)
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    const handleUnlike = async (profileId: string) => {
-        setActionLoadingId(profileId)
-        const res = await fetch("/api/likes", {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, likedUserId: profileId }),
-        })
-        const data = await res.json()
-        if (!res.ok) {
-            toast.error("Failed to unlike profile.")
-        } else {
-            toast.success("Interest retracted.")
-            setILikedIds(prev => prev.filter(id => id !== profileId))
-            setProfiles(prev => ({
-                ...prev,
-                [profileId]: { ...prev[profileId], iLiked: false }
-            }))
-            if (selectedProfile?.user_id === profileId) {
-                setSelectedProfile(prev => prev ? { ...prev, iLiked: false } : prev)
+        } else if (activeSection === "sent") {
+            list = iLikedData.map(l => ({ id: l.id, status: l.status }))
+            if (activeStatus !== "all") {
+                list = list.filter(l => l.status === activeStatus)
             }
         }
-        setActionLoadingId("")
-    }
 
-    const handleLike = async (profileId: string) => {
-        setActionLoadingId(profileId)
-        const res = await fetch("/api/likes", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, likedUserId: profileId }),
-        })
-        const data = await res.json()
-        if (!res.ok) {
-            if (data.error === "already_liked") toast.error("Interest already sent to this profile.")
-            else toast.error("Failed to send interest.")
-        } else {
-            toast.success("Interest sent! 💜")
-            setILikedIds(prev => prev.includes(profileId) ? prev : [...prev, profileId])
-            setProfiles(prev => ({
-                ...prev,
-                [profileId]: { ...prev[profileId], iLiked: true }
-            }))
-            if (selectedProfile?.user_id === profileId) {
-                setSelectedProfile(prev => prev ? { ...prev, iLiked: true } : prev)
+        return list.map(item => {
+            const p = profiles[item.id]
+            if (!p) return null
+            return { ...p, interaction_status: item.status }
+        }).filter(Boolean) as ProfileCard[]
+    }, [activeSection, activeStatus, iLikedData, likedMeData, profiles])
+
+    const counts = useMemo(() => {
+        return {
+            mutual: iLikedData.filter(l => l.status === "accepted" && likedMeData.some(m => m.id === l.id && m.status === "accepted")).length,
+            received: {
+                all: likedMeData.length,
+                pending: likedMeData.filter(l => l.status === "pending").length,
+                accepted: likedMeData.filter(l => l.status === "accepted").length,
+                declined: likedMeData.filter(l => l.status === "declined").length,
+            },
+            sent: {
+                all: iLikedData.length,
+                pending: iLikedData.filter(l => l.status === "pending").length,
+                accepted: iLikedData.filter(l => l.status === "accepted").length,
+                declined: iLikedData.filter(l => l.status === "declined").length,
             }
         }
-        setActionLoadingId("")
+    }, [iLikedData, likedMeData])
+
+    interface NavItemProps {
+        label: string
+        count?: number
+        section: Section
+        status?: StatusFilter
+        icon?: any
     }
 
-    const handleRemoveMatch = async (profileId: string) => {
-        setActionLoadingId(profileId)
-        // Remove both sides of the mutual like
-        await Promise.all([
-            fetch("/api/likes", {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId, likedUserId: profileId }),
-            }),
-            fetch("/api/likes", {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: profileId, likedUserId: userId }),
-            })
-        ])
-        toast.success("Match removed.")
-        setILikedIds(prev => prev.filter(id => id !== profileId))
-        setLikedMeIds(prev => prev.filter(id => id !== profileId))
-        setSelectedProfile(null)
-        setActionLoadingId("")
-    }
-
-    // Derive lists from state
-    const mutualIds = iLikedIds.filter(id => likedMeIds.includes(id))
-    // "Liked Me" shows only profiles that liked me but I haven't liked back
-    const onlyLikedMeIds = likedMeIds.filter(id => !iLikedIds.includes(id))
-    // "I Liked" shows only profiles that I liked but haven't liked me back
-    const onlyILikedIds = iLikedIds.filter(id => !likedMeIds.includes(id))
-
-    const getProfileList = (ids: string[]) =>
-        ids.map(id => profiles[id]).filter(Boolean)
-
-    const tabs: { key: Tab; label: string; icon: React.ReactNode; ids: string[] }[] = [
-        { key: "mutual", label: "Mutual Interest", icon: <HeartHandshake className="h-4 w-4" />, ids: mutualIds },
-        { key: "liked", label: "Interest Expressed", icon: <Heart className="h-4 w-4" />, ids: onlyILikedIds },
-        { key: "likedme", label: "Interest Received", icon: <Sparkles className="h-4 w-4" />, ids: onlyLikedMeIds },
-    ]
-
-    const currentTab = tabs.find(t => t.key === activeTab)!
-    const currentProfiles = getProfileList(currentTab.ids)    const ProfileCard = ({ profile }: { profile: any }) => {
-        const isMutual = iLikedIds.includes(profile.user_id) && likedMeIds.includes(profile.user_id)
-        const genderColor = profile.sex?.toLowerCase() === 'female' 
-            ? 'border-pink-100/50 hover:border-pink-200 shadow-[0_8px_30px_rgb(255,182,193,0.1)]' 
-            : 'border-blue-100/50 hover:border-blue-200 shadow-[0_8px_30px_rgb(173,216,230,0.1)]'
-
+    const NavItem = ({ label, count, section, status = "all", icon: Icon }: NavItemProps) => {
+        const isActive = activeSection === section && activeStatus === status
+        
         return (
-            <motion.div
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-                className="h-full"
+            <button
+                onClick={() => {
+                    setActiveSection(section)
+                    setActiveStatus(status)
+                }}
+                className={cn(
+                    "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group",
+                    isActive 
+                        ? "bg-[#4B0082] text-white shadow-lg shadow-indigo-200" 
+                        : "text-gray-500 hover:bg-indigo-50/50 hover:text-[#4B0082]"
+                )}
             >
-                <div
-                    className={`sds-glass rounded-[2.5rem] overflow-hidden hover:shadow-[0_20px_50px_rgba(75,0,130,0.1)] transition-all duration-500 cursor-pointer group flex flex-col h-full border-2 ${genderColor}`}
-                    onClick={() => handleOpenProfile(profile)}
-                >
-                    <div className="aspect-[4/5] relative overflow-hidden bg-gray-50/30">
-                        {profile.photo ? (
-                            <img
-                                src={profile.photo}
-                                alt={profile.name}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&size=400&background=random`
-                                }}
-                            />
-                        ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-200">
-                                <User className="h-20 w-20 opacity-10" />
-                                <span className="text-[10px] mt-2 font-black uppercase tracking-[0.3em] opacity-30">No Image Intel</span>
-                            </div>
-                        )}
-                        {isMutual && (
-                            <div className="absolute top-4 left-4 bg-[#FEF9C3]/90 text-[#854d0e] text-[8px] font-black px-4 py-2 rounded-full flex items-center gap-2 shadow-xl border border-yellow-200 tracking-[0.2em] uppercase backdrop-blur-md z-10">
-                                <Sparkles className="h-3.5 w-3.5 animate-pulse" /> Mutual Interest
-                            </div>
-                        )}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-8 pt-24">
-                            <h3 className="text-white text-3xl font-light tracking-tight drop-shadow-lg">
-                                {profile.name} <span className="font-bold text-rose-300/80 ml-1">{profile.age && `, ${profile.age}`}</span>
-                            </h3>
-                        </div>
-                    </div>
-
-                    <div className="p-6 space-y-4 flex-1 flex flex-col justify-between bg-gradient-to-b from-white/40 to-transparent">
-                        <div className="space-y-3">
-                            <div className="flex items-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-indigo-600 transition-colors">
-                                <Briefcase className="h-3.5 w-3.5 mr-3 text-indigo-400/50" />
-                                <span className="truncate">{profile.profession === "Not specified" ? "Vocation Undisclosed" : profile.profession}</span>
-                            </div>
-                            <div className="flex items-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                                <MapPin className="h-3.5 w-3.5 mr-3 text-indigo-400/50" />
-                                <span className="truncate">{profile.location.split(',')[0]}</span>
-                            </div>
-                        </div>
-                        
-                        <div className="pt-6 border-t border-black/[0.03]" onClick={e => e.stopPropagation()}>
-                            {isMutual ? (
-                                <div className="grid grid-cols-2 gap-3">
-                                    <Button
-                                        onClick={(e) => { e.stopPropagation(); handleOpenProfile(profile) }}
-                                        className="h-12 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] bg-emerald-50/80 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-all duration-300 shadow-sm border-none backdrop-blur-sm"
-                                    >
-                                        View Profile
-                                    </Button>
-                                    <Button
-                                        onClick={(e) => { 
-                                            e.stopPropagation(); 
-                                            setMessageTarget({ id: profile.user_id, name: profile.name });
-                                            setIsMessageDialogOpen(true);
-                                        }}
-                                        className="h-12 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] bg-indigo-50/80 text-indigo-700 hover:bg-[#4B0082] hover:text-white transition-all duration-300 shadow-sm border-none backdrop-blur-sm"
-                                    >
-                                        Comms
-                                    </Button>
-                                </div>
-                            ) : profile.iLiked ? (
-                                <Button
-                                    onClick={() => handleUnlike(profile.user_id)}
-                                    disabled={actionLoadingId === profile.user_id}
-                                    className="w-full h-12 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] bg-rose-50/80 text-rose-500 hover:bg-rose-500 hover:text-white transition-all duration-300 disabled:opacity-50 shadow-sm border-none"
-                                >
-                                    {actionLoadingId === profile.user_id ? "Processing..." : "Retract Interest"}
-                                </Button>
-                            ) : (
-                                <Button
-                                    onClick={() => handleLike(profile.user_id)}
-                                    disabled={actionLoadingId === profile.user_id}
-                                    className="w-full h-12 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-50 shadow-xl shadow-indigo-900/20"
-                                >
-                                    {actionLoadingId === profile.user_id ? "Processing..." : "Send Interest Back"}
-                                </Button>
-                            )}
-                        </div>
-                    </div>
+                <div className="flex items-center gap-3">
+                    {Icon && <Icon className={cn("h-4 w-4", isActive ? "text-white" : "text-gray-400 group-hover:text-indigo-400")} />}
+                    <span className={cn("text-[13px] font-bold tracking-tight", isActive ? "text-white" : "text-gray-700")}>
+                        {label}
+                    </span>
                 </div>
-            </motion.div>
+                {count !== undefined && (
+                    <span className={cn(
+                        "text-[11px] font-black px-2 py-0.5 rounded-full",
+                        isActive ? "bg-white/20 text-white" : "bg-gray-100 text-gray-400"
+                    )}>
+                        ({count})
+                    </span>
+                )}
+            </button>
         )
     }
 
     return (
-        <div className="w-full max-w-7xl mx-auto px-4 py-12">
+        <div className="w-full px-6 md:px-10 py-12">
+            {/* Page Header */}
             <div className="mb-12 border-b border-black/5 pb-8 flex items-end justify-between">
-                <div>
+                <div className="flex-1">
                     <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#4B0082]/40 mb-2">Connection Matrix</h4>
                     <h2 className="text-5xl font-light text-gray-900 tracking-tight flex items-center gap-4">
                         Interests <span className="text-[#4B0082] font-black">&</span> Matches
                     </h2>
                 </div>
-                <div className="text-right hidden md:block">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Platform Analytics</p>
-                    <p className="text-xs font-bold text-[#4B0082]">Real-time match scoring active</p>
+                <div className="flex items-center gap-6 text-right">
+                    <div className="hidden xl:block">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Platform Analytics</p>
+                        <p className="text-xs font-bold text-[#4B0082]">Real-time match scoring active</p>
+                    </div>
+                    <Button 
+                        onClick={() => window.location.href = "/dashboard/browse"}
+                        className="h-14 px-8 rounded-2xl bg-[#4B0082] hover:bg-indigo-700 text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-indigo-200 group flex items-center gap-3 transition-all active:scale-95"
+                    >
+                        <Sparkles className="h-4 w-4 group-hover:rotate-12 transition-transform" />
+                        Find New Interests
+                    </Button>
                 </div>
             </div>
 
-            {/* Tabs Redesign */}
-            <div className="sds-glass rounded-[2rem] p-2 mb-16 flex gap-1 border-2 border-indigo-50/50 max-w-2xl shadow-[0_20px_50px_rgba(75,0,130,0.05)]">
-                {tabs.map(tab => (
-                    <button
-                        key={tab.key}
-                        onClick={() => setActiveTab(tab.key)}
-                        className={`flex-1 flex items-center justify-center gap-3 px-8 py-5 rounded-[1.5rem] transition-all duration-500 relative overflow-hidden ${activeTab === tab.key
-                            ? "bg-[#4B0082] text-white shadow-xl shadow-indigo-900/30 scale-[1.02] z-10"
-                            : "text-gray-400 hover:bg-indigo-50/50 hover:text-[#4B0082]"
-                            }`}
-                    >
-                        <span className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-300 ${activeTab === tab.key ? "text-white" : "group-hover:text-[#4B0082]"}`}>
-                            {tab.label}
-                        </span>
-                        {tab.ids.length > 0 && (
-                            <span className={`px-2.5 py-1 rounded-full text-[9px] font-black transition-all duration-500 ${activeTab === tab.key ? "bg-white/20 text-white" : "bg-gray-100/80 text-gray-400"}`}>
-                                {tab.ids.length}
-                            </span>
-                        )}
-                        {activeTab === tab.key && (
-                            <motion.div layoutId="tab-pill" className="absolute bottom-0 left-0 right-0 h-1 bg-indigo-300/40" />
-                        )}
-                    </button>
-                ))
-                }
-            </div >
-
-            {
-                isLoading ? (
-                    <div className="flex justify-center items-center py-20" >
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4B0082]"></div>
+            <div className="flex flex-col lg:flex-row gap-8 items-start">
+                {/* Vertical Navigation Sidebar */}
+                <aside className="w-full lg:w-[17rem] flex-shrink-0 sds-glass rounded-[2rem] p-4 space-y-6 lg:sticky lg:top-24">
+                    <div>
+                        <NavItem 
+                            label="Mutual Interest" 
+                            count={counts.mutual} 
+                            section="mutual" 
+                            icon={HeartHandshake}
+                        />
                     </div>
-                ) : currentProfiles.length === 0 ? (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-center py-20 bg-white/50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700"
-                    >
-                        <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-                            {activeTab === "mutual" ? <HeartHandshake className="h-8 w-8 text-gray-400" /> :
-                                activeTab === "liked" ? <Heart className="h-8 w-8 text-gray-400" /> :
-                                    <Sparkles className="h-8 w-8 text-gray-400" />}
+
+                    <div className="space-y-1">
+                        <div className="px-4 py-2 border-b border-gray-100 mb-2">
+                             <h4 className="text-[11px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                <Inbox className="h-3 w-3" /> Interests Received
+                             </h4>
                         </div>
-                        <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-                            {activeTab === "mutual" ? "No mutual interest yet" :
-                                activeTab === "liked" ? "No interest expressed yet" :
-                                    "No interest received yet"}
-                        </h3>
-                        <p className="text-gray-500 mt-2 text-sm">
-                            {activeTab === "mutual" ? "Express interest to find more mutual interest!" :
-                                activeTab === "liked" ? "Browse profiles and express your interest!" :
-                                    "Complete your profile to receive more interests."}
-                        </p>
-                    </motion.div>
-                ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        <AnimatePresence>
-                            {currentProfiles.map(profile => (
-                                <ProfileCard key={profile.user_id} profile={profile} />
-                            ))}
-                        </AnimatePresence>
+                        <NavItem label="All" count={counts.received.all} section="received" status="all" />
+                        <NavItem label="Pending" count={counts.received.pending} section="received" status="pending" />
+                        <NavItem label="Accepted/Replied" count={counts.received.accepted} section="received" status="accepted" />
+                        <NavItem label="Declined" count={counts.received.declined} section="received" status="declined" />
                     </div>
-                )}
 
-            {/* Profile Quick-View Modal */}
+                    <div className="space-y-1">
+                        <div className="px-4 py-2 border-b border-gray-100 mb-2">
+                             <h4 className="text-[11px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                <Send className="h-3 w-3" /> Interests Sent
+                             </h4>
+                        </div>
+                        <NavItem label="All" count={counts.sent.all} section="sent" status="all" />
+                        <NavItem label="Pending" count={counts.sent.pending} section="sent" status="pending" />
+                        <NavItem label="Accepted/Replied" count={counts.sent.accepted} section="sent" status="accepted" />
+                    </div>
+                </aside>
+
+                {/* Main Content Area */}
+                <div className="flex-1 min-w-0">
+                    <div className="mb-6 flex items-center justify-between">
+                        <h3 className="text-sm font-black uppercase tracking-widest text-[#4B0082]">
+                            {activeSection === 'mutual' ? 'Mutual Connections' : 
+                             activeSection === 'received' ? `Received Interests > ${activeStatus}` : 
+                             `Sent Interests > ${activeStatus}`}
+                        </h3>
+                        <div className="h-px bg-indigo-100 flex-1 mx-6" />
+                        <span className="text-[11px] font-black text-gray-400 bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
+                            {filteredProfiles.length} Profiles Found
+                        </span>
+                    </div>
+
+                    {isLoading ? (
+                        <div className="flex justify-center items-center py-20" >
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4B0082]"></div>
+                        </div>
+                    ) : filteredProfiles.length === 0 ? (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-center py-32 sds-glass rounded-3xl border border-gray-100"
+                        >
+                            <div className="mx-auto w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
+                                <Inbox className="h-10 w-10 text-indigo-300" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                No profiles to display
+                            </h3>
+                            <p className="text-gray-500 text-sm max-w-sm mx-auto mb-8">
+                                Try adjusting your filters or explore more profiles to see matches here.
+                            </p>
+                            <Button 
+                                onClick={() => window.location.href = "/dashboard/browse"}
+                                variant="outline"
+                                className="h-12 px-8 rounded-xl border-indigo-100 text-[#4B0082] font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50"
+                            >
+                                <Users2 className="h-4 w-4 mr-2" /> Browse Profiles
+                            </Button>
+                        </motion.div>
+                    ) : (
+                        <div className="space-y-6">
+                            <AnimatePresence mode="popLayout">
+                                {filteredProfiles.map((profile, idx) => (
+                                    <div key={profile.user_id}>
+                                         <LikesHorizontalCard 
+                                            profile={profile} 
+                                            section={activeSection}
+                                            onAction={(status) => handleUpdateStatus(profile.user_id, status, activeSection === 'received')}
+                                            onView={() => handleOpenProfile(profile)}
+                                            onMessage={() => {
+                                                setMessageTarget({ id: profile.user_id, name: profile.name })
+                                                setIsMessageDialogOpen(true)
+                                            }}
+                                            actionLoading={actionLoadingId === profile.user_id}
+                                            index={idx}
+                                         />
+                                    </div>
+                                ))}
+                            </AnimatePresence>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Profile Detail Modal */}
             <Dialog open={!!selectedProfile} onOpenChange={(open) => !open && setSelectedProfile(null)}>
-
                 <DialogContent className="max-w-3xl p-0 overflow-hidden bg-white dark:bg-gray-900 border-none rounded-2xl">
                     <DialogTitle className="sr-only">Profile Details</DialogTitle>
-                    {selectedProfile && (() => {
-                        const isMutual = iLikedIds.includes(selectedProfile.user_id) && likedMeIds.includes(selectedProfile.user_id);
-
-                        return (
-                            <div className="flex flex-col md:flex-row h-[85vh] md:h-[35rem]">
-                                {/* Left side: Photo Gallery */}
-                                <div className="md:w-2/5 bg-gray-100 dark:bg-gray-800 relative group">
-                                    {(() => {
-                                        // Build photos array: prefer mutualFullData photos, then selectedProfile.photos, then single photo fallback
-                                        const photoArr: string[] = (
-                                            (mutualFullData?.photos && mutualFullData.photos.length > 0)
-                                                ? mutualFullData.photos
-                                                : (selectedProfile.photos && selectedProfile.photos.length > 0)
-                                                    ? selectedProfile.photos
-                                                    : selectedProfile.photo
-                                                        ? [selectedProfile.photo]
-                                                        : []
-                                        )
-                                        return photoArr.length > 0 ? (
-                                            <>
-                                                <img
-                                                    src={photoArr[modalPhotoIndex] || photoArr[0]}
-                                                    alt={selectedProfile.name}
-                                                    className="w-full h-full object-cover transition-opacity duration-300"
-                                                    onError={(e) => {
-                                                        (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedProfile.name || 'User') + '&size=400&background=random'
-                                                    }}
-                                                />
-                                                {photoArr.length > 1 ? (
-                                                    <>
-                                                        <div className="absolute top-1/2 left-4 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button
-                                                                onClick={(e) => prevModalPhoto(e, photoArr.length)}
-                                                                className="bg-black/50 hover:bg-black/70 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
-                                                            >
-                                                                <ChevronLeft className="h-6 w-6" />
-                                                            </button>
-                                                        </div>
-                                                        <div className="absolute top-1/2 right-4 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button
-                                                                onClick={(e) => nextModalPhoto(e, photoArr.length)}
-                                                                className="bg-black/50 hover:bg-black/70 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
-                                                            >
-                                                                <ChevronRight className="h-6 w-6" />
-                                                            </button>
-                                                        </div>
-                                                        <div className="absolute top-4 right-4 bg-black/50 text-white text-sm px-3 py-1.5 rounded-full backdrop-blur-sm z-10 shadow-sm">
-                                                            {modalPhotoIndex + 1} / {photoArr.length}
-                                                        </div>
-
-                                                        {/* Dots indicator at bottom */}
-                                                        <div className="absolute bottom-6 left-0 right-0 justify-center gap-1.5 z-10 hidden md:flex">
-                                                            {photoArr.map((_: any, idx: number) => (
-                                                                <div
-                                                                    key={idx}
-                                                                    className={`w-2 h-2 rounded-full transition-all ${idx === modalPhotoIndex ? 'bg-white scale-110' : 'bg-white/40'}`}
-                                                                />
-                                                            ))}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </>
-                                        ) : (
-
-                                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 p-8">
-                                                <User className="h-24 w-24 mb-4 opacity-50" />
-                                                <span className="text-center font-medium">No Photo</span>
-                                            </div>
-                                        )
-                                    })()}
-                                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-6 text-white md:hidden">
-                                        <h2 className="text-2xl font-bold">{selectedProfile.name}{selectedProfile.age && `, ${selectedProfile.age}`}</h2>
-                                    </div>
-                                </div>
-
-                                {/* Right side: Details */}
-                                <div className="flex-1 flex flex-col overflow-hidden">
-                                    <div className="p-6 md:p-8 flex-1 overflow-y-auto">
-                                        <div className="hidden md:block mb-6">
-                                            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                                                {selectedProfile.name}{selectedProfile.age && <span className="text-gray-500 font-normal">, {selectedProfile.age}</span>}
-                                                {isMutual && (
-                                                    <span className="ml-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800 align-middle -translate-y-1">
-                                                        <HeartHandshake className="h-3.5 w-3.5" /> Mutual Interest
-                                                    </span>
-                                                )}
-                                            </h2>
-                                            <p className="text-[#4B0082] font-medium text-lg">{selectedProfile.profession === "Not specified" ? "Profession not specified" : selectedProfile.profession}</p>
-                                        </div>
-
-                                        {isFetchingFull ? (
-                                            <div className="flex items-center justify-center py-6 gap-3 text-gray-400">
-                                                <div className="animate-spin h-5 w-5 border-2 border-amber-400 border-t-transparent rounded-full" />
-                                                <span className="text-sm">Loading full profile details…</span>
-                                            </div>
-                                        ) : mutualFullData && (
-                                            <div className="space-y-8">
-
-                                                {/* 1. About Me — always shown */}
-                                                {mutualFullData.personal?.about && (
-                                                    <section>
-                                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
-                                                            <User className="h-5 w-5 mr-2 text-pink-500" /> About Me
-                                                        </h3>
-                                                        <p className="text-gray-600 dark:text-gray-300 leading-relaxed bg-pink-50 dark:bg-pink-500/10 p-4 rounded-xl text-sm">
-                                                            {mutualFullData.personal.about}
-                                                        </p>
-                                                    </section>
-                                                )}
-
-                                                {/* 2. Personal Details — always shown */}
-                                                {mutualFullData.personal && (
-                                                    <section>
-                                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                                            <Heart className="h-5 w-5 mr-2 text-red-500" /> Personal Details
-                                                        </h3>
-                                                        <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm bg-pink-50 dark:bg-pink-900/10 p-4 rounded-xl">
-                                                            {mutualFullData.personal.date_of_birth && <div><span className="block text-gray-500 mb-1">Date of Birth</span><span className="font-medium text-gray-900 dark:text-white">{formatToDDMMYYYY(mutualFullData.personal.date_of_birth)}</span></div>}
-                                                            {mutualFullData.personal.age && <div><span className="block text-gray-500 mb-1">Age</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.personal.age}</span></div>}
-                                                            {mutualFullData.personal.sex && <div><span className="block text-gray-500 mb-1">Gender</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.personal.sex}</span></div>}
-                                                            {mutualFullData.personal.height && <div><span className="block text-gray-500 mb-1">Height (cm)</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.personal.height}</span></div>}
-                                                            {mutualFullData.personal.weight && <div><span className="block text-gray-500 mb-1">Weight (kg)</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.personal.weight}</span></div>}
-                                                            {mutualFullData.personal.skin_color && <div><span className="block text-gray-500 mb-1">Skin Color</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.personal.skin_color}</span></div>}
-                                                            {mutualFullData.personal.marital_status && <div><span className="block text-gray-500 mb-1">Marital Status</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.personal.marital_status}</span></div>}
-                                                            {mutualFullData.personal.mother_tongue && <div><span className="block text-gray-500 mb-1">Mother Tongue</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.personal.mother_tongue}</span></div>}
-                                                            {mutualFullData.personal.religion && <div><span className="block text-gray-500 mb-1">Religion</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.personal.religion}</span></div>}
-                                                            {mutualFullData.personal.caste && <div><span className="block text-gray-500 mb-1">Caste</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.personal.caste}</span></div>}
-                                                            {mutualFullData.personal.food_preference && <div><span className="block text-gray-500 mb-1">Diet</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.personal.food_preference}</span></div>}
-                                                            {mutualFullData.personal.languages && Array.isArray(mutualFullData.personal.languages) && mutualFullData.personal.languages.length > 0 && <div className="col-span-2"><span className="block text-gray-500 mb-1">Languages Known</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.personal.languages.join(', ')}</span></div>}
-                                                        </div>
-                                                    </section>
-                                                )}
-
-                                                {/* 3. Contact Details — MUTUAL ONLY */}
-                                                {isMutual && mutualFullData.fullContact && (
-                                                    <section>
-                                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                                            <Phone className="h-5 w-5 mr-2 text-[#4B0082]" /> Contact Details
-                                                        </h3>
-                                                        <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm bg-purple-50 dark:bg-purple-900/10 p-4 rounded-xl mb-4">
-                                                            {mutualFullData.fullContact.phone && <div><span className="block text-gray-500 mb-1">Phone</span><a href={`tel:${mutualFullData.fullContact.phone}`} className="font-semibold text-[#4B0082] hover:underline">{mutualFullData.fullContact.phone}</a></div>}
-                                                            {mutualFullData.fullContact.whatsapp_number && <div><span className="block text-gray-500 mb-1">WhatsApp</span><a href={`https://wa.me/${mutualFullData.fullContact.whatsapp_number.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="font-semibold text-green-600 hover:underline flex items-center gap-1"><MessageCircle className="h-3.5 w-3.5" /> {mutualFullData.fullContact.whatsapp_number}</a></div>}
-                                                        </div>
-                                                        {mutualFullData.fullContact.current_district && (
-                                                            <div className="mb-4">
-                                                                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Current Address</h4>
-                                                                <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
-                                                                    {mutualFullData.fullContact.current_address_line1 && <div className="col-span-2"><span className="block text-gray-500 mb-1">Address</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.current_address_line1}</span></div>}
-                                                                    {mutualFullData.fullContact.current_area && <div><span className="block text-gray-500 mb-1">Area</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.current_area}</span></div>}
-                                                                    {mutualFullData.fullContact.current_district && <div><span className="block text-gray-500 mb-1">District</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.current_district}</span></div>}
-                                                                    {mutualFullData.fullContact.current_state && <div><span className="block text-gray-500 mb-1">State</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.current_state}</span></div>}
-                                                                    {mutualFullData.fullContact.current_pincode && <div><span className="block text-gray-500 mb-1">Pincode</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.current_pincode}</span></div>}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                        {mutualFullData.fullContact.permanent_district && (
-                                                            <div>
-                                                                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Permanent Address</h4>
-                                                                <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
-                                                                    {mutualFullData.fullContact.permanent_address_line1 && <div className="col-span-2"><span className="block text-gray-500 mb-1">Address</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.permanent_address_line1}</span></div>}
-                                                                    {mutualFullData.fullContact.permanent_area && <div><span className="block text-gray-500 mb-1">Area</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.permanent_area}</span></div>}
-                                                                    {mutualFullData.fullContact.permanent_district && <div><span className="block text-gray-500 mb-1">District</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.permanent_district}</span></div>}
-                                                                    {mutualFullData.fullContact.permanent_state && <div><span className="block text-gray-500 mb-1">State</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.permanent_state}</span></div>}
-                                                                    {mutualFullData.fullContact.permanent_pincode && <div><span className="block text-gray-500 mb-1">Pincode</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullContact.permanent_pincode}</span></div>}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </section>
-                                                )}
-
-                                                {/* 4. Educational Details — always shown */}
-                                                {mutualFullData.fullEdu && mutualFullData.fullEdu.length > 0 && (
-                                                    <section>
-                                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                                            <GraduationCap className="h-5 w-5 mr-2 text-indigo-500" /> Educational Details
-                                                        </h3>
-                                                        <div className="space-y-3 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
-                                                            {mutualFullData.fullEdu.map((edu: any, i: number) => (
-                                                                <div key={i} className={`flex gap-3 ${i > 0 ? 'pt-3 border-t border-gray-200 dark:border-gray-700' : ''}`}>
-                                                                    <GraduationCap className="h-5 w-5 text-gray-400 shrink-0 mt-0.5" />
-                                                                    <div>
-                                                                        <p className="font-medium text-gray-900 dark:text-white">{edu.education}</p>
-                                                                        {edu.institution && <p className="text-sm text-gray-500">{edu.institution}</p>}
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </section>
-                                                )}
-
-                                                {/* 5. Professional Details — always shown */}
-                                                {(mutualFullData.fullEmp || mutualFullData.fullBus || mutualFullData.fullStu) && (
-                                                    <section>
-                                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                                            <Briefcase className="h-5 w-5 mr-2 text-blue-500" /> Professional Details
-                                                        </h3>
-                                                        <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm bg-blue-50 dark:bg-blue-900/10 p-4 rounded-xl">
-                                                            {mutualFullData.fullEmp?.designation && <div><span className="block text-gray-500 mb-1">Designation</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullEmp.designation}</span></div>}
-                                                            {mutualFullData.fullEmp?.company && <div><span className="block text-gray-500 mb-1">Company</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullEmp.company}</span></div>}
-                                                            {mutualFullData.fullEmp?.sector && <div><span className="block text-gray-500 mb-1">Sector</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullEmp.sector}</span></div>}
-                                                            {mutualFullData.fullEmp?.employment_type && <div><span className="block text-gray-500 mb-1">Employment Type</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullEmp.employment_type}</span></div>}
-                                                            {mutualFullData.fullEmp?.annual_income && <div><span className="block text-gray-500 mb-1">Annual Income</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullEmp.annual_income}</span></div>}
-                                                            {mutualFullData.fullBus?.designation && <div><span className="block text-gray-500 mb-1">Designation</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullBus.designation}</span></div>}
-                                                            {mutualFullData.fullBus?.business_name && <div><span className="block text-gray-500 mb-1">Business Name</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullBus.business_name}</span></div>}
-                                                            {mutualFullData.fullBus?.business_type && <div><span className="block text-gray-500 mb-1">Business Type</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullBus.business_type}</span></div>}
-                                                            {mutualFullData.fullBus?.annual_income && <div><span className="block text-gray-500 mb-1">Annual Income</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullBus.annual_income}</span></div>}
-                                                            {mutualFullData.fullStu?.institution && <div><span className="block text-gray-500 mb-1">Institution</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullStu.institution}</span></div>}
-                                                            {mutualFullData.fullStu?.course && <div><span className="block text-gray-500 mb-1">Course</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.fullStu.course}</span></div>}
-                                                        </div>
-                                                    </section>
-                                                )}
-
-                                                {/* 6. Family Details — MUTUAL ONLY */}
-                                                {isMutual && mutualFullData.family && (
-                                                    <section>
-                                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                                            <User className="h-5 w-5 mr-2 text-teal-500" /> Family Details
-                                                        </h3>
-                                                        <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm bg-teal-50 dark:bg-teal-900/10 p-4 rounded-xl">
-                                                            {mutualFullData.family.father_name && <div><span className="block text-gray-500 mb-1">Father's Name</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.father_name}</span></div>}
-                                                            {mutualFullData.family.father_occupation && <div><span className="block text-gray-500 mb-1">Father's Occupation</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.father_occupation}</span></div>}
-                                                            {mutualFullData.family.mother_name && <div><span className="block text-gray-500 mb-1">Mother's Name</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.mother_name}</span></div>}
-                                                            {mutualFullData.family.mother_occupation && <div><span className="block text-gray-500 mb-1">Mother's Occupation</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.mother_occupation}</span></div>}
-                                                            {mutualFullData.family.family_type && <div><span className="block text-gray-500 mb-1">Family Type</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.family_type}</span></div>}
-                                                            {mutualFullData.family.family_status && <div><span className="block text-gray-500 mb-1">Family Status</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.family_status}</span></div>}
-                                                            {mutualFullData.family.family_values && <div><span className="block text-gray-500 mb-1">Family Values</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.family_values}</span></div>}
-                                                            {mutualFullData.family.brothers_count !== null && mutualFullData.family.brothers_count !== undefined && <div><span className="block text-gray-500 mb-1">Brothers</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.brothers_count}</span></div>}
-                                                            {mutualFullData.family.sisters_count !== null && mutualFullData.family.sisters_count !== undefined && <div><span className="block text-gray-500 mb-1">Sisters</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.family.sisters_count}</span></div>}
-                                                        </div>
-                                                    </section>
-                                                )}
-
-                                                {/* 7. Horoscope Details — always shown */}
-                                                {mutualFullData.horo && (mutualFullData.horo.zodiac_sign || mutualFullData.horo.star) && (
-                                                    <section>
-                                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                                            <Star className="h-5 w-5 mr-2 text-amber-500" /> Horoscope Details
-                                                        </h3>
-                                                        <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm bg-amber-50 dark:bg-amber-900/10 p-4 rounded-xl">
-                                                            {mutualFullData.horo.zodiac_sign && <div><span className="block text-gray-500 mb-1">Zodiac Sign</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.horo.zodiac_sign}</span></div>}
-                                                            {mutualFullData.horo.star && <div><span className="block text-gray-500 mb-1">Star (Nakshatra)</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.horo.star}</span></div>}
-                                                            {mutualFullData.horo.lagnam && <div><span className="block text-gray-500 mb-1">Lagnam</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.horo.lagnam}</span></div>}
-                                                            {mutualFullData.horo.dhosham && <div><span className="block text-gray-500 mb-1">Dhosham</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.horo.dhosham}</span></div>}
-                                                            {mutualFullData.horo.time_of_birth && <div><span className="block text-gray-500 mb-1">Time of Birth</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.horo.time_of_birth}</span></div>}
-                                                            {mutualFullData.horo.place_of_birth && <div><span className="block text-gray-500 mb-1">Place of Birth</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.horo.place_of_birth}</span></div>}
-                                                        </div>
-                                                    </section>
-                                                )}
-
-                                                {/* 8. Interests & Hobbies — always shown */}
-                                                {mutualFullData.interests?.hobbies && mutualFullData.interests.hobbies.length > 0 && (
-                                                    <section>
-                                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                                            <Sparkles className="h-5 w-5 mr-2 text-yellow-500" /> Interests & Hobbies
-                                                        </h3>
-                                                        <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
-                                                            <div className="flex flex-wrap gap-2">
-                                                                {mutualFullData.interests.hobbies.map((hobby: string, i: number) => (
-                                                                    <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
-                                                                        {hobby}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    </section>
-                                                )}
-
-                                                {/* 9. Social Habits — MUTUAL ONLY */}
-                                                {isMutual && mutualFullData.socialHabits && (
-                                                    <section>
-                                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                                            <Coffee className="h-5 w-5 mr-2 text-orange-500" /> Social Habits
-                                                        </h3>
-                                                        <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm bg-orange-50 dark:bg-orange-900/10 p-4 rounded-xl">
-                                                            {mutualFullData.socialHabits.smoking !== undefined && mutualFullData.socialHabits.smoking !== null && <div><span className="block text-gray-500 mb-1">Smoking</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.socialHabits.smoking ? 'Yes' : 'No'}</span></div>}
-                                                            {mutualFullData.socialHabits.drinking !== undefined && mutualFullData.socialHabits.drinking !== null && <div><span className="block text-gray-500 mb-1">Drinking</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.socialHabits.drinking ? 'Yes' : 'No'}</span></div>}
-                                                            {mutualFullData.socialHabits.exercise && <div><span className="block text-gray-500 mb-1">Exercise</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.socialHabits.exercise}</span></div>}
-                                                            {mutualFullData.socialHabits.diet && <div><span className="block text-gray-500 mb-1">Diet</span><span className="font-medium text-gray-900 dark:text-white">{mutualFullData.socialHabits.diet}</span></div>}
-                                                        </div>
-                                                    </section>
-                                                )}
-
-                                            </div>
-                                        )}
-
-                                    </div>{/* end p-6 overflow-y-auto */}
-
-                                    {/* Actions Footer */}
-                                    <div className="border-t border-gray-100 dark:border-gray-800 p-4 bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm z-10 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                                        {isMutual ? (
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <Button
-                                                    className="w-full bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-400"
-                                                    onClick={() => handleRemoveMatch(selectedProfile.user_id)}
-                                                    disabled={actionLoadingId === selectedProfile.user_id}
-                                                >
-                                                    {actionLoadingId === selectedProfile.user_id ? "Removing..." : "Remove Match"}
-                                                </Button>
-                                                <Button
-                                                    className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-white"
-                                                    onClick={() => {
-                                                        const p = mutualFullData?.fullContact?.phone || mutualFullData?.fullContact?.whatsapp_number
-                                                        if (p) window.open(`tel:${p}`)
-                                                    }}
-                                                >
-                                                    <Phone className="h-4 w-4 mr-2" /> Contact Now
-                                                </Button>
-                                            </div>
-                                        ) : selectedProfile.iLiked ? (
-                                            <Button
-                                                variant="outline"
-                                                className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 dark:border-red-900/30 dark:text-red-400 dark:hover:bg-red-900/20"
-                                                onClick={() => handleUnlike(selectedProfile.user_id)}
-                                                disabled={actionLoadingId === selectedProfile.user_id}
-                                            >
-                                                {actionLoadingId === selectedProfile.user_id ? "Unliking..." : "Unlike Profile"}
-                                            </Button>
-                                        ) : (
-                                            <Button
-                                                className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-white"
-                                                onClick={() => handleLike(selectedProfile.user_id)}
-                                                disabled={actionLoadingId === selectedProfile.user_id}
-                                            >
-                                                <Heart className="h-4 w-4 mr-2" />
-                                                {actionLoadingId === selectedProfile.user_id ? "Expressing Interest..." : "Like & Express Interest"}
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
+                    {selectedProfile && (
+                        <div className="flex flex-col md:flex-row h-[85vh] md:h-[35rem]">
+                            <div className="md:w-2/5 bg-gray-100 relative group shrink-0">
+                                {(() => {
+                                    const photoArr: string[] = mutualFullData?.photos || selectedProfile.photos || [selectedProfile.photo].filter(Boolean) as string[]
+                                    return photoArr.length > 0 ? (
+                                        <>
+                                            <img
+                                                src={photoArr[modalPhotoIndex]}
+                                                alt={selectedProfile.name}
+                                                className="w-full h-full object-cover transition-opacity duration-300"
+                                            />
+                                            {photoArr.length > 1 && (
+                                                <>
+                                                    <button onClick={(e) => { e.stopPropagation(); setModalPhotoIndex(prev => (prev - 1 + photoArr.length) % photoArr.length); }} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 p-2 rounded-full text-white"><ChevronLeft /></button>
+                                                    <button onClick={(e) => { e.stopPropagation(); setModalPhotoIndex(prev => (prev + 1) % photoArr.length); }} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 p-2 rounded-full text-white"><ChevronRight /></button>
+                                                </>
+                                            )}
+                                        </>
+                                    ) : <div className="flex items-center justify-center h-full"><User className="h-20 w-20 opacity-20" /></div>
+                                })()}
                             </div>
-                        )
-                    })()}
+                            <div className="flex-1 overflow-y-auto p-8 bg-white/40 backdrop-blur-xl">
+                                <div className="flex items-center justify-between mb-8">
+                                    <h2 className="text-4xl font-light text-gray-900 tracking-tight">
+                                        {selectedProfile.name}{selectedProfile.age && `, ${selectedProfile.age}`}
+                                    </h2>
+                                    {selectedProfile.interaction_status === 'accepted' && (
+                                        <div className="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100 flex items-center gap-2">
+                                            <CheckCircle2 className="h-4 w-4" /> Connected
+                                        </div>
+                                    )}
+                                </div>
+                                {isFetchingFull ? <div className="flex items-center gap-3 text-indigo-400 font-bold animate-pulse"><Clock className="h-5 w-5 animate-spin" /> Verifying profile intel...</div> : (
+                                    <div className="space-y-10">
+                                        <section>
+                                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-900/40 mb-4">Identity Information</h3>
+                                            <div className="grid grid-cols-2 gap-6 bg-white/50 p-6 rounded-[2rem] border border-indigo-50/50">
+                                                <div><span className="text-[9px] font-black uppercase tracking-widest text-gray-400 block mb-1">Height</span><span className="text-sm font-bold">{mutualFullData?.personal?.height}cm</span></div>
+                                                <div><span className="text-[9px] font-black uppercase tracking-widest text-gray-400 block mb-1">Location</span><span className="text-sm font-bold">{selectedProfile.location}</span></div>
+                                                <div><span className="text-[9px] font-black uppercase tracking-widest text-gray-400 block mb-1">Vocation</span><span className="text-sm font-bold">{selectedProfile.profession}</span></div>
+                                                <div><span className="text-[9px] font-black uppercase tracking-widest text-gray-400 block mb-1">Caste/Nakshatra</span><span className="text-sm font-bold">{mutualFullData?.personal?.caste} • {mutualFullData?.horo?.star || 'N/A'}</span></div>
+                                            </div>
+                                        </section>
+                                        
+                                        {selectedProfile.interaction_status === 'accepted' && (
+                                            <div className="flex gap-4">
+                                                <Button 
+                                                    onClick={() => {
+                                                        setMessageTarget({ id: selectedProfile.user_id, name: selectedProfile.name })
+                                                        setIsMessageDialogOpen(true)
+                                                    }}
+                                                    className="flex-1 h-14 rounded-2xl bg-[#4B0082] hover:bg-indigo-700 text-white font-black text-[11px] uppercase tracking-widest shadow-xl shadow-indigo-200"
+                                                >
+                                                    Open Communications
+                                                </Button>
+                                                <Button variant="outline" className="h-14 w-14 rounded-2xl border-indigo-100 flex items-center justify-center text-indigo-600">
+                                                    <Phone className="h-6 w-6" />
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
+            
+            <MessageDialog
+                isOpen={isMessageDialogOpen}
+                onOpenChange={setIsMessageDialogOpen}
+                receiverId={messageTarget?.id || ""}
+                receiverName={messageTarget?.name || ""}
+                senderId={userId}
+                isPremium={isPremium}
+            />
+        </div>
+    )
+}
 
-            {messageTarget && (
-                <MessageDialog
-                    isOpen={isMessageDialogOpen}
-                    onOpenChange={setIsMessageDialogOpen}
-                    receiverId={messageTarget.id}
-                    receiverName={messageTarget.name}
-                    senderId={userId}
-                    isPremium={isPremium}
-                />
-            )}
-        </div >
+interface LikesHorizontalCardProps {
+    profile: ProfileCard
+    section: Section
+    onAction: (status: string) => void
+    onView: () => void
+    onMessage: () => void
+    actionLoading: boolean
+    index: number
+}
+
+function LikesHorizontalCard({ profile, section, onAction, onView, onMessage, actionLoading, index }: LikesHorizontalCardProps) {
+    return (
+        <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.05 }}
+            className="w-full sds-glass rounded-[2rem] overflow-hidden group border border-indigo-100/20 hover:border-[#4B0082]/30 hover:shadow-[0_40px_80px_-20px_rgba(75,0,130,0.15)] transition-all duration-500 flex flex-col md:flex-row"
+        >
+            {/* Left Image */}
+            <div className="relative w-full md:w-56 h-auto min-h-[220px] bg-gray-50 shrink-0 overflow-hidden cursor-pointer" onClick={onView}>
+                {profile.photo ? (
+                    <img
+                        src={profile.photo}
+                        alt={profile.name}
+                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <User className="h-16 w-16 text-indigo-100" />
+                    </div>
+                )}
+                
+                <div className="absolute top-4 left-4 z-10">
+                    <span className={cn(
+                        "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest backdrop-blur-md shadow-sm border",
+                        profile.interaction_status === "accepted" ? "bg-emerald-500/90 text-white border-emerald-400" :
+                        profile.interaction_status === "declined" ? "bg-rose-500/90 text-white border-rose-400" :
+                        "bg-white/90 text-indigo-900 border-indigo-100/50"
+                    )}>
+                        {profile.interaction_status}
+                    </span>
+                </div>
+            </div>
+
+            {/* Right profile Content */}
+            <div className="flex-1 p-6 md:p-8 flex flex-col justify-between bg-white/60 relative">
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div>
+                        <div className="flex items-center gap-3 mb-2">
+                             <h3 className="text-2xl font-light text-gray-900 tracking-tighter group-hover:text-[#4B0082] transition-colors" onClick={onView}>
+                                {profile.name}{profile.age && <span className="font-bold text-[#4B0082]/20 ml-1">, {profile.age}</span>}
+                             </h3>
+                             {profile.isPremium && <Crown className="h-4 w-4 text-amber-400" />}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-4 text-[10px] font-black uppercase tracking-widest text-indigo-900/40">
+                            <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-indigo-300" /> {profile.location}</div>
+                            <div className="flex items-center gap-2"><Briefcase className="h-3.5 w-3.5 text-indigo-300" /> {profile.profession}</div>
+                        </div>
+                    </div>
+
+                    {/* Header Action Area */}
+                    <div className="flex items-center gap-3">
+                        {section === "received" && profile.interaction_status === "pending" ? (
+                            <div className="flex gap-2">
+                                <Button 
+                                    onClick={() => onAction("declined")}
+                                    disabled={actionLoading}
+                                    variant="ghost"
+                                    className="h-10 px-4 rounded-xl text-rose-500 hover:bg-rose-50 text-[10px] font-black uppercase tracking-widest"
+                                >
+                                    Decline
+                                </Button>
+                                <Button 
+                                    onClick={() => onAction("accepted")}
+                                    disabled={actionLoading}
+                                    className="h-10 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-200"
+                                >
+                                    Accept Interest
+                                </Button>
+                            </div>
+                        ) : (
+                            <Button 
+                                onClick={onView}
+                                variant="ghost" 
+                                className="h-10 px-6 rounded-xl border-indigo-100 text-[#4B0082] hover:bg-indigo-50 text-[10px] font-black uppercase tracking-widest border"
+                            >
+                                Details Matrix <ArrowRight className="h-3.5 w-3.5 ml-2" />
+                            </Button>
+                        )}
+                    </div>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-black/[0.04] flex items-center justify-between">
+                    <div className="flex gap-3">
+                        <div className="flex items-center gap-2 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full">
+                            <Shield className="h-3 w-3" /> Identity Verified
+                        </div>
+                        <div className="flex items-center gap-2 text-[9px] font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full">
+                            <Sparkles className="h-3 w-3" /> 88% Match Score
+                        </div>
+                    </div>
+                    {profile.interaction_status === 'accepted' && (
+                        <div className="flex gap-2">
+                            <Button variant="ghost" className="h-10 w-10 p-0 rounded-xl text-indigo-600 hover:bg-indigo-50"><Phone className="h-4 w-4" /></Button>
+                            <Button 
+                                onClick={onMessage}
+                                variant="ghost" 
+                                className="h-10 w-10 p-0 rounded-xl text-indigo-600 hover:bg-indigo-50"
+                            >
+                                <MessageCircle className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </motion.div>
     )
 }

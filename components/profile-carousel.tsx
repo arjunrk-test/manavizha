@@ -1,10 +1,10 @@
 "use client"
 
 import { useRef, useState, useEffect } from "react"
-import { motion, useScroll, useSpring } from "framer-motion"
-import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react"
+import { motion } from "framer-motion"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { ProfilePreviewCard } from "./profile-preview-card"
+import { DashboardProfileCard } from "./dashboard-profile-card"
 
 interface ProfileCarouselProps {
     title: string
@@ -31,6 +31,9 @@ export function ProfileCarousel({
     const [canScrollLeft, setCanScrollLeft] = useState(false)
     const [canScrollRight, setCanScrollRight] = useState(false)
 
+    // Limit to 10 profiles for dashboard sections
+    const displayedProfiles = profiles.slice(0, 10)
+
     const checkScroll = () => {
         if (scrollRef.current) {
             const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
@@ -41,8 +44,12 @@ export function ProfileCarousel({
 
     useEffect(() => {
         checkScroll()
+        const timer = setTimeout(checkScroll, 100) // Double check after render
         window.addEventListener("resize", checkScroll)
-        return () => window.removeEventListener("resize", checkScroll)
+        return () => {
+            window.removeEventListener("resize", checkScroll)
+            clearTimeout(timer)
+        }
     }, [profiles, isLoading])
 
     const scroll = (direction: "left" | "right") => {
@@ -66,9 +73,9 @@ export function ProfileCarousel({
                     <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg" />
                     <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg" />
                 </div>
-                <div className="flex gap-4 px-4 overflow-hidden">
-                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                        <div key={i} className="min-w-[12rem] sm:min-w-[15rem] aspect-[3/4.4] bg-gray-100 dark:bg-gray-700 animate-pulse rounded-[2rem]" />
+                <div className="flex gap-6 px-4 overflow-hidden">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                        <div key={i} className="min-w-[12rem] sm:min-w-[14.5rem] aspect-[3/4.8] bg-gray-100 dark:bg-gray-800 animate-pulse rounded-[2.5rem]" />
                     ))}
                 </div>
             </div>
@@ -76,100 +83,98 @@ export function ProfileCarousel({
     }
 
     return (
-        <section className="py-4 relative group/carousel">
-            <div className="w-full px-4">
+        <section className="py-6 relative group/carousel">
+            <div className="w-full">
                 {/* Header */}
-                <div className="flex items-end justify-between mb-4">
+                <div className="px-4 mb-6 flex items-end justify-between">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            {icon && <span className="text-[#4B0082]">{icon}</span>}
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">
+                            <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
                                 {title}
                                 {profiles.length > 0 && (
-                                    <span className="ml-2 text-sm font-medium text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full align-middle">
-                                        {profiles.length}
+                                    <span className="ml-2 text-gray-400 font-bold">
+                                        ({profiles.length})
                                     </span>
                                 )}
                             </h2>
                         </div>
                         {subtitle && (
-                            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                            <p className="text-[14px] text-gray-500 font-medium whitespace-pre-line">
                                 {subtitle}
                             </p>
                         )}
                     </div>
+
                     {onViewAll && profiles.length > 0 && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
+                        <button
                             onClick={onViewAll}
-                            className="text-[#4B0082] hover:text-[#FF1493] font-bold text-sm flex items-center gap-1 group/btn transition-all px-2"
+                            className="flex items-center gap-1 text-[#4B0082] font-black text-[13px] uppercase tracking-widest hover:text-[#FF1493] transition-colors group px-2"
                         >
                             View all
-                            <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
-                        </Button>
+                            <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        </button>
                     )}
                 </div>
 
                 {/* Carousel Container */}
-                <div className="relative">
-                    {/* Navigation Buttons - Desktop Only */}
+                <div className="relative px-4">
+                    {/* Navigation Buttons */}
                     {canScrollLeft && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-20 hidden md:block">
-                            <Button
-                                size="icon"
-                                variant="secondary"
-                                className="h-10 w-10 rounded-full shadow-xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border border-gray-200 dark:border-gray-700 text-[#4B0082] hover:scale-110 transition-transform"
-                                onClick={() => scroll("left")}
-                            >
-                                <ChevronLeft className="h-6 w-6" />
-                            </Button>
-                        </div>
+                        <button
+                            className="absolute left-6 top-[40%] -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/90 shadow-xl border border-gray-100 flex items-center justify-center text-gray-700 hover:bg-[#4B0082] hover:text-white transition-all duration-300 hidden md:flex"
+                            onClick={() => scroll("left")}
+                        >
+                            <ChevronLeft className="h-6 w-6" />
+                        </button>
                     )}
                     {canScrollRight && (
-                        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-20 hidden md:block">
-                            <Button
-                                size="icon"
-                                variant="secondary"
-                                className="h-10 w-10 rounded-full shadow-xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border border-gray-200 dark:border-gray-700 text-[#4B0082] hover:scale-110 transition-transform"
-                                onClick={() => scroll("right")}
-                            >
-                                <ChevronRight className="h-6 w-6" />
-                            </Button>
-                        </div>
+                        <button
+                            className="absolute right-6 top-[40%] -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/90 shadow-xl border border-gray-100 flex items-center justify-center text-gray-700 hover:bg-[#4B0082] hover:text-white transition-all duration-300 hidden md:flex"
+                            onClick={() => scroll("right")}
+                        >
+                            <ChevronRight className="h-6 w-6" />
+                        </button>
                     )}
 
                     {/* Scrollable Area */}
                     <div
                         ref={scrollRef}
                         onScroll={checkScroll}
-                        className="flex gap-4 overflow-x-auto pb-6 pt-2 snap-x snap-mandatory scrollbar-hide no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 items-start justify-start"
+                        className="flex gap-6 overflow-x-auto pb-8 pt-2 scrollbar-hide no-scrollbar snap-x snap-mandatory"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
-                        {profiles.length === 0 ? (
-                            <div className="w-full py-12 text-center bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700">
-                                <p className="text-gray-500 dark:text-gray-400 font-medium">{emptyMessage}</p>
+                        {displayedProfiles.length === 0 ? (
+                            <div className="w-full py-16 text-center bg-gray-50 dark:bg-white/5 rounded-[2.5rem] border-2 border-dashed border-gray-200 dark:border-white/10">
+                                <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">{emptyMessage}</p>
                             </div>
                         ) : (
-                            profiles.map((profile, index) => (
-                                <div
-                                    key={profile.user_id || index}
-                                    className="w-[12rem] sm:w-[15rem] flex-none snap-start"
-                                >
-                                    <ProfilePreviewCard
-                                        profile={profile}
-                                        onClick={() => onProfileClick(profile)}
-                                        priority={index < 4}
-                                        onScoreClick={profile.onScoreClick}
-                                        viewerIsPremium={profile.viewerIsPremium}
-                                        lifestyleScore={profile.lifestyleScore}
-                                        poruthamScore={profile.poruthamScore}
-                                    />
-                                </div>
-                            ))
+                            <>
+                                {displayedProfiles.map((profile, index) => (
+                                    <div
+                                        key={profile.user_id || index}
+                                        className="w-[12rem] sm:w-[14.5rem] flex-none snap-start"
+                                    >
+                                        <DashboardProfileCard
+                                            profile={profile}
+                                            onClick={() => onProfileClick(profile)}
+                                            contextText={profile.interaction_at ? `Viewed on : ${new Date(profile.interaction_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}` : profile.location}
+                                        />
+                                    </div>
+                                ))}
+                                
+                                {/* Final "View all" card if we have more than 1 profiles */}
+                                {onViewAll && profiles.length > 0 && (
+                                    <div className="w-[12rem] sm:w-[14.5rem] flex-none snap-start">
+                                        <DashboardProfileCard
+                                            isViewAll
+                                            profile={displayedProfiles[0]}
+                                            onClick={onViewAll}
+                                        />
+                                    </div>
+                                )}
+                            </>
                         )}
-                        {/* Final spacer for padding */}
-                        <div className="min-w-[20px] shrink-0 pointer-events-none" />
+                        <div className="min-w-[20px] shrink-0" />
                     </div>
                 </div>
             </div>

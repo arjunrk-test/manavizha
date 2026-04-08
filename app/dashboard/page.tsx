@@ -29,10 +29,10 @@ export default function DashboardPage() {
       onNavigateToParents={() => router.push("/dashboard/parents")}
       onNavigateToSelections={() => router.push("/dashboard/selections")}
       onNavigateToPartnerPreferences={() => router.push("/dashboard/preferences")}
-      onNavigateToLikes={() => router.push("/dashboard/likes?tab=mutual")}
-      onNavigateToMutualMatches={() => router.push("/dashboard/likes?tab=mutual")}
-      onNavigateToILiked={() => router.push("/dashboard/likes?tab=liked")}
-      onNavigateToLikedMe={() => router.push("/dashboard/likes?tab=likedme")}
+      onNavigateToLikes={() => router.push("/dashboard/interests?tab=mutual")}
+      onNavigateToMutualMatches={() => router.push("/dashboard/interests?tab=mutual")}
+      onNavigateToILiked={() => router.push("/dashboard/interests?tab=liked")}
+      onNavigateToLikedMe={() => router.push("/dashboard/interests?tab=likedme")}
       onProgressChange={setProfileProgress}
     />
   )
