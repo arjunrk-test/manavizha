@@ -1,6 +1,6 @@
 "use client"
 
-import { Crown, ChevronRight, User } from "lucide-react"
+import { Crown, ChevronRight, User, Bookmark } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
@@ -11,6 +11,9 @@ interface DashboardProfileCardProps {
     isViewAll?: boolean
     contextText?: string
     className?: string
+    isShortlisted?: boolean
+    onShortlist?: (e: React.MouseEvent) => void
+    isLoadingShortlist?: boolean
 }
 
 export function DashboardProfileCard({
@@ -18,7 +21,10 @@ export function DashboardProfileCard({
     onClick,
     isViewAll = false,
     contextText,
-    className
+    className,
+    isShortlisted = false,
+    onShortlist,
+    isLoadingShortlist = false
 }: DashboardProfileCardProps) {
     if (isViewAll) {
         return (
@@ -85,6 +91,23 @@ export function DashboardProfileCard({
                         </div>
                     )}
 
+                    {onShortlist && (
+                        <div className="absolute top-4 left-4 z-20">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onShortlist(e); }}
+                                disabled={isLoadingShortlist}
+                                className={cn(
+                                    "w-8 h-8 rounded-xl backdrop-blur-md shadow-lg flex items-center justify-center transition-all duration-300 border border-white/40 active:scale-90",
+                                    isShortlisted 
+                                        ? "bg-[#FF1493] text-white border-none shadow-[#FF1493]/30" 
+                                        : "bg-white/70 text-indigo-400 hover:bg-white hover:text-[#4B0082]"
+                                )}
+                            >
+                                <Bookmark className={cn("h-4 w-4", isShortlisted && "fill-current")} />
+                            </button>
+                        </div>
+                    )}
+
                     {/* Premium Gold Crown Badge */}
                     {profile?.isPremium && (
                         <div className="absolute top-4 right-4 z-20">
@@ -101,7 +124,7 @@ export function DashboardProfileCard({
                         {profile?.name || "Unknown"}
                     </h3>
                     <p className="text-[12px] sm:text-[13px] font-medium text-gray-500">
-                        {profile?.age ? `${profile.age} Yrs` : ""}{profile?.height ? `, ${profile.height}cm` : ""}
+                        {profile?.age ? `${profile.age} Yrs` : ""}{profile?.height ? `, ${profile.height}m` : ""}
                     </p>
                     {contextText && (
                         <p className="text-[11px] font-medium text-gray-800 mt-0.5 flex items-center gap-1">

@@ -5,8 +5,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { supabase } from "@/lib/supabase"
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ArrowRight, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Star, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle, MoreVertical, UserX, UserMinus, Crown, Gem, Shield, X } from "lucide-react"
+import { ArrowLeft, ArrowRight, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Bookmark, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle, MoreVertical, UserX, UserMinus, Crown, Gem, Shield, X, Star } from "lucide-react"
 import { motion } from "framer-motion"
+import { cn } from "@/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { calculateTrustScore } from "@/lib/utils/profile-utils"
@@ -40,6 +41,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
     const [actionLoadingId, setActionLoadingId] = useState<string>("")
     const [shortlistLoadingId, setShortlistLoadingId] = useState<string>("")
     const [hasPreferences, setHasPreferences] = useState(false)
+    const [userPreferences, setUserPreferences] = useState<any>(null)
     const [applyPreferences, setApplyPreferences] = useState(true)
     const [selectedProfileIds, setSelectedProfileIds] = useState<Set<string>>(new Set())
     const [shortlistedIds, setShortlistedIds] = useState<string[]>([])
@@ -57,6 +59,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
     const [isProfileIncomplete, setIsProfileIncomplete] = useState(false)
     const [iViewedIds, setIViewedIds] = useState<string[]>([])
     const [viewedMeIds, setViewedMeIds] = useState<string[]>([])
+    const [shortlistedMeIds, setShortlistedMeIds] = useState<string[]>([])
     const [currentUserLocation, setCurrentUserLocation] = useState<string>("")
 
     // State to track the currently viewed photo index for the modal
@@ -84,20 +87,20 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
         // Record the view
         console.log("Navigating to profile:", profile.user_id)
         if (!parentViewer?.isParent) {
-            fetch("/api/views", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ viewerId: userId, viewedUserId: profile.user_id })
-            }).catch(e => console.error("Error logging view", e))
+            try {
+                // Wait for the view to be recorded so it doesn't get cancelled by navigation
+                await fetch("/api/views", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ viewerId: userId, viewedUserId: profile.user_id })
+                })
+            } catch (e) {
+                console.error("Error logging view", e)
+            }
         }
 
         // Navigate to the dedicated profile page using window.location for reliability
-        if (profile.user_id) {
-            window.location.href = `/dashboard/profile/${profile.user_id}`
-        } else {
-            console.error("Missing profile.user_id:", profile)
-            toast.error("Profile ID missing")
-        }
+        window.location.href = `/dashboard/profile/${profile.user_id}`
     }
 
     // Fetch full profile data when a mutual match modal opens
@@ -260,6 +263,17 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                             </div>
                         )}
                         <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={(e) => { e.stopPropagation(); handleShortlist(e, profile.user_id); }} 
+                                className={cn(
+                                    "h-7 w-7 p-0 rounded-full transition-all",
+                                    shortlistedIds.includes(profile.user_id) ? "text-[#FF1493] bg-pink-50" : "text-gray-400 hover:text-[#4B0082] hover:bg-indigo-50"
+                                )}
+                            >
+                                <Bookmark className={cn("h-4 w-4", shortlistedIds.includes(profile.user_id) && "fill-current")} />
+                            </Button>
                             <Button 
                                 variant="ghost" 
                                 size="sm" 
@@ -446,6 +460,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
 
                 if (preferences) {
                     setHasPreferences(true)
+                    setUserPreferences(preferences)
                 }
 
                 // Fetch current user horoscope for matching
@@ -497,6 +512,14 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 let selectedIds = new Set<string>()
                 let hiddenProfileIds: string[] = []
 
+                // Local buffers to avoid stale state issues during the same fetch cycle
+                let localLikedIds: string[] = []
+                let localLikedMeIds: string[] = []
+                let localShortlistedIds: string[] = []
+                let localShortlistedMeIds: string[] = []
+                let localIViewedIds: string[] = []
+                let localViewedMeIds: string[] = []
+
                 try {
                     const [likeRes, shortRes, viewsRes, blockRes, ignoreRes] = await Promise.all([
                         fetch(`/api/likes?userId=${userId}`),
@@ -508,8 +531,10 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     
                     if (likeRes.ok) {
                         const likeData = await likeRes.json()
-                        setLikedIds(likeData.iLikedIds || [])
-                        setLikedMeIds(likeData.likedMeIds || [])
+                        localLikedIds = likeData.iLikedIds || []
+                        localLikedMeIds = likeData.likedMeIds || []
+                        setLikedIds(localLikedIds)
+                        setLikedMeIds(localLikedMeIds)
                     }
                     
                     // Fetch premium status
@@ -522,13 +547,18 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     
                     if (shortRes.ok) {
                         const shortData = await shortRes.json()
-                        setShortlistedIds(shortData.shortlistedIds || [])
+                        localShortlistedIds = shortData.shortlistedIds || []
+                        localShortlistedMeIds = shortData.shortlistedMeIds || []
+                        setShortlistedIds(localShortlistedIds)
+                        setShortlistedMeIds(localShortlistedMeIds)
                     }
 
                     if (viewsRes.ok) {
                         const viewsData = await viewsRes.json()
-                        setIViewedIds((viewsData.iViewed || []).map((v: any) => v.viewed_user_id))
-                        setViewedMeIds((viewsData.viewedMe || []).map((v: any) => v.viewer_user_id))
+                        localIViewedIds = (viewsData.iViewed || []).map((v: any) => v.viewed_user_id)
+                        localViewedMeIds = (viewsData.viewedMe || []).map((v: any) => v.viewer_user_id)
+                        setIViewedIds(localIViewedIds)
+                        setViewedMeIds(localViewedMeIds)
                     }
 
                     if (blockRes.ok) {
@@ -563,12 +593,40 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 } catch { }
 
                 const activeProfiles = unmarriedProfiles.filter((p: any) => !deactivatedUserIds.includes(p.user_id))
-                const targetUserIds = activeProfiles.map((p: any) => p.user_id)
+                
+                // Identify all IDs from activities that might be missing from the target feed
+                const activityIds = Array.from(new Set([
+                    ...localIViewedIds,
+                    ...localViewedMeIds,
+                    ...localShortlistedIds,
+                    ...localShortlistedMeIds,
+                    ...localLikedIds,
+                    ...localLikedMeIds
+                ])).filter(id => id && id !== userId)
 
-                if (targetUserIds.length === 0) {
+                const existingProfileIds = new Set(activeProfiles.map(p => p.user_id))
+                const missingActivityIds = activityIds.filter(id => !existingProfileIds.has(id))
+
+                let combinedProfiles = [...activeProfiles]
+
+                // Fetch missing profiles for activities
+                if (missingActivityIds.length > 0) {
+                    const { data: missingProfiles } = await supabase
+                        .from("personal_details")
+                        .select("*")
+                        .in("user_id", missingActivityIds)
+                    
+                    if (missingProfiles) {
+                        combinedProfiles = [...combinedProfiles, ...missingProfiles]
+                    }
+                }
+
+                if (combinedProfiles.length === 0) {
                     setIsLoading(false)
                     return
                 }
+
+                const targetUserIds = combinedProfiles.map((p: any) => p.user_id)
 
 
 
@@ -609,7 +667,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
 
                 const settingsData: any[] = Array.isArray(settingsApiRes) ? settingsApiRes : []
 
-                const combined = activeProfiles.map((p: any) => {
+                const combined = combinedProfiles.map((p: any) => {
                     const myPhotos = photosData?.find(x => x.user_id === p.user_id)
                     const myContact = contactData?.find(x => x.user_id === p.user_id)
                     const myEmp = empData?.find(x => x.user_id === p.user_id)
@@ -678,163 +736,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     }
                 })
 
-                let finalProfiles = combined
-
-                // Apply Sorting by Lifestyle Compatibility as priority
-                if (isPremium) {
-                    finalProfiles = [...combined].sort((a, b) => {
-                        const scoreA = a.lifestyleMatch?.totalScore || 0
-                        const scoreB = b.lifestyleMatch?.totalScore || 0
-                        return scoreB - scoreA
-                    })
-                }
-
-                if (preferences && applyPreferences) {
-                    finalProfiles = combined.filter((profile: any) => {
-                        // Age filtering
-                        if (preferences.min_age != null || preferences.max_age != null) {
-                            const profileAge = profile.age ? parseInt(profile.age.toString()) : null
-                            if (profileAge !== null) {
-                                if (preferences.min_age != null && profileAge < preferences.min_age) return false
-                                if (preferences.max_age != null && profileAge > preferences.max_age) return false
-                            }
-                        }
-
-                        // Height filtering
-                        if (preferences.min_height != null || preferences.max_height != null) {
-                            const profileHeight = profile.height ? parseInt(profile.height.toString()) : null
-                            if (profileHeight !== null) {
-                                if (preferences.min_height != null && profileHeight < preferences.min_height) return false
-                                if (preferences.max_height != null && profileHeight > preferences.max_height) return false
-                            }
-                        }
-
-                        if (preferences.marital_status && preferences.marital_status.length > 0) {
-                            if (profile.marital_status) {
-                                const isMatch = preferences.marital_status.some((m: string) =>
-                                    (profile.marital_status?.toLowerCase() || "").includes(m.toLowerCase())
-                                )
-                                if (!isMatch) return false
-                            }
-                        }
-
-                        // Religion Matching
-                        if (preferences.preferred_religion && preferences.preferred_religion !== "Any") {
-                            if (profile.religion && profile.religion !== preferences.preferred_religion) return false
-                        }
-
-                        // Languages Matching (Multi-select)
-                        if (preferences.preferred_languages && preferences.preferred_languages.length > 0 && !preferences.preferred_languages.includes("Any")) {
-                            const profileLangs = Array.isArray(profile.languages) ? profile.languages : []
-                            const hasMatch = preferences.preferred_languages.some((pl: string) => 
-                                profileLangs.includes(pl)
-                            )
-                            if (!hasMatch) return false
-                        }
-
-                        if (preferences.diet && preferences.diet.length > 0) {
-                            if (profile.food_preference) {
-                                const isMatch = preferences.diet.some((d: string) =>
-                                    (profile.food_preference?.toLowerCase() || "").includes(d.toLowerCase())
-                                )
-                                if (!isMatch) return false
-                            }
-                        }
-
-                        if (preferences.location && preferences.location.length > 0) {
-                            if (profile.location && profile.location !== "Location not specified" && profile.location !== "Location hidden (Requires mutual interest)") {
-                                const locMatches = preferences.location.some((loc: string) =>
-                                    profile.location.toLowerCase().includes(loc.toLowerCase())
-                                )
-                                if (!locMatches) return false
-                            }
-                        }
-
-                        // Education filtering
-                        const prefLevels = preferences.education || []
-                        const prefDegrees = preferences.preferred_degrees || []
-                        const prefBranches = preferences.preferred_branches || []
-
-                        const hasLevelPref = prefLevels.length > 0 && !prefLevels.includes("Any")
-                        const hasDegreePref = prefDegrees.length > 0 && !prefDegrees.includes("Any")
-                        const hasBranchPref = prefBranches.length > 0 && !prefBranches.includes("Any")
-
-                        if (hasLevelPref || hasDegreePref || hasBranchPref) {
-                            if (!profile.education || profile.education.length === 0) {
-                                return false // No education on profile, but preferences are set
-                            }
-
-                            const hasAnyMatchingEdu = profile.education.some((edu: any) => {
-                                let levelMatch = true
-                                let degreeMatch = true
-                                let branchMatch = true
-
-                                if (hasLevelPref) {
-                                    levelMatch = prefLevels.some((pref: string) => 
-                                        (edu.education?.toLowerCase() || "").includes(pref.toLowerCase())
-                                    )
-                                }
-
-                                if (hasDegreePref) {
-                                    degreeMatch = prefDegrees.some((pref: string) => 
-                                        (edu.degree?.toLowerCase() || "").includes(pref.toLowerCase()) || 
-                                        (edu.degree_other?.toLowerCase() || "").includes(pref.toLowerCase())
-                                    )
-                                }
-
-                                if (hasBranchPref) {
-                                    branchMatch = prefBranches.some((pref: string) => 
-                                        (edu.branch?.toLowerCase() || "").includes(pref.toLowerCase())
-                                    )
-                                }
-
-                                return levelMatch && degreeMatch && branchMatch
-                            })
-
-                            if (!hasAnyMatchingEdu) return false
-                        }
-
-                        if (preferences.employment_type && preferences.employment_type.length > 0) {
-                            if (profile.professionType) {
-                                const empMatches = preferences.employment_type.some((emp: string) =>
-                                    profile.professionType.toLowerCase().includes(emp.toLowerCase())
-                                )
-                                if (!empMatches) return false
-                            }
-                        }
-
-                        if (preferences.sector && preferences.sector.length > 0) {
-                            if (profile.professionDetails?.sector) {
-                                const sectorMatches = preferences.sector.some((sec: string) =>
-                                    (profile.professionDetails.sector.toLowerCase() || "").includes(sec.toLowerCase())
-                                )
-                                if (!sectorMatches) return false
-                            }
-                        }
-
-                        if (preferences.smoking && preferences.smoking.length > 0) {
-                            if (profile.socialHabits?.smoking) {
-                                const isMatch = preferences.smoking.some((s: string) =>
-                                    (profile.socialHabits?.smoking?.toLowerCase() || "").includes(s.toLowerCase())
-                                )
-                                if (!isMatch) return false
-                            }
-                        }
-
-                        if (preferences.drinking && preferences.drinking.length > 0) {
-                            if (profile.socialHabits?.drinking) {
-                                const isMatch = preferences.drinking.some((d: string) =>
-                                    (profile.socialHabits?.drinking?.toLowerCase() || "").includes(d.toLowerCase())
-                                )
-                                if (!isMatch) return false
-                            }
-                        }
-
-                        return true
-                    })
-                }
-
-                setProfiles(finalProfiles)
+                setProfiles(combined)
             } catch (error) {
                 console.error("Error fetching profiles:", error)
             } finally {
@@ -850,27 +752,163 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
         const thirtyDaysAgo = new Date()
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
+        const isActivityCategory = ["shortlisted-by-you", "shortlisted-you", "viewed-you", "viewed-by-you"].includes(activeCategory)
+
+        // 1. Primary Preference Filter (bypass for activity categories)
+        let dataset = profiles
+        if (userPreferences && applyPreferences && !isActivityCategory) {
+            dataset = profiles.filter((profile: any) => {
+                // Age filtering
+                if (userPreferences.min_age != null || userPreferences.max_age != null) {
+                    const profileAge = profile.age ? parseInt(profile.age.toString()) : null
+                    if (profileAge !== null) {
+                        if (userPreferences.min_age != null && profileAge < userPreferences.min_age) return false
+                        if (userPreferences.max_age != null && profileAge > userPreferences.max_age) return false
+                    }
+                }
+
+                // Height filtering
+                if (userPreferences.min_height != null || userPreferences.max_height != null) {
+                    const profileHeight = profile.height ? parseInt(profile.height.toString()) : null
+                    if (profileHeight !== null) {
+                        if (userPreferences.min_height != null && profileHeight < userPreferences.min_height) return false
+                        if (userPreferences.max_height != null && profileHeight > userPreferences.max_height) return false
+                    }
+                }
+
+                if (userPreferences.diet && userPreferences.diet.length > 0) {
+                    if (profile.food_preference) {
+                        const isMatch = userPreferences.diet.some((d: string) =>
+                            (profile.food_preference?.toLowerCase() || "").includes(d.toLowerCase())
+                        )
+                        if (!isMatch) return false
+                    }
+                }
+
+                if (userPreferences.location && userPreferences.location.length > 0) {
+                    if (profile.location && profile.location !== "Location not specified" && profile.location !== "Location hidden (Requires mutual interest)") {
+                        const locMatches = userPreferences.location.some((loc: string) =>
+                            profile.location.toLowerCase().includes(loc.toLowerCase())
+                        )
+                        if (!locMatches) return false
+                    }
+                }
+
+                // Education filtering
+                const prefLevels = userPreferences.education || []
+                const prefDegrees = userPreferences.preferred_degrees || []
+                const prefBranches = userPreferences.preferred_branches || []
+
+                const hasLevelPref = prefLevels.length > 0 && !prefLevels.includes("Any")
+                const hasDegreePref = prefDegrees.length > 0 && !prefDegrees.includes("Any")
+                const hasBranchPref = prefBranches.length > 0 && !prefBranches.includes("Any")
+
+                if (hasLevelPref || hasDegreePref || hasBranchPref) {
+                    if (!profile.education || profile.education.length === 0) {
+                        return false // No education on profile, but preferences are set
+                    }
+
+                    const hasAnyMatchingEdu = profile.education.some((edu: any) => {
+                        let levelMatch = true
+                        let degreeMatch = true
+                        let branchMatch = true
+
+                        if (hasLevelPref) {
+                            levelMatch = prefLevels.some((pref: string) => 
+                                (edu.education?.toLowerCase() || "").includes(pref.toLowerCase())
+                            )
+                        }
+
+                        if (hasDegreePref) {
+                            degreeMatch = prefDegrees.some((pref: string) => 
+                                (edu.degree?.toLowerCase() || "").includes(pref.toLowerCase()) || 
+                                (edu.degree_other?.toLowerCase() || "").includes(pref.toLowerCase())
+                            )
+                        }
+
+                        if (hasBranchPref) {
+                            branchMatch = prefBranches.some((pref: string) => 
+                                (edu.branch?.toLowerCase() || "").includes(pref.toLowerCase())
+                            )
+                        }
+
+                        return levelMatch && degreeMatch && branchMatch
+                    })
+
+                    if (!hasAnyMatchingEdu) return false
+                }
+
+                if (userPreferences.employment_type && userPreferences.employment_type.length > 0) {
+                    if (profile.professionType) {
+                        const empMatches = userPreferences.employment_type.some((emp: string) =>
+                            profile.professionType.toLowerCase().includes(emp.toLowerCase())
+                        )
+                        if (!empMatches) return false
+                    }
+                }
+
+                if (userPreferences.sector && userPreferences.sector.length > 0) {
+                    if (profile.professionDetails?.sector) {
+                        const sectorMatches = userPreferences.sector.some((sec: string) =>
+                            (profile.professionDetails.sector.toLowerCase() || "").includes(sec.toLowerCase())
+                        )
+                        if (!sectorMatches) return false
+                    }
+                }
+
+                if (userPreferences.smoking && userPreferences.smoking.length > 0) {
+                    if (profile.socialHabits?.smoking) {
+                        const isMatch = userPreferences.smoking.some((s: string) =>
+                            (profile.socialHabits?.smoking?.toLowerCase() || "").includes(s.toLowerCase())
+                        )
+                        if (!isMatch) return false
+                    }
+                }
+
+                if (userPreferences.drinking && userPreferences.drinking.length > 0) {
+                    if (profile.socialHabits?.drinking) {
+                        const isMatch = userPreferences.drinking.some((d: string) =>
+                            (profile.socialHabits?.drinking?.toLowerCase() || "").includes(d.toLowerCase())
+                        )
+                        if (!isMatch) return false
+                    }
+                }
+
+                return true
+            })
+        }
+
+        // 2. Sorting (by lifestyle match if premium)
+        if (isPremium) {
+            dataset = [...dataset].sort((a, b) => {
+                const scoreA = a.lifestyleMatch?.totalScore || 0
+                const scoreB = b.lifestyleMatch?.totalScore || 0
+                return scoreB - scoreA
+            })
+        }
+
+        // 3. Category Filter
         switch (activeCategory) {
             case "newly-joined":
-                return profiles.filter(p => new Date(p.created_at) > thirtyDaysAgo)
+                return dataset.filter(p => new Date(p.created_at) > thirtyDaysAgo)
             case "matches-with-photos":
-                return profiles.filter(p => p.photos && p.photos.length > 0)
+                return dataset.filter(p => p.photos && p.photos.length > 0)
             case "matches-with-horoscope":
-                return profiles.filter(p => p.horoscope && (p.horoscope.zodiac_sign || p.horoscope.star))
+                return dataset.filter(p => p.horoscope && (p.horoscope.zodiac_sign || p.horoscope.star))
             case "shortlisted-by-you":
-                return profiles.filter(p => shortlistedIds.includes(p.user_id))
+                return dataset.filter(p => shortlistedIds.includes(p.user_id))
             case "shortlisted-you":
-                return profiles.filter(p => p.profileLikedChild)
+                return dataset.filter(p => shortlistedMeIds.includes(p.user_id))
             case "viewed-you":
-                return profiles.filter(p => viewedMeIds.includes(p.user_id))
+                return dataset.filter(p => viewedMeIds.includes(p.user_id))
             case "viewed-by-you":
-                return profiles.filter(p => iViewedIds.includes(p.user_id))
+                return dataset.filter(p => iViewedIds.includes(p.user_id))
             case "nearby-matches":
-                if (!currentUserLocation) return profiles
+                if (!currentUserLocation) return dataset
                 const myCity = currentUserLocation.split(',')[0].trim().toLowerCase()
                 const myCoords = getCoordinatesForCity(myCity)
                 
-                return profiles.filter(p => {
+                return dataset.filter(p => {
                     const profileCity = (p.location || "").split(',')[0].trim().toLowerCase()
                     if (myCity === profileCity) return true // Exact text match
                     if (!myCoords) return profileCity.includes(myCity) || myCity.includes(profileCity) // String fallback if no coords
@@ -885,14 +923,14 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     return profileCity.includes(myCity) || myCity.includes(profileCity)
                 })
             case "star-matches":
-                return profiles.filter(p => p.horoscope?.star)
+                return dataset.filter(p => p.horoscope?.star)
             case "horoscope-matches":
-                return profiles.filter(p => p.compatibility && p.compatibility.score >= 6)
+                return dataset.filter(p => p.compatibility && p.compatibility.score >= 6)
             case "all-matches":
             default:
-                return profiles
+                return dataset
         }
-    }, [profiles, activeCategory, shortlistedIds, viewedMeIds, iViewedIds, currentUserLocation])
+    }, [profiles, activeCategory, shortlistedIds, shortlistedMeIds, viewedMeIds, iViewedIds, currentUserLocation, userPreferences, applyPreferences, isPremium])
 
     const getAgeHeightCasteEducationProfessionCityStr = (profile: any) => {
         const parts = []
@@ -1002,13 +1040,25 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     {/* Right: Content Section */}
                     <div className="p-6 md:p-8 flex-1 flex flex-col relative bg-gradient-to-br from-white/60 via-white/40 to-transparent">
                         {/* Compatibility Score */}
-                        <div className="absolute top-6 right-6 z-20 scale-100">
+                        <div className="absolute top-6 right-8 z-20 flex items-center gap-6">
                             <MatchScoreBadge 
                                 lifestyleScore={profile.lifestyleMatch?.totalScore || 0}
                                 poruthamScore={profile.compatibility?.score || 0}
                                 isPremium={isPremium}
                                 onClick={openBreakdown}
                             />
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleShortlist(e, profile.user_id); }}
+                                disabled={shortlistLoadingId === profile.user_id}
+                                className={cn(
+                                    "p-0 h-auto hover:bg-transparent transition-all hover:scale-110 flex items-start -mt-2",
+                                    shortlistedIds.includes(profile.user_id) ? "text-[#FF1493]" : "text-gray-300 hover:text-[#4B0082]"
+                                )}
+                            >
+                                <Bookmark className={cn("h-[64px] w-[32px]", shortlistedIds.includes(profile.user_id) && "fill-current")} />
+                            </Button>
                         </div>
 
                         <div className="mb-4">
@@ -1060,15 +1110,6 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                     disabled={actionLoadingId === profile.user_id}
                                 >
                                     {likedIds.includes(profile.user_id) ? 'Interest Logged' : 'Send Interest'}
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className={`h-14 w-14 p-0 rounded-3xl transition-all duration-500 border-2 ${shortlistedIds.includes(profile.user_id) ? 'text-amber-500 border-amber-100 bg-amber-50/30' : 'text-gray-200 border-transparent hover:text-amber-400 hover:bg-amber-50'}`}
-                                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleShortlist(e, profile.user_id); }}
-                                    disabled={shortlistLoadingId === profile.user_id}
-                                >
-                                    <Star className={`h-6 w-6 ${shortlistedIds.includes(profile.user_id) ? 'fill-amber-500' : ''}`} />
                                 </Button>
                             </div>
                             
@@ -1153,15 +1194,15 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
             title: "Astrology",
             items: [
                 { id: "horoscope-matches", label: "Horoscope Matches", description: "High compatibility based on Porutham", icon: SparklesIcon },
-                { id: "star-matches", label: "Star Matches", description: "Profiles with defined birth stars", icon: Star },
+                { id: "star-matches", label: "Star Matches", description: "Profiles with defined birth stars", icon: Bookmark },
             ]
         },
         {
             title: "Activity",
             items: [
-                { id: "shortlisted-by-you", label: "Shortlisted", description: "Matches you have saved", icon: Star },
+                { id: "shortlisted-by-you", label: "Shortlisted", description: "Matches you have saved", icon: Bookmark },
                 { id: "viewed-you", label: "Who viewed me", description: "Matches who have viewed your profile", icon: Filter },
-                { id: "shortlisted-you", label: "Who shortlisted me", description: "Matches who have shortlisted your profile", icon: User },
+                { id: "shortlisted-you", label: "Who shortlisted me", description: "Matches who have shortlisted your profile", icon: Bookmark },
                 { id: "viewed-by-you", label: "Profiles I viewed", description: "Matches you have viewed", icon: Filter },
             ]
         },
@@ -1196,35 +1237,33 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Sidebar */}
                     <aside className="w-full lg:w-[19rem] shrink-0 space-y-8 lg:sticky lg:top-24">
-                        <div className="sds-glass rounded-[2.5rem] overflow-hidden p-6 border-2 border-indigo-100/30 shadow-[0_32px_64px_-12px_rgba(75,0,130,0.12)]">
+                        <div className="sds-glass rounded-[2.5rem] overflow-hidden p-3 border-2 border-indigo-100/30 shadow-[0_32px_64px_-12px_rgba(75,0,130,0.12)]">
                             <div className="p-4 border-b border-black/[0.03] mb-4">
-                                <h4 className="text-[10px] font-black uppercase tracking-[0.5em] text-[#4B0082] opacity-50">Filter Results</h4>
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.5em] text-[#4B0082] opacity-50">Quick Actions</h4>
                             </div>
                             <div className="space-y-6 p-2">
                                 {menuGroups.map((group) => (
                                     <div key={group.title} className="space-y-2">
-                                        <div className="px-4 py-1 text-[8px] font-black uppercase tracking-[0.4em] text-[#4B0082]/60">{group.title}</div>
+                                        <div className="px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-900/40">{group.title}</div>
                                         <div className="space-y-1.5">
                                             {group.items.map((item) => (
                                                 <button
                                                     key={item.id}
                                                     onClick={() => setActiveCategory(item.id)}
-                                                    className={`w-full group text-left px-4 py-3 rounded-2xl transition-all duration-500 flex items-center gap-4 relative overflow-hidden ${
+                                                    className={`w-full group text-left px-4 h-11 rounded-xl transition-all duration-500 flex items-center gap-3 relative overflow-hidden ${
                                                         activeCategory === item.id 
                                                         ? "bg-[#4B0082] text-white shadow-lg shadow-indigo-900/20 z-10" 
-                                                        : "hover:bg-indigo-50/50 text-indigo-950/70 hover:text-[#4B0082]"
+                                                        : "hover:bg-[#4B0082]/5 text-gray-700 hover:text-[#4B0082]"
                                                     }`}
                                                 >
-                                                    <div className={`p-2 rounded-xl transition-all duration-300 ${activeCategory === item.id ? "bg-white/10 text-white" : "bg-indigo-50 text-indigo-300 group-hover:bg-white group-hover:text-[#4B0082]"}`}>
-                                                        <item.icon className="h-4 w-4" />
-                                                    </div>
+                                                    <item.icon className={`h-4 w-4 shrink-0 transition-all duration-300 ${activeCategory === item.id ? "text-white" : "text-[#4B0082]"}`} />
                                                     <div className="flex-1 min-w-0">
-                                                        <div className={`text-[10px] font-black uppercase tracking-[0.1em] truncate transition-colors duration-300 ${activeCategory === item.id ? "text-white" : "group-hover:text-[#4B0082]"}`}>
+                                                        <div className={`text-[11px] font-bold truncate transition-colors duration-300 ${activeCategory === item.id ? "text-white" : "group-hover:text-[#4B0082]"}`}>
                                                             {item.label}
                                                         </div>
                                                     </div>
                                                     {isMounted && activeCategory === item.id && (
-                                                        <motion.div layoutId="active-indicator" className="absolute right-0 w-1 h-6 bg-indigo-300 rounded-l-full" />
+                                                        <motion.div layoutId="active-indicator" className="absolute right-0 w-1 h-5 bg-indigo-300 rounded-l-full" />
                                                     )}
                                                 </button>
                                             ))}
@@ -1966,14 +2005,27 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                             </Button>
                                         )
                                     ) : (
-                                        <Button
-                                            className="w-full bg-[#4B0082] hover:bg-indigo-700 text-white py-6 rounded-[1.5rem] font-bold tracking-widest text-[11px] uppercase shadow-lg shadow-indigo-500/20"
-                                            onClick={(e) => handleCustomerLike(e, selectedProfile.user_id)}
-                                            disabled={actionLoadingId === selectedProfile.user_id}
-                                        >
-                                            <Heart className={`h-5 w-5 mr-3 ${actionLoadingId === selectedProfile.user_id ? "animate-pulse" : ""}`} />
-                                            {actionLoadingId === selectedProfile.user_id ? "Liking..." : "Send Interest"}
-                                        </Button>
+                                        <div className="flex gap-4">
+                                            <Button
+                                                className="flex-1 bg-[#4B0082] hover:bg-indigo-700 text-white py-6 rounded-[1.5rem] font-bold tracking-widest text-[11px] uppercase shadow-lg shadow-indigo-500/20"
+                                                onClick={(e) => handleCustomerLike(e, selectedProfile.user_id)}
+                                                disabled={actionLoadingId === selectedProfile.user_id}
+                                            >
+                                                <Heart className={`h-5 w-5 mr-3 ${actionLoadingId === selectedProfile.user_id ? "animate-pulse" : ""}`} />
+                                                {actionLoadingId === selectedProfile.user_id ? "Liking..." : "Send Interest"}
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                className={cn(
+                                                    "h-12 w-12 p-0 rounded-2xl transition-all border",
+                                                    shortlistedIds.includes(selectedProfile.user_id) ? "text-[#FF1493] bg-pink-50 border-pink-100 shadow-sm" : "border-gray-200 text-gray-400 hover:text-[#4B0082] hover:bg-indigo-50"
+                                                )}
+                                                onClick={(e) => handleShortlist(e, selectedProfile.user_id)}
+                                                disabled={shortlistLoadingId === selectedProfile.user_id}
+                                            >
+                                                <Bookmark className={cn("h-5 w-5", shortlistedIds.includes(selectedProfile.user_id) && "fill-current")} />
+                                            </Button>
+                                        </div>
                                     )}
                                 </div>
                             </div>

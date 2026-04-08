@@ -5,6 +5,7 @@ import { VerificationDialog } from "@/components/verification-dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { motion } from "framer-motion"
 import {
+  Bookmark,
   User,
   CheckCircle2,
   Edit,
@@ -31,6 +32,7 @@ import {
   Shield,
   Bell
 } from "lucide-react"
+import { toast } from "sonner"
 import {
   Popover,
   PopoverContent,
@@ -109,6 +111,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
   const [isSectionsLoading, setIsSectionsLoading] = useState(true)
   const userName = userEmail.split("@")[0]
   const isProfileComplete = completionPercentage === 100
+
+  const [shortlistedIds, setShortlistedIds] = useState<string[]>([])
+  const [shortlistLoadingId, setShortlistLoadingId] = useState<string | null>(null)
 
   useEffect(() => {
     const calculateProgress = async () => {
@@ -613,6 +618,51 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
     fetchSectionsData()
   }, [userId])
 
+  useEffect(() => {
+    const fetchShortlists = async () => {
+      if (!userId) return
+      const res = await fetch(`/api/shortlists?userId=${userId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setShortlistedIds(data.shortlistedIds || [])
+      }
+    }
+    fetchShortlists()
+  }, [userId])
+
+  const handleShortlist = async (targetId: string) => {
+    if (shortlistLoadingId) return
+    setShortlistLoadingId(targetId)
+
+    const isCurrentlyShortlisted = shortlistedIds.includes(targetId)
+    const method = isCurrentlyShortlisted ? "DELETE" : "POST"
+
+    try {
+      const res = await fetch("/api/shortlists", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, targetUserId: targetId }),
+      })
+
+      if (res.ok) {
+        if (isCurrentlyShortlisted) {
+          setShortlistedIds(prev => prev.filter(id => id !== targetId))
+          toast.success("Removed from shortlist")
+        } else {
+          setShortlistedIds(prev => [...prev, targetId])
+          toast.success("Added to shortlist")
+        }
+      } else {
+        const data = await res.json()
+        toast.error(data.error || "Failed to update shortlist")
+      }
+    } catch (err) {
+      toast.error("Network error. Please try again.")
+    } finally {
+      setShortlistLoadingId(null)
+    }
+  }
+
   const handleMarkAsMarried = async () => {
     try {
       const { error } = await supabase
@@ -955,6 +1005,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 onProfileClick={(p) => onNavigateToBrowse()}
                 onViewAll={onNavigateToBrowse}
                 isLoading={isSectionsLoading}
+                shortlistedIds={shortlistedIds}
+                onShortlist={handleShortlist}
+                shortlistLoadingId={shortlistLoadingId}
             />
 
             <ProfileCarousel
@@ -964,6 +1017,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 onProfileClick={(p) => onNavigateToBrowse()}
                 onViewAll={onNavigateToBrowse}
                 isLoading={isSectionsLoading}
+                shortlistedIds={shortlistedIds}
+                onShortlist={handleShortlist}
+                shortlistLoadingId={shortlistLoadingId}
             />
 
             <ProfileCarousel
@@ -973,6 +1029,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 onProfileClick={(p) => onNavigateToBrowse()}
                 onViewAll={onNavigateToBrowse}
                 isLoading={isSectionsLoading}
+                shortlistedIds={shortlistedIds}
+                onShortlist={handleShortlist}
+                shortlistLoadingId={shortlistLoadingId}
             />
 
             <ProfileCarousel
@@ -982,6 +1041,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 onProfileClick={(p) => onNavigateToBrowse()}
                 onViewAll={onNavigateToBrowse}
                 isLoading={isSectionsLoading}
+                shortlistedIds={shortlistedIds}
+                onShortlist={handleShortlist}
+                shortlistLoadingId={shortlistLoadingId}
             />
 
             <ProfileCarousel
@@ -991,6 +1053,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 onProfileClick={(p) => onNavigateToBrowse()}
                 onViewAll={onNavigateToBrowse}
                 isLoading={isSectionsLoading}
+                shortlistedIds={shortlistedIds}
+                onShortlist={handleShortlist}
+                shortlistLoadingId={shortlistLoadingId}
             />
           </div>
           {/* Marriage/Success Card */}

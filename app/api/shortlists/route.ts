@@ -42,21 +42,22 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'userId is required' }, { status: 400 })
         }
 
-        const { data, error } = await supabaseAdmin
-            .from('shortlists')
-            .select('shortlisted_user_id')
-            .eq('user_id', userId)
+        const [{ data: myShortlistData, error: e1 }, { data: shortlistedMeData, error: e2 }] = await Promise.all([
+            supabaseAdmin.from('shortlists').select('shortlisted_user_id').eq('user_id', userId),
+            supabaseAdmin.from('shortlists').select('user_id').eq('shortlisted_user_id', userId)
+        ])
 
-        if (error) {
-            // If table doesn't exist, return empty
-            if (error.code === 'PGRST116' || error.code === '42P01') {
-                return NextResponse.json({ shortlistedIds: [] })
+        if (e1 || e2) {
+            const error = e1 || e2
+            if (error?.code === 'PGRST116' || error?.code === '42P01') {
+                return NextResponse.json({ shortlistedIds: [], shortlistedMeIds: [] })
             }
-            return NextResponse.json({ error: error.message }, { status: 500 })
+            return NextResponse.json({ error: error?.message }, { status: 500 })
         }
 
         return NextResponse.json({
-            shortlistedIds: (data || []).map((r: any) => r.shortlisted_user_id),
+            shortlistedIds: (myShortlistData || []).map((r: any) => r.shortlisted_user_id),
+            shortlistedMeIds: (shortlistedMeData || []).map((r: any) => r.user_id),
         })
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 })

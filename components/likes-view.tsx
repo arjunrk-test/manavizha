@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
-import { Heart, User, MapPin, Briefcase, Sparkles, HeartHandshake, X, GraduationCap, Star, Phone, MessageCircle, Coffee, ChevronLeft, ChevronRight, Inbox, Send, Filter, CheckCircle2, XCircle, Clock, ArrowRight, Shield, Crown, Users2 } from "lucide-react"
+import { Heart, User, MapPin, Briefcase, Sparkles, HeartHandshake, X, GraduationCap, Star, Phone, MessageCircle, Coffee, ChevronLeft, ChevronRight, Inbox, Send, Filter, CheckCircle2, XCircle, Clock, ArrowRight, Shield, Crown, Users2, Bookmark } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog"
@@ -57,6 +57,8 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
     const [profiles, setProfiles] = useState<Record<string, ProfileCard>>({})
     const [selectedProfile, setSelectedProfile] = useState<ProfileCard | null>(null)
     const [actionLoadingId, setActionLoadingId] = useState("")
+    const [shortlistedIds, setShortlistedIds] = useState<string[]>([])
+    const [shortlistLoadingId, setShortlistLoadingId] = useState<string | null>(null)
 
     // Messaging & Detailed Data States
     const [mutualFullData, setMutualFullData] = useState<any>(null)
@@ -77,7 +79,48 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
     useEffect(() => {
         fetchLikes()
         fetchStatus()
+        fetchShortlists()
     }, [userId])
+
+    const fetchShortlists = async () => {
+        if (!userId) return
+        const res = await fetch(`/api/shortlists?userId=${userId}`)
+        if (res.ok) {
+            const data = await res.json()
+            setShortlistedIds(data.shortlistedIds || [])
+        }
+    }
+
+    const handleShortlist = async (e: React.MouseEvent, targetId: string) => {
+        e.stopPropagation()
+        if (shortlistLoadingId) return
+        setShortlistLoadingId(targetId)
+
+        const isCurrentlyShortlisted = shortlistedIds.includes(targetId)
+        const method = isCurrentlyShortlisted ? "DELETE" : "POST"
+
+        try {
+            const res = await fetch("/api/shortlists", {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, targetUserId: targetId }),
+            })
+
+            if (res.ok) {
+                if (isCurrentlyShortlisted) {
+                    setShortlistedIds(prev => prev.filter(id => id !== targetId))
+                    toast.success("Removed from shortlist")
+                } else {
+                    setShortlistedIds(prev => [...prev, targetId])
+                    toast.success("Added to shortlist")
+                }
+            }
+        } catch (err) {
+            toast.error("Operation failed")
+        } finally {
+            setShortlistLoadingId(null)
+        }
+    }
 
     const fetchStatus = async () => {
         const { data } = await supabase.from('user_settings').select('is_premium').eq('user_id', userId).maybeSingle()
@@ -207,6 +250,15 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
     }
 
     const handleOpenProfile = async (profile: ProfileCard) => {
+        // Record the view
+        if (userId && profile.user_id && userId !== profile.user_id) {
+            fetch("/api/views", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ viewerId: userId, viewedUserId: profile.user_id })
+            }).catch(e => console.error("Error logging view", e))
+        }
+        
         setModalPhotoIndex(0)
         setSelectedProfile(profile)
     }
@@ -454,6 +506,8 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                                                 setMessageTarget({ id: profile.user_id, name: profile.name })
                                                 setIsMessageDialogOpen(true)
                                             }}
+                                            onShortlist={(e) => handleShortlist(e, profile.user_id)}
+                                            shortlistedIds={shortlistedIds}
                                             actionLoading={actionLoadingId === profile.user_id}
                                             index={idx}
                                          />
@@ -525,7 +579,21 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                                                 >
                                                     Open Communications
                                                 </Button>
-                                                <Button variant="outline" className="h-14 w-14 rounded-2xl border-indigo-100 flex items-center justify-center text-indigo-600">
+                                                <Button 
+                                                    variant="outline" 
+                                                    className={cn(
+                                                        "h-14 w-14 rounded-2xl border-indigo-100 flex items-center justify-center transition-all",
+                                                        shortlistedIds.includes(selectedProfile.user_id) ? "text-[#FF1493] bg-pink-50 border-pink-100 shadow-sm" : "text-gray-300 border-gray-100 hover:text-[#4B0082] hover:bg-indigo-50"
+                                                    )}
+                                                    onClick={(e) => handleShortlist(e, selectedProfile.user_id)}
+                                                    disabled={shortlistLoadingId === selectedProfile.user_id}
+                                                >
+                                                    <Bookmark className={cn("h-6 w-6", shortlistedIds.includes(selectedProfile.user_id) && "fill-current")} />
+                                                </Button>
+                                                <Button 
+                                                    variant="outline" 
+                                                    className="h-14 w-14 rounded-2xl border-indigo-100 flex items-center justify-center text-indigo-600"
+                                                >
                                                     <Phone className="h-6 w-6" />
                                                 </Button>
                                             </div>
@@ -558,9 +626,11 @@ interface LikesHorizontalCardProps {
     onMessage: () => void
     actionLoading: boolean
     index: number
+    shortlistedIds: string[]
+    onShortlist: (e: React.MouseEvent) => void
 }
 
-function LikesHorizontalCard({ profile, section, onAction, onView, onMessage, actionLoading, index }: LikesHorizontalCardProps) {
+function LikesHorizontalCard({ profile, section, onAction, onView, onMessage, actionLoading, index, shortlistedIds, onShortlist }: LikesHorizontalCardProps) {
     return (
         <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -596,6 +666,20 @@ function LikesHorizontalCard({ profile, section, onAction, onView, onMessage, ac
 
             {/* Right profile Content */}
             <div className="flex-1 p-6 md:p-8 flex flex-col justify-between bg-white/60 relative">
+                {/* Floating Bookmark Ribbon */}
+                <div className="absolute top-6 right-8 z-20">
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={onShortlist}
+                        className={cn(
+                            "p-0 h-auto hover:bg-transparent transition-all hover:scale-110 flex items-start -mt-2",
+                            shortlistedIds.includes(profile.user_id) ? "text-[#FF1493]" : "text-gray-300 hover:text-[#4B0082]"
+                        )}
+                    >
+                        <Bookmark className={cn("h-[64px] w-[32px]", shortlistedIds.includes(profile.user_id) && "fill-current")} />
+                    </Button>
+                </div>
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-3 mb-2">

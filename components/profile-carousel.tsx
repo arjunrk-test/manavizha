@@ -15,6 +15,9 @@ interface ProfileCarouselProps {
     isLoading?: boolean
     emptyMessage?: string
     icon?: React.ReactNode
+    shortlistedIds?: string[]
+    onShortlist?: (profileId: string) => void
+    shortlistLoadingId?: string | null
 }
 
 export function ProfileCarousel({
@@ -25,7 +28,10 @@ export function ProfileCarousel({
     onViewAll,
     isLoading,
     emptyMessage = "No matches found yet.",
-    icon
+    icon,
+    shortlistedIds = [],
+    onShortlist,
+    shortlistLoadingId
 }: ProfileCarouselProps) {
     const scrollRef = useRef<HTMLDivElement>(null)
     const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -158,6 +164,9 @@ export function ProfileCarousel({
                                             profile={profile}
                                             onClick={() => onProfileClick(profile)}
                                             contextText={profile.interaction_at ? `Viewed on : ${new Date(profile.interaction_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}` : profile.location}
+                                            isShortlisted={shortlistedIds.includes(profile.user_id)}
+                                            onShortlist={onShortlist ? () => onShortlist(profile.user_id) : undefined}
+                                            isLoadingShortlist={shortlistLoadingId === profile.user_id}
                                         />
                                     </div>
                                 ))}

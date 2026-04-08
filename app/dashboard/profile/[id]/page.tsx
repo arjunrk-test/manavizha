@@ -7,7 +7,7 @@ import {
     ArrowLeft, MapPin, Briefcase, User, GraduationCap, ArrowRight,
     Heart, Star, CheckCircle2, Phone, MessageCircle, Lock,
     Calendar, Coffee, Eye, Info, Users, Shield, Sparkles, XCircle, Home,
-    Search, Target, Award, HeartHandshake, MoreVertical, UserX, UserMinus, Crown, Gem
+    Search, Target, Award, HeartHandshake, MoreVertical, UserX, UserMinus, Crown, Gem, Bookmark
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -58,6 +58,15 @@ export default function ProfileViewPage() {
 
         const fetchProfile = async () => {
             try {
+                // Record the view on page load (if not viewing own profile)
+                if (currentUserId && targetUserId && currentUserId !== targetUserId) {
+                    fetch("/api/views", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ viewerId: currentUserId, viewedUserId: targetUserId })
+                    }).catch(e => console.error("Error logging view", e))
+                }
+
                 const [
                     { data: personal },
                     { data: contact },
@@ -475,10 +484,10 @@ export default function ProfileViewPage() {
                             onClick={handleShortlist}
                             disabled={isShortlistProcessing}
                             variant="outline"
-                            className={`flex-1 md:flex-none h-16 px-10 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] border-none shadow-2xl transition-all duration-500 hover:scale-105 ${isShortlisted ? 'bg-amber-500 text-white shadow-amber-500/30' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                            className={`flex-1 md:flex-none h-16 px-10 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] border-none shadow-2xl transition-all duration-500 hover:scale-105 ${isShortlisted ? 'bg-[#FF1493]/10 text-[#FF1493] border-[#FF1493]/20' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
                         >
-                            <Star className={`h-5 w-5 mr-3 ${isShortlisted ? 'fill-white' : ''}`} />
-                            {isShortlisted ? 'Saved' : 'Save'}
+                            <Bookmark className={`h-5 w-5 mr-3 ${isShortlisted ? 'fill-current' : ''}`} />
+                            {isShortlisted ? 'Shortlisted' : 'Shortlist'}
                         </Button>
                         <Button 
                             onClick={handleLike}
