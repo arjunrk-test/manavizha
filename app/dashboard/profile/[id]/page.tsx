@@ -44,6 +44,15 @@ export default function ProfileViewPage() {
     const [isMutual, setIsMutual] = useState(false)
     const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
+    
+    // Interaction dates
+    const [iLikedDate, setILikedDate] = useState<string | null>(null)
+    const [likedMeDate, setLikedMeDate] = useState<string | null>(null)
+    const [likedMeStatus, setLikedMeStatus] = useState<string | null>(null)
+    const [iLikedStatus, setILikedStatus] = useState<string | null>(null)
+    const [shortlistedDate, setShortlistedDate] = useState<string | null>(null)
+    const [shortlistedMeDate, setShortlistedMeDate] = useState<string | null>(null)
+    const [lastViewedMeDate, setLastViewedMeDate] = useState<string | null>(null)
 
     useEffect(() => {
         const getSession = async () => {
@@ -144,17 +153,37 @@ export default function ProfileViewPage() {
                     
                     if (likesRes.ok) {
                         const likesData = await likesRes.json()
-                        setIsLiked(likesData.iLikedIds?.includes(targetUserId))
-                        setIsMutual(likesData.iLikedIds?.includes(targetUserId) && likesData.likedMeIds?.includes(targetUserId))
+                        const myLike = (likesData.iLiked || []).find((l: any) => l.id === targetUserId)
+                        const likeMe = (likesData.likedMe || []).find((l: any) => l.id === targetUserId)
+                        
+                        setIsLiked(!!myLike)
+                        setIsMutual(!!myLike && !!likeMe)
+                        setILikedDate(myLike?.created_at || null)
+                        setILikedStatus(myLike?.status || null)
+                        setLikedMeDate(likeMe?.created_at || null)
+                        setLikedMeStatus(likeMe?.status || null)
                     }
                     
                     if (shortRes.ok) {
                         const shortData = await shortRes.json()
-                        setIsShortlisted(shortData.shortlistedIds?.includes(targetUserId))
+                        const myShort = (shortData.shortlisted || []).find((s: any) => s.id === targetUserId)
+                        const shortMe = (shortData.shortlistedMe || []).find((s: any) => s.id === targetUserId)
+                        
+                        setIsShortlisted(!!myShort)
+                        setShortlistedDate(myShort?.created_at || null)
+                        setShortlistedMeDate(shortMe?.created_at || null)
                     }
 
                     if (settingsRes.data) {
                         setIsViewerPremium(settingsRes.data.is_premium)
+                    }
+
+                    // Fetch viewed-me date for this specific user
+                    const viewsRes = await fetch(`/api/views?userId=${currentUserId}`)
+                    if (viewsRes.ok) {
+                        const viewsData = await viewsRes.json()
+                        const viewMe = (viewsData.viewedMe || []).find((v: any) => v.viewer_user_id === targetUserId)
+                        setLastViewedMeDate(viewMe?.created_at || null)
                     }
 
                     if (viewerRes.data) {
@@ -304,8 +333,9 @@ export default function ProfileViewPage() {
                 body: JSON.stringify({ userId: currentUserId, likedUserId: targetUserId }),
             })
             if (res.ok) {
-                setIsLiked(!isLiked)
-                toast.success(isLiked ? "Interest removed" : "Interest expressed!")
+                setIsLiked(true)
+                setILikedDate(new Date().toISOString())
+                toast.success("Interest sent! We'll notify them.")
             } else {
                 toast.error("Action failed")
             }
@@ -327,8 +357,9 @@ export default function ProfileViewPage() {
                 body: JSON.stringify({ userId: currentUserId, targetUserId }),
             })
             if (res.ok) {
-                setIsShortlisted(!isShortlisted)
-                toast.success(isShortlisted ? "Removed from list" : "Saved to shortlist!")
+                setIsShortlisted(true)
+                setShortlistedDate(new Date().toISOString())
+                toast.success("Profile shortlisted!")
             } else {
                 toast.error("Action failed.")
             }
@@ -340,14 +371,9 @@ export default function ProfileViewPage() {
     }
 
     const handleSendMessage = () => {
-        if (isViewerPremium || isMutual) {
-            // Open message dialog logic
-            setIsMessageDialogOpen(true)
-        } else {
-            toast.error("Premium Feature or Mutual Match required", {
-                description: "Upgrade to Premium to message anyone directly, or wait for a mutual interest match."
-            })
-        }
+        // Open message dialog logic even for non-premium
+        // MessageDialog will show the upgrade prompt internally
+        setIsMessageDialogOpen(true)
     }
 
     const handleIgnore = async () => {
@@ -479,47 +505,92 @@ export default function ProfileViewPage() {
                         </p>
                     </div>
 
-                    <div className="flex gap-5 w-full md:w-auto items-center">
-                        <Button 
-                            onClick={handleShortlist}
-                            disabled={isShortlistProcessing}
-                            variant="outline"
-                            className={`flex-1 md:flex-none h-16 px-10 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] border-none shadow-2xl transition-all duration-500 hover:scale-105 ${isShortlisted ? 'bg-[#FF1493]/10 text-[#FF1493] border-[#FF1493]/20' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
-                        >
-                            <Bookmark className={`h-5 w-5 mr-3 ${isShortlisted ? 'fill-current' : ''}`} />
-                            {isShortlisted ? 'Shortlisted' : 'Shortlist'}
-                        </Button>
-                        <Button 
-                            onClick={handleLike}
-                            disabled={isLikeProcessing}
-                            className={`flex-1 md:flex-none h-16 px-10 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl transition-all duration-500 hover:scale-105 ${isLiked ? 'bg-indigo-900 text-white shadow-indigo-900/30' : 'bg-[#4B0082] hover:bg-[#3b0062] text-white shadow-indigo-500/30'}`}
-                        >
-                            <Heart className={`h-5 w-5 mr-3 ${isLiked ? 'fill-white' : ''}`} />
-                            {isLiked ? 'Interested' : 'Send Interest'}
-                        </Button>
+                    <div className="flex flex-col gap-6 w-full md:w-auto">
+                        {/* Interaction Timeline Labels */}
+                        <div className="flex flex-col gap-2 items-end">
+                            {shortlistedMeDate && (
+                                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#4B0082]">
+                                    <Star className="h-4 w-4 fill-current" />
+                                    She shortlisted you {shortlistedMeDate ? `on ${formatToDDMMYYYY(shortlistedMeDate)}` : 'Recently'}
+                                </div>
+                            )}
+                            {isLiked && (
+                                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-900/40">
+                                    <Heart className="h-4 w-4 fill-indigo-900/40" />
+                                    You sent her an interest {iLikedDate ? `- ${formatToDDMMYYYY(iLikedDate)}` : 'Recently'}
+                                </div>
+                            )}
+                            {likedMeDate && (
+                                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-600">
+                                    <Heart className="h-4 w-4 fill-emerald-600" />
+                                    {likedMeStatus === 'accepted' ? 'Accepted interest' : (iLikedStatus === 'accepted' ? 'You accepted her interest' : 'She showed interest')} {likedMeDate ? `on ${formatToDDMMYYYY(likedMeDate)}` : 'Recently'}
+                                </div>
+                            )}
+                            {lastViewedMeDate && (
+                                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#4B0082]/40">
+                                    <Eye className="h-4 w-4" />
+                                    Profile viewed you {lastViewedMeDate ? `on ${formatToDDMMYYYY(lastViewedMeDate)}` : 'Recently'}
+                                </div>
+                            )}
+                        </div>
 
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="icon" className="h-16 w-16 rounded-full border-none shadow-2xl bg-white hover:bg-gray-50 text-gray-700 shrink-0 transition-transform hover:rotate-90 duration-500">
-                                    <MoreVertical className="h-6 w-6" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-64 sds-glass rounded-3xl p-3 z-50 border-indigo-50/50 shadow-2xl">
-                                <DropdownMenuLabel className="text-[10px] font-black text-indigo-300 px-3 py-2 uppercase tracking-[0.2em]">Options</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={handleSendMessage} className="gap-3 cursor-pointer rounded-2xl p-4 focus:bg-[#4B0082] focus:text-white font-black text-[10px] uppercase tracking-[0.2em] transition-all">
-                                    <MessageCircle className="h-5 w-5" /> Send Message
-                                    <Crown className="h-4 w-4 ml-auto text-amber-500" />
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator className="my-2 bg-indigo-50/50" />
-                                <DropdownMenuLabel className="text-[10px] font-black text-indigo-300 px-3 py-2 uppercase tracking-[0.2em]">More Options</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={handleIgnore} className="gap-3 cursor-pointer rounded-2xl p-4 focus:bg-gray-100 text-gray-500 font-bold text-[10px] uppercase tracking-[0.2em]">
-                                    <UserMinus className="h-5 w-5" /> Skip
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={handleBlock} className="gap-3 cursor-pointer rounded-2xl p-4 focus:bg-rose-500 focus:text-white text-rose-500 font-black text-[10px] uppercase tracking-[0.2em]">
-                                    <UserX className="h-5 w-5" /> Block
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <div className="flex gap-5 w-full md:w-auto items-center">
+                            <Button 
+                                onClick={handleShortlist}
+                                disabled={isShortlistProcessing}
+                                variant="outline"
+                                className={`flex-1 md:flex-none h-16 px-10 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] border-none shadow-xl transition-all duration-500 hover:scale-105 ${isShortlisted ? 'bg-[#FF1493]/10 text-[#FF1493] border-[#FF1493]/20' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                            >
+                                <Bookmark className={`h-5 w-5 mr-3 ${isShortlisted ? 'fill-current' : ''}`} />
+                                {isShortlisted ? 'Shortlisted' : 'Shortlist'}
+                            </Button>
+                            <Button 
+                                onClick={() => {
+                                    if (isLiked) {
+                                        handleSendMessage();
+                                    } else {
+                                        handleLike();
+                                    }
+                                }}
+                                disabled={isLikeProcessing}
+                                className={`flex-1 md:flex-none h-16 px-10 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-xl border-none transition-all duration-500 hover:scale-105 ${isLiked ? 'bg-[#FF4500] text-white' : 'bg-[#4B0082] hover:bg-[#3b0062] text-white'}`}
+                            >
+                                {isLiked ? (
+                                    <>
+                                        <MessageCircle className="h-5 w-5 mr-3" />
+                                        Send Message
+                                    </>
+                                ) : (
+                                    <>
+                                        <Heart className="h-5 w-5 mr-3" />
+                                        Send Interest
+                                    </>
+                                )}
+                            </Button>
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="icon" className="h-16 w-16 rounded-full border-none shadow-2xl bg-white hover:bg-gray-50 text-gray-700 shrink-0 transition-transform hover:rotate-90 duration-500">
+                                        <MoreVertical className="h-6 w-6" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-64 sds-glass rounded-3xl p-3 z-50 border-indigo-50/50 shadow-2xl">
+                                    <DropdownMenuLabel className="text-[10px] font-black text-indigo-300 px-3 py-2 uppercase tracking-[0.2em]">Options</DropdownMenuLabel>
+                                    <DropdownMenuItem onClick={handleSendMessage} className="gap-3 cursor-pointer rounded-2xl p-4 focus:bg-[#4B0082] focus:text-white font-black text-[10px] uppercase tracking-[0.2em] transition-all">
+                                        <MessageCircle className="h-5 w-5" /> Send Message
+                                        <Crown className="h-4 w-4 ml-auto text-amber-500" />
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator className="my-2 bg-indigo-50/50" />
+                                    <DropdownMenuLabel className="text-[10px] font-black text-indigo-300 px-3 py-2 uppercase tracking-[0.2em]">More Options</DropdownMenuLabel>
+                                    <DropdownMenuItem onClick={handleIgnore} className="gap-3 cursor-pointer rounded-2xl p-4 focus:bg-gray-100 text-gray-500 font-bold text-[10px] uppercase tracking-[0.2em]">
+                                        <UserMinus className="h-5 w-5" /> Skip
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={handleBlock} className="gap-3 cursor-pointer rounded-2xl p-4 focus:bg-rose-500 focus:text-white text-rose-500 font-black text-[10px] uppercase tracking-[0.2em]">
+                                        <UserX className="h-5 w-5" /> Block
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                     </div>
                 </div>
 

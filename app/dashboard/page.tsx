@@ -25,7 +25,13 @@ export default function DashboardPage() {
       userEmail={user.email || ""}
       userId={user.id}
       onNavigateToProfileSetup={() => router.push("/dashboard/setup")}
-      onNavigateToBrowse={() => router.push("/dashboard/browse")}
+      onNavigateToBrowse={(category?: string) => {
+        if (category) {
+          router.push(`/dashboard/browse?category=${category}`)
+        } else {
+          router.push("/dashboard/browse")
+        }
+      }}
       onNavigateToParents={() => router.push("/dashboard/parents")}
       onNavigateToSelections={() => router.push("/dashboard/selections")}
       onNavigateToPartnerPreferences={() => router.push("/dashboard/preferences")}

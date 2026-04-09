@@ -2,11 +2,13 @@
 
 import { BrowseProfiles } from "@/components/browse-profiles"
 import { supabase } from "@/lib/supabase"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
 export default function BrowsePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const initialCategory = searchParams.get("category") || undefined
   const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -22,6 +24,7 @@ export default function BrowsePage() {
   return (
     <BrowseProfiles 
       userId={userId} 
+      initialCategory={initialCategory}
       onBack={() => router.push("/dashboard")}
     />
   )

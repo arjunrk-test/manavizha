@@ -58,7 +58,7 @@ interface UserLandingPageProps {
   userEmail: string
   userId: string
   onNavigateToProfileSetup: () => void
-  onNavigateToBrowse: () => void
+  onNavigateToBrowse: (category?: string) => void
   onNavigateToParents: () => void
   onNavigateToSelections: () => void
   onNavigateToPartnerPreferences: () => void
@@ -818,7 +818,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               <Button
                 variant="ghost"
                 className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
-                onClick={onNavigateToBrowse}
+                onClick={() => onNavigateToBrowse()}
                 disabled={completionPercentage === 0}
               >
                 <Users2 className="h-4 w-4 mr-3 text-indigo-400" />
@@ -999,11 +999,11 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           {/* --- Match Sections --- */}
           <div className="space-y-2">
             <ProfileCarousel
-                title="Daily Recommendations"
+                title={`Daily Recommendations (${dailyRecs.length})`}
                 subtitle="Recommended matches for today"
                 profiles={dailyRecs}
                 onProfileClick={(p) => onNavigateToBrowse()}
-                onViewAll={onNavigateToBrowse}
+                onViewAll={() => onNavigateToBrowse()}
                 isLoading={isSectionsLoading}
                 shortlistedIds={shortlistedIds}
                 onShortlist={handleShortlist}
@@ -1011,11 +1011,11 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             />
 
             <ProfileCarousel
-                title="All Matches"
+                title={`All Matches (${allMatches.length})`}
                 subtitle="Members who match your partner preferences"
                 profiles={allMatches}
                 onProfileClick={(p) => onNavigateToBrowse()}
-                onViewAll={onNavigateToBrowse}
+                onViewAll={() => onNavigateToBrowse()}
                 isLoading={isSectionsLoading}
                 shortlistedIds={shortlistedIds}
                 onShortlist={handleShortlist}
@@ -1023,11 +1023,11 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             />
 
             <ProfileCarousel
-                title="New Matches"
+                title={`New Matches (${newMatches.length})`}
                 subtitle="Members who joined in the last 30 days"
                 profiles={newMatches}
-                onProfileClick={(p) => onNavigateToBrowse()}
-                onViewAll={onNavigateToBrowse}
+                onProfileClick={(p) => onNavigateToBrowse('newly-joined')}
+                onViewAll={() => onNavigateToBrowse('newly-joined')}
                 isLoading={isSectionsLoading}
                 shortlistedIds={shortlistedIds}
                 onShortlist={handleShortlist}
@@ -1035,11 +1035,11 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             />
 
             <ProfileCarousel
-                title="Who Viewed me"
+                title={`Who Viewed me (${whoViewedMe.length})`}
                 subtitle="Members who have viewed your profile"
                 profiles={whoViewedMe}
-                onProfileClick={(p) => onNavigateToBrowse()}
-                onViewAll={onNavigateToBrowse}
+                onProfileClick={(p) => onNavigateToBrowse('viewed-you')}
+                onViewAll={() => onNavigateToBrowse('viewed-you')}
                 isLoading={isSectionsLoading}
                 shortlistedIds={shortlistedIds}
                 onShortlist={handleShortlist}
@@ -1047,11 +1047,11 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             />
 
             <ProfileCarousel
-                title="Profiles I Viewed"
+                title={`Profiles I Viewed (${profilesIViewed.length})`}
                 subtitle="Members whose profile you have visited"
                 profiles={profilesIViewed}
-                onProfileClick={(p) => onNavigateToBrowse()}
-                onViewAll={onNavigateToBrowse}
+                onProfileClick={(p) => onNavigateToBrowse('viewed-by-you')}
+                onViewAll={() => onNavigateToBrowse('viewed-by-you')}
                 isLoading={isSectionsLoading}
                 shortlistedIds={shortlistedIds}
                 onShortlist={handleShortlist}

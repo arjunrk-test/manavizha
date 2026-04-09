@@ -1,21 +1,10 @@
 /**
- * Formats a date string (YYYY-MM-DD) to DD-MM-YYYY format.
- * If the input is not a valid date string, returns the original input.
+ * Formats a date string to DD-MM-YYYY format.
+ * If the input is not valid, returns the original input.
  */
 export function formatToDDMMYYYY(dateStr: string | null | undefined): string {
   if (!dateStr) return "";
   
-  // Check if it's already in DD-MM-YYYY format (optional safety)
-  if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) return dateStr;
-  
-  // Try to parse YYYY-MM-DD
-  const parts = dateStr.split("-");
-  if (parts.length === 3 && parts[0].length === 4) {
-    const [year, month, day] = parts;
-    return `${day}-${month}-${year}`;
-  }
-  
-  // Fallback: try native Date parsing
   try {
     const date = new Date(dateStr);
     if (!isNaN(date.getTime())) {
@@ -26,6 +15,22 @@ export function formatToDDMMYYYY(dateStr: string | null | undefined): string {
     }
   } catch (e) {
     // console.error("Error formatting date:", e);
+  }
+
+  // Backup: manual split for YYYY-MM-DD
+  const cleanStr = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+  const parts = cleanStr.split(/[-/]/);
+  if (parts.length === 3) {
+    // Check if first part is year
+    if (parts[0].length === 4) {
+      const [year, month, day] = parts;
+      return `${day.padStart(2, '0')}-${month.padStart(2, '0')}-${year}`;
+    }
+    // Check if last part is year
+    if (parts[2].length === 4) {
+       const [day, month, year] = parts;
+       return `${day.padStart(2, '0')}-${month.padStart(2, '0')}-${year}`;
+    }
   }
   
   return dateStr;

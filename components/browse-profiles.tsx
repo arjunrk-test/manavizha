@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { supabase } from "@/lib/supabase"
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ArrowRight, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Bookmark, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle, MoreVertical, UserX, UserMinus, Crown, Gem, Shield, X, Star } from "lucide-react"
+import { ArrowLeft, ArrowRight, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Bookmark, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle, MoreVertical, UserX, UserMinus, Crown, Gem, Shield, X, Star, Eye } from "lucide-react"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -26,6 +26,7 @@ import { formatToDDMMYYYY } from "@/lib/utils/date-utils"
 interface BrowseProfilesProps {
     userId: string
     onBack?: () => void
+    initialCategory?: string
     parentViewer?: {
         isParent: boolean
         parentId: string
@@ -33,7 +34,7 @@ interface BrowseProfilesProps {
     }
 }
 
-export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesProps) {
+export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }: BrowseProfilesProps) {
     const [isLoading, setIsLoading] = useState(true)
     const [profiles, setProfiles] = useState<any[]>([])
     const [selectedProfile, setSelectedProfile] = useState<any | null>(null)
@@ -54,13 +55,21 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
     const [breakdownName, setBreakdownName] = useState("")
 
     // State to track the active sidebar category
-    const [activeCategory, setActiveCategory] = useState<string>("all-matches")
+    const [activeCategory, setActiveCategory] = useState<string>(initialCategory || "all-matches")
     const [searchTerm, setSearchTerm] = useState("")
     const [isProfileIncomplete, setIsProfileIncomplete] = useState(false)
     const [iViewedIds, setIViewedIds] = useState<string[]>([])
     const [viewedMeIds, setViewedMeIds] = useState<string[]>([])
     const [shortlistedMeIds, setShortlistedMeIds] = useState<string[]>([])
     const [currentUserLocation, setCurrentUserLocation] = useState<string>("")
+    const [iLikedDateMap, setILikedDateMap] = useState<Record<string, string>>({})
+    const [likedMeDateMap, setLikedMeDateMap] = useState<Record<string, string>>({})
+    const [iViewedDateMap, setIViewedDateMap] = useState<Record<string, string>>({})
+    const [viewedMeDateMap, setViewedMeDateMap] = useState<Record<string, string>>({})
+    const [shortlistedDateMap, setShortlistedDateMap] = useState<Record<string, string>>({})
+    const [shortlistedMeDateMap, setShortlistedMeDateMap] = useState<Record<string, string>>({})
+    const [likedMeStatusMap, setLikedMeStatusMap] = useState<Record<string, string>>({})
+    const [iLikedStatusMap, setILikedStatusMap] = useState<Record<string, string>>({})
 
     // State to track the currently viewed photo index for the modal
     const [modalPhotoIndex, setModalPhotoIndex] = useState(0)
@@ -381,6 +390,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 toast.success(`Removed from shortlist`)
             } else {
                 setShortlistedIds(prev => [...prev, profileId])
+                setShortlistedDateMap(prev => ({ ...prev, [profileId]: new Date().toISOString() }))
                 toast.success(`Profile shortlisted!`)
             }
         }
@@ -411,6 +421,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                 toast.success(`Interest removed`)
             } else {
                 setLikedIds(prev => [...prev, profileId])
+                setILikedDateMap(prev => ({ ...prev, [profileId]: new Date().toISOString() }))
                 toast.success(`Interest sent! We'll notify them.`)
             }
         }
@@ -531,17 +542,35 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     
                     if (likeRes.ok) {
                         const likeData = await likeRes.json()
-                        localLikedIds = likeData.iLikedIds || []
-                        localLikedMeIds = likeData.likedMeIds || []
+                        localLikedIds = (likeData.iLiked || []).map((r: any) => r.id)
+                        localLikedMeIds = (likeData.likedMe || []).map((r: any) => r.id)
+                        
+                        const iLikedDates: Record<string, string> = {}
+                        const iLikedStatuses: Record<string, string> = {}
+                        likeData.iLiked.forEach((r: any) => {
+                            iLikedDates[r.id] = r.created_at
+                            iLikedStatuses[r.id] = r.status
+                        })
+                        
+                        const likedMeDates: Record<string, string> = {}
+                        const likedMeStatuses: Record<string, string> = {}
+                        likeData.likedMe.forEach((r: any) => {
+                            likedMeDates[r.id] = r.created_at
+                            likedMeStatuses[r.id] = r.status
+                        })
+                        
                         setLikedIds(localLikedIds)
                         setLikedMeIds(localLikedMeIds)
+                        setILikedDateMap(iLikedDates)
+                        setILikedStatusMap(iLikedStatuses)
+                        setLikedMeDateMap(likedMeDates)
+                        setLikedMeStatusMap(likedMeStatuses)
                     }
                     
                     // Fetch premium status
                     const settingsRes = await fetch(`/api/settings?userId=${userId}`)
                     if (settingsRes.ok) {
                         const settingsData = await settingsRes.json()
-                        // ALLOW FOR NOW: Bypass check if requested
                         setIsPremium(settingsData.is_premium || true)
                     }
                     
@@ -549,16 +578,38 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                         const shortData = await shortRes.json()
                         localShortlistedIds = shortData.shortlistedIds || []
                         localShortlistedMeIds = shortData.shortlistedMeIds || []
+                        
+                        const sDates: Record<string, string> = {}
+                        const sMeDates: Record<string, string> = {}
+                        
+                        if (shortData.shortlisted) {
+                            shortData.shortlisted.forEach((r: any) => sDates[r.id] = r.created_at)
+                        }
+                        if (shortData.shortlistedMe) {
+                            shortData.shortlistedMe.forEach((r: any) => sMeDates[r.id] = r.created_at)
+                        }
+                        
                         setShortlistedIds(localShortlistedIds)
                         setShortlistedMeIds(localShortlistedMeIds)
+                        setShortlistedDateMap(sDates)
+                        setShortlistedMeDateMap(sMeDates)
                     }
 
                     if (viewsRes.ok) {
                         const viewsData = await viewsRes.json()
                         localIViewedIds = (viewsData.iViewed || []).map((v: any) => v.viewed_user_id)
                         localViewedMeIds = (viewsData.viewedMe || []).map((v: any) => v.viewer_user_id)
+                        
+                        const iVDates: Record<string, string> = {}
+                        const vMeDates: Record<string, string> = {}
+                        
+                        viewsData.iViewed.forEach((v: any) => iVDates[v.viewed_user_id] = v.created_at)
+                        viewsData.viewedMe.forEach((v: any) => vMeDates[v.viewer_user_id] = v.created_at)
+                        
                         setIViewedIds(localIViewedIds)
                         setViewedMeIds(localViewedMeIds)
+                        setIViewedDateMap(iVDates)
+                        setViewedMeDateMap(vMeDates)
                     }
 
                     if (blockRes.ok) {
@@ -1039,26 +1090,41 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
 
                     {/* Right: Content Section */}
                     <div className="p-6 md:p-8 flex-1 flex flex-col relative bg-gradient-to-br from-white/60 via-white/40 to-transparent">
-                        {/* Compatibility Score */}
-                        <div className="absolute top-6 right-8 z-20 flex items-center gap-6">
-                            <MatchScoreBadge 
-                                lifestyleScore={profile.lifestyleMatch?.totalScore || 0}
-                                poruthamScore={profile.compatibility?.score || 0}
-                                isPremium={isPremium}
-                                onClick={openBreakdown}
-                            />
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleShortlist(e, profile.user_id); }}
-                                disabled={shortlistLoadingId === profile.user_id}
-                                className={cn(
-                                    "p-0 h-auto hover:bg-transparent transition-all hover:scale-110 flex items-start -mt-2",
-                                    shortlistedIds.includes(profile.user_id) ? "text-[#FF1493]" : "text-gray-300 hover:text-[#4B0082]"
+                        {/* Compatibility Score & Interaction Badges */}
+                        <div className="absolute top-6 right-8 z-20 flex flex-col items-end gap-2">
+                            <div className="flex items-center gap-6">
+                                {shortlistedMeIds.includes(profile.user_id) && (
+                                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-[#4B0082] bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100 shadow-sm">
+                                        <Star className="h-3 w-3 fill-current" />
+                                        She shortlisted you {shortlistedMeDateMap[profile.user_id] ? `on ${formatToDDMMYYYY(shortlistedMeDateMap[profile.user_id])}` : 'Recently'}
+                                    </div>
                                 )}
-                            >
-                                <Bookmark className={cn("h-[64px] w-[32px]", shortlistedIds.includes(profile.user_id) && "fill-current")} />
-                            </Button>
+                                <MatchScoreBadge 
+                                    lifestyleScore={profile.lifestyleMatch?.totalScore || 0}
+                                    poruthamScore={profile.compatibility?.score || 0}
+                                    isPremium={isPremium}
+                                    onClick={openBreakdown}
+                                />
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleShortlist(e, profile.user_id); }}
+                                    disabled={shortlistLoadingId === profile.user_id}
+                                    className={cn(
+                                        "p-0 h-auto hover:bg-transparent transition-all hover:scale-110 flex items-start -mt-2",
+                                        shortlistedIds.includes(profile.user_id) ? "text-[#FF1493]" : "text-gray-300 hover:text-[#4B0082]"
+                                    )}
+                                >
+                                    <Bookmark className={cn("h-[64px] w-[32px]", shortlistedIds.includes(profile.user_id) && "fill-current")} />
+                                </Button>
+                            </div>
+                            
+                            {viewedMeIds.includes(profile.user_id) && (
+                                <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest text-indigo-300 bg-white/50 px-3 py-1 rounded-full border border-indigo-50/50">
+                                    <Eye className="h-3 w-3" />
+                                    Profile viewed you {viewedMeDateMap[profile.user_id] ? `on ${formatToDDMMYYYY(viewedMeDateMap[profile.user_id])}` : 'Recently'}
+                                </div>
+                            )}
                         </div>
 
                         <div className="mb-4">
@@ -1096,72 +1162,118 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                 </span>
                             ))}
                         </div>
-
-                        <div className="mt-auto flex flex-wrap items-center justify-between pt-8 border-t border-black/[0.04]">
-                            <div className="flex items-center gap-5">
-                                <Button
-                                    size="sm"
-                                    className={`h-14 px-12 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.4em] transition-all duration-700 ${
-                                        likedIds.includes(profile.user_id)
-                                        ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-[0_20px_40px_rgba(244,63,94,0.3)] ring-offset-4 ring-2 ring-rose-500/20'
-                                        : 'bg-[#4B0082] text-white hover:bg-indigo-700 shadow-[0_20px_40px_rgba(75,0,130,0.25)] hover:shadow-[0_25px_50px_rgba(75,0,130,0.35)]'
-                                    }`}
-                                    onClick={(e) => handleCustomerLike(e, profile.user_id)}
-                                    disabled={actionLoadingId === profile.user_id}
-                                >
-                                    {likedIds.includes(profile.user_id) ? 'Interest Logged' : 'Send Interest'}
-                                </Button>
+                        <div className="mt-auto pt-6 border-t border-black/[0.04]">
+                            {/* Interaction timeline labels */}
+                            <div className="flex flex-col gap-2 mb-6">
+                                {likedIds.includes(profile.user_id) && (
+                                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-indigo-900/40">
+                                        <Heart className="h-3.5 w-3.5 fill-indigo-900/40" />
+                                        You sent her an interest {iLikedDateMap[profile.user_id] ? `- ${formatToDDMMYYYY(iLikedDateMap[profile.user_id])}` : 'Recently'}
+                                    </div>
+                                )}
+                                {likedMeIds.includes(profile.user_id) && (
+                                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-emerald-600">
+                                        <Heart className="h-3.5 w-3.5 fill-emerald-600" />
+                                        {likedMeStatusMap[profile.user_id] === 'accepted' ? 'Accepted interest' : (iLikedStatusMap[profile.user_id] === 'accepted' ? 'You accepted her interest' : 'She showed interest')} {likedMeDateMap[profile.user_id] ? `on ${formatToDDMMYYYY(likedMeDateMap[profile.user_id])}` : 'Recently'}
+                                    </div>
+                                )}
                             </div>
-                            
-                            <div className="flex items-center gap-4">
-                                <Button 
-                                    variant="ghost"
-                                    className="h-14 px-8 rounded-3xl font-black text-[10px] uppercase tracking-[0.3em] text-gray-400 hover:text-[#4B0082] hover:bg-indigo-50/50 transition-all duration-500"
-                                    onClick={(e) => handleOpenProfile(profile, e)}
-                                >
-                                    Full Details
-                                    <ArrowRight className="h-4 w-4 ml-3 transition-transform group-hover:translate-x-2" />
-                                </Button>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-14 w-14 rounded-3xl text-gray-200 hover:text-gray-900 border-2 border-transparent hover:border-black/[0.05] hover:bg-white transition-all">
-                                            <MoreVertical className="h-6 w-6" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-72 sds-glass rounded-[2rem] p-3 z-50 border-white/50 shadow-[0_40px_80px_rgba(0,0,0,0.15)]" onClick={(e) => e.stopPropagation()}>
-                                        <DropdownMenuItem
-                                            onClick={(e) => { 
-                                                e.stopPropagation(); 
-                                                const isMutual = likedIds.includes(profile.user_id) && likedMeIds.includes(profile.user_id);
-                                                if (isPremium || isMutual) {
-                                                    setMessageTarget({ id: profile.user_id, name: profile.name });
-                                                    setIsMessageDialogOpen(true);
-                                                } else {
-                                                    toast.error('Premium Required', { 
-                                                        description: 'Upgrade for instant secure messaging.' 
-                                                    });
-                                                }
-                                            }}
-                                            className="gap-5 cursor-pointer rounded-2xl p-6 focus:bg-[#4B0082] focus:text-white font-black text-[11px] uppercase tracking-[0.2em] transition-all"
-                                        >
-                                            <MessageCircle className="h-5 w-5 opacity-50" /> Secure Message
-                                            {!isPremium && <Crown className="h-3.5 w-3.5 ml-auto text-amber-500" />}
-                                        </DropdownMenuItem>
-                                        <div className="h-px bg-black/[0.03] my-2" />
-                                        <DropdownMenuItem
-                                            onClick={(e) => { e.stopPropagation(); handleIgnore(e, profile.user_id); }}
-                                            className="gap-5 cursor-pointer rounded-2xl p-6 focus:bg-gray-50 text-gray-400 font-bold text-[11px] uppercase tracking-[0.2em] transition-all"
-                                        >
-                                            <UserMinus className="h-5 w-5 opacity-40" /> Archive Profile
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            onClick={(e) => { e.stopPropagation(); handleBlock(e, profile.user_id); }}
-                                            className="gap-5 cursor-pointer rounded-2xl p-6 focus:bg-rose-50 focus:text-rose-600 text-rose-400/50 font-bold text-[11px] uppercase tracking-[0.2em] transition-all"
-                                        >
-                                            <UserX className="h-5 w-5 opacity-40" /> Block Entity
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+
+                            <div className="flex flex-wrap items-center justify-between gap-4">
+                                <div className="flex items-center gap-4">
+                                    <Button
+                                        onClick={(e) => { e.stopPropagation(); handleContactClick('whatsapp'); }}
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-12 w-12 rounded-2xl border-none bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all duration-300 shadow-sm"
+                                    >
+                                        <MessageCircle className="h-5 w-5" />
+                                    </Button>
+                                    <Button
+                                        onClick={(e) => { e.stopPropagation(); handleContactClick('call'); }}
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-12 w-12 rounded-2xl border-none bg-indigo-50 text-[#4B0082] hover:bg-[#4B0082] hover:text-white transition-all duration-300 shadow-sm"
+                                    >
+                                        <Phone className="h-5 w-5" />
+                                    </Button>
+                                    <Button
+                                        onClick={(e) => { 
+                                            e.stopPropagation(); 
+                                            if (likedIds.includes(profile.user_id)) {
+                                                setMessageTarget({ id: profile.user_id, name: profile.name || "this member" });
+                                            } else {
+                                                handleCustomerLike(e, profile.user_id);
+                                            }
+                                        }}
+                                        disabled={actionLoadingId === profile.user_id}
+                                        className={cn(
+                                            "h-12 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 shadow-xl border-none",
+                                            likedIds.includes(profile.user_id) 
+                                                ? "bg-[#FF4500] text-white hover:bg-[#FF6347] hover:scale-105 active:scale-95" 
+                                                : "bg-[#4B0082] text-white hover:bg-[#3b0062] hover:scale-105 active:scale-95"
+                                        )}
+                                    >
+                                        {likedIds.includes(profile.user_id) ? (
+                                            <span className="flex items-center gap-2">
+                                                <MessageCircle className="h-4 w-4" />
+                                                Send Message
+                                            </span>
+                                        ) : (
+                                            <span className="flex items-center gap-2">
+                                                <Heart className="h-4 w-4" />
+                                                Send Interest
+                                            </span>
+                                        )}
+                                    </Button>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button 
+                                        variant="ghost"
+                                        className="h-12 px-6 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] text-gray-400 hover:text-[#4B0082] hover:bg-indigo-50/50 transition-all"
+                                        onClick={(e) => handleOpenProfile(profile, e)}
+                                    >
+                                        Full Profile
+                                        <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
+                                    </Button>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="sm" className="h-12 w-12 rounded-2xl text-gray-200 hover:text-gray-900 border border-transparent hover:border-black/[0.05] hover:bg-white transition-all">
+                                                <MoreVertical className="h-5 w-5" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-64 sds-glass rounded-3xl p-2 z-50 border-white/50 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                                            <DropdownMenuItem
+                                                onClick={(e) => { 
+                                                    e.stopPropagation(); 
+                                                    const isMutual = likedIds.includes(profile.user_id) && likedMeIds.includes(profile.user_id);
+                                                    if (isPremium || isMutual) {
+                                                        setMessageTarget({ id: profile.user_id, name: profile.name });
+                                                    } else {
+                                                        toast.error('Premium Required', { description: 'Upgrade for instant secure messaging.' });
+                                                    }
+                                                }}
+                                                className="gap-3 cursor-pointer rounded-xl p-4 focus:bg-[#4B0082] focus:text-white font-bold text-[10px] uppercase tracking-widest transition-all"
+                                            >
+                                                <MessageCircle className="h-4 w-4 opacity-50" /> Secure Message
+                                                {!isPremium && <Crown className="h-3 w-3 ml-auto text-amber-500" />}
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator className="bg-black/[0.03] mx-2" />
+                                            <DropdownMenuItem
+                                                onClick={(e) => { e.stopPropagation(); handleIgnore(e, profile.user_id); }}
+                                                className="gap-3 cursor-pointer rounded-xl p-4 focus:bg-gray-50 text-gray-400 font-bold text-[10px] uppercase tracking-widest transition-all"
+                                            >
+                                                <UserMinus className="h-4 w-4 opacity-40" /> Archive Profile
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={(e) => { e.stopPropagation(); handleBlock(e, profile.user_id); }}
+                                                className="gap-3 cursor-pointer rounded-xl p-4 focus:bg-rose-50 focus:text-rose-600 text-rose-400/50 font-bold text-[10px] uppercase tracking-widest transition-all"
+                                            >
+                                                <UserX className="h-4 w-4 opacity-40" /> Block Entity
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1279,16 +1391,23 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                     <div className="flex-1 space-y-6">
                         <div className="flex items-end justify-between pb-6 border-b border-black/[0.06]">
                             <div className="space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-px w-8 bg-[#4B0082]/20" />
-                                    <h4 className="text-[10px] font-black uppercase tracking-[0.6em] text-[#4B0082]/40">Verified Match Discovery</h4>
-                                </div>
                                 <h2 className="text-5xl font-light text-[#4B0082] tracking-tighter leading-none">
-                                    {menuGroups.flatMap(g => g.items).find(i => i.id === activeCategory)?.label || "Discover Matches"}
+                                    {(() => {
+                                        const activeItem = menuGroups.flatMap(g => g.items).find(i => i.id === activeCategory);
+                                        const count = filteredProfiles.length;
+                                        
+                                        if (activeCategory === "viewed-by-you") return `${count} Match${count !== 1 ? 'es' : ''} you viewed`;
+                                        if (activeCategory === "shortlisted-by-you") return `${count} Match${count !== 1 ? 'es' : ''} you saved`;
+                                        if (activeCategory === "viewed-you") return `${count} Match${count !== 1 ? 'es' : ''} viewed you`;
+                                        if (activeCategory === "shortlisted-you") return `${count} Match${count !== 1 ? 'es' : ''} saved you`;
+                                        if (activeCategory === "horoscope-matches") return `${count} Compatible Match${count !== 1 ? 'es' : ''}`;
+                                        if (activeCategory === "star-matches") return `${count} Match${count !== 1 ? 'es' : ''} with Stars`;
+                                        if (activeCategory === "nearby-matches") return `${count} Match${count !== 1 ? 'es' : ''} near you`;
+                                        if (activeCategory === "newly-joined") return `${count} New Match${count !== 1 ? 'es' : ''}`;
+                                        
+                                        return activeItem?.label || "Discover Matches";
+                                    })()}
                                 </h2>
-                                <p className="text-indigo-900/40 text-sm font-medium tracking-tight">
-                                    {menuGroups.flatMap(g => g.items).find(i => i.id === activeCategory)?.description || "Curated life partner matches for you."}
-                                </p>
                             </div>
                             {hasPreferences && (
                                 <div className="flex items-center gap-4">
@@ -1306,7 +1425,7 @@ export function BrowseProfiles({ userId, onBack, parentViewer }: BrowseProfilesP
                                         ) : (
                                             <Filter className="h-4 w-4 mr-3" />
                                         )}
-                                        {applyPreferences ? "Applied Filter" : "Auto-Matches Off"}
+                                        {applyPreferences ? "Partner Prefs: ON" : "Partner Prefs: OFF"}
                                     </Button>
                                 </div>
                             )}
