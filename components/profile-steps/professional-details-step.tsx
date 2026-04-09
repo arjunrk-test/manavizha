@@ -110,6 +110,27 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
   const isBusiness = ["business", "self employed"].includes(employmentTypeValue)
   const isStudent = employmentTypeValue === "student"
 
+  const salaryRanges = [
+    { id: "below_2l", value: "Below 2 Lakhs" },
+    { id: "2l_5l", value: "2L - 5L" },
+    { id: "5l_10l", value: "5L - 10L" },
+    { id: "10l_15l", value: "10L - 15L" },
+    { id: "15l_25l", value: "15L - 25L" },
+    { id: "25l_50l", value: "25L - 50L" },
+    { id: "50l_1c", value: "50L - 1 Crore" },
+    { id: "above_1c", value: "Above 1 Crore" },
+  ]
+
+  const revenueRanges = [
+    { id: "below_5l", value: "Below 5 Lakhs" },
+    { id: "5l_10l", value: "5L - 10L" },
+    { id: "10l_25l", value: "10L - 25L" },
+    { id: "25l_50l", value: "25L - 50L" },
+    { id: "50l_1c", value: "50L - 1 Crore" },
+    { id: "1c_5c", value: "1C - 5 Crore" },
+    { id: "above_5c", value: "Above 5 Crores" },
+  ]
+
   return (
     <div className="space-y-12">
       {/* Employment Type Selection */}
@@ -123,28 +144,34 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
       />
 
       {/* Employee-specific fields */}
-      {isEmployee && (
+      {(isEmployee || isStudent) && (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <CustomSelectDropdown
               id="sector"
-              label="Industry *"
+              label={isStudent ? "Current Sector" : "Industry *"}
               value={formData.sector || ""}
               onChange={(value) => onChange("sector", value)}
               options={sectorOptions}
-              required
+              required={!isStudent}
               showOtherInput={sectorOptions.some(opt => opt.value.toLowerCase() === "other")}
               otherValue={formData.sectorOther || ""}
               onOtherChange={(value) => onChange("sectorOther", value)}
               otherPlaceholder="Enter Industry Name"
             />
             <div className="space-y-2">
-              <Label htmlFor="company" className="sds-label">Company Name *</Label>
+              <Label htmlFor="company" className="sds-label">{isStudent ? "Institution Name *" : "Company Name *"}</Label>
               <Input
                 id="company"
-                value={formData.company || ""}
-                onChange={(e) => onChange("company", e.target.value)}
-                placeholder="e.g., Google India / TCS"
+                value={(isStudent ? formData.institution : formData.company) || ""}
+                onChange={(e) => {
+                  if (isStudent) {
+                    onChange("institution", e.target.value)
+                  } else {
+                    onChange("company", e.target.value)
+                  }
+                }}
+                placeholder={isStudent ? "e.g., IIT Madras" : "e.g., Google India / TCS"}
                 required
                 className="sds-input w-full"
               />
@@ -153,40 +180,40 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
               <Label htmlFor="designation" className="sds-label">Role / Designation *</Label>
               <Input
                 id="designation"
-                value={formData.designation || ""}
+                value={formData.designation || (isStudent ? "Student" : "")}
                 onChange={(e) => onChange("designation", e.target.value)}
-                placeholder="e.g., Senior Software Engineer"
+                placeholder={isStudent ? "e.g., Student" : "e.g., Senior Software Engineer"}
                 required
                 className="sds-input w-full"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="salary" className="sds-label">Annual Salary *</Label>
-              <div className="relative group">
-                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#4B0082]/40 font-black text-sm pointer-events-none z-10 transition-colors group-focus-within:text-[#4B0082]">
-                  ₹
-                </div>
+            
+            {!isStudent ? (
+              <CustomSelectDropdown
+                id="salaryRange"
+                label="Annual Salary Range *"
+                value={formData.salaryRange || ""}
+                onChange={(value) => onChange("salaryRange", value)}
+                options={salaryRanges}
+                required
+              />
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="expectedGraduationYear" className="sds-label">Expected Graduation Year *</Label>
                 <Input
-                  id="salary"
-                  type="text"
-                  value={formData.salary?.startsWith("₹") ? formData.salary.slice(1) : formData.salary || ""}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^0-9]/g, "")
-                    onChange("salary", value ? `₹${value}` : "₹")
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Backspace" && formData.salary === "₹") {
-                      e.preventDefault()
-                    }
-                  }}
-                  placeholder="e.g., 2,400,000"
+                  id="expectedGraduationYear"
+                  type="number"
+                  value={formData.expectedGraduationYear || ""}
+                  onChange={(e) => onChange("expectedGraduationYear", e.target.value)}
+                  placeholder="YYYY"
                   required
-                  className="sds-input pl-10 w-full"
+                  className="sds-input w-full"
                 />
               </div>
-            </div>
+            )}
+
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="workLocation" className="sds-label">Work Location *</Label>
+              <Label htmlFor="workLocation" className="sds-label">{isStudent ? "Current Location *" : "Work Location *"}</Label>
               <Input
                 id="workLocation"
                 value={formData.workLocation || ""}
@@ -195,79 +222,6 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                 required
                 className="sds-input w-full"
               />
-            </div>
-          </div>
-
-          {/* Payslip Upload */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-6 mb-4">
-              <Label htmlFor="payslip" className="sds-label !mb-0 whitespace-nowrap">Upload Payslips</Label>
-              <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent" />
-            </div>
-            
-            {payslipError && (
-              <div className="text-rose-500 text-[10px] font-black uppercase tracking-widest bg-rose-50/50 p-4 rounded-2xl border border-rose-100/50 animate-in shake-in duration-300">
-                {payslipError}
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {(formData.payslip as string[] || []).map((payslip, index) => (
-                <div key={index} className="relative group">
-                  <div className="sds-glass rounded-3xl overflow-hidden border-2 border-indigo-50/50 shadow-lg aspect-[4/3] flex items-center justify-center bg-white/20">
-                    {payslip.startsWith("data:image/") ? (
-                      <img
-                        src={payslip}
-                        alt={`Payslip ${index + 1}`}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="h-12 w-12 rounded-2xl bg-[#4B0082]/10 flex items-center justify-center text-[#4B0082]">
-                          <Upload className="h-6 w-6" />
-                        </div>
-                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400">PDF File {index + 1}</p>
-                      </div>
-                    )}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => removePayslip(index)}
-                    className="absolute -top-3 -right-3 h-8 w-8 rounded-full shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-rose-500 hover:bg-rose-600 border-2 border-white"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              
-              {(formData.payslip as string[] || []).length < 3 && (
-                <div className="sds-glass rounded-3xl border-2 border-dashed border-indigo-100 bg-indigo-50/10 aspect-[4/3] relative group hover:border-[#4B0082]/30 transition-all duration-500">
-                  <input
-                    type="file"
-                    accept="image/*,application/pdf"
-                    onChange={handlePayslipUpload}
-                    className="hidden"
-                    id="payslip-upload"
-                    multiple
-                  />
-                  <label
-                    htmlFor="payslip-upload"
-                    className="absolute inset-0 cursor-pointer flex flex-col items-center justify-center p-6 text-center"
-                  >
-                    <div className="h-12 w-12 rounded-2xl bg-[#4B0082]/5 flex items-center justify-center text-[#4B0082]/40 mb-3 transition-all duration-500 group-hover:scale-110 group-hover:bg-[#4B0082]/10 group-hover:text-[#4B0082]">
-                      <Upload className="h-6 w-6" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 group-hover:text-[#4B0082] transition-colors">
-                      Upload File
-                    </span>
-                    <span className="text-[9px] text-[#4B0082]/20 font-bold uppercase mt-1 tracking-widest group-hover:text-[#4B0082]/40 transition-colors">
-                      {(formData.payslip as string[] || []).length} / 03 Files
-                    </span>
-                  </label>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -323,31 +277,16 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                 className="sds-input w-full"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="annualReturns" className="sds-label">Annual Business Returns *</Label>
-              <div className="relative group">
-                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#4B0082]/40 font-black text-sm pointer-events-none z-10 transition-colors group-focus-within:text-[#4B0082]">
-                  ₹
-                </div>
-                <Input
-                  id="annualReturns"
-                  type="text"
-                  value={formData.annualReturns?.startsWith("₹") ? formData.annualReturns.slice(1) : formData.annualReturns || ""}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^0-9]/g, "")
-                    onChange("annualReturns", value ? `₹${value}` : "₹")
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Backspace" && formData.annualReturns === "₹") {
-                      e.preventDefault()
-                    }
-                  }}
-                  placeholder="e.g., 5,000,000"
-                  required
-                  className="sds-input pl-10 w-full"
-                />
-              </div>
-            </div>
+
+            <CustomSelectDropdown
+              id="revenueRange"
+              label="Annual Business Revenue *"
+              value={formData.revenueRange || ""}
+              onChange={(value) => onChange("revenueRange", value)}
+              options={revenueRanges}
+              required
+            />
+
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="businessLocation" className="sds-label">Business Location *</Label>
               <Input
@@ -355,67 +294,6 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                 value={formData.businessLocation || ""}
                 onChange={(e) => onChange("businessLocation", e.target.value)}
                 placeholder="e.g., Coimbatore, Tamil Nadu"
-                required
-                className="sds-input w-full"
-              />
-            </div>
-          </div>
-
-        </div>
-      )}
-
-      {/* Student-specific fields */}
-      {isStudent && (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="institution" className="sds-label">Academy / University *</Label>
-              <Input
-                id="institution"
-                value={formData.institution || ""}
-                onChange={(e) => onChange("institution", e.target.value)}
-                placeholder="e.g., Indian Institute of Technology, Madras"
-                required
-                className="sds-input w-full"
-              />
-            </div>
-            <CustomSelectDropdown
-              id="course"
-              label="Course *"
-              value={formData.course || ""}
-              onChange={(value) => onChange("course", value)}
-              options={courseOptions}
-              required
-            />
-            <div className="space-y-2">
-              <Label htmlFor="fieldOfStudy" className="sds-label">Main Subject *</Label>
-              <Input
-                id="fieldOfStudy"
-                value={formData.fieldOfStudy || ""}
-                onChange={(e) => onChange("fieldOfStudy", e.target.value)}
-                placeholder="e.g. Science, Arts, Commerce"
-                required
-                className="sds-input w-full"
-              />
-            </div>
-            <CustomSelectDropdown
-              id="yearOfStudy"
-              label="Current Year of Study *"
-              value={formData.yearOfStudy || ""}
-              onChange={(value) => onChange("yearOfStudy", value)}
-              options={yearOfStudyOptions}
-              required
-            />
-            <div className="space-y-2">
-              <Label htmlFor="expectedGraduationYear" className="sds-label">Expected Graduation Year *</Label>
-              <Input
-                id="expectedGraduationYear"
-                type="number"
-                value={formData.expectedGraduationYear || ""}
-                onChange={(e) => onChange("expectedGraduationYear", e.target.value)}
-                placeholder="YYYY"
-                min="2000"
-                max="2100"
                 required
                 className="sds-input w-full"
               />

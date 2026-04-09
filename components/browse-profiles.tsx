@@ -21,7 +21,7 @@ import { MessageDialog } from "@/components/message-dialog"
 import { calculateLifestyleScore } from "@/lib/matching"
 import { CompatibilitySheet } from "./compatibility-sheet"
 import { MatchScoreBadge } from "@/components/match-score-badge"
-import { formatToDDMMYYYY } from "@/lib/utils/date-utils"
+import { formatToDDMMYYYY, formatActivityTime } from "@/lib/utils/date-utils"
 
 interface BrowseProfilesProps {
     userId: string
@@ -989,8 +989,12 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
         if (profile.height) parts.push(profile.height)
         if (profile.caste) parts.push(profile.caste)
         if (profile.education && profile.education.length > 0) {
-            const edu = profile.education[0].education || profile.education[0]
-            parts.push(typeof edu === 'string' ? edu : edu.education)
+            // Get last 2 educations (most recent)
+            const recentEdu = profile.education.slice(-2);
+            recentEdu.forEach((e: any) => {
+                const edu = e.education || e;
+                parts.push(typeof edu === 'string' ? edu : edu.education);
+            });
         }
         if (profile.profession && profile.profession !== "Not specified") parts.push(profile.profession)
         if (profile.location && profile.location !== "Location not specified" && profile.location !== "Location hidden (Requires mutual interest)") {
@@ -1036,11 +1040,11 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                 className="w-full"
             >
                 <div
-                    className="sds-glass rounded-3xl overflow-hidden hover:shadow-[0_40px_80px_-20px_rgba(75,0,130,0.15)] transition-all duration-700 cursor-pointer group flex flex-col md:flex-row h-auto md:min-h-[200px] border-2 border-indigo-100/20 hover:border-[#4B0082]/30 active:scale-[0.99] bg-white/95"
+                    className="sds-glass rounded-3xl overflow-hidden hover:shadow-[0_40px_80px_-20px_rgba(75,0,130,0.15)] transition-all duration-700 cursor-pointer group flex flex-col md:flex-row h-auto md:h-[260px] border-2 border-indigo-100/20 hover:border-[#4B0082]/30 active:scale-[0.99] bg-white/95"
                     onClick={(e) => handleOpenProfile(profile, e)}
                 >
                     {/* Left: Image Section */}
-                    <div className="w-full md:w-56 h-72 md:h-auto relative overflow-hidden bg-gray-100/50 shrink-0">
+                    <div className="w-full md:w-56 h-72 md:h-full relative overflow-hidden bg-gray-100/50 shrink-0">
                         {profile.photos && profile.photos.length > 0 ? (
                             <>
                                 <img
@@ -1094,8 +1098,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                         <div className="absolute top-6 right-8 z-20 flex flex-col items-end gap-2">
                             <div className="flex items-center gap-6">
                                 {shortlistedMeIds.includes(profile.user_id) && (
-                                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-[#4B0082] bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100 shadow-sm">
-                                        <Star className="h-3 w-3 fill-current" />
+                                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-[#4B0082]">
                                         She shortlisted you {shortlistedMeDateMap[profile.user_id] ? `on ${formatToDDMMYYYY(shortlistedMeDateMap[profile.user_id])}` : 'Recently'}
                                     </div>
                                 )}
@@ -1118,7 +1121,14 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                     <Bookmark className={cn("h-[64px] w-[32px]", shortlistedIds.includes(profile.user_id) && "fill-current")} />
                                 </Button>
                             </div>
-                            
+                             
+                            {profile.last_active_at && (
+                                <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50/50 px-3 py-1 rounded-full border border-emerald-100/50">
+                                    <span className={cn("w-1.5 h-1.5 rounded-full bg-emerald-500", formatActivityTime(profile.last_active_at) === "Online" && "animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]")} />
+                                    {formatActivityTime(profile.last_active_at)}
+                                </div>
+                            )}
+
                             {viewedMeIds.includes(profile.user_id) && (
                                 <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest text-indigo-300 bg-white/50 px-3 py-1 rounded-full border border-indigo-50/50">
                                     <Eye className="h-3 w-3" />

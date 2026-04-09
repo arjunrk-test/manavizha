@@ -9,6 +9,7 @@ import { CheckCircle2, XCircle, Eye, EyeOff } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import { getUserDashboard } from "@/lib/auth"
 
 interface AuthDialogProps {
   open: boolean
@@ -200,39 +201,14 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
         if (signInError) throw signInError
 
         if (signInData.user) {
-          // Check if user is a referral partner - if so, deny access
-          const { data: partnerData, error: partnerError } = await supabase
-            .from("referral_partners")
-            .select("user_id")
-            .eq("user_id", signInData.user.id)
-            .single()
-
-          if (!partnerError && partnerData) {
-            // User is a referral partner, sign them out and deny access
-            await supabase.auth.signOut()
-            throw new Error("Access denied. This account is registered as a referral partner. Please use the referral partner login.")
-          }
-
-          // Check if the user is a Parent
-          const { data: parentData, error: parentErrorObj } = await supabase
-            .from("parents")
-            .select("id")
-            .eq("id", signInData.user.id)
-            .single()
-
-          if (!parentErrorObj && parentData) {
-            // User is a parent
-            setSuccessMessage(null)
-            onOpenChange(false)
-            router.push("/parent-dashboard")
-            return
-          }
+          // Determine the correct dashboard for the user based on their specific role
+          const dashboardPath = await getUserDashboard(signInData.user.id)
+          
+          setSuccessMessage(null)
+          onOpenChange(false)
+          router.push(dashboardPath)
+          return
         }
-
-        // Clear success message, close dialog, and navigate to customer dashboard
-        setSuccessMessage(null)
-        onOpenChange(false)
-        router.push("/dashboard")
       }
     } catch (err: any) {
       setError(err.message || "An error occurred. Please try again.")

@@ -127,6 +127,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     caste: "",
     subcaste: "",
     kulam: "",
+    kilai: "",
     gotram: "",
     familyType: "",
     familyStatus: "",
@@ -137,6 +138,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     star: "",
     lagnam: "",
     dhosham: "",
+    salaryRange: "",
+    revenueRange: "",
+    siblingDetails: [],
     hobbies: [],
     interests: [],
     smoking: "",
@@ -446,6 +450,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             parentsCountry: data.parents_country || "",
             parentsLandmark: data.parents_landmark || "",
             siblings: data.siblings || "",
+            siblingDetails: data.sibling_details || [],
             familyDescription: data.family_description || "",
             caste: data.caste || "",
             subcaste: data.subcaste || "",
@@ -787,6 +792,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             company: employeeData.company || "",
             designation: employeeData.designation || "",
             salary: employeeData.salary || "₹",
+            salaryRange: employeeData.salary_range || "",
             workLocation: employeeData.work_location || "",
             payslip: payslipUrls,
           }
@@ -841,6 +847,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             businessTypeOther: businessData.business_type_other || "",
             designation: businessData.designation || "",
             annualReturns: businessData.annual_returns || "₹",
+            revenueRange: businessData.revenue_range || "",
             businessLocation: businessData.business_location || "",
             itrDocument: itrDocumentUrl,
           }
@@ -1139,18 +1146,19 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const hasPersonalDetailsChanged = (): boolean => {
     if (!originalPersonalDetails) {
       // If no original data exists, check if any field is filled
-      const personalFields = ["name", "dateOfBirth", "age", "sex", "religion", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"]
+      const personalFields = ["name", "dateOfBirth", "age", "sex", "religion", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages", "physicalStatus", "subcaste"]
       return personalFields.some((field) => {
         const value = formData[field as keyof FormData]
         if (Array.isArray(value)) {
           return value.length > 0
         }
+        if (field === "physicalStatus") return value !== "Normal" && value !== "" && value !== null
         return value !== "" && value !== null && value !== undefined
       })
     }
 
     // Compare current form data with original saved data
-    const fieldsToCompare: (keyof FormData)[] = ["name", "dateOfBirth", "age", "sex", "religion", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages"]
+    const fieldsToCompare: (keyof FormData)[] = ["name", "dateOfBirth", "age", "sex", "religion", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages", "physicalStatus", "subcaste"]
 
     for (const field of fieldsToCompare) {
       const currentValue = formData[field]
@@ -1261,13 +1269,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
   const validateHoroscopeDetails = (): boolean => {
     const requiredFields = [
-      { key: "jaadhagam", label: "Jaadhagam" },
       { key: "timeOfBirth", label: "Time of Birth" },
       { key: "placeOfBirth", label: "Place of Birth" },
-      { key: "zodiacSign", label: "Zodiac or Moon Sign" },
       { key: "star", label: "Star" },
-      { key: "lagnam", label: "Lagnam" },
-      { key: "dhosham", label: "Dhosham" },
     ]
 
     const missingFields: string[] = []
@@ -1308,14 +1312,14 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const validateInterestsDetails = (): boolean => {
     const errors: string[] = []
 
-    // Check hobbies - at least 3 required
-    if (!formData.hobbies || formData.hobbies.length < 3) {
-      errors.push("Please select at least 3 hobbies")
+    // Check hobbies - at least 1 required
+    if (!formData.hobbies || formData.hobbies.length < 1) {
+      errors.push("Please select at least 1 hobby")
     }
 
-    // Check interests - at least 3 required
-    if (!formData.interests || formData.interests.length < 3) {
-      errors.push("Please select at least 3 interests")
+    // Check interests - at least 1 required
+    if (!formData.interests || formData.interests.length < 1) {
+      errors.push("Please select at least 1 interest")
     }
 
     if (errors.length > 0) {
@@ -1329,7 +1333,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           },
         })
       } else {
-        toast.error("Please select at least 3 hobbies and 3 interests", {
+        toast.error("Please select at least 1 hobby and 1 interest", {
           description: "Both hobbies and interests are required to save.",
           style: {
             background: "#fee2e2",
@@ -1350,6 +1354,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       { key: "drinking", label: "Drinking" },
       { key: "parties", label: "Parties" },
       { key: "pubs", label: "Pubs" },
+      { key: "diet", label: "Diet" },
     ]
 
     const missingFields: string[] = []
@@ -1443,9 +1448,11 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   }
 
   const validateProfessionalDetails = (): boolean => {
-    const employmentType = formData.employmentType || ""
+    const employmentType = (formData.employmentType || "").toLowerCase()
 
-    if (!employmentType || employmentType.trim() === "") {
+    if (!employmentType || employmentType.trim() === "" || employmentType === "not working") {
+      if (employmentType === "not working") return true
+      
       toast.error("Please select employment type", {
         description: "Employment type is required to save your professional details.",
         style: {
@@ -1458,8 +1465,12 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     }
 
     const missingFields: string[] = []
+    
+    const isEmployee = ["employee", "private", "government/psu", "defence"].includes(employmentType)
+    const isBusiness = ["business", "self employed"].includes(employmentType)
+    const isStudent = employmentType === "student"
 
-    if (employmentType === "employee") {
+    if (isEmployee) {
       if (!formData.sector || formData.sector.trim() === "") {
         missingFields.push("Sector")
       } else if (formData.sector === "other" && (!formData.sectorOther || formData.sectorOther.trim() === "")) {
@@ -1471,14 +1482,16 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       if (!formData.designation || formData.designation.trim() === "") {
         missingFields.push("Designation")
       }
-      if (!formData.salary || formData.salary === "₹" || formData.salary.trim() === "") {
-        missingFields.push("Annual Salary")
+      const hasSalaryValue = formData.salary && formData.salary !== "₹" && formData.salary.trim() !== ""
+      const hasSalaryRange = formData.salaryRange && formData.salaryRange.trim() !== ""
+      if (!hasSalaryValue && !hasSalaryRange) {
+        missingFields.push("Annual Salary or Range")
       }
       if (!formData.workLocation || formData.workLocation.trim() === "") {
         missingFields.push("Work Location")
       }
       // Payslip is optional - removed from required fields
-    } else if (employmentType === "business") {
+    } else if (isBusiness) {
       if (!formData.sector || formData.sector.trim() === "") {
         missingFields.push("Sector")
       } else if (formData.sector === "other" && (!formData.sectorOther || formData.sectorOther.trim() === "")) {
@@ -1495,14 +1508,16 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       if (!formData.designation || formData.designation.trim() === "") {
         missingFields.push("Designation")
       }
-      if (!formData.annualReturns || formData.annualReturns === "₹" || formData.annualReturns.trim() === "") {
-        missingFields.push("Annual Returns")
+      const hasReturnsValue = formData.annualReturns && formData.annualReturns !== "₹" && formData.annualReturns.trim() !== ""
+      const hasRevenueRange = formData.revenueRange && formData.revenueRange.trim() !== ""
+      if (!hasReturnsValue && !hasRevenueRange) {
+        missingFields.push("Annual Returns or Range")
       }
       if (!formData.businessLocation || formData.businessLocation.trim() === "") {
         missingFields.push("Business Location")
       }
       // ITR Document is optional - removed from required fields
-    } else if (employmentType === "student") {
+    } else if (isStudent) {
       if (!formData.institution || formData.institution.trim() === "") {
         missingFields.push("Institution / University")
       }
@@ -1548,13 +1563,21 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
   // Check if all professional details fields are filled
   const areAllProfessionalDetailsFilled = (): boolean => {
-    const employmentType = formData.employmentType || ""
+    const employmentType = (formData.employmentType || "").toLowerCase()
 
     if (!employmentType || employmentType.trim() === "") {
       return false
     }
 
-    if (employmentType === "employee") {
+    if (employmentType === "not working") {
+      return true
+    }
+
+    const isEmployee = ["employee", "private", "government/psu", "defence"].includes(employmentType)
+    const isBusiness = ["business", "self employed"].includes(employmentType)
+    const isStudent = employmentType === "student"
+
+    if (isEmployee) {
       const sector = formData.sector || ""
       const sectorOther = formData.sectorOther || ""
       const sectorValid = Boolean(sector.trim() !== "" &&
@@ -1562,16 +1585,19 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       const company = formData.company || ""
       const designation = formData.designation || ""
       const salary = formData.salary || ""
+      const salaryRange = formData.salaryRange || ""
       const workLocation = formData.workLocation || ""
       const payslips = (formData.payslip as string[]) || []
+
+      const hasSalary = (salary !== "₹" && salary.trim() !== "") || (salaryRange.trim() !== "")
 
       return sectorValid &&
         company.trim() !== "" &&
         designation.trim() !== "" &&
-        salary !== "₹" && salary.trim() !== "" &&
+        hasSalary &&
         workLocation.trim() !== ""
       // Payslip is optional - removed from validation
-    } else if (employmentType === "business") {
+    } else if (isBusiness) {
       const sector = formData.sector || ""
       const sectorOther = formData.sectorOther || ""
       const sectorValid = Boolean(sector.trim() !== "" &&
@@ -1583,17 +1609,20 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       const businessName = formData.businessName || ""
       const designation = formData.designation || ""
       const annualReturns = formData.annualReturns || ""
+      const revenueRange = formData.revenueRange || ""
       const businessLocation = formData.businessLocation || ""
       const itrDocument = formData.itrDocument || ""
+
+      const hasReturns = (annualReturns !== "₹" && annualReturns.trim() !== "") || (revenueRange.trim() !== "")
 
       return sectorValid &&
         businessName.trim() !== "" &&
         businessTypeValid &&
         designation.trim() !== "" &&
-        annualReturns !== "₹" && annualReturns.trim() !== "" &&
+        hasReturns &&
         businessLocation.trim() !== ""
       // ITR Document is optional - removed from validation
-    } else if (employmentType === "student") {
+    } else if (isStudent) {
       const institution = formData.institution || ""
       const course = formData.course || ""
       const fieldOfStudy = formData.fieldOfStudy || ""
@@ -1617,17 +1646,21 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       return areAllProfessionalDetailsFilled()
     }
 
-    const employmentType = formData.employmentType || ""
-    const originalEmploymentType = originalProfessionalDetails.employmentType || ""
+    const employmentType = (formData.employmentType || "").toLowerCase()
+    const originalEmploymentType = (originalProfessionalDetails.employmentType || "").toLowerCase()
 
     // If employment type changed, consider it changed
     if (employmentType !== originalEmploymentType) {
       return true
     }
 
-    // Compare fields based on employment type
-    if (employmentType === "employee") {
-      const fieldsToCompare: (keyof FormData)[] = ["sector", "sectorOther", "company", "designation", "salary", "workLocation", "payslip"]
+    const isEmployee = ["employee", "private", "government/psu", "defence"].includes(employmentType)
+    const isBusiness = ["business", "self employed"].includes(employmentType)
+    const isStudent = employmentType === "student"
+
+    // Compare fields based on categorised group
+    if (isEmployee) {
+      const fieldsToCompare: (keyof FormData)[] = ["sector", "sectorOther", "company", "designation", "salary", "salaryRange", "workLocation", "payslip"]
       for (const field of fieldsToCompare) {
         const currentValue = formData[field]
         const originalValue = originalProfessionalDetails[field]
@@ -1655,8 +1688,8 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           return true
         }
       }
-    } else if (employmentType === "business") {
-      const fieldsToCompare: (keyof FormData)[] = ["sector", "sectorOther", "businessName", "businessType", "businessTypeOther", "designation", "annualReturns", "businessLocation", "itrDocument"]
+    } else if (isBusiness) {
+      const fieldsToCompare: (keyof FormData)[] = ["sector", "sectorOther", "businessName", "businessType", "businessTypeOther", "designation", "annualReturns", "revenueRange", "businessLocation", "itrDocument"]
       for (const field of fieldsToCompare) {
         const currentValue = formData[field]?.toString().trim() || ""
         const originalValue = originalProfessionalDetails[field]?.toString().trim() || ""
@@ -1664,7 +1697,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           return true
         }
       }
-    } else if (employmentType === "student") {
+    } else if (isStudent) {
       const fieldsToCompare: (keyof FormData)[] = ["institution", "course", "fieldOfStudy", "yearOfStudy", "expectedGraduationYear"]
       for (const field of fieldsToCompare) {
         const currentValue = formData[field]?.toString().trim() || ""
@@ -1696,8 +1729,6 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       { key: "siblings", label: "Siblings Details" },
       { key: "familyDescription", label: "Brief Description About Family" },
       { key: "caste", label: "Caste" },
-      { key: "subcaste", label: "Subcaste" },
-      { key: "familyType", label: "Family Type" },
       { key: "familyStatus", label: "Family Status" },
     ]
 
@@ -1738,26 +1769,23 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
   // Check if contact details have changed
   const hasContactDetailsChanged = (): boolean => {
+    const contactFields = [
+      "phone", "whatsappNumber", 
+      "permanentAddressLine1", "permanentAddressLine2", "permanentPincode", "permanentArea", "permanentTaluk", "permanentDistrict", "permanentDivision", "permanentRegion", "permanentState", "permanentCountry", "permanentLandmark",
+      "currentAddressLine1", "currentAddressLine2", "currentPincode", "currentArea", "currentTaluk", "currentDistrict", "currentDivision", "currentRegion", "currentState", "currentCountry", "currentLandmark"
+    ]
+
     if (!originalContactDetails) {
-      // If no original data exists, check if any field is filled
-      const contactFields = ["phone", "whatsappNumber", "permanentAddressLine1", "permanentPincode", "permanentArea", "permanentTaluk", "permanentDistrict", "permanentDivision", "permanentRegion", "permanentState", "permanentCountry", "currentAddressLine1", "currentPincode", "currentArea", "currentTaluk", "currentDistrict", "currentDivision", "currentRegion", "currentState", "currentCountry"]
       return contactFields.some((field) => {
         const value = formData[field as keyof FormData]
         return value !== "" && value !== null && value !== undefined
       })
     }
 
-    // Compare current form data with original saved data
-    const fieldsToCompare: (keyof FormData)[] = ["phone", "whatsappNumber", "permanentAddressLine1", "permanentAddressLine2", "permanentPincode", "permanentArea", "permanentTaluk", "permanentDistrict", "permanentDivision", "permanentRegion", "permanentState", "permanentCountry", "permanentLandmark", "currentAddressLine1", "currentAddressLine2", "currentPincode", "currentArea", "currentTaluk", "currentDistrict", "currentDivision", "currentRegion", "currentState", "currentCountry", "currentLandmark"]
-
-    for (const field of fieldsToCompare) {
-      const currentValue = formData[field]
-      const originalValue = originalContactDetails[field]
-
-      // Handle string comparison
-      const currentStr = currentValue?.toString().trim() || ""
-      const originalStr = originalValue?.toString().trim() || ""
-      if (currentStr !== originalStr) {
+    for (const field of contactFields) {
+      const currentValue = formData[field as keyof FormData]?.toString().trim() || ""
+      const originalValue = originalContactDetails[field as keyof FormData]?.toString().trim() || ""
+      if (currentValue !== originalValue) {
         return true
       }
     }
@@ -1808,23 +1836,33 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
   // Check if family details have changed
   const hasFamilyDetailsChanged = (): boolean => {
+    const familyFields = [
+      "fatherName", "fatherOccupation", "motherName", "motherOccupation", 
+      "parentsAddressLine1", "parentsAddressLine2", "parentsPincode", "parentsArea", "parentsTaluk", "parentsDistrict", "parentsDivision", "parentsRegion", "parentsState", "parentsCountry", "parentsLandmark",
+      "siblings", "familyDescription", "caste", "subcaste", "kulam", "kilai", "gotram", "ancestralOrigin", "familyType", "familyStatus"
+    ]
+
     if (!originalFamilyDetails) {
-      // If no original data exists, check if any field is filled
-      const familyFields = ["fatherName", "fatherOccupation", "motherName", "motherOccupation", "parentsAddressLine1", "parentsPincode", "parentsArea", "parentsTaluk", "parentsDistrict", "parentsDivision", "parentsRegion", "parentsState", "parentsCountry", "siblings", "familyDescription", "caste", "subcaste", "kulam", "gotram", "familyType", "familyStatus"]
-      return familyFields.some((field) => {
+      const basicFieldsChanged = familyFields.some((field) => {
         const value = formData[field as keyof FormData]
+        if (Array.isArray(value)) return value.length > 0
         return value !== "" && value !== null && value !== undefined
       })
+      return basicFieldsChanged
     }
 
-    // Compare current form data with original saved data
-    const fieldsToCompare: (keyof FormData)[] = ["fatherName", "fatherOccupation", "motherName", "motherOccupation", "parentsAddressLine1", "parentsAddressLine2", "parentsPincode", "parentsArea", "parentsTaluk", "parentsDistrict", "parentsDivision", "parentsRegion", "parentsState", "parentsCountry", "parentsLandmark", "siblings", "familyDescription", "caste", "subcaste", "kulam", "gotram", "familyType", "familyStatus"]
+    for (const field of familyFields) {
+      const currentValue = formData[field as keyof FormData]
+      const originalValue = originalFamilyDetails[field as keyof FormData]
 
-    for (const field of fieldsToCompare) {
-      const currentValue = formData[field]
-      const originalValue = originalFamilyDetails[field]
+      // Deep compare siblingDetails array
+      if (field === "siblingDetails") {
+        const currentArr = Array.isArray(currentValue) ? currentValue : []
+        const originalArr = Array.isArray(originalValue) ? originalValue : []
+        if (JSON.stringify(currentArr) !== JSON.stringify(originalArr)) return true
+        continue
+      }
 
-      // Handle string comparison
       const currentStr = currentValue?.toString().trim() || ""
       const originalStr = originalValue?.toString().trim() || ""
       if (currentStr !== originalStr) {
@@ -1929,13 +1967,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   // Check if all photos fields are filled (without showing toasts)
   const areAllPhotosFieldsFilled = (): boolean => {
     const userPhotos = formData.userPhotos || []
-    const familyPhoto = formData.familyPhoto || ""
-    const aadharFront = formData.aadharFront || ""
-    const aadharBack = formData.aadharBack || ""
-    return userPhotos.length >= 3 &&
-      familyPhoto.trim() !== "" &&
-      aadharFront.trim() !== "" &&
-      aadharBack.trim() !== ""
+    return userPhotos.length >= 1
   }
 
   // Check if photos details have changed
@@ -2015,19 +2047,20 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   }
 
   const hasPartnerPreferencesChanged = (): boolean => {
-    const prefFields = [
+    const preferenceFields = [
       "preferredAgeMin", "preferredAgeMax", "preferredHeightMin", "preferredHeightMax",
-      "preferredMaritalStatus", "preferredMotherTongue", "preferredPhysicalStatus",
-      "preferredEatingHabits", "preferredSmokingHabits", "preferredDrinkingHabits",
-      "preferredReligion", "preferredCaste", "preferredSubcaste", "preferredStar", "preferredRaasi",
-      "preferredDosham", "preferredEducation", "preferredEmployedIn", "preferredOccupation",
-      "preferredAnnualIncomeMin",
-      "preferredCountry", "preferredState", "preferredCity", "preferredLanguages"
+      "preferredMaritalStatus", "preferredMotherTongue", "preferredLanguages",
+      "preferredPhysicalStatus", "preferredEatingHabits", "preferredSmokingHabits", "preferredDrinkingHabits",
+      "preferredReligion", "preferredCaste", "preferredSubcaste", "preferredStar", "preferredRaasi", "preferredDosham",
+      "preferredEducation", "preferredDegrees", "preferredBranches", "preferredEmploymentType",
+      "preferredEmployedIn", "preferredOccupation", "preferredAnnualIncomeMin", "preferredAnnualIncome",
+      "preferredCountry", "preferredState", "preferredCity"
     ]
 
     if (!originalPartnerPreferences) {
-      return prefFields.some((field) => {
+      return preferenceFields.some((field) => {
         const value = formData[field as keyof FormData]
+        if (Array.isArray(value)) return value.length > 0
         const anyFields = ["preferredMaritalStatus", "preferredPhysicalStatus", "preferredEatingHabits", "preferredSmokingHabits", "preferredDrinkingHabits", "preferredDosham", "preferredEmploymentType"]
         if (anyFields.includes(field)) {
           return value !== "Any" && value !== "Normal" && value !== "" && value !== null
@@ -2036,12 +2069,20 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       })
     }
 
-    for (const field of prefFields) {
-      const currentValue = formData[field as keyof FormData]?.toString().trim() || ""
-      const originalValue = originalPartnerPreferences[field as keyof FormData]?.toString().trim() || ""
-      if (currentValue !== originalValue) {
-        return true
+    for (const field of preferenceFields) {
+      const currentValue = formData[field as keyof FormData]
+      const originalValue = originalPartnerPreferences[field as keyof FormData]
+
+      if (Array.isArray(currentValue) || Array.isArray(originalValue)) {
+        const curArr = Array.isArray(currentValue) ? currentValue : []
+        const origArr = Array.isArray(originalValue) ? originalValue : []
+        if (JSON.stringify([...curArr].sort()) !== JSON.stringify([...origArr].sort())) return true
+        continue
       }
+
+      const curStr = currentValue?.toString().trim() || ""
+      const origStr = originalValue?.toString().trim() || ""
+      if (curStr !== origStr) return true
     }
     return false
   }
@@ -2277,14 +2318,21 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         // Update the stored completion percentage after calculation
         setProfessionalCompletionPercentage(professionalDetailsProgress)
 
-        const employmentType = formData.employmentType || ""
-        const originalEmploymentType = originalProfessionalDetails?.employmentType || ""
+        const employmentType = (formData.employmentType || "").toLowerCase()
+        const originalEmploymentType = (originalProfessionalDetails?.employmentType || "").toLowerCase()
+
+        const isEmployee = ["employee", "private", "government/psu", "defence"].includes(employmentType)
+        const isBusiness = ["business", "self employed"].includes(employmentType)
+        const isStudent = employmentType === "student"
+        
+        const wasEmployee = ["private", "government/psu", "defence"].includes(originalEmploymentType) || originalEmploymentType === "employee"
+        const wasBusiness = ["business", "self employed"].includes(originalEmploymentType) || originalEmploymentType === "business"
 
         // If employment type changed, delete old files from storage
         if (originalEmploymentType && originalEmploymentType !== employmentType) {
           try {
             // Delete old payslips if switching from employee
-            if (originalEmploymentType === "employee") {
+            if (wasEmployee && !isEmployee) {
               const { data: files } = await supabase.storage
                 .from("payslips")
                 .list(userId)
@@ -2298,7 +2346,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             }
 
             // Delete old ITR document if switching from business
-            if (originalEmploymentType === "business") {
+            if (wasBusiness && !isBusiness) {
               const { data: files } = await supabase.storage
                 .from("itr-documents")
                 .list(userId)
@@ -2321,7 +2369,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         await supabase.from("profession_business").delete().eq("user_id", userId)
         await supabase.from("profession_student").delete().eq("user_id", userId)
 
-        if (employmentType === "employee") {
+        if (isEmployee) {
           // Upload payslips to storage
           const payslipUrls: string[] = []
           const payslips = (formData.payslip as string[]) || []
@@ -2405,6 +2453,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             company: formData.company || null,
             designation: formData.designation || null,
             salary: formData.salary || null,
+            salary_range: formData.salaryRange || null,
             work_location: formData.workLocation || null,
             payslip: payslipUrls.length > 0 ? payslipUrls : null,
             completion_percentage: professionalDetailsProgress,
@@ -2420,12 +2469,13 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
           // Update original data
           setOriginalProfessionalDetails({
-            employmentType: "employee",
+            employmentType: formData.employmentType, // Preserve original casing/value
             sector: formData.sector,
             sectorOther: formData.sectorOther,
             company: formData.company,
             designation: formData.designation,
             salary: formData.salary,
+            salaryRange: formData.salaryRange,
             workLocation: formData.workLocation,
             payslip: payslipUrls,
           })
@@ -2437,7 +2487,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               payslip: payslipUrls,
             }))
           }
-        } else if (employmentType === "business") {
+        } else if (isBusiness) {
           // Upload ITR document to storage
           let itrDocumentUrl = formData.itrDocument || ""
 
@@ -2518,6 +2568,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             business_type_other: formData.businessType === "other" ? (formData.businessTypeOther || null) : null,
             designation: formData.designation || null,
             annual_returns: formData.annualReturns || null,
+            revenue_range: formData.revenueRange || null,
             business_location: formData.businessLocation || null,
             itr_document: itrDocumentUrl || null,
             completion_percentage: professionalDetailsProgress,
@@ -2533,7 +2584,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
           // Update original data
           setOriginalProfessionalDetails({
-            employmentType: "business",
+            employmentType: formData.employmentType,
             sector: formData.sector,
             sectorOther: formData.sectorOther,
             businessName: formData.businessName,
@@ -2541,6 +2592,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             businessTypeOther: formData.businessTypeOther,
             designation: formData.designation,
             annualReturns: formData.annualReturns,
+            revenueRange: formData.revenueRange,
             businessLocation: formData.businessLocation,
             itrDocument: itrDocumentUrl,
           })
@@ -2552,7 +2604,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               itrDocument: itrDocumentUrl,
             }))
           }
-        } else if (employmentType === "student") {
+        } else if (isStudent) {
           // Save to student table
           const studentData = {
             user_id: userId,
@@ -2574,12 +2626,19 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
           // Update original data
           setOriginalProfessionalDetails({
-            employmentType: "student",
+            employmentType: formData.employmentType,
             institution: formData.institution,
             course: formData.course,
             fieldOfStudy: formData.fieldOfStudy,
             yearOfStudy: formData.yearOfStudy,
             expectedGraduationYear: formData.expectedGraduationYear,
+          })
+        } else if (employmentType === "not working") {
+          // No additional tables to update, just clear them (already done above)
+          
+          // Update original data so button deactivates
+          setOriginalProfessionalDetails({
+            employmentType: "Not Working"
           })
         }
 
@@ -2619,6 +2678,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           parents_country: formData.parentsCountry || null,
           parents_landmark: formData.parentsLandmark || null,
           siblings: formData.siblings || null,
+          sibling_details: formData.siblingDetails || [],
           family_description: formData.familyDescription || null,
           caste: formData.caste || null,
           subcaste: formData.subcaste || null,
@@ -2656,6 +2716,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           parentsCountry: formData.parentsCountry,
           parentsLandmark: formData.parentsLandmark,
           siblings: formData.siblings,
+          siblingDetails: formData.siblingDetails,
           familyDescription: formData.familyDescription,
           caste: formData.caste,
           subcaste: formData.subcaste,
@@ -3521,7 +3582,20 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                 </div>
                 <Button
                   onClick={handleSave}
-                  disabled={isSaving || (currentStep === 0 && !hasPersonalDetailsChanged()) || (currentStep === 1 && !hasContactDetailsChanged()) || (currentStep === 2 && !hasEducationDetailsChanged()) || (currentStep === 3 && (!areAllProfessionalDetailsFilled() || !hasProfessionalDetailsChanged())) || (currentStep === 4 && !hasFamilyDetailsChanged()) || (currentStep === 5 && !hasHoroscopeDetailsChanged()) || (currentStep === 6 && !hasInterestsDetailsChanged()) || (currentStep === 7 && !hasSocialHabitsDetailsChanged()) || (currentStep === 8 && (!areAllPhotosFieldsFilled() || !hasPhotosDetailsChanged())) || (currentStep === 9 && !hasPartnerPreferencesChanged()) || (currentStep === 10 && (!isReferralPartnerIdValid() || !hasReferralDetailsChanged()))}
+                  disabled={
+                    isSaving || 
+                    (currentStep === 0 && !hasPersonalDetailsChanged()) || 
+                    (currentStep === 1 && !hasContactDetailsChanged()) || 
+                    (currentStep === 2 && !hasEducationDetailsChanged()) || 
+                    (currentStep === 3 && !hasProfessionalDetailsChanged()) || 
+                    (currentStep === 4 && !hasFamilyDetailsChanged()) || 
+                    (currentStep === 5 && !hasHoroscopeDetailsChanged()) || 
+                    (currentStep === 6 && !hasInterestsDetailsChanged()) || 
+                    (currentStep === 7 && !hasSocialHabitsDetailsChanged()) || 
+                    (currentStep === 8 && !hasPhotosDetailsChanged()) || 
+                    (currentStep === 9 && !hasPartnerPreferencesChanged()) || 
+                    (currentStep === 10 && !hasReferralDetailsChanged())
+                  }
                   className="h-16 px-12 rounded-[2rem] bg-[#4B0082] text-white font-black text-[12px] uppercase tracking-[0.2em] shadow-2xl shadow-indigo-500/40 hover:shadow-indigo-500/60 transition-all disabled:opacity-30 disabled:grayscale"
                 >
                   {isSaving ? (

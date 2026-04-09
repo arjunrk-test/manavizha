@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DashboardProfileCard } from "./dashboard-profile-card"
+import { formatToDDMMYYYY } from "@/lib/utils/date-utils"
 
 interface ProfileCarouselProps {
     title: string
@@ -155,24 +156,27 @@ export function ProfileCarousel({
                             </div>
                         ) : (
                             <>
-                                {displayedProfiles.map((profile, index) => (
-                                    <div
-                                        key={profile.user_id || index}
-                                        className="w-[12rem] sm:w-[14.5rem] flex-none snap-start"
-                                    >
-                                        <DashboardProfileCard
-                                            profile={profile}
-                                            onClick={() => onProfileClick(profile)}
-                                            contextText={profile.interaction_at ? `Viewed on : ${new Date(profile.interaction_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}` : profile.location}
-                                            isShortlisted={shortlistedIds.includes(profile.user_id)}
-                                            onShortlist={onShortlist ? () => onShortlist(profile.user_id) : undefined}
-                                            isLoadingShortlist={shortlistLoadingId === profile.user_id}
-                                        />
-                                    </div>
-                                ))}
+                                {displayedProfiles.map((profile, index) => {
+                                    if (!profile) return null;
+                                    return (
+                                        <div
+                                            key={profile.user_id || index}
+                                            className="w-[12rem] sm:w-[14.5rem] flex-none snap-start"
+                                        >
+                                            <DashboardProfileCard
+                                                profile={profile}
+                                                onClick={() => onProfileClick(profile)}
+                                                contextText={profile.interaction_at ? `Profile viewed you on ${formatToDDMMYYYY(profile.interaction_at)}` : profile.location}
+                                                isShortlisted={shortlistedIds.includes(profile.user_id)}
+                                                onShortlist={onShortlist ? () => onShortlist(profile.user_id) : undefined}
+                                                isLoadingShortlist={shortlistLoadingId === profile.user_id}
+                                            />
+                                        </div>
+                                    );
+                                })}
                                 
                                 {/* Final "View all" card if we have more than 1 profiles */}
-                                {onViewAll && profiles.length > 0 && (
+                                {onViewAll && profiles.length > 0 && displayedProfiles[0] && (
                                     <div className="w-[12rem] sm:w-[14.5rem] flex-none snap-start">
                                         <DashboardProfileCard
                                             isViewAll

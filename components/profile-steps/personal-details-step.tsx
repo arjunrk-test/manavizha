@@ -44,11 +44,22 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
     }
   }
 
+  // Fallback religions if master data is empty
+  const religions = religionOptions.length > 0 ? religionOptions : [
+    { id: "Hindu", value: "Hindu" },
+    { id: "Christian", value: "Christian" },
+    { id: "Muslim", value: "Muslim" },
+    { id: "Jain", value: "Jain" },
+    { id: "Sikh", value: "Sikh" },
+    { id: "Buddhist", value: "Buddhist" },
+    { id: "Other", value: "Other" }
+  ]
+
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         
-        {/* Birth Details Section */}
+        {/* Basic Details Section */}
         <div className="space-y-8 md:col-span-2">
           <div className="flex items-center gap-4 mb-2">
             <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
@@ -151,7 +162,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
               label="Religion *"
               value={formData.religion}
               onChange={(value) => onChange("religion", value)}
-              options={religionOptions}
+              options={religions}
               required
             />
           </div>

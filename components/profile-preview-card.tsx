@@ -4,6 +4,8 @@ import { MapPin, Briefcase, User, GraduationCap, Heart, CheckCircle2, Crown, Gem
 import { MatchScoreBadge } from "./match-score-badge"
 import { motion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
+import { formatActivityTime } from "@/lib/utils/date-utils"
 
 interface ProfilePreviewCardProps {
     profile: any
@@ -101,8 +103,14 @@ export function ProfilePreviewCard({
                     {/* Bottom Info Overlay */}
                     <div className="absolute bottom-0 left-0 right-0 p-4 text-white z-10 transition-transform duration-500 group-hover:translate-y-[-2px]">
                         <div className="flex items-center justify-between gap-1 mb-1">
-                            <h3 className="font-bold text-[12px] sm:text-[14px] truncate drop-shadow-2xl leading-none tracking-tight">
+                            <h3 className="font-bold text-[12px] sm:text-[14px] truncate drop-shadow-2xl leading-none tracking-tight flex items-center gap-1.5">
                                 {profile.name}{profile.age ? `, ${profile.age}` : ""}
+                                {profile.last_active_at && (
+                                    <span className={cn(
+                                        "w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1 shadow-[0_0_8px_rgba(16,185,129,0.4)]",
+                                        formatActivityTime(profile.last_active_at) === "Online" && "animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+                                    )} />
+                                )}
                             </h3>
                             {profile.isVerified && (
                                 <CheckCircle2 className="h-4 w-4 text-emerald-400 drop-shadow-lg shrink-0" />

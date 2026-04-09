@@ -1,3 +1,12 @@
+export interface SiblingDetail {
+  id: string
+  type: 'brother' | 'sister'
+  relation: 'elder' | 'younger'
+  occupation: string
+  isWorking: boolean
+  isMarried: boolean
+}
+
 export interface FormData {
   // Personal Details
   name: string
@@ -62,12 +71,14 @@ export interface FormData {
   company: string
   designation: string
   salary: string
+  salaryRange: string
   workLocation: string
   payslip: string[]
   businessName: string
   businessType: string
   businessTypeOther: string
   annualReturns: string
+  revenueRange: string
   businessLocation: string
   itrDocument: string
   // Student Details
@@ -95,11 +106,13 @@ export interface FormData {
   parentsState: string
   parentsCountry: string
   parentsLandmark: string
-  siblings: string
+  siblings: string // Legacy
+  siblingDetails: SiblingDetail[]
   familyDescription: string
   caste: string
   subcaste: string
   kulam: string
+  kilai: string
   gotram: string
   familyType: string
   familyStatus: string

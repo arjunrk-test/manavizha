@@ -6,6 +6,7 @@ import { Menu, X, User } from "lucide-react"
 import { useState, useEffect } from "react"
 import { AuthDialog } from "@/components/auth-dialog"
 import { supabase } from "@/lib/supabase"
+import { getUserDashboard } from "@/lib/auth"
 import Image from "next/image"
 
 export function Navbar() {
@@ -13,14 +14,27 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [isLoginOpen, setIsLoginOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [dashboardPath, setDashboardPath] = useState("/dashboard")
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      const authUser = session?.user ?? null
+      setUser(authUser)
+      if (authUser) {
+        const path = await getUserDashboard(authUser.id)
+        setDashboardPath(path)
+      }
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const authUser = session?.user ?? null
+      setUser(authUser)
+      if (authUser) {
+        const path = await getUserDashboard(authUser.id)
+        setDashboardPath(path)
+      } else {
+        setDashboardPath("/dashboard")
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -95,18 +109,20 @@ export function Navbar() {
             >
               {user ? (
                 <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="rounded-full border-indigo-500/20 bg-white/40 hover:bg-indigo-50 text-[#4B0082] font-bold text-[10px] uppercase tracking-widest px-6 h-9 backdrop-blur-sm"
-                    onClick={() => window.location.href = `/dashboard/profile/${user.id}`}
-                  >
-                    Profile Preview
-                  </Button>
+                  {dashboardPath === "/dashboard" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full border-indigo-500/20 bg-white/40 hover:bg-indigo-50 text-[#4B0082] font-bold text-[10px] uppercase tracking-widest px-6 h-9 backdrop-blur-sm"
+                      onClick={() => window.location.href = `/dashboard/profile/${user.id}`}
+                    >
+                      Profile Preview
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     className="rounded-full bg-[#4B0082] hover:bg-[#1F4068] text-white shadow-lg hover:shadow-indigo-500/20 transition-all px-6 h-9 font-bold text-[10px] uppercase tracking-widest"
-                    onClick={() => window.location.href = '/dashboard'}
+                    onClick={() => window.location.href = dashboardPath}
                   >
                     Dashboard
                   </Button>
@@ -175,22 +191,24 @@ export function Navbar() {
               <div className="pt-4 flex flex-col gap-3">
                 {user ? (
                   <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full rounded-full border-indigo-500/20 text-[#4B0082] font-bold text-[10px] uppercase tracking-widest"
-                      onClick={() => {
-                        window.location.href = `/dashboard/profile/${user.id}`
-                        setIsOpen(false)
-                      }}
-                    >
-                      Profile Preview
-                    </Button>
+                    {dashboardPath === "/dashboard" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full rounded-full border-indigo-500/20 text-[#4B0082] font-bold text-[10px] uppercase tracking-widest"
+                        onClick={() => {
+                          window.location.href = `/dashboard/profile/${user.id}`
+                          setIsOpen(false)
+                        }}
+                      >
+                        Profile Preview
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       className="w-full rounded-full bg-[#4B0082] text-white font-bold text-[10px] uppercase tracking-widest"
                       onClick={() => {
-                        window.location.href = '/dashboard'
+                        window.location.href = dashboardPath
                         setIsOpen(false)
                       }}
                     >

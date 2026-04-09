@@ -575,7 +575,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             const result = [...arr]
             let s = seed
             for (let i = result.length - 1; i > 0; i--) {
-                const j = Math.floor((Math.sin(s++) * 10000 - Math.floor(Math.sin(s) * 10000)) * (i + 1))
+                const x = Math.sin(s++) * 10000
+                const random = x - Math.floor(x)
+                const j = Math.floor(random * (i + 1))
                 ;[result[i], result[j]] = [result[j], result[i]]
             }
             return result
@@ -591,10 +593,10 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
         const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
 
-        const recentViews = (viewsData.viewedMe || []).filter((v: any) => new Date(v.created_at) > oneMonthAgo && !v.is_read)
+        const recentViews = (viewsData.viewedMe || []).filter((v: any) => new Date(v.created_at) > oneMonthAgo)
         const recentViewedIds = recentViews.map((v: any) => v.viewer_user_id)
         
-        const recentInterests = (likedMeDataList || []).filter((l: any) => new Date(l.created_at) > oneMonthAgo && !l.is_read)
+        const recentInterests = (likedMeDataList || []).filter((l: any) => new Date(l.created_at) > oneMonthAgo)
         const recentInterestIds = recentInterests.map((l: any) => l.id)
 
         setWhoViewedMe(recentViews.map((rv: any) => {

@@ -53,9 +53,10 @@ export function useMasterData({
       if (fetchError) throw fetchError
 
       setData(fetchedData || [])
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err))
-      console.error(`Error fetching ${tableName}:`, error)
+    } catch (err: any) {
+      const errorMessage = err?.message || String(err)
+      const error = err instanceof Error ? err : new Error(errorMessage)
+      console.error(`Error fetching ${tableName}:`, errorMessage, err)
       setError(error)
       setData([])
     } finally {

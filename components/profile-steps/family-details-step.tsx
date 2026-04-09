@@ -1,14 +1,13 @@
-"use client"
-
 import { useState, useEffect, useRef, useMemo } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { FormData } from "@/types/profile"
+import { FormData, SiblingDetail } from "@/types/profile"
 import { Textarea } from "@/components/ui/textarea"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, Plus, Trash2, UserPlus } from "lucide-react"
 import { useMasterData } from "@/hooks/use-master-data"
 import { SelectDropdown } from "@/components/ui/select-dropdown"
 import { useClickOutside } from "@/hooks/use-click-outside"
+import { Button } from "@/components/ui/button"
 
 interface FamilyDetailsStepProps {
   formData: FormData
@@ -127,10 +126,32 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
 
   const filteredSubcasteOptions = useMemo(() => {
     if (!subcasteOptions) return [];
-    if (!formData.caste) return []; // Filter strictly if caste is unselected? Wait! If they haven't selected a caste, showing all options might be confusing. So returning [] is better.
-    // However, some subcastes might not have a category yet, we can choose to show them or hide them.
+    if (!formData.caste) return []; 
     return subcasteOptions.filter((opt) => !opt.category || opt.category === formData.caste);
   }, [subcasteOptions, formData.caste]);
+
+  const addSibling = (type: 'brother' | 'sister') => {
+    const currentSiblings = formData.siblingDetails || []
+    const newSibling: SiblingDetail = {
+      id: Math.random().toString(36).substr(2, 9),
+      type,
+      relation: 'younger',
+      occupation: '',
+      isWorking: false,
+      isMarried: false
+    }
+    onChange("siblingDetails", [...currentSiblings, newSibling])
+  }
+
+  const removeSibling = (id: string) => {
+    const currentSiblings = formData.siblingDetails || []
+    onChange("siblingDetails", currentSiblings.filter(s => s.id !== id))
+  }
+
+  const updateSibling = (id: string, field: keyof SiblingDetail, value: any) => {
+    const currentSiblings = formData.siblingDetails || []
+    onChange("siblingDetails", currentSiblings.map(s => s.id === id ? { ...s, [field]: value } : s))
+  }
 
   return (
     <div className="space-y-12">
@@ -343,7 +364,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
               value={formData.caste || ""}
               onChange={(value) => {
                 onChange("caste", value)
-                onChange("subcaste", "") // Reset subcaste when caste changes
+                onChange("subcaste", "") 
               }}
               options={casteOptions}
               required
@@ -357,26 +378,22 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
               disabled={!formData.caste}
               required
             />
-            <div className="space-y-2">
-              <Label htmlFor="kulam" className="sds-label">Kulam / Kilai (Optional)</Label>
-              <Input
-                id="kulam"
-                value={formData.kulam || ""}
-                onChange={(e) => onChange("kulam", e.target.value)}
-                placeholder="Type your Kulam / Kilai"
-                className="sds-input w-full"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="gotram" className="sds-label">Gotram (Optional)</Label>
-              <Input
-                id="gotram"
-                value={formData.gotram || ""}
-                onChange={(e) => onChange("gotram", e.target.value)}
-                placeholder="Type your Gotram"
-                className="sds-input w-full"
-              />
-            </div>
+            <SelectDropdown
+              id="kulam"
+              label="Kulam / Kilai *"
+              value={formData.kulam || ""}
+              onChange={(value) => onChange("kulam", value)}
+              options={kulamOptions}
+              required
+            />
+            <SelectDropdown
+              id="gotram"
+              label="Gotram *"
+              value={formData.gotram || ""}
+              onChange={(value) => onChange("gotram", value)}
+              options={gotramOptions}
+              required
+            />
             <div className="space-y-2">
               <Label htmlFor="ancestralOrigin" className="sds-label">Native Place *</Label>
               <Input
@@ -404,16 +421,141 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
               options={familyTypeOptions}
               required
             />
-            <div className="space-y-2">
-              <Label htmlFor="siblings" className="sds-label">Siblings *</Label>
-              <Input
-                id="siblings"
-                value={formData.siblings || ""}
-                onChange={(e) => onChange("siblings", e.target.value)}
-                placeholder="e.g., 1 Younger Brother (Unmarried)"
-                required
-                className="sds-input w-full"
-              />
+          </div>
+        </div>
+
+        {/* Structured Siblings Section */}
+        <div className="space-y-8 md:col-span-2">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
+              <span className="text-[#4B0082] font-black text-xs">S4</span>
+            </div>
+            <div>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Siblings</h4>
+              <h3 className="text-xl font-light text-gray-900 tracking-tight">Brothers & Sisters</h3>
+            </div>
+            <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
+          </div>
+
+          <div className="space-y-6">
+            <div className="flex gap-4">
+              <Button 
+                type="button" 
+                onClick={() => addSibling('brother')}
+                variant="outline"
+                className="flex-1 h-16 rounded-2xl border-dashed border-indigo-200 hover:border-[#4B0082] hover:bg-indigo-50/30 text-[#4B0082] font-black text-[10px] uppercase tracking-widest gap-3"
+              >
+                <Plus className="h-4 w-4" /> Add Brother
+              </Button>
+              <Button 
+                type="button" 
+                onClick={() => addSibling('sister')}
+                variant="outline"
+                className="flex-1 h-16 rounded-2xl border-dashed border-indigo-200 hover:border-[#4B0082] hover:bg-indigo-50/30 text-[#4B0082] font-black text-[10px] uppercase tracking-widest gap-3"
+              >
+                <Plus className="h-4 w-4" /> Add Sister
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6">
+              {(formData.siblingDetails || []).map((sibling, index) => (
+                <div 
+                  key={sibling.id} 
+                  className="sds-glass rounded-3xl p-8 border-indigo-50/50 shadow-xl space-y-6 animate-in slide-in-from-left-4 duration-300"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${sibling.type === 'brother' ? 'bg-indigo-100 text-indigo-600' : 'bg-pink-100 text-pink-600'}`}>
+                        <span className="font-black text-[10px] uppercase">{sibling.type[0]}</span>
+                      </div>
+                      <div>
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Sibling {index + 1}</h4>
+                        <h3 className="font-bold text-gray-900 capitalize">{sibling.relation} {sibling.type}</h3>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={() => removeSibling(sibling.id)}
+                      variant="ghost" 
+                      size="icon"
+                      className="text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-full"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                    <div className="space-y-2">
+                      <Label className="sds-label">Relation</Label>
+                      <select 
+                        value={sibling.relation}
+                        onChange={(e) => updateSibling(sibling.id, 'relation', e.target.value)}
+                        className="sds-input w-full appearance-none cursor-pointer"
+                      >
+                        <option value="elder">Elder</option>
+                        <option value="younger">Younger</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="sds-label">Status</Label>
+                      <div className="flex bg-black/[0.03] p-1 rounded-2xl border border-indigo-50/50 h-14">
+                        <button
+                          type="button"
+                          onClick={() => updateSibling(sibling.id, 'isWorking', false)}
+                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${!sibling.isWorking ? 'bg-white shadow-sm text-[#4B0082]' : 'text-gray-400 hover:text-[#4B0082]/60'}`}
+                        >
+                          Studying
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateSibling(sibling.id, 'isWorking', true)}
+                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${sibling.isWorking ? 'bg-white shadow-sm text-[#4B0082]' : 'text-gray-400 hover:text-[#4B0082]/60'}`}
+                        >
+                          Working
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="sds-label">Profession / Course</Label>
+                      <Input 
+                        value={sibling.occupation}
+                        onChange={(e) => updateSibling(sibling.id, 'occupation', e.target.value)}
+                        placeholder={sibling.isWorking ? "e.g., Software Engineer" : "e.g., B.E. Final Year"}
+                        className="sds-input w-full"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="sds-label">Marital Status</Label>
+                      <div className="flex bg-black/[0.03] p-1 rounded-2xl border border-indigo-50/50 h-14">
+                        <button
+                          type="button"
+                          onClick={() => updateSibling(sibling.id, 'isMarried', false)}
+                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${!sibling.isMarried ? 'bg-white shadow-sm text-[#4B0082]' : 'text-gray-400 hover:text-[#4B0082]/60'}`}
+                        >
+                          Unmarried
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateSibling(sibling.id, 'isMarried', true)}
+                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${sibling.isMarried ? 'bg-white shadow-sm text-[#4B0082]' : 'text-gray-400 hover:text-[#4B0082]/60'}`}
+                        >
+                          Married
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {(formData.siblingDetails || []).length === 0 && (
+                <div className="text-center py-12 px-6 sds-glass rounded-3xl border-dashed border-indigo-100">
+                  <UserPlus className="h-10 w-10 text-indigo-400/30 mx-auto mb-4" />
+                  <p className="text-indigo-900/40 text-sm font-medium">No siblings added yet. Use the buttons above to add brothers or sisters.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

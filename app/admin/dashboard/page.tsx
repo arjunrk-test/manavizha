@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { getUserDashboard } from "@/lib/auth"
 import { LogOut, Users, Database, Mail, ArrowRight, User, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -37,17 +38,19 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     // Check if user is authenticated and is an admin
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) {
         router.push("/admin")
         return
       }
 
-      // TODO: Verify user is an admin (add admin check logic here)
-      // For now, we'll just check if user is authenticated
-      // You can add admin table check similar to referral_partners
+      const dashboardPath = await getUserDashboard(authUser.id)
+      if (dashboardPath !== "/admin/dashboard") {
+        router.push(dashboardPath)
+        return
+      }
 
-      setUser(user)
+      setUser(authUser)
       setIsLoading(false)
     }
 

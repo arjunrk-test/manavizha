@@ -51,9 +51,24 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: e1?.message || e2?.message }, { status: 500 })
         }
 
-        // De-duplicate: only keep the latest view for each user to show unique profiles
-        const uniqueIViewed = Array.from(new Map((iViewedData || []).map((v: any) => [v.viewed_user_id, v])).values())
-        const uniqueViewedMe = Array.from(new Map((viewedMeData || []).map((v: any) => [v.viewer_user_id, v])).values())
+        // De-duplicate: keep only the latest view for each user
+        const uniqueIViewed: any[] = []
+        const iViewedMap = new Set()
+        for (const v of (iViewedData || [])) {
+            if (!iViewedMap.has(v.viewed_user_id)) {
+                iViewedMap.add(v.viewed_user_id)
+                uniqueIViewed.push(v)
+            }
+        }
+
+        const uniqueViewedMe: any[] = []
+        const viewedMeMap = new Set()
+        for (const v of (viewedMeData || [])) {
+            if (!viewedMeMap.has(v.viewer_user_id)) {
+                viewedMeMap.add(v.viewer_user_id)
+                uniqueViewedMe.push(v)
+            }
+        }
 
         return NextResponse.json({
             iViewed: uniqueIViewed,

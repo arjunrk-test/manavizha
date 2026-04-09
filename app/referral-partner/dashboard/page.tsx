@@ -7,6 +7,7 @@ import { useEffect, useState } from "react"
 import { LogOut, User, Settings, Users, IndianRupee } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
+import { getUserDashboard } from "@/lib/auth"
 
 export default function ReferralPartnerDashboardPage() {
   const router = useRouter()
@@ -22,9 +23,15 @@ export default function ReferralPartnerDashboardPage() {
   useEffect(() => {
     // Check if user is authenticated and is a referral partner
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) {
         router.push("/referral-partner")
+        return
+      }
+
+      const dashboardPath = await getUserDashboard(authUser.id)
+      if (dashboardPath !== "/referral-partner/dashboard") {
+        router.push(dashboardPath)
         return
       }
 
@@ -32,19 +39,19 @@ export default function ReferralPartnerDashboardPage() {
       const { data: partnerData, error: partnerError } = await supabase
         .from("referral_partners")
         .select("user_id, partner_id")
-        .eq("user_id", user.id)
+        .eq("user_id", authUser.id)
         .single()
 
       if (partnerError || !partnerData) {
-        // User is not a referral partner, redirect to home
-        await supabase.auth.signOut()
-        router.push("/referral-partner")
+        // This case should theoretically be handled by getUserDashboard returning a different path,
+        // but adding as a safety net.
+        router.push(dashboardPath)
         return
       }
 
       // Merge user data with partner data (including partner_id)
       setUser({
-        ...user,
+        ...authUser,
         partner_id: partnerData.partner_id
       })
       await fetchStats(partnerData.partner_id)

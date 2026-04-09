@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
+import { getUserDashboard } from "@/lib/auth"
 import { LogOut, ArrowLeft, Edit, Settings, MessageSquare, User, Bell, HeartHandshake, Eye, Sparkles } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -33,15 +34,11 @@ export default function DashboardLayout({
         return
       }
 
-      const { data: partnerData, error: partnerError } = await supabase
-        .from("referral_partners")
-        .select("user_id")
-        .eq("user_id", authUser.id)
-        .single()
-
-      if (!partnerError && partnerData) {
-        await supabase.auth.signOut()
-        router.push("/")
+      // Determine the correct dashboard for the user based on their specific role
+      const dashboardPath = await getUserDashboard(authUser.id)
+      
+      if (dashboardPath !== "/dashboard") {
+        router.push(dashboardPath)
         return
       }
 
