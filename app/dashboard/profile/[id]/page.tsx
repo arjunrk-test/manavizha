@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = 'force-dynamic'
+
 import { supabase } from "@/lib/supabase"
 import { useRouter, useParams } from "next/navigation"
 import React, { useEffect, useState } from "react"
@@ -7,7 +9,8 @@ import {
     ArrowLeft, MapPin, Briefcase, User, GraduationCap, ArrowRight,
     Heart, Star, CheckCircle2, Phone, MessageCircle, Lock,
     Calendar, Coffee, Eye, Info, Users, Shield, Sparkles, XCircle, Home,
-    Search, Target, Award, HeartHandshake, MoreVertical, UserX, UserMinus, Crown, Gem, Bookmark, ShieldCheck
+    Search, Target, Award, HeartHandshake, MoreVertical, UserX, UserMinus, Crown, Gem, Bookmark, ShieldCheck,
+    ChevronLeft, ChevronRight
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -15,7 +18,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { MessageDialog } from "@/components/message-dialog"
-import { formatToDDMMYYYY } from "@/lib/utils/date-utils"
+import { formatToDDMMYYYY, formatActivityTime } from "@/lib/utils/date-utils"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 export default function ProfileViewPage() {
     const router = useRouter()
@@ -53,6 +58,10 @@ export default function ProfileViewPage() {
     const [shortlistedDate, setShortlistedDate] = useState<string | null>(null)
     const [shortlistedMeDate, setShortlistedMeDate] = useState<string | null>(null)
     const [lastViewedMeDate, setLastViewedMeDate] = useState<string | null>(null)
+    
+    // Navigation sequence states
+    const [prevProfileId, setPrevProfileId] = useState<string | null>(null)
+    const [nextProfileId, setNextProfileId] = useState<string | null>(null)
 
     useEffect(() => {
         const getSession = async () => {
@@ -61,6 +70,26 @@ export default function ProfileViewPage() {
         }
         getSession()
     }, [])
+
+    // Sibling Profile Navigation Sequence
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const sequenceStr = sessionStorage.getItem('manavizha_browse_sequence');
+            if (sequenceStr) {
+                try {
+                    const sequence: string[] = JSON.parse(sequenceStr);
+                    const currentIndex = sequence.indexOf(targetUserId);
+                    
+                    if (currentIndex !== -1) {
+                        if (currentIndex > 0) setPrevProfileId(sequence[currentIndex - 1]);
+                        if (currentIndex < sequence.length - 1) setNextProfileId(sequence[currentIndex + 1]);
+                    }
+                } catch (e) {
+                    console.error("Error parsing navigation sequence", e);
+                }
+            }
+        }
+    }, [targetUserId]);
 
     useEffect(() => {
         if (!targetUserId) return
@@ -104,7 +133,7 @@ export default function ProfileViewPage() {
                     supabase.from("social_habits").select("*").eq("user_id", targetUserId).maybeSingle(),
                     supabase.from("partner_preferences").select("*").eq("user_id", targetUserId).maybeSingle(),
                     supabase.from("photos").select("*").eq("user_id", targetUserId).maybeSingle(),
-                    supabase.from("users").select("name, email, phone").eq("id", targetUserId).single(),
+                    supabase.from("users").select("*, name, email, phone, updated_at, is_premium, last_active_at").eq("id", targetUserId).single(),
                     // Use server API to bypass RLS - target user's settings not readable by anon
                     fetch(`/api/premium-status?userIds=${targetUserId}`).then(r => r.ok ? r.json() : []).catch(() => []),
                 ])
@@ -121,8 +150,10 @@ export default function ProfileViewPage() {
                     allPhotos = photosRow.user_photos
                 }
 
-                // Derive settingsRow from API result (array of 0 or 1 items)
-                const settingsRow = Array.isArray(settingsApiResult) ? settingsApiResult[0] : null
+                // Derive settingsRow from API result (array of users)
+                const settingsRow = Array.isArray(settingsApiResult) 
+                    ? settingsApiResult.find((s: any) => s.user_id === targetUserId) 
+                    : null
 
                 // Build combined profile object
                 setProfile({
@@ -136,9 +167,11 @@ export default function ProfileViewPage() {
                     horoscope: horo || {},
                     interests: int || {},
                     social: soc || {},
+                    sex: personal.sex || userRow?.sex || personal.gender || null,
                     partner_preferences: prefs || null,
-                    isPremium: settingsRow?.is_premium || false,
-                    premiumPlan: settingsRow?.premium_plan || null,
+                    isPremium: settingsRow?.is_premium || userRow?.is_premium || personal.is_premium || false,
+                    premiumPlan: settingsRow?.premium_plan || userRow?.premium_plan || personal.premium_plan || null,
+                    last_active: settingsRow?.last_active_at || userRow?.last_active_at || personal.last_active_at || personal.updated_at || userRow?.updated_at || personal.created_at,
                 })
                 setPhotos(allPhotos)
 
@@ -506,7 +539,7 @@ export default function ProfileViewPage() {
             </div>
 
             {/* Header: Identity & Status Overview (Integrated) */}
-            <div className="relative z-10 max-w-7xl mx-auto px-6 pt-24 pb-12">
+            <div className="relative z-10 max-w-7xl mx-auto px-6 pt-14 pb-12">
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr,auto] items-end gap-16">
                     
                     {/* Left Column: Name and Subtitle */}
@@ -514,10 +547,27 @@ export default function ProfileViewPage() {
                         <div className="space-y-6">
                             {/* Top Accent Row: Badges & Status */}
                             <div className="flex flex-wrap items-center gap-4">
-                                <div className="flex items-center gap-2 px-3 py-1.5 bg-white/40 backdrop-blur-md rounded-full border border-white/50 shadow-sm">
-                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Active Now</span>
-                                </div>
+                                {profile.last_active && (
+                                    <Badge className={cn(
+                                        "backdrop-blur-xl border px-5 py-2 rounded-full text-[11px] font-black tracking-[0.15em] uppercase shadow-2xl flex items-center gap-2.5 transition-all duration-700", 
+                                        formatActivityTime(profile.last_active) === "Online" 
+                                            ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-400 shadow-emerald-500/20 ring-1 ring-emerald-500/20" 
+                                            : "bg-black/20 border-white/10 text-white/70"
+                                    )}>
+                                        <div className="relative flex h-2.5 w-2.5">
+                                            {formatActivityTime(profile.last_active) === "Online" && (
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                            )}
+                                            <span className={cn(
+                                                "relative inline-flex rounded-full h-2.5 w-2.5",
+                                                formatActivityTime(profile.last_active) === "Online" 
+                                                    ? "bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,1)]" 
+                                                    : "bg-white/30"
+                                            )}></span>
+                                        </div>
+                                        {formatActivityTime(profile.last_active) === "Online" ? "Online Now" : formatActivityTime(profile.last_active)}
+                                    </Badge>
+                                )}
                                 <div className="h-7 px-3 rounded-full bg-[#F3F4FF] text-[#4B0082] text-[9px] font-black flex items-center tracking-widest uppercase border border-[#E0E2FF]">
                                     <ShieldCheck className="h-3.5 w-3.5 mr-2" /> Verified
                                 </div>
@@ -543,7 +593,7 @@ export default function ProfileViewPage() {
                                     <span className="w-1.5 h-1.5 rounded-full bg-[#4B0082]/10" />
                                     <span className="text-gray-900">{profile.marital_status}</span>
                                     <span className="w-1.5 h-1.5 rounded-full bg-[#4B0082]/10" />
-                                    <span className="text-gray-500/60 lowercase">Created by <span className="text-[#4B0082] font-black uppercase text-xs tracking-widest">{profile.created_by || "Self"}</span></span>
+                                    <span className="text-gray-900 lowercase font-medium">Created by <span className="text-indigo-900 font-black uppercase text-xs tracking-widest">{profile.created_by || "Self"}</span></span>
                                 </div>
                             </div>
                         </div>
@@ -554,21 +604,27 @@ export default function ProfileViewPage() {
                         {/* Stacked Interaction Statuses */}
                         <div className="space-y-4 text-right">
                             {shortlistedMeDate && (
-                                <div className="flex items-center justify-end gap-3 text-[10.5px] font-medium uppercase tracking-widest text-gray-400">
-                                    <Bookmark className="h-4 w-4" />
-                                    <span>{profile.gender === 'male' ? 'He' : 'She'} shortlisted you on {formatToDDMMYYYY(shortlistedMeDate).replace(/-/g, '.')}</span>
+                                <div className="flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest text-indigo-600">
+                                    <HeartHandshake className="h-4 w-4 shadow-sm" />
+                                    <span>{(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'He' : 'She'} shortlisted you on {formatToDDMMYYYY(shortlistedMeDate).replace(/-/g, '.')}</span>
                                 </div>
                             )}
-                            {iLikedDate && (
-                                <div className="flex items-center justify-end gap-3 text-[10.5px] font-medium uppercase tracking-widest text-gray-400">
+                            {iLikedDate && iLikedStatus !== 'accepted' && likedMeStatus !== 'accepted' && !isMutual && (
+                                <div className="flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest text-rose-500">
                                     <Heart className="h-4 w-4" />
-                                    <span>You sent {profile.gender === 'male' ? 'him' : 'her'} an interest — {formatToDDMMYYYY(iLikedDate).replace(/-/g, '.')}</span>
+                                    <span>You sent {(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'him' : 'her'} an interest — {formatToDDMMYYYY(iLikedDate).replace(/-/g, '.')}</span>
+                                </div>
+                            )}
+                            {(isMutual || iLikedStatus === 'accepted' || likedMeStatus === 'accepted') && (
+                                <div className="flex items-center justify-end gap-3 text-[10.5px] font-black uppercase tracking-widest text-emerald-600">
+                                    <CheckCircle2 className="h-4 w-4" />
+                                    <span>{(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'He' : 'She'} accepted your interest on {formatToDDMMYYYY(likedMeDate || iLikedDate).replace(/-/g, '.')}</span>
                                 </div>
                             )}
                             {lastViewedMeDate && (
-                                <div className="flex items-center justify-end gap-3 text-[10.5px] font-medium uppercase tracking-widest text-gray-400">
+                                <div className="flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest text-sky-600">
                                     <Eye className="h-4 w-4" />
-                                    <span>Profile viewed you {formatToDDMMYYYY(lastViewedMeDate).replace(/-/g, '.')}</span>
+                                    <span>{(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'He' : 'She'} viewed your profile {formatToDDMMYYYY(lastViewedMeDate).replace(/-/g, '.')}</span>
                                 </div>
                             )}
                         </div>
@@ -618,11 +674,12 @@ export default function ProfileViewPage() {
                 <div className="flex flex-col lg:flex-row gap-12 items-start">
                     
                     {/* Left Column (Sidebar) */}
-                    <div className="w-full lg:w-[380px] space-y-10 shrink-0 lg:sticky lg:top-8">
-                        {/* Photo Carousel: Rectangular with top indicators */}
-                        <div className="space-y-6">
-                            <div className="relative aspect-[4/5] rounded-[3rem] overflow-hidden bg-gray-100 shadow-2xl group border-8 border-white">
-                                {/* Top Indicators (Progress Bars) */}
+                    <div className="w-full lg:w-[380px] space-y-10 shrink-0 lg:sticky lg:top-24">
+                        {/* Integrated Photo Carousel Frame */}
+                        <div className="bg-white rounded-[3.5rem] p-4 shadow-2xl border border-gray-100 overflow-hidden space-y-6">
+                            {/* Main Photo Area */}
+                            <div className="relative aspect-[4/5] rounded-[2.5rem] overflow-hidden bg-gray-100 group">
+                                {/* Top Indicators */}
                                 <div className="absolute top-6 inset-x-8 flex gap-2 z-20">
                                     {photos.map((_, i) => (
                                         <div key={i} className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
@@ -648,20 +705,34 @@ export default function ProfileViewPage() {
                                     </div>
                                 )}
 
-                                {/* Simple Arrows */}
+                                {/* Persistent Arrows */}
                                 {photos.length > 1 && (
-                                    <div className="absolute inset-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                        <button onClick={() => setCurrentPhotoIndex(prev => (prev - 1 + photos.length) % photos.length)} className="h-10 w-10 rounded-full bg-black/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/40"><ArrowLeft className="h-5 w-5" /></button>
-                                        <button onClick={() => setCurrentPhotoIndex(prev => (prev + 1) % photos.length)} className="h-10 w-10 rounded-full bg-black/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/40"><ArrowRight className="h-5 w-5" /></button>
+                                    <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex items-center justify-between z-30 pointer-events-none">
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); setCurrentPhotoIndex(prev => (prev - 1 + photos.length) % photos.length); }} 
+                                            className="h-12 w-12 rounded-full bg-white/30 backdrop-blur-xl border border-white/40 text-white flex items-center justify-center hover:bg-white/50 transition-all pointer-events-auto shadow-lg"
+                                        >
+                                            <ChevronLeft className="h-6 w-6" />
+                                        </button>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); setCurrentPhotoIndex(prev => (prev + 1) % photos.length); }} 
+                                            className="h-12 w-12 rounded-full bg-white/30 backdrop-blur-xl border border-white/40 text-white flex items-center justify-center hover:bg-white/50 transition-all pointer-events-auto shadow-lg"
+                                        >
+                                            <ChevronRight className="h-6 w-6" />
+                                        </button>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Mini Thumbnails */}
+                            {/* Integrated Thumbnails */}
                             {photos.length > 1 && (
-                                <div className="flex gap-3 px-2">
+                                <div className="flex gap-4 px-2 pb-2 overflow-x-auto no-scrollbar">
                                     {photos.map((p, i) => (
-                                        <button key={i} onClick={() => setCurrentPhotoIndex(i)} className={`w-14 h-14 rounded-2xl overflow-hidden border-4 transition-all ${i === currentPhotoIndex ? 'border-[#4B0082] scale-110 shadow-lg' : 'border-transparent opacity-40 hover:opacity-100'}`}>
+                                        <button 
+                                            key={i} 
+                                            onClick={() => setCurrentPhotoIndex(i)} 
+                                            className={`w-16 h-16 rounded-2xl overflow-hidden border-[3px] transition-all shrink-0 ${i === currentPhotoIndex ? 'border-[#4B0082] scale-105 shadow-md' : 'border-transparent opacity-50 hover:opacity-100'}`}
+                                        >
                                             <img src={p} className="w-full h-full object-cover" />
                                         </button>
                                     ))}
@@ -891,6 +962,7 @@ export default function ProfileViewPage() {
                 <AnimatePresence>
                 {isMessageDialogOpen && (
                     <MessageDialog
+                        key="message-dialog"
                         isOpen={isMessageDialogOpen}
                         onOpenChange={setIsMessageDialogOpen}
                         receiverId={targetUserId}
@@ -900,6 +972,74 @@ export default function ProfileViewPage() {
                     />
                 )}
             </AnimatePresence>
+                </div>
+            </div>
+
+            {/* Profile Navigation Arrows */}
+            <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+                <div className="max-w-7xl mx-auto h-full relative">
+                    <AnimatePresence>
+                        {prevProfileId && (
+                            <motion.div 
+                                key={`desktop-prev-${prevProfileId}`}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="hidden lg:flex absolute left-[-100px] top-1/2 -translate-y-1/2 pointer-events-auto"
+                            >
+                                <Button 
+                                    onClick={() => window.location.href = `/dashboard/profile/${prevProfileId}`}
+                                    variant="ghost" 
+                                    className="h-20 w-16 bg-white/20 hover:bg-white/40 backdrop-blur-3xl rounded-[2rem] border border-white/30 text-gray-900 shadow-2xl transition-all group"
+                                    title="Previous Profile"
+                                >
+                                    <ChevronLeft className="h-10 w-10 group-hover:-translate-x-1 transition-transform" />
+                                </Button>
+                            </motion.div>
+                        )}
+                        {nextProfileId && (
+                            <motion.div 
+                                key={`desktop-next-${nextProfileId}`}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="hidden lg:flex absolute right-[-100px] top-1/2 -translate-y-1/2 pointer-events-auto"
+                            >
+                                <Button 
+                                    onClick={() => window.location.href = `/dashboard/profile/${nextProfileId}`}
+                                    variant="ghost" 
+                                    className="h-20 w-16 bg-white/20 hover:bg-white/40 backdrop-blur-3xl rounded-[2rem] border border-white/30 text-gray-900 shadow-2xl transition-all group"
+                                    title="Next Profile"
+                                >
+                                    <ChevronRight className="h-10 w-10 group-hover:translate-x-1 transition-transform" />
+                                </Button>
+                            </motion.div>
+                        )}
+
+                        {(prevProfileId || nextProfileId) && (
+                            <motion.div 
+                                key={`mobile-nav-${targetUserId}`}
+                                initial={{ opacity: 0, y: -20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="lg:hidden fixed top-[60px] inset-x-0 h-12 flex items-center justify-between px-4 pointer-events-auto"
+                            >
+                                {prevProfileId ? (
+                                    <Button 
+                                        onClick={() => window.location.href = `/dashboard/profile/${prevProfileId}`}
+                                        className="h-9 px-4 bg-white/80 backdrop-blur-xl border border-white rounded-full shadow-lg text-[#4B0082] font-black text-[9px] uppercase tracking-widest flex items-center gap-2"
+                                    >
+                                        <ChevronLeft className="h-4 w-4" /> Prev
+                                    </Button>
+                                ) : <div />}
+                                {nextProfileId && (
+                                    <Button 
+                                        onClick={() => window.location.href = `/dashboard/profile/${nextProfileId}`}
+                                        className="h-9 px-4 bg-white/80 backdrop-blur-xl border border-white rounded-full shadow-lg text-[#4B0082] font-black text-[9px] uppercase tracking-widest flex items-center gap-2"
+                                    >
+                                        Next <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
         </div>

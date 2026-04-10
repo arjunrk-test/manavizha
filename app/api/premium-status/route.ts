@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase"
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const userIds = searchParams.get("userIds")?.split(",").filter(Boolean)
@@ -9,15 +11,21 @@ export async function GET(request: NextRequest) {
         return NextResponse.json([])
     }
 
-    const { data, error } = await supabaseAdmin
-        .from("user_settings")
-        .select("user_id, is_premium, premium_plan, premium_expires_at")
-        .in("user_id", userIds)
+    try {
+        const { data, error } = await supabaseAdmin
+            .from("user_settings")
+            .select("*")
+            .in("user_id", userIds)
 
-    if (error) {
-        console.error("Error fetching premium status:", error)
+        if (error) {
+            console.error("[premium-status] Error fetching user_settings:", error)
+            // Even if user_settings fails, we can try to return an empty array or 200
+            return NextResponse.json([])
+        }
+
+        return NextResponse.json(data || [])
+    } catch (err) {
+        console.error("[premium-status] CRITICAL Error:", err)
         return NextResponse.json([])
     }
-
-    return NextResponse.json(data || [])
 }

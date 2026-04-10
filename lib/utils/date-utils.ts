@@ -55,10 +55,6 @@ export function formatActivityTime(dateStr: string | null | undefined): string {
   const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
   const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
-  if (diffInMinutes < 5) {
-    return "Online";
-  }
-
   if (diffInDays >= 1) {
     return `Active ${diffInDays} ${diffInDays === 1 ? 'day' : 'days'} ago`;
   }
@@ -67,6 +63,9 @@ export function formatActivityTime(dateStr: string | null | undefined): string {
     return `Active ${diffInHours} ${diffInHours === 1 ? 'hour' : 'hours'} ago`;
   }
 
-  // Fallback for less than an hour but more than 5 mins
-  return "Active recently";
+  if (diffInMinutes >= 5) {
+    return `Active ${diffInMinutes} minutes ago`;
+  }
+
+  return "Online";
 }
