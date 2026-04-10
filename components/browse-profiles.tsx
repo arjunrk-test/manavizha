@@ -10,7 +10,7 @@ import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { calculateTrustScore } from "@/lib/utils/profile-utils"
+import { calculateTrustScore, getProfileSummaryStr } from "@/lib/utils/profile-utils"
 import { toast } from "sonner"
 import { checkTamilPorutham } from "@/lib/astrology"
 import { getDistanceInKm, getCoordinatesForCity } from "@/lib/locations"
@@ -404,29 +404,52 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
         setActionLoadingId(profileId)
 
         const isCurrentlyLiked = likedIds.includes(profileId)
+        const isReceivedPending = likedMeIds.includes(profileId) && likedMeStatusMap[profileId] === 'pending'
         const method = isCurrentlyLiked ? "DELETE" : "POST"
 
-        const res = await fetch("/api/likes", {
-            method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, likedUserId: profileId }),
-        })
-
-        if (!res.ok) {
-            const data = await res.json()
-            toast.error(`Failed to update interest: ${data.error}`)
-        } else {
-            if (isCurrentlyLiked) {
-                setLikedIds(prev => prev.filter(id => id !== profileId))
-                toast.success(`Interest removed`)
-            } else {
-                setLikedIds(prev => [...prev, profileId])
-                setILikedDateMap(prev => ({ ...prev, [profileId]: new Date().toISOString() }))
-                toast.success(`Interest sent! We'll notify them.`)
+        try {
+            // If accepting interest, we need to PATCH the other side first
+            if (!isCurrentlyLiked && isReceivedPending) {
+                await fetch("/api/likes", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        userId: profileId, 
+                        likedUserId: userId,
+                        status: 'accepted'
+                    }),
+                })
+                setLikedMeStatusMap(prev => ({ ...prev, [profileId]: 'accepted' }))
             }
-        }
 
-        setActionLoadingId("")
+            const res = await fetch("/api/likes", {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    userId, 
+                    likedUserId: profileId,
+                    status: (!isCurrentlyLiked && (isReceivedPending || likedMeStatusMap[profileId] === 'accepted')) ? 'accepted' : undefined
+                }),
+            })
+
+            if (!res.ok) {
+                const data = await res.json()
+                toast.error(`Failed to update interest: ${data.error}`)
+            } else {
+                if (isCurrentlyLiked) {
+                    setLikedIds(prev => prev.filter(id => id !== profileId))
+                    toast.success(`Interest removed`)
+                } else {
+                    setLikedIds(prev => [...prev, profileId])
+                    setILikedDateMap(prev => ({ ...prev, [profileId]: new Date().toISOString() }))
+                    toast.success(isReceivedPending ? `Interest Accepted! You are now connected.` : `Interest sent! We'll notify them.`)
+                }
+            }
+        } catch (err) {
+            toast.error("Network error. Please try again.")
+        } finally {
+            setActionLoadingId("")
+        }
     }
 
 
@@ -809,18 +832,20 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
         let dataset = profiles
         if (userPreferences && applyPreferences && !isActivityCategory) {
             dataset = profiles.filter((profile: any) => {
-                // Age filtering
+                // Age filtering (lenient Case: if profile.age is missing, we don't hide)
                 if (userPreferences.min_age != null || userPreferences.max_age != null) {
-                    const profileAge = profile.age ? parseInt(profile.age.toString()) : null
+                    const rawAge = (profile.age || "").toString().replace(/[^0-9]/g, "")
+                    const profileAge = rawAge ? parseInt(rawAge) : null
                     if (profileAge !== null) {
                         if (userPreferences.min_age != null && profileAge < userPreferences.min_age) return false
                         if (userPreferences.max_age != null && profileAge > userPreferences.max_age) return false
                     }
                 }
 
-                // Height filtering
+                // Height filtering (lenient Case: if profile.height is missing, we don't hide)
                 if (userPreferences.min_height != null || userPreferences.max_height != null) {
-                    const profileHeight = profile.height ? parseInt(profile.height.toString()) : null
+                    const rawHeight = (profile.height || "").toString().replace(/[^0-9]/g, "")
+                    const profileHeight = rawHeight ? parseInt(rawHeight) : null
                     if (profileHeight !== null) {
                         if (userPreferences.min_height != null && profileHeight < userPreferences.min_height) return false
                         if (userPreferences.max_height != null && profileHeight > userPreferences.max_height) return false
@@ -855,38 +880,37 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                 const hasBranchPref = prefBranches.length > 0 && !prefBranches.includes("Any")
 
                 if (hasLevelPref || hasDegreePref || hasBranchPref) {
-                    if (!profile.education || profile.education.length === 0) {
-                        return false // No education on profile, but preferences are set
+                    // Lenient check: if profile has NO education data, we SKIP this filter instead of returning false
+                    if (profile.education && profile.education.length > 0) {
+                        const hasAnyMatchingEdu = profile.education.some((edu: any) => {
+                            let levelMatch = true
+                            let degreeMatch = true
+                            let branchMatch = true
+
+                            if (hasLevelPref) {
+                                levelMatch = prefLevels.some((pref: string) => 
+                                    (edu.education?.toLowerCase() || "").includes(pref.toLowerCase())
+                                )
+                            }
+
+                            if (hasDegreePref) {
+                                degreeMatch = prefDegrees.some((pref: string) => 
+                                    (edu.degree?.toLowerCase() || "").includes(pref.toLowerCase()) || 
+                                    (edu.degree_other?.toLowerCase() || "").includes(pref.toLowerCase())
+                                )
+                            }
+
+                            if (hasBranchPref) {
+                                branchMatch = prefBranches.some((pref: string) => 
+                                    (edu.branch?.toLowerCase() || "").includes(pref.toLowerCase())
+                                )
+                            }
+
+                            return levelMatch && degreeMatch && branchMatch
+                        })
+
+                        if (!hasAnyMatchingEdu) return false
                     }
-
-                    const hasAnyMatchingEdu = profile.education.some((edu: any) => {
-                        let levelMatch = true
-                        let degreeMatch = true
-                        let branchMatch = true
-
-                        if (hasLevelPref) {
-                            levelMatch = prefLevels.some((pref: string) => 
-                                (edu.education?.toLowerCase() || "").includes(pref.toLowerCase())
-                            )
-                        }
-
-                        if (hasDegreePref) {
-                            degreeMatch = prefDegrees.some((pref: string) => 
-                                (edu.degree?.toLowerCase() || "").includes(pref.toLowerCase()) || 
-                                (edu.degree_other?.toLowerCase() || "").includes(pref.toLowerCase())
-                            )
-                        }
-
-                        if (hasBranchPref) {
-                            branchMatch = prefBranches.some((pref: string) => 
-                                (edu.branch?.toLowerCase() || "").includes(pref.toLowerCase())
-                            )
-                        }
-
-                        return levelMatch && degreeMatch && branchMatch
-                    })
-
-                    if (!hasAnyMatchingEdu) return false
                 }
 
                 if (userPreferences.employment_type && userPreferences.employment_type.length > 0) {
@@ -984,24 +1008,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
     }, [profiles, activeCategory, shortlistedIds, shortlistedMeIds, viewedMeIds, iViewedIds, currentUserLocation, userPreferences, applyPreferences, isPremium])
 
     const getAgeHeightCasteEducationProfessionCityStr = (profile: any) => {
-        const parts = []
-        if (profile.age) parts.push(`${profile.age} yrs`)
-        if (profile.height) parts.push(profile.height)
-        if (profile.caste) parts.push(profile.caste)
-        if (profile.education && profile.education.length > 0) {
-            // Get last 2 educations (most recent)
-            const recentEdu = profile.education.slice(-2);
-            recentEdu.forEach((e: any) => {
-                const edu = e.education || e;
-                parts.push(typeof edu === 'string' ? edu : edu.education);
-            });
-        }
-        if (profile.profession && profile.profession !== "Not specified") parts.push(profile.profession)
-        if (profile.location && profile.location !== "Location not specified" && profile.location !== "Location hidden (Requires mutual interest)") {
-            const city = profile.location.split(',')[0]
-            parts.push(city)
-        }
-        return parts.join(" • ")
+        return getProfileSummaryStr(profile)
     }
     const HorizontalProfileCard = ({ profile, index }: { profile: any, index: number }) => {
         const [cardPhotoIndex, setCardPhotoIndex] = useState(0)
@@ -1166,7 +1173,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                         </div>
 
                         <div className="flex flex-wrap gap-2 mb-6">
-                            {getAgeHeightCasteEducationProfessionCityStr(profile).split(" • ").slice(2).map((tag, i) => (
+                            {getAgeHeightCasteEducationProfessionCityStr(profile).split(" â€¢ ").slice(2).map((tag, i) => (
                                 <span key={i} className="px-3.5 py-1.5 rounded-full bg-indigo-50/30 text-indigo-900/70 text-[8px] font-bold tracking-widest uppercase border border-indigo-100/30 group-hover:bg-white group-hover:border-indigo-200 transition-all">
                                     {tag}
                                 </span>
@@ -1210,7 +1217,9 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                     <Button
                                         onClick={(e) => { 
                                             e.stopPropagation(); 
-                                            if (likedIds.includes(profile.user_id)) {
+                                            // Smarter check: if both liked, it's a mutual connection
+                                            const isMutual = likedIds.includes(profile.user_id) && likedMeIds.includes(profile.user_id);
+                                            if (likedIds.includes(profile.user_id) || isMutual) {
                                                 setMessageTarget({ id: profile.user_id, name: profile.name || "this member" });
                                             } else {
                                                 handleCustomerLike(e, profile.user_id);
@@ -1219,23 +1228,33 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                         disabled={actionLoadingId === profile.user_id}
                                         className={cn(
                                             "h-12 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 shadow-xl border-none",
-                                            likedIds.includes(profile.user_id) 
+                                            (likedIds.includes(profile.user_id) || (likedMeIds.includes(profile.user_id) && likedIds.includes(profile.user_id))) 
                                                 ? "bg-[#FF4500] text-white hover:bg-[#FF6347] hover:scale-105 active:scale-95" 
-                                                : "bg-[#4B0082] text-white hover:bg-[#3b0062] hover:scale-105 active:scale-95"
+                                                : (likedMeIds.includes(profile.user_id) && likedMeStatusMap[profile.user_id] === 'pending'
+                                                    ? "bg-emerald-600 text-white hover:bg-emerald-700 hover:scale-105 active:scale-95 shadow-emerald-200"
+                                                    : "bg-[#4B0082] text-white hover:bg-[#3b0062] hover:scale-105 active:scale-95")
                                         )}
                                     >
-                                        {likedIds.includes(profile.user_id) ? (
+                                        {(likedIds.includes(profile.user_id) || (likedMeIds.includes(profile.user_id) && likedIds.includes(profile.user_id))) ? (
                                             <span className="flex items-center gap-2">
                                                 <MessageCircle className="h-4 w-4" />
                                                 Send Message
                                             </span>
                                         ) : (
-                                            <span className="flex items-center gap-2">
-                                                <Heart className="h-4 w-4" />
-                                                Send Interest
-                                            </span>
+                                            likedMeIds.includes(profile.user_id) && likedMeStatusMap[profile.user_id] === 'pending' ? (
+                                                <span className="flex items-center gap-2">
+                                                    <HeartHandshake className="h-4 w-4" />
+                                                    Accept Interest
+                                                </span>
+                                            ) : (
+                                                <span className="flex items-center gap-2">
+                                                    <Heart className="h-4 w-4" />
+                                                    Send Interest
+                                                </span>
+                                            )
                                         )}
                                     </Button>
+
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Button 
@@ -1621,7 +1640,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                             </div>
                         )}
 
-                        {/* Section 3: Child Showed Interest (selected + child liked, not mutual) — show full card + contact */}
+                        {/* Section 3: Child Showed Interest (selected + child liked, not mutual) â€” show full card + contact */}
                         {childLikedOnly.length > 0 && (
                             <div>
                                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -1643,11 +1662,11 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                             </div>
                         )}
 
-                        {/* Section 4: Mutual Matches — full profile details + contact */}
+                        {/* Section 4: Mutual Matches â€” full profile details + contact */}
                         {mutualSection.length > 0 && (
                             <div>
                                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                    <Star className="h-5 w-5 text-amber-500" /> Mutual Interest 🎉
+                                    <Star className="h-5 w-5 text-amber-500" /> Mutual Interest ðŸŽ‰
                                     <span className="text-sm font-normal text-gray-500">({mutualSection.length})</span>
                                 </h3>
                                 <div className="space-y-6">
@@ -1976,12 +1995,12 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                             </section>
                                         )}
 
-                                        {/* ── MUTUAL MATCH: Full Detail Sections ── */}
+                                        {/* â”€â”€ MUTUAL MATCH: Full Detail Sections â”€â”€ */}
                                         {selectedProfile.isSelected && selectedProfile.childLiked && selectedProfile.profileLikedChild && (
                                             isFetchingFull ? (
                                                 <div className="flex items-center justify-center py-6 gap-3 text-gray-400">
                                                     <div className="animate-spin h-5 w-5 border-2 border-amber-400 border-t-transparent rounded-full" />
-                                                    <span className="text-sm">Loading full profile details…</span>
+                                                    <span className="text-sm">Loading full profile detailsâ€¦</span>
                                                 </div>
                                             ) : mutualFullData && (
                                                 <>

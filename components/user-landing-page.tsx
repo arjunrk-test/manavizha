@@ -1001,7 +1001,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           {/* --- Match Sections --- */}
           <div className="space-y-2">
             <ProfileCarousel
-                title={`Daily Recommendations (${dailyRecs.length})`}
+                title="Daily Recommendations"
                 subtitle="Recommended matches for today"
                 profiles={dailyRecs}
                 onProfileClick={(p) => onNavigateToBrowse()}
@@ -1013,7 +1013,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             />
 
             <ProfileCarousel
-                title={`All Matches (${allMatches.length})`}
+                title="All Matches"
                 subtitle="Members who match your partner preferences"
                 profiles={allMatches}
                 onProfileClick={(p) => onNavigateToBrowse()}
@@ -1025,7 +1025,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             />
 
             <ProfileCarousel
-                title={`New Matches (${newMatches.length})`}
+                title="New Matches"
                 subtitle="Members who joined in the last 30 days"
                 profiles={newMatches}
                 onProfileClick={(p) => onNavigateToBrowse('newly-joined')}
@@ -1037,7 +1037,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             />
 
             <ProfileCarousel
-                title={`Who Viewed me (${whoViewedMe.length})`}
+                title="Who Viewed me"
                 subtitle="Members who have viewed your profile"
                 profiles={whoViewedMe}
                 onProfileClick={(p) => onNavigateToBrowse('viewed-you')}
@@ -1049,7 +1049,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             />
 
             <ProfileCarousel
-                title={`Profiles I Viewed (${profilesIViewed.length})`}
+                title="Profiles I Viewed"
                 subtitle="Members whose profile you have visited"
                 profiles={profilesIViewed}
                 onProfileClick={(p) => onNavigateToBrowse('viewed-by-you')}

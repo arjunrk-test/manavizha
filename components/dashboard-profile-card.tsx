@@ -125,7 +125,7 @@ export function DashboardProfileCard({
                         {profile?.name || "Unknown"}
                     </h3>
                     <p className="text-[12px] sm:text-[13px] font-medium text-gray-500 flex items-center gap-2">
-                        {profile?.age ? `${profile.age} Yrs` : ""}{profile?.height ? `, ${profile.height}m` : ""}
+                        {profile?.age ? `${profile.age} Yrs` : ""}{profile?.height ? `, ${profile.height} cm` : ""}
                         {profile?.last_active_at && (
                             <span className="flex items-center gap-1 ml-auto text-[10px] font-bold text-emerald-500 uppercase tracking-wider">
                                 <span className={cn("w-1.5 h-1.5 rounded-full bg-emerald-500", formatActivityTime(profile.last_active_at) === "Online" && "animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]")} />

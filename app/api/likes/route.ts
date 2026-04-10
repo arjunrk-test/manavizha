@@ -111,16 +111,19 @@ export async function PATCH(request: Request) {
 // POST /api/likes — like a profile
 export async function POST(request: Request) {
     try {
-        const { userId, likedUserId } = await request.json()
+        const { userId, likedUserId, status } = await request.json()
 
         if (!userId || !likedUserId) {
             return NextResponse.json({ error: 'userId and likedUserId are required' }, { status: 400 })
         }
 
         const admin = getSupabaseAdmin()
+        const insertData: any = { user_id: userId, liked_user_id: likedUserId }
+        if (status) insertData.status = status
+
         const { error } = await admin
             .from('likes')
-            .insert({ user_id: userId, liked_user_id: likedUserId })
+            .insert(insertData)
 
         if (error) {
             if (error.code === '23505') {

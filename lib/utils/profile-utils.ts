@@ -37,3 +37,32 @@ export function calculateTrustScore(
   // Round to nearest 1 decimal
   return Math.min(Math.round(score * 10) / 10, 10.0)
 }
+/**
+ * Generates a bullet-separated string of profile attributes for UI tags.
+ */
+export function getProfileSummaryStr(profile: any): string {
+  const parts = []
+  if (profile.age) parts.push(`${profile.age} yrs`)
+  if (profile.height) parts.push(`${profile.height} cm`)
+  if (profile.caste) parts.push(profile.caste)
+  
+  if (profile.education && Array.isArray(profile.education) && profile.education.length > 0) {
+    // Get last 2 educations (most recent)
+    const recentEdu = profile.education.slice(-2);
+    recentEdu.forEach((e: any) => {
+      const edu = typeof e === 'string' ? e : (e.education || e.degree || "Education");
+      parts.push(edu);
+    });
+  }
+  
+  if (profile.profession && profile.profession !== "Not specified") {
+    parts.push(profile.profession)
+  }
+  
+  if (profile.location && profile.location !== "Location not specified" && !profile.location.includes("hidden")) {
+    const city = profile.location.split(',')[0]
+    parts.push(city)
+  }
+  
+  return parts.join(" • ")
+}

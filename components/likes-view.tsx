@@ -8,8 +8,11 @@ import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { MessageDialog } from "@/components/message-dialog"
-import { formatToDDMMYYYY } from "@/lib/utils/date-utils"
+import { formatToDDMMYYYY, formatActivityTime } from "@/lib/utils/date-utils"
 import { cn } from "@/lib/utils"
+import { calculateTrustScore, getProfileSummaryStr } from "@/lib/utils/profile-utils"
+import { MatchScoreBadge } from "@/components/match-score-badge"
+import { Eye, MapPin as MapPinIcon, ShieldCheck, HeartHandshake as HeartHandshakeIcon, MessageCircle as MessageCircleIcon } from "lucide-react"
 
 interface LikesViewProps {
     userId: string
@@ -39,6 +42,23 @@ interface ProfileCard {
     iLiked: boolean
     isPremium: boolean
     interaction_status: string
+    photo_verified?: boolean
+    completion_percentage?: number
+    caste?: string
+    education?: any[]
+    professionType?: string
+    professionDetails?: any
+    last_active_at?: string
+    horoscope?: {
+        zodiac_sign?: string
+        star?: string
+    }
+    compatibility?: {
+        score: number
+    }
+    lifestyleMatch?: {
+        totalScore: number
+    }
 }
 
 export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
@@ -153,14 +173,22 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                 { data: empData },
                 { data: busData },
                 { data: contactData },
-                { data: settingsData }
+                { data: settingsData },
+                { data: horoData },
+                { data: socialHabitsData },
+                { data: interestsData },
+                { data: eduData }
             ] = await Promise.all([
-                supabase.from("personal_details").select("user_id, name, age, sex").in("user_id", allIds),
-                supabase.from("photos").select("user_id, user_photos").in("user_id", allIds),
-                supabase.from("profession_employee").select("user_id, designation, company").in("user_id", allIds),
-                supabase.from("profession_business").select("user_id, designation, business_name").in("user_id", allIds),
+                supabase.from("personal_details").select("user_id, name, age, sex, caste, completion_percentage").in("user_id", allIds),
+                supabase.from("photos").select("user_id, user_photos, photo_verified").in("user_id", allIds),
+                supabase.from("profession_employee").select("user_id, designation, company, sector, salary, work_location").in("user_id", allIds),
+                supabase.from("profession_business").select("user_id, designation, business_name, business_type, annual_returns, business_location").in("user_id", allIds),
                 supabase.from("contact_details").select("user_id, current_district, current_state").in("user_id", allIds),
-                supabase.from("user_settings").select("user_id, is_premium").in("user_id", allIds)
+                supabase.from("user_settings").select("user_id, is_premium, last_active_at").in("user_id", allIds),
+                supabase.from("horoscope_details").select("user_id, zodiac_sign, star").in("user_id", allIds),
+                supabase.from("social_habits").select("user_id, smoking, drinking").in("user_id", allIds),
+                supabase.from("interests").select("user_id, interests, hobbies").in("user_id", allIds),
+                supabase.from("education_details").select("user_id, education, degree").in("user_id", allIds)
             ])
 
             const buildCard = (uid: string): ProfileCard => {
@@ -171,11 +199,24 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                 const contact = contactData?.find(p => p.user_id === uid)
                 const settings = settingsData?.find(p => p.user_id === uid)
 
+                const horo = horoData?.find(p => p.user_id === uid)
+                const social = socialHabitsData?.find(p => p.user_id === uid)
+                const interests = interestsData?.find(p => p.user_id === uid)
+                const edu = eduData?.filter(p => p.user_id === uid)
+
                 let profession = "Not specified"
-                if (emp?.designation && emp?.company) profession = `${emp.designation} at ${emp.company}`
-                else if (emp?.designation) profession = emp.designation
-                else if (bus?.designation && bus?.business_name) profession = `${bus.designation} at ${bus.business_name}`
-                else if (bus?.designation) profession = bus.designation
+                let professionType = ""
+                let professionDetails = {}
+
+                if (emp?.designation) {
+                    profession = emp.company ? `${emp.designation} at ${emp.company}` : emp.designation
+                    professionType = "employee"
+                    professionDetails = emp
+                } else if (bus?.designation) {
+                    profession = bus.business_name ? `${bus.designation} at ${bus.business_name}` : bus.designation
+                    professionType = "business"
+                    professionDetails = bus
+                }
 
                 let location = "Location not specified"
                 if (contact?.current_district) {
@@ -187,12 +228,20 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                     name: personal?.name || "Unknown",
                     age: personal?.age,
                     sex: personal?.sex || "Not specified",
+                    caste: personal?.caste,
+                    completion_percentage: personal?.completion_percentage || 70,
                     profession,
+                    professionType,
+                    professionDetails,
                     location,
                     photo: photos?.user_photos?.[0] || null,
                     photos: photos?.user_photos || [],
+                    photo_verified: !!photos?.photo_verified,
                     iLiked: iLikeds.some(l => l.id === uid),
                     isPremium: !!settings?.is_premium,
+                    last_active_at: settings?.last_active_at,
+                    horoscope: horo,
+                    education: edu,
                     interaction_status: "unknown" // Updated during filtering
                 }
             }
@@ -236,7 +285,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                 await fetch("/api/likes", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ userId, likedUserId: targetId }),
+                    body: JSON.stringify({ userId, likedUserId: targetId, status: 'accepted' }),
                 })
                 const res = await fetch(`/api/likes?userId=${userId}`)
                 const data = await res.json()
@@ -308,9 +357,15 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
         let list: { id: string, status: string }[] = []
         
         if (activeSection === "mutual") {
-            const iLikedOk = iLikedData.filter(l => l.status === "accepted").map(l => l.id)
-            const likedMeOk = likedMeData.filter(l => l.status === "accepted").map(l => l.id)
-            list = iLikedOk.filter(id => likedMeOk.includes(id)).map(id => ({ id, status: "accepted" }))
+            const iLikedOk = iLikedData.map(l => l.id)
+            const likedMeOk = likedMeData.map(l => l.id)
+            
+            // Mutual = both have liked each other
+            list = iLikedData
+                .filter(l => 
+                    likedMeData.some(m => m.id === l.id)
+                )
+                .map(l => ({ id: l.id, status: "accepted" }))
         } else if (activeSection === "received") {
             list = likedMeData.map(l => ({ id: l.id, status: l.status }))
             if (activeStatus !== "all") {
@@ -326,13 +381,25 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
         return list.map(item => {
             const p = profiles[item.id]
             if (!p) return null
-            return { ...p, interaction_status: item.status }
+            
+            // Smarter status: if we both liked each other, it's accepted (Mutual)
+            const myLike = iLikedData.find(l => l.id === item.id)
+            const theirLike = likedMeData.find(l => l.id === item.id)
+            
+            let effectiveStatus = item.status
+            if (myLike && theirLike) {
+                effectiveStatus = 'accepted'
+            }
+
+            return { ...p, interaction_status: effectiveStatus }
         }).filter(Boolean) as ProfileCard[]
     }, [activeSection, activeStatus, iLikedData, likedMeData, profiles])
 
     const counts = useMemo(() => {
         return {
-            mutual: iLikedData.filter(l => l.status === "accepted" && likedMeData.some(m => m.id === l.id && m.status === "accepted")).length,
+            mutual: iLikedData.filter(l => 
+                likedMeData.some(m => m.id === l.id)
+            ).length,
             received: {
                 all: likedMeData.length,
                 pending: likedMeData.filter(l => l.status === "pending").length,
@@ -500,13 +567,13 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                                          <LikesHorizontalCard 
                                             profile={profile} 
                                             section={activeSection}
-                                            onAction={(status) => handleUpdateStatus(profile.user_id, status, activeSection === 'received')}
-                                            onView={() => handleOpenProfile(profile)}
-                                            onMessage={() => {
-                                                setMessageTarget({ id: profile.user_id, name: profile.name })
+                                            onAction={handleUpdateStatus}
+                                            onView={handleOpenProfile}
+                                            onMessage={(p) => {
+                                                setMessageTarget({ id: p.user_id, name: p.name })
                                                 setIsMessageDialogOpen(true)
                                             }}
-                                            onShortlist={(e) => handleShortlist(e, profile.user_id)}
+                                            onShortlist={handleShortlist}
                                             shortlistedIds={shortlistedIds}
                                             actionLoading={actionLoadingId === profile.user_id}
                                             index={idx}
@@ -621,132 +688,231 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
 interface LikesHorizontalCardProps {
     profile: ProfileCard
     section: Section
-    onAction: (status: string) => void
-    onView: () => void
-    onMessage: () => void
+    onAction: (targetId: string, status: string, isReceived: boolean) => void
+    onView: (profile: ProfileCard) => void
+    onMessage: (profile: ProfileCard) => void
     actionLoading: boolean
     index: number
     shortlistedIds: string[]
-    onShortlist: (e: React.MouseEvent) => void
+    onShortlist: (e: React.MouseEvent, targetId: string) => void
 }
 
 function LikesHorizontalCard({ profile, section, onAction, onView, onMessage, actionLoading, index, shortlistedIds, onShortlist }: LikesHorizontalCardProps) {
+    const [cardPhotoIndex, setCardPhotoIndex] = useState(0)
+    const hasMultiplePhotos = profile.photos && profile.photos.length > 1
+
+    const handleContactClick = (type: string) => {
+        toast.info(`${type.toUpperCase()} contact feature available for mutual matches.`)
+    }
+
     return (
         <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.05 }}
-            className="w-full sds-glass rounded-[2rem] overflow-hidden group border border-indigo-100/20 hover:border-[#4B0082]/30 hover:shadow-[0_40px_80px_-20px_rgba(75,0,130,0.15)] transition-all duration-500 flex flex-col md:flex-row"
+            initial={{ opacity: 0, scale: 0.95, y: 30 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ 
+                duration: 0.8, 
+                delay: index * 0.05,
+                ease: [0.16, 1, 0.3, 1]
+            }}
+            className="w-full"
         >
-            {/* Left Image */}
-            <div className="relative w-full md:w-56 h-auto min-h-[220px] bg-gray-50 shrink-0 overflow-hidden cursor-pointer" onClick={onView}>
-                {profile.photo ? (
-                    <img
-                        src={profile.photo}
-                        alt={profile.name}
-                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <User className="h-16 w-16 text-indigo-100" />
-                    </div>
-                )}
-                
-                <div className="absolute top-4 left-4 z-10">
-                    <span className={cn(
-                        "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest backdrop-blur-md shadow-sm border",
-                        profile.interaction_status === "accepted" ? "bg-emerald-500/90 text-white border-emerald-400" :
-                        profile.interaction_status === "declined" ? "bg-rose-500/90 text-white border-rose-400" :
-                        "bg-white/90 text-indigo-900 border-indigo-100/50"
-                    )}>
-                        {profile.interaction_status}
-                    </span>
-                </div>
-            </div>
-
-            {/* Right profile Content */}
-            <div className="flex-1 p-6 md:p-8 flex flex-col justify-between bg-white/60 relative">
-                {/* Floating Bookmark Ribbon */}
-                <div className="absolute top-6 right-8 z-20">
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={onShortlist}
-                        className={cn(
-                            "p-0 h-auto hover:bg-transparent transition-all hover:scale-110 flex items-start -mt-2",
-                            shortlistedIds.includes(profile.user_id) ? "text-[#FF1493]" : "text-gray-300 hover:text-[#4B0082]"
-                        )}
-                    >
-                        <Bookmark className={cn("h-[64px] w-[32px]", shortlistedIds.includes(profile.user_id) && "fill-current")} />
-                    </Button>
-                </div>
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-3 mb-2">
-                             <h3 className="text-2xl font-light text-gray-900 tracking-tighter group-hover:text-[#4B0082] transition-colors" onClick={onView}>
-                                {profile.name}{profile.age && <span className="font-bold text-[#4B0082]/20 ml-1">, {profile.age}</span>}
-                             </h3>
-                             {profile.isPremium && <Crown className="h-4 w-4 text-amber-400" />}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-4 text-[10px] font-black uppercase tracking-widest text-indigo-900/40">
-                            <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-indigo-300" /> {profile.location}</div>
-                            <div className="flex items-center gap-2"><Briefcase className="h-3.5 w-3.5 text-indigo-300" /> {profile.profession}</div>
-                        </div>
-                    </div>
-
-                    {/* Header Action Area */}
-                    <div className="flex items-center gap-3">
-                        {section === "received" && profile.interaction_status === "pending" ? (
-                            <div className="flex gap-2">
-                                <Button 
-                                    onClick={() => onAction("declined")}
-                                    disabled={actionLoading}
-                                    variant="ghost"
-                                    className="h-10 px-4 rounded-xl text-rose-500 hover:bg-rose-50 text-[10px] font-black uppercase tracking-widest"
-                                >
-                                    Decline
-                                </Button>
-                                <Button 
-                                    onClick={() => onAction("accepted")}
-                                    disabled={actionLoading}
-                                    className="h-10 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-200"
-                                >
-                                    Accept Interest
-                                </Button>
-                            </div>
-                        ) : (
-                            <Button 
-                                onClick={onView}
-                                variant="ghost" 
-                                className="h-10 px-6 rounded-xl border-indigo-100 text-[#4B0082] hover:bg-indigo-50 text-[10px] font-black uppercase tracking-widest border"
-                            >
-                                Details Matrix <ArrowRight className="h-3.5 w-3.5 ml-2" />
-                            </Button>
-                        )}
-                    </div>
-                </div>
-
-                <div className="mt-8 pt-6 border-t border-black/[0.04] flex items-center justify-between">
-                    <div className="flex gap-3">
-                        <div className="flex items-center gap-2 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full">
-                            <Shield className="h-3 w-3" /> Identity Verified
-                        </div>
-                        <div className="flex items-center gap-2 text-[9px] font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full">
-                            <Sparkles className="h-3 w-3" /> 88% Match Score
-                        </div>
-                    </div>
-                    {profile.interaction_status === 'accepted' && (
-                        <div className="flex gap-2">
-                            <Button variant="ghost" className="h-10 w-10 p-0 rounded-xl text-indigo-600 hover:bg-indigo-50"><Phone className="h-4 w-4" /></Button>
-                            <Button 
-                                onClick={onMessage}
-                                variant="ghost" 
-                                className="h-10 w-10 p-0 rounded-xl text-indigo-600 hover:bg-indigo-50"
-                            >
-                                <MessageCircle className="h-4 w-4" />
-                            </Button>
+            <div
+                className="sds-glass rounded-3xl overflow-hidden hover:shadow-[0_40px_80px_-20px_rgba(75,0,130,0.15)] transition-all duration-700 cursor-pointer group flex flex-col md:flex-row h-auto md:h-[260px] border-2 border-indigo-100/20 hover:border-[#4B0082]/30 active:scale-[0.99] bg-white/95"
+                onClick={() => onView(profile)}
+            >
+                {/* Left: Image Section */}
+                <div className="w-full md:w-56 h-72 md:h-full relative overflow-hidden bg-gray-100/50 shrink-0">
+                    {profile.photos && profile.photos.length > 0 ? (
+                        <>
+                            <img
+                                src={profile.photos[cardPhotoIndex]}
+                                alt={profile.name}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-[cubic-bezier(0.33,1,0.68,1)]"
+                            />
+                            {hasMultiplePhotos && (
+                                <div className="absolute bottom-4 right-4 sds-glass text-[9px] px-3 py-1.5 rounded-full z-10 font-black tracking-[0.2em] text-[#4B0082] bg-white/90 shadow-xl border-indigo-50/50">
+                                    {cardPhotoIndex + 1} / {profile.photos.length}
+                                </div>
+                            )}
+                            
+                            {/* Photo Progress Bars */}
+                            {hasMultiplePhotos && (
+                                <div className="absolute top-6 inset-x-6 flex gap-1.5 z-10">
+                                    {profile.photos.map((_: any, i: number) => (
+                                        <div 
+                                            key={i} 
+                                            className={`h-0.5 flex-1 rounded-full transition-all duration-500 ${i === cardPhotoIndex ? 'bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]' : 'bg-white/30'}`} 
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-indigo-900/10 bg-indigo-50/30">
+                            <User className="h-24 w-24 opacity-50" />
+                            <span className="text-[9px] mt-4 font-black uppercase tracking-[0.4em] opacity-40">No Image</span>
                         </div>
                     )}
+                    
+                    {profile.photo_verified && (
+                        <div className="absolute bottom-4 left-4 bg-emerald-500 text-white px-3 py-1.5 rounded-full text-[8px] font-black flex items-center gap-1.5 shadow-2xl shadow-emerald-500/40 uppercase tracking-[0.2em] backdrop-blur-xl border border-emerald-400/30">
+                            <Shield className="h-3 w-3 shadow-sm" /> Verified
+                        </div>
+                    )}
+
+                    {profile.isPremium && (
+                        <div className="absolute top-4 left-4 z-30">
+                            <div className="bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-white p-1 rounded-xl shadow-2xl shadow-amber-500/40 border border-white/20">
+                                <Crown className="h-3.5 w-3.5" />
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Right: Content Section */}
+                <div className="p-6 md:p-8 flex-1 flex flex-col relative bg-gradient-to-br from-white/60 via-white/40 to-transparent">
+                    {/* Compatibility Score & Interaction Badges */}
+                    <div className="absolute top-6 right-8 z-20 flex flex-col items-end gap-2">
+                        <div className="flex items-center gap-6">
+                            <MatchScoreBadge 
+                                lifestyleScore={profile.lifestyleMatch?.totalScore || 0}
+                                poruthamScore={profile.compatibility?.score || 0}
+                                isPremium={true}
+                                onClick={(e) => { e.stopPropagation(); onView(profile); }}
+                            />
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => onShortlist(e, profile.user_id)}
+                                disabled={actionLoading}
+                                className={cn(
+                                    "p-0 h-auto hover:bg-transparent transition-all hover:scale-110 flex items-start -mt-2",
+                                    shortlistedIds.includes(profile.user_id) ? "text-[#FF1493]" : "text-gray-300 hover:text-[#4B0082]"
+                                )}
+                            >
+                                <Bookmark className={cn("h-[64px] w-[32px]", shortlistedIds.includes(profile.user_id) && "fill-current")} />
+                            </Button>
+                        </div>
+                         
+                        {profile.last_active_at && (
+                            <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50/50 px-3 py-1 rounded-full border border-emerald-100/50">
+                                <span className={cn("w-1.5 h-1.5 rounded-full bg-emerald-500", formatActivityTime(profile.last_active_at) === "Online" && "animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]")} />
+                                {formatActivityTime(profile.last_active_at)}
+                            </div>
+                        )}
+                    </div>
+                    <div className="mb-4">
+                        <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-2xl font-light text-gray-900 tracking-tighter leading-none group-hover:text-[#4B0082] transition-colors duration-500">
+                                {profile.name}
+                            </h3>
+                            <span className="text-lg font-black text-[#4B0082]/20 tracking-tighter">{profile.age && `${profile.age}`}</span>
+                            {profile.isPremium && (
+                                <span className="text-[8px] font-black uppercase tracking-[0.3em] text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-100/50">Elite</span>
+                            )}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-4">
+                            <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-900/60">
+                                <MapPinIcon className="h-3 w-3 text-indigo-500/40" />
+                                {profile.location.split(',')[0]}
+                            </div>
+                            <div className="h-1 w-1 bg-indigo-100 rounded-full" />
+                            <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600">
+                                <Shield className="h-3 w-3 opacity-60" />
+                                Trust Vector {calculateTrustScore(
+                                    !!profile.photo_verified, 
+                                    profile.completion_percentage || 80, 
+                                    profile.photos?.length || 0
+                                )}% Approved
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mb-6">
+                        {getProfileSummaryStr(profile).split(" • ").map((tag, i) => (
+                            <span key={i} className="px-3.5 py-1.5 rounded-full bg-indigo-50/30 text-indigo-900/70 text-[8px] font-bold tracking-widest uppercase border border-indigo-100/30 group-hover:bg-white group-hover:border-indigo-200 transition-all">
+                                {tag}
+                            </span>
+                        ))}
+                    </div>
+                    
+                    <div className="mt-auto pt-6 border-t border-black/[0.04] flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <Button
+                                onClick={(e) => { e.stopPropagation(); handleContactClick('whatsapp'); }}
+                                variant="outline"
+                                size="icon"
+                                className="h-12 w-12 rounded-2xl border-none bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all duration-300 shadow-sm"
+                            >
+                                <MessageCircleIcon className="h-5 w-5" />
+                            </Button>
+                            <Button
+                                onClick={(e) => { e.stopPropagation(); handleContactClick('call'); }}
+                                variant="outline"
+                                size="icon"
+                                className="h-12 w-12 rounded-2xl border-none bg-indigo-50 text-[#4B0082] hover:bg-[#4B0082] hover:text-white transition-all duration-300 shadow-sm"
+                            >
+                                <Phone className="h-5 w-5" />
+                            </Button>
+
+                            {section === "received" && profile.interaction_status === "pending" ? (
+                                <div className="flex gap-2">
+                                    <Button
+                                        onClick={(e) => { e.stopPropagation(); onAction(profile.user_id, "accepted", true); }}
+                                        disabled={actionLoading}
+                                        className="h-12 px-8 rounded-2xl bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200 border-none"
+                                    >
+                                        <HeartHandshakeIcon className="h-4 w-4 mr-2" />
+                                        Accept Interest
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={(e) => { e.stopPropagation(); onAction(profile.user_id, "declined", true); }}
+                                        disabled={actionLoading}
+                                        className="h-12 px-6 rounded-2xl border-none bg-rose-50 text-rose-600 font-bold text-[10px] uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all"
+                                    >
+                                        Decline
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Button
+                                    onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        if (section === "mutual" || profile.interaction_status === 'accepted') {
+                                            onMessage(profile);
+                                        } else {
+                                            toast.info(`Current status: ${profile.interaction_status.toUpperCase()}`);
+                                        }
+                                    }}
+                                    className={cn(
+                                        "h-12 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 shadow-xl border-none",
+                                        (section === "mutual" || profile.interaction_status === 'accepted') 
+                                            ? "bg-[#FF4500] text-white hover:bg-[#FF6347]" 
+                                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                    )}
+                                >
+                                    {(section === "mutual" || profile.interaction_status === 'accepted') ? (
+                                        <span className="flex items-center gap-2">
+                                            <MessageCircleIcon className="h-4 w-4" />
+                                            Send Message
+                                        </span>
+                                    ) : (
+                                        <span className="capitalize">{profile.interaction_status}</span>
+                                    )}
+                                </Button>
+                            )}
+                        </div>
+                        
+                        <Button 
+                            variant="ghost"
+                            className="h-12 px-6 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] text-gray-400 hover:text-[#4B0082] hover:bg-indigo-50/50 transition-all"
+                            onClick={() => onView(profile)}
+                        >
+                            Full Profile
+                            <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
+                        </Button>
+                    </div>
                 </div>
             </div>
         </motion.div>

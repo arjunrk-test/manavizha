@@ -327,15 +327,32 @@ export default function ProfileViewPage() {
         setIsLikeProcessing(true)
         try {
             const method = isLiked ? "DELETE" : "POST"
+            
+            // If they already liked us, our reciprocal like should be 'accepted' immediately
+            const status = (!isLiked && likedMeDate) ? 'accepted' : undefined
+            
             const res = await fetch("/api/likes", {
                 method,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: currentUserId, likedUserId: targetUserId }),
+                body: JSON.stringify({ 
+                    userId: currentUserId, 
+                    likedUserId: targetUserId,
+                    status
+                }),
             })
             if (res.ok) {
                 const newLikedState = !isLiked
                 setIsLiked(newLikedState)
                 setILikedDate(newLikedState ? new Date().toISOString() : null)
+                setILikedStatus(newLikedState ? (status || 'pending') : null)
+                
+                // If it was an acceptance, we are now mutual
+                if (newLikedState && (status === 'accepted' || likedMeStatus === 'accepted')) {
+                    setIsMutual(true)
+                } else if (!newLikedState) {
+                    setIsMutual(false)
+                }
+
                 toast.success(newLikedState ? "Interest sent! We'll notify them." : "Interest withdrawn.")
             } else {
                 toast.error("Action failed")
