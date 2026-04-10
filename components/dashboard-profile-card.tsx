@@ -120,22 +120,22 @@ export function DashboardProfileCard({
                 </div>
 
                 {/* Info Section - BELOW IMAGE */}
-                <div className="px-1 flex flex-col gap-0.5">
+                <div className="px-1 flex flex-col gap-1">
                     <h3 className="font-bold text-[15px] sm:text-[16px] text-gray-900 leading-tight truncate">
                         {profile?.name || "Unknown"}
                     </h3>
-                    <p className="text-[12px] sm:text-[13px] font-medium text-gray-500 flex items-center gap-2">
+                    <p className="text-[12px] sm:text-[13px] font-medium text-gray-500">
                         {profile?.age ? `${profile.age} Yrs` : ""}{profile?.height ? `, ${profile.height} cm` : ""}
-                        {profile?.last_active_at && (
-                            <span className="flex items-center gap-1 ml-auto text-[10px] font-bold text-emerald-500 uppercase tracking-wider">
-                                <span className={cn("w-1.5 h-1.5 rounded-full bg-emerald-500", formatActivityTime(profile.last_active_at) === "Online" && "animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]")} />
-                                {formatActivityTime(profile.last_active_at)}
-                            </span>
-                        )}
                     </p>
                     {contextText && (
-                        <p className="text-[11px] font-medium text-gray-800 mt-0.5 flex items-center gap-1">
+                        <p className="text-[12px] sm:text-[13px] font-medium text-gray-500">
                             {contextText}
+                        </p>
+                    )}
+                    {profile?.last_active_at && (
+                        <p className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-500 uppercase tracking-wider">
+                            <span className={cn("w-1.5 h-1.5 rounded-full bg-emerald-500", formatActivityTime(profile.last_active_at) === "Online" && "animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]")} />
+                            {formatActivityTime(profile.last_active_at)}
                         </p>
                     )}
                 </div>

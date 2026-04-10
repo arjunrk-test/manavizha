@@ -166,7 +166,7 @@ export function ProfileCarousel({
                                             <DashboardProfileCard
                                                 profile={profile}
                                                 onClick={() => onProfileClick(profile)}
-                                                contextText={profile.interaction_at ? `Profile viewed you on ${formatToDDMMYYYY(profile.interaction_at)}` : profile.location}
+                                                contextText={profile.location}
                                                 isShortlisted={shortlistedIds.includes(profile.user_id)}
                                                 onShortlist={onShortlist ? () => onShortlist(profile.user_id) : undefined}
                                                 isLoadingShortlist={shortlistLoadingId === profile.user_id}

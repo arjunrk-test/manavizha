@@ -31,6 +31,7 @@
     "react-dom": "19.2.0",
     "react-hot-toast": "^2.6.0",
     "sonner": "^2.0.7",
+    "tesseract.js": "^7.0.0",
     "vedic-astro": "^0.1.1",
     "xlsx": "^0.18.5"
   },

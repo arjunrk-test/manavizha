@@ -147,13 +147,15 @@ export function GlobalLocationSelector({ onLocationChange, initialCity }: Locati
               <ChevronDown className="h-4 w-4 opacity-50" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="min-w-[280px] w-[var(--radix-dropdown-menu-trigger-width)] max-h-[300px] overflow-y-auto rounded-3xl border border-white/20 shadow-2xl p-0 bg-white/95 backdrop-blur-xl">
-            <div className="p-3 border-b sticky top-0 bg-white/80 backdrop-blur-md z-10">
+          <DropdownMenuContent 
+            className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-[300px] overflow-y-auto rounded-3xl border border-gray-100 shadow-2xl p-0 bg-white z-[100]"
+          >
+            <div className="p-3 border-b sticky top-0 bg-white z-10">
                 <div className="relative group">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#4B0082]/40 group-focus-within:text-[#4B0082] transition-colors" />
                     <Input 
                         placeholder="Search country..." 
-                        className="h-10 pl-10 text-sm rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white transition-all"
+                        className="h-10 pl-10 text-sm rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-medium"
                         value={search.country}
                         onChange={(e) => setSearch(prev => ({ ...prev, country: e.target.value }))}
                     />
@@ -188,31 +190,35 @@ export function GlobalLocationSelector({ onLocationChange, initialCity }: Locati
               <ChevronDown className="h-4 w-4 opacity-50" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-[200px] max-h-[300px] overflow-y-auto rounded-2xl border-none shadow-2xl p-0">
-            <div className="p-2 border-b sticky top-0 bg-white">
-                <div className="relative">
-                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+          <DropdownMenuContent 
+            className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-[300px] overflow-y-auto rounded-3xl border border-gray-100 shadow-2xl p-0 bg-white z-[100]"
+          >
+            <div className="p-3 border-b sticky top-0 bg-white z-10">
+                <div className="relative group">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#4B0082]/40 group-focus-within:text-[#4B0082] transition-colors" />
                     <Input 
                         placeholder="Search state..." 
-                        className="h-8 pl-8 text-xs rounded-xl"
+                        className="h-10 pl-10 text-sm rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-medium"
                         value={search.state}
                         onChange={(e) => setSearch(prev => ({ ...prev, state: e.target.value }))}
                     />
                 </div>
             </div>
-            {filteredStates.map((s) => (
-              <DropdownMenuItem
-                key={s.name}
-                onSelect={() => {
-                  setSelectedState(s.name)
-                  setSearch(prev => ({ ...prev, state: "" }))
-                }}
-                className="flex items-center justify-between py-2.5 px-3 cursor-pointer"
-              >
-                {s.name}
-                {selectedState === s.name && <Check className="h-4 w-4 text-[#4B0082]" />}
-              </DropdownMenuItem>
-            ))}
+            <div className="p-1">
+                {filteredStates.map((s) => (
+                <DropdownMenuItem
+                    key={s.name}
+                    onSelect={() => {
+                    setSelectedState(s.name)
+                    setSearch(prev => ({ ...prev, state: "" }))
+                    }}
+                    className="flex items-center justify-between py-3 px-4 cursor-pointer rounded-2xl hover:bg-[#4B0082]/5 focus:bg-[#4B0082]/5 transition-colors"
+                >
+                    <span className="text-sm font-medium text-gray-700">{s.name}</span>
+                    {selectedState === s.name && <Check className="h-4 w-4 text-[#4B0082]" />}
+                </DropdownMenuItem>
+                ))}
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -227,32 +233,36 @@ export function GlobalLocationSelector({ onLocationChange, initialCity }: Locati
               <ChevronDown className="h-4 w-4 opacity-50" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-[200px] max-h-[300px] overflow-y-auto rounded-2xl border-none shadow-2xl p-0">
-            <div className="p-2 border-b sticky top-0 bg-white">
-                <div className="relative">
-                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+          <DropdownMenuContent 
+            className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-[300px] overflow-y-auto rounded-3xl border border-gray-100 shadow-2xl p-0 bg-white z-[100]"
+          >
+            <div className="p-3 border-b sticky top-0 bg-white z-10">
+                <div className="relative group">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#4B0082]/40 group-focus-within:text-[#4B0082] transition-colors" />
                     <Input 
                         placeholder="Search city..." 
-                        className="h-8 pl-8 text-xs rounded-xl"
+                        className="h-10 pl-10 text-sm rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-medium"
                         value={search.city}
                         onChange={(e) => setSearch(prev => ({ ...prev, city: e.target.value }))}
                     />
                 </div>
             </div>
-            {filteredCities.map((c) => (
-              <DropdownMenuItem
-                key={c}
-                onSelect={() => {
-                  setSelectedCity(c)
-                  setSearch(prev => ({ ...prev, city: "" }))
-                  fetchCoords(c)
-                }}
-                className="flex items-center justify-between py-2.5 px-3 cursor-pointer"
-              >
-                {c}
-                {selectedCity === c && <Check className="h-4 w-4 text-[#4B0082]" />}
-              </DropdownMenuItem>
-            ))}
+            <div className="p-1">
+                {filteredCities.map((c) => (
+                <DropdownMenuItem
+                    key={c}
+                    onSelect={() => {
+                    setSelectedCity(c)
+                    setSearch(prev => ({ ...prev, city: "" }))
+                    fetchCoords(c)
+                    }}
+                    className="flex items-center justify-between py-3 px-4 cursor-pointer rounded-2xl hover:bg-[#4B0082]/5 focus:bg-[#4B0082]/5 transition-colors"
+                >
+                    <span className="text-sm font-medium text-gray-700">{c}</span>
+                    {selectedCity === c && <Check className="h-4 w-4 text-[#4B0082]" />}
+                </DropdownMenuItem>
+                ))}
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -39,6 +39,7 @@ export default function DashboardPage() {
       onNavigateToMutualMatches={() => router.push("/dashboard/interests?tab=mutual")}
       onNavigateToILiked={() => router.push("/dashboard/interests?tab=liked")}
       onNavigateToLikedMe={() => router.push("/dashboard/interests?tab=likedme")}
+      onNavigateToHoroscope={() => router.push("/dashboard/horoscope")}
       onProgressChange={setProfileProgress}
     />
   )

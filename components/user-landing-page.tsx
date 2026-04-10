@@ -66,6 +66,7 @@ interface UserLandingPageProps {
   onNavigateToMutualMatches: () => void
   onNavigateToILiked: () => void
   onNavigateToLikedMe: () => void
+  onNavigateToHoroscope: () => void
   onProgressChange?: (progress: number) => void
 }
 
@@ -82,7 +83,7 @@ interface ProfileData {
   premiumExpiresAt?: string | null
 }
 
-export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, onNavigateToBrowse, onNavigateToParents, onNavigateToSelections, onNavigateToPartnerPreferences, onNavigateToLikes, onNavigateToMutualMatches, onNavigateToILiked, onNavigateToLikedMe, onProgressChange }: UserLandingPageProps) {
+export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, onNavigateToBrowse, onNavigateToParents, onNavigateToSelections, onNavigateToPartnerPreferences, onNavigateToLikes, onNavigateToMutualMatches, onNavigateToILiked, onNavigateToLikedMe, onNavigateToHoroscope, onProgressChange }: UserLandingPageProps) {
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [completionPercentage, setCompletionPercentage] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
@@ -830,7 +831,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               <Button
                 variant="ghost"
                 className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
-                onClick={() => setShowHoroscopeDialog(true)}
+                onClick={onNavigateToHoroscope}
               >
                 <Star className="h-4 w-4 mr-3 text-amber-500" />
                 <div className="font-bold text-[11px] text-gray-700">Generate Horoscope</div>
