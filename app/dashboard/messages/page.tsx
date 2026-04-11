@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
-import { User, Send, MessageSquare, ArrowLeft, MoreVertical, Phone, Video, Search } from "lucide-react"
+import { User, Send, MessageSquare, ArrowLeft, MoreVertical, Phone, Video, Search, CheckCheck, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
+import { formatActivityTime } from "@/lib/utils/date-utils"
 
 interface Message {
     id: string
@@ -24,6 +25,7 @@ interface Conversation {
     last_message: string
     last_message_at: string
     unread_count: number
+    last_active_at?: string | null
 }
 
 export default function MessagesPage() {
@@ -39,15 +41,22 @@ export default function MessagesPage() {
     const scrollRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
-        const getUser = async () => {
+        const init = async () => {
             const { data: { user } } = await supabase.auth.getUser()
             if (user) {
                 setUserId(user.id)
                 fetchUserStatus(user.id)
-                fetchConversations(user.id)
+                const convs = await fetchConversations(user.id)
+                
+                // Auto-select first unread conversation or just the first one
+                if (convs.length > 0) {
+                    const firstUnread = convs.find(c => c.unread_count > 0) || convs[0]
+                    setActiveConversation(firstUnread)
+                    loadMessages(user.id, firstUnread.other_user_id)
+                }
             }
         }
-        getUser()
+        init()
     }, [])
 
     useEffect(() => {
@@ -56,14 +65,39 @@ export default function MessagesPage() {
                 .channel('realtime:messages')
                 .on(
                     'postgres_changes',
-                    { event: 'INSERT', schema: 'public', table: 'messages' },
+                    { event: '*', schema: 'public', table: 'messages' },
                     (payload) => {
                         const msg = payload.new as Message
-                        if (msg.sender_id === userId || msg.receiver_id === userId) {
-                            if (activeConversation && (msg.sender_id === activeConversation.other_user_id || msg.receiver_id === activeConversation.other_user_id)) {
-                                setMessages(prev => [...prev, msg])
+                        
+                        // Handle INSERT
+                        if (payload.eventType === 'INSERT') {
+                            if (msg.sender_id === userId || msg.receiver_id === userId) {
+                                if (activeConversation && (msg.sender_id === activeConversation.other_user_id || msg.receiver_id === activeConversation.other_user_id)) {
+                                    setMessages(prev => [...prev, msg])
+                                    
+                                    // If message is for the active conversation and I am the receiver, mark as read immediately
+                                    if (msg.receiver_id === userId) {
+                                        supabase.from("messages").update({ is_read: true }).eq("id", msg.id).then(({ error }) => {
+                                            if (error) console.error("Error marking message as read:", error)
+                                            else {
+                                                fetchConversations(userId)
+                                                window.dispatchEvent(new CustomEvent('messagesRead'))
+                                            }
+                                        })
+                                    }
+                                } else {
+                                    fetchConversations(userId)
+                                }
                             }
-                            fetchConversations(userId)
+                        }
+                        
+                        // Handle UPDATE (for read receipts/ticks)
+                        if (payload.eventType === 'UPDATE') {
+                            if (msg.sender_id === userId || msg.receiver_id === userId) {
+                                setMessages(prev => prev.map(m => m.id === msg.id ? msg : m))
+                                // If I am the one who marked it as read, or if my message was marked as read, update conversation counts
+                                fetchConversations(userId)
+                            }
                         }
                     }
                 )
@@ -103,7 +137,7 @@ export default function MessagesPage() {
             })
 
             const convs: Conversation[] = await Promise.all(Object.keys(map).map(async (otherId) => {
-                const { data: profile } = await supabase.from("personal_details").select("name").eq("user_id", otherId).single()
+                const { data: profile } = await supabase.from("personal_details").select("name, last_active_at").eq("user_id", otherId).single()
                 const { data: photo } = await supabase.from("photos").select("user_photos").eq("user_id", otherId).single()
                 
                 const conversationMessages = map[otherId].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -115,27 +149,44 @@ export default function MessagesPage() {
                     other_user_photo: photo?.user_photos?.[0] || null,
                     last_message: last.content,
                     last_message_at: last.created_at,
-                    unread_count: conversationMessages.filter(m => m.receiver_id === uid && !m.is_read).length
+                    unread_count: conversationMessages.filter(m => m.receiver_id === uid && !m.is_read).length,
+                    last_active_at: profile?.last_active_at
                 }
             }))
-
-            setConversations(convs.sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime()))
-        } catch (err) {
-            console.error(err)
-        } finally {
+            const sortedConvs = convs.sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime())
+            setConversations(sortedConvs)
             setIsLoading(false)
+            return sortedConvs
+        } catch (err) {
+            console.error("Error fetching conversations:", err)
+            setIsLoading(false)
+            return []
         }
     }
 
-    const loadMessages = async (targetId: string) => {
-        if (!userId) return
+    const loadMessages = async (uid: string, targetId: string) => {
         try {
-            const res = await fetch(`/api/messages?userId=${userId}&targetUserId=${targetId}`)
+            const res = await fetch(`/api/messages?userId=${uid}&targetUserId=${targetId}`)
             const data = await res.json()
             setMessages(data.messages || [])
             
             // Mark as read
-            await supabase.from("messages").update({ is_read: true }).eq("receiver_id", userId).eq("sender_id", targetId)
+            const { error } = await supabase.from("messages")
+                .update({ is_read: true })
+                .eq("receiver_id", uid)
+                .eq("sender_id", targetId)
+                .eq("is_read", false)
+            
+            if (error) {
+                console.error("Supabase Update Error (Mark as Read):", error)
+            } else {
+                // Instantly update local conversation state to clear unread count
+                setConversations(prev => prev.map(c => 
+                    c.other_user_id === targetId ? { ...c, unread_count: 0 } : c
+                ))
+                // Broadcast event to clear header/navbar notifications
+                window.dispatchEvent(new CustomEvent('messagesRead'))
+            }
         } catch (err) {
             toast.error("Failed to load messages")
         }
@@ -222,7 +273,7 @@ export default function MessagesPage() {
                                 key={conv.other_user_id}
                                 onClick={() => {
                                     setActiveConversation(conv)
-                                    loadMessages(conv.other_user_id)
+                                    loadMessages(userId!, conv.other_user_id)
                                 }}
                                 className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all ${activeConversation?.other_user_id === conv.other_user_id
                                     ? 'bg-white dark:bg-gray-800 shadow-md ring-1 ring-black/5'
@@ -237,8 +288,11 @@ export default function MessagesPage() {
                                             <User className="h-6 w-6 text-gray-400" />
                                         </div>
                                     )}
+                                    <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 ${
+                                        formatActivityTime(conv.last_active_at) === "Online" ? "bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.6)]" : "bg-gray-300"
+                                    }`}></div>
                                     {conv.unread_count > 0 && (
-                                        <span className="absolute -top-1 -right-1 bg-[#FF1493] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center ring-2 ring-white dark:ring-gray-900">
+                                        <span className="absolute -top-1 -right-1 bg-[#FF1493] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center ring-2 ring-white dark:ring-gray-900 shadow-lg">
                                             {conv.unread_count}
                                         </span>
                                     )}
@@ -281,11 +335,17 @@ export default function MessagesPage() {
                                             <User className="h-5 w-5 text-gray-400" />
                                         </div>
                                     )}
-                                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900"></div>
+                                    <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 ${
+                                        formatActivityTime(activeConversation.last_active_at) === "Online" ? "bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-gray-300"
+                                    }`}></div>
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-gray-900 dark:text-white leading-tight">{activeConversation.other_user_name}</h3>
-                                    <p className="text-[10px] text-green-500 font-bold uppercase tracking-wider">Online Now</p>
+                                    <p className={`text-[10px] font-bold uppercase tracking-wider ${
+                                        formatActivityTime(activeConversation.last_active_at) === "Online" ? "text-green-500" : "text-gray-400"
+                                    }`}>
+                                        {formatActivityTime(activeConversation.last_active_at) || "Offline"}
+                                    </p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-1">
@@ -306,9 +366,20 @@ export default function MessagesPage() {
                                             : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-tl-none border border-gray-100 dark:border-gray-700'
                                             }`}>
                                             <p className="text-sm leading-relaxed">{m.content}</p>
-                                            <p className={`text-[9px] mt-1.5 opacity-60 font-bold uppercase tracking-tighter ${isMe ? 'text-right' : 'text-left'}`}>
-                                                {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </p>
+                                            <div className={`flex items-center gap-1 mt-1.5 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                                <p className={`text-[9px] opacity-60 font-bold uppercase tracking-tighter`}>
+                                                    {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </p>
+                                                {isMe && (
+                                                    <div className="flex items-center">
+                                                        {m.is_read ? (
+                                                            <CheckCheck className="h-3 w-3 text-blue-400" />
+                                                        ) : (
+                                                            <CheckCheck className="h-3 w-3 text-gray-400" />
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 )

@@ -538,8 +538,44 @@ export default function ProfileViewPage() {
                 <div className="absolute -bottom-32 left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-indigo-500/10 rounded-full blur-[150px]" />
             </div>
 
+            {/* Navigation Header */}
+            <div className="relative z-20 max-w-7xl mx-auto px-6 pt-8">
+                <div className="flex items-center justify-between">
+                    <Button 
+                        onClick={() => router.back()}
+                        variant="ghost" 
+                        size="sm" 
+                        className="rounded-full bg-white/50 backdrop-blur-xl border border-white/40 text-gray-500 hover:text-gray-900 px-6 h-12 shadow-lg hover:shadow-xl transition-all font-black text-[10px] uppercase tracking-widest"
+                    >
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Back to List
+                    </Button>
+
+                    <div className="flex items-center gap-4">
+                        <Button 
+                            onClick={() => prevProfileId && (window.location.href = `/dashboard/profile/${prevProfileId}`)}
+                            disabled={!prevProfileId}
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-12 w-12 rounded-full bg-white/50 backdrop-blur-xl border border-white/40 text-gray-500 hover:text-[#4B0082] shadow-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                        >
+                            <ChevronLeft className="h-6 w-6" />
+                        </Button>
+                        <Button 
+                            onClick={() => nextProfileId && (window.location.href = `/dashboard/profile/${nextProfileId}`)}
+                            disabled={!nextProfileId}
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-12 w-12 rounded-full bg-white/50 backdrop-blur-xl border border-white/40 text-gray-500 hover:text-[#4B0082] shadow-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                        >
+                            <ChevronRight className="h-6 w-6" />
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
             {/* Header: Identity & Status Overview (Integrated) */}
-            <div className="relative z-10 max-w-7xl mx-auto px-6 pt-14 pb-12">
+            <div className="relative z-10 max-w-7xl mx-auto px-6 pt-10 pb-12">
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr,auto] items-end gap-16">
                     
                     {/* Left Column: Name and Subtitle */}

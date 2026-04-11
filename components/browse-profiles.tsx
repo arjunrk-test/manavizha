@@ -95,7 +95,6 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
         if (!profile.user_id) return
         
         // Record the view
-        console.log("Navigating to profile:", profile.user_id)
         if (!parentViewer?.isParent) {
             try {
                 // Wait for the view to be recorded so it doesn't get cancelled by navigation
@@ -106,6 +105,15 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                 })
             } catch (e) {
                 console.error("Error logging view", e)
+            }
+        }
+
+        // Save navigation sequence to sessionStorage for Next/Prev functionality
+        if (typeof window !== 'undefined') {
+            // Get current list of profile IDs from the view
+            const sequenceIds = filteredProfiles.map(p => p.user_id);
+            if (sequenceIds.length > 0) {
+                sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(sequenceIds));
             }
         }
 

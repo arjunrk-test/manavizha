@@ -220,35 +220,80 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
     const load = async () => {
       try {
         setIsLoading(true)
-        const { data } = await supabase.from("partner_preferences").select("*").eq("user_id", userId).maybeSingle()
-        if (data) setFd({
-          preferredAgeMin: data.preferred_age_min?.toString() || "",
-          preferredAgeMax: data.preferred_age_max?.toString() || "",
-          preferredHeightMin: data.preferred_height_min?.toString() || "",
-          preferredHeightMax: data.preferred_height_max?.toString() || "",
-          preferredMaritalStatus: data.preferred_marital_status || "",
-          preferredLanguages: Array.isArray(data.preferred_languages) ? data.preferred_languages : [],
-          preferredPhysicalStatus: data.preferred_physical_status || "",
-          preferredEatingHabits: data.preferred_eating_habits || "",
-          preferredSmokingHabits: data.preferred_smoking_habits || "",
-          preferredDrinkingHabits: data.preferred_drinking_habits || "",
-          preferredReligion: data.preferred_religion || "",
-          preferredCaste: data.preferred_caste || "",
-          preferredSubcaste: data.preferred_subcaste || "",
-          preferredStar: data.preferred_star || "",
-          preferredRaasi: data.preferred_raasi || "",
-          preferredDosham: data.preferred_dosham || "",
-          preferredEducation: Array.isArray(data.preferred_education) ? data.preferred_education : [],
-          preferredDegrees: Array.isArray(data.preferred_degrees) ? data.preferred_degrees : [],
-          preferredBranches: Array.isArray(data.preferred_branches) ? data.preferred_branches : [],
-          preferredEmployedIn: Array.isArray(data.preferred_employed_in) ? data.preferred_employed_in : [],
-          preferredOccupation: Array.isArray(data.preferred_occupation) ? data.preferred_occupation : [],
-          preferredAnnualIncomeMin: data.preferred_annual_income_min || "",
-          preferredCountry: data.preferred_country || "",
-          preferredState: data.preferred_state || "",
-          preferredCity: data.preferred_city || "",
-        })
-      } catch (e) { console.error(e) } finally { setIsLoading(false) }
+        
+        // 1. Fetch existing preferences
+        const { data: prefData } = await supabase.from("partner_preferences").select("*").eq("user_id", userId).maybeSingle()
+        
+        // 2. Fetch user's own profile for defaults
+        const [
+          { data: profile },
+          { data: horoscope },
+          { data: education }
+        ] = await Promise.all([
+          supabase.from("personal_details").select("*").eq("user_id", userId).maybeSingle(),
+          supabase.from("horoscope_details").select("*").eq("user_id", userId).maybeSingle(),
+          supabase.from("education_details").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle()
+        ])
+
+        if (prefData) {
+          // Use existing data if available
+          setFd({
+            preferredAgeMin: prefData.preferred_age_min?.toString() || "",
+            preferredAgeMax: prefData.preferred_age_max?.toString() || "",
+            preferredHeightMin: prefData.preferred_height_min?.toString() || "",
+            preferredHeightMax: prefData.preferred_height_max?.toString() || "",
+            preferredMaritalStatus: prefData.preferred_marital_status || "",
+            preferredLanguages: Array.isArray(prefData.preferred_languages) ? prefData.preferred_languages : [],
+            preferredPhysicalStatus: prefData.preferred_physical_status || "",
+            preferredEatingHabits: prefData.preferred_eating_habits || "",
+            preferredSmokingHabits: prefData.preferred_smoking_habits || "",
+            preferredDrinkingHabits: prefData.preferred_drinking_habits || "",
+            preferredReligion: prefData.preferred_religion || "",
+            preferredCaste: prefData.preferred_caste || "",
+            preferredSubcaste: prefData.preferred_subcaste || "",
+            preferredStar: prefData.preferred_star || "",
+            preferredRaasi: prefData.preferred_raasi || "",
+            preferredDosham: prefData.preferred_dosham || "",
+            preferredEducation: Array.isArray(prefData.preferred_education) ? prefData.preferred_education : [],
+            preferredDegrees: Array.isArray(prefData.preferred_degrees) ? prefData.preferred_degrees : [],
+            preferredBranches: Array.isArray(prefData.preferred_branches) ? prefData.preferred_branches : [],
+            preferredEmployedIn: Array.isArray(prefData.preferred_employed_in) ? prefData.preferred_employed_in : [],
+            preferredOccupation: Array.isArray(prefData.preferred_occupation) ? prefData.preferred_occupation : [],
+            preferredAnnualIncomeMin: prefData.preferred_annual_income_min || "",
+            preferredCountry: prefData.preferred_country || "",
+            preferredState: prefData.preferred_state || "",
+            preferredCity: prefData.preferred_city || "",
+          })
+        } else if (profile) {
+          // Apply smart defaults from profile if no preferences exist
+          const userAge = profile.age ? parseInt(profile.age) : 25
+          const userHeight = profile.height ? parseInt(profile.height) : 165
+          
+          setFd(prev => ({
+            ...prev,
+            preferredAgeMin: Math.max(18, userAge - 5).toString(),
+            preferredAgeMax: (userAge + 5).toString(),
+            preferredHeightMin: Math.max(120, userHeight - 15).toString(),
+            preferredHeightMax: (userHeight + 15).toString(),
+            preferredMaritalStatus: profile.marital_status || "Never Married",
+            preferredReligion: profile.religion || "",
+            preferredCaste: profile.caste || "",
+            preferredSubcaste: profile.subcaste || "Any",
+            preferredEatingHabits: profile.food_preference || "Any",
+            preferredLanguages: profile.languages || [],
+            preferredStar: horoscope?.star || "Any",
+            preferredRaasi: horoscope?.zodiac_sign || "Any",
+            preferredDosham: horoscope?.dhosham || "Any",
+            preferredEducation: education?.education ? [education.education] : [],
+          }))
+          
+          toast.info("We've pre-filled some preferences based on your profile!")
+        }
+      } catch (e) { 
+        console.error("Error loading preferences/profile:", e) 
+      } finally { 
+        setIsLoading(false) 
+      }
     }
     load()
   }, [userId])

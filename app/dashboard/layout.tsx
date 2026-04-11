@@ -139,12 +139,18 @@ export default function DashboardLayout({
       )
       .subscribe()
 
-    // Refresh notifications every 2 minutes
-    const notifInterval = setInterval(fetchNotifications, 120000)
+    // Listen for custom message read events from other tabs or components
+    window.addEventListener('messagesRead', fetchUnreadCount)
+
+    const notifInterval = setInterval(() => {
+      fetchUnreadCount()
+      fetchNotifications()
+    }, 30000)
 
     return () => {
       supabase.removeChannel(channel)
       clearInterval(notifInterval)
+      window.removeEventListener('messagesRead', fetchUnreadCount)
     }
   }, [user?.id])
 

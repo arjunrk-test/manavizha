@@ -53,6 +53,7 @@ import { CompatibilitySheet } from "./compatibility-sheet"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import { getDailySeed, seededShuffle } from "@/lib/utils/match-utils"
 
 interface UserLandingPageProps {
   userEmail: string
@@ -566,24 +567,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
         }
 
         // -- Section 1: Daily Recommendations (Seeded Shuffle) --
-        // Use YYYY-MM-DD + userId as seed for stability
-        const today = new Date().toISOString().split('T')[0]
-        const seedStr = today + userId
-        let seed = 0
-        for (let i = 0; i < seedStr.length; i++) seed += seedStr.charCodeAt(i)
-
-        const seededShuffle = (arr: any[]) => {
-            const result = [...arr]
-            let s = seed
-            for (let i = result.length - 1; i > 0; i--) {
-                const x = Math.sin(s++) * 10000
-                const random = x - Math.floor(x)
-                const j = Math.floor(random * (i + 1))
-                ;[result[i], result[j]] = [result[j], result[i]]
-            }
-            return result
-        }
-        setDailyRecs(seededShuffle(filtered).slice(0, 10))
+        const seedStr = getDailySeed(userId)
+        setDailyRecs(seededShuffle(filtered, seedStr).slice(0, 10))
 
         // -- Section 2: All Matches --
         setAllMatches(filtered)
@@ -1005,8 +990,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 title="Daily Recommendations"
                 subtitle="Recommended matches for today"
                 profiles={dailyRecs}
-                onProfileClick={(p) => onNavigateToBrowse()}
-                onViewAll={() => onNavigateToBrowse()}
+                onProfileClick={(p) => router.push(`/dashboard/daily-recommendations?id=${p.user_id}`)}
+                onViewAll={() => router.push("/dashboard/daily-recommendations")}
                 isLoading={isSectionsLoading}
                 shortlistedIds={shortlistedIds}
                 onShortlist={handleShortlist}
@@ -1017,7 +1002,13 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 title="All Matches"
                 subtitle="Members who match your partner preferences"
                 profiles={allMatches}
-                onProfileClick={(p) => onNavigateToBrowse()}
+                onProfileClick={(p) => {
+                    // Set sequence for contextual navigation
+                    if (typeof window !== 'undefined') {
+                        sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(allMatches.map(m => m.user_id)));
+                    }
+                    router.push(`/dashboard/profile/${p.user_id}`);
+                }}
                 onViewAll={() => onNavigateToBrowse()}
                 isLoading={isSectionsLoading}
                 shortlistedIds={shortlistedIds}
@@ -1029,7 +1020,13 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 title="New Matches"
                 subtitle="Members who joined in the last 30 days"
                 profiles={newMatches}
-                onProfileClick={(p) => onNavigateToBrowse('newly-joined')}
+                onProfileClick={(p) => {
+                    // Set sequence for contextual navigation
+                    if (typeof window !== 'undefined') {
+                        sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(newMatches.map(m => m.user_id)));
+                    }
+                    router.push(`/dashboard/profile/${p.user_id}`);
+                }}
                 onViewAll={() => onNavigateToBrowse('newly-joined')}
                 isLoading={isSectionsLoading}
                 shortlistedIds={shortlistedIds}
@@ -1041,7 +1038,13 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 title="Who Viewed me"
                 subtitle="Members who have viewed your profile"
                 profiles={whoViewedMe}
-                onProfileClick={(p) => onNavigateToBrowse('viewed-you')}
+                onProfileClick={(p) => {
+                    // Set sequence for contextual navigation
+                    if (typeof window !== 'undefined') {
+                        sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(whoViewedMe.map(m => m.user_id)));
+                    }
+                    router.push(`/dashboard/profile/${p.user_id}`);
+                }}
                 onViewAll={() => onNavigateToBrowse('viewed-you')}
                 isLoading={isSectionsLoading}
                 shortlistedIds={shortlistedIds}
@@ -1053,7 +1056,13 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 title="Profiles I Viewed"
                 subtitle="Members whose profile you have visited"
                 profiles={profilesIViewed}
-                onProfileClick={(p) => onNavigateToBrowse('viewed-by-you')}
+                onProfileClick={(p) => {
+                    // Set sequence for contextual navigation
+                    if (typeof window !== 'undefined') {
+                        sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(profilesIViewed.map(m => m.user_id)));
+                    }
+                    router.push(`/dashboard/profile/${p.user_id}`);
+                }}
                 onViewAll={() => onNavigateToBrowse('viewed-by-you')}
                 isLoading={isSectionsLoading}
                 shortlistedIds={shortlistedIds}

@@ -124,18 +124,12 @@ export function DashboardProfileCard({
                     <h3 className="font-bold text-[15px] sm:text-[16px] text-gray-900 leading-tight truncate">
                         {profile?.name || "Unknown"}
                     </h3>
-                    <p className="text-[12px] sm:text-[13px] font-medium text-gray-500">
+                    <p className="text-[12px] sm:text-[13px] font-bold text-gray-600/80">
                         {profile?.age ? `${profile.age} Yrs` : ""}{profile?.height ? `, ${profile.height} cm` : ""}
                     </p>
                     {contextText && (
-                        <p className="text-[12px] sm:text-[13px] font-medium text-gray-500">
+                        <p className="text-[12px] sm:text-[13px] font-semibold text-[#4B0082]/60">
                             {contextText}
-                        </p>
-                    )}
-                    {profile?.last_active_at && (
-                        <p className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-500 uppercase tracking-wider">
-                            <span className={cn("w-1.5 h-1.5 rounded-full bg-emerald-500", formatActivityTime(profile.last_active_at) === "Online" && "animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]")} />
-                            {formatActivityTime(profile.last_active_at)}
                         </p>
                     )}
                 </div>
