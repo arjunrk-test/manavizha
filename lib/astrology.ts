@@ -54,6 +54,20 @@ export const RASHI_TAMIL: Record<string, string> = {
 export const NAKSHATRAS = Object.keys(NAKSHATRA_TAMIL);
 export const RASHIS = Object.keys(RASHI_TAMIL);
 
+export const PLANETS = [
+    { name: "Sun", abbr: "சூ", tamil: "சூரியன்" },
+    { name: "Moon", abbr: "சந்", tamil: "சந்திரன்" },
+    { name: "Mars", abbr: "செ", tamil: "செவ்வாய்" },
+    { name: "Mercury", abbr: "பு", tamil: "புதன்" },
+    { name: "Jupiter", abbr: "குரு", tamil: "குரு" },
+    { name: "Venus", abbr: "சு", tamil: "சுக்கிரன்" },
+    { name: "Saturn", abbr: "சனி", tamil: "சனி" },
+    { name: "Rahu", abbr: "ரா", tamil: "ராகு" },
+    { name: "Ketu", abbr: "கே", tamil: "கேது" },
+    { name: "Lagnam", abbr: "ல", tamil: "லக்னம்" },
+    { name: "Maandi", abbr: "மா", tamil: "மாந்தி" }
+];
+
 // --- Core Math Functions ---
 
 function calculateJD(date: Date): number {

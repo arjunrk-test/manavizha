@@ -23,7 +23,7 @@ import {
   Trash2,
   Image as ImageIcon
 } from "lucide-react"
-import { generateHoroscope } from "@/lib/astrology"
+import { generateHoroscope, PLANETS } from "@/lib/astrology"
 import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
 import axios from "axios"
@@ -39,20 +39,7 @@ import { cn } from "@/lib/utils"
 import { createWorker } from 'tesseract.js'
 import { DetailedHoroscopeView } from "@/components/detailed-horoscope-view"
 
-// Planet constants for manual entry
-const PLANETS = [
-    { name: "Sun", abbr: "சூ", tamil: "சூரியன்" },
-    { name: "Moon", abbr: "சந்", tamil: "சந்திரன்" },
-    { name: "Mars", abbr: "செ", tamil: "செவ்வாய்" },
-    { name: "Mercury", abbr: "பு", tamil: "புதன்" },
-    { name: "Jupiter", abbr: "குரு", tamil: "குரு" },
-    { name: "Venus", abbr: "சு", tamil: "சுக்கிரன்" },
-    { name: "Saturn", abbr: "சனி", tamil: "சனி" },
-    { name: "Rahu", abbr: "ரா", tamil: "ராகு" },
-    { name: "Ketu", abbr: "கே", tamil: "கேது" },
-    { name: "Lagnam", abbr: "ல", tamil: "லக்னம்" },
-    { name: "Maandi", abbr: "மா", tamil: "மாந்தி" }
-];
+
 
 export default function HoroscopePage() {
   const [entryMode, setEntryMode] = useState<'auto' | 'manual'>('auto')
@@ -416,9 +403,17 @@ export default function HoroscopePage() {
         lagnam: activeResult.lagnam,
         time_of_birth: entryMode === 'auto' ? tob : null,
         place_of_birth: entryMode === 'auto' ? pob.city : "Manual Entry",
-        manual_grid: manualPlacements, // Always save the current grid state
+        birth_state: entryMode === 'auto' ? pob.state : null,
+        birth_country: entryMode === 'auto' ? pob.country : null,
+        manual_grid: manualPlacements, // Retained! Make sure to run the SQL command provided.
         completion_percentage: 100,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        dhosham: activeResult.papaPulligal ? (
+          [
+            activeResult.papaPulligal.sevvaiDosham === "தோஷம் உள்ளது" ? "செவ்வாய் தோஷம்" : null,
+            activeResult.papaPulligal.rahuDosham === "தோஷம் உள்ளது" ? "ராகு தோஷம்" : null
+          ].filter(Boolean).join(", ") || "தோஷம் இல்லை"
+        ) : null
       }
 
       const { error } = await supabase
@@ -428,9 +423,10 @@ export default function HoroscopePage() {
       if (error) throw error
 
       toast.success("Horoscope saved to your profile!")
-    } catch (err) {
-      console.error("Error saving horoscope:", err)
-      toast.error("Failed to save horoscope to profile.")
+    } catch (err: any) {
+      console.error("Error saving horoscope detailed:", err)
+      const errorMsg = err.message || (typeof err === 'object' ? JSON.stringify(err) : String(err))
+      toast.error(`Failed to save: ${errorMsg}`)
     } finally {
       setIsSaving(false)
     }

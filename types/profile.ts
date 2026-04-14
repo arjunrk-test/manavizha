@@ -121,6 +121,8 @@ export interface FormData {
   jaadhagam: string
   timeOfBirth: string
   placeOfBirth: string
+  birthState: string
+  birthCountry: string
   zodiacSign: string
   star: string
   lagnam: string
