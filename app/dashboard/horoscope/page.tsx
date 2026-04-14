@@ -26,6 +26,7 @@ import {
 import { generateHoroscope } from "@/lib/astrology"
 import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
+import axios from "axios"
 import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { GlobalLocationSelector } from "@/components/ui/global-location-selector"
@@ -36,6 +37,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { parseISO, format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { createWorker } from 'tesseract.js'
+import { DetailedHoroscopeView } from "@/components/detailed-horoscope-view"
 
 // Planet constants for manual entry
 const PLANETS = [
@@ -66,9 +68,15 @@ export default function HoroscopePage() {
   })
   const [userId, setUserId] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [result, setResult] = useState<any>(null)
+  const [thirukanithamResult, setThirukanithamResult] = useState<any>(null)
+  const [vakkiyamResult, setVakkiyamResult] = useState<any>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
+  const [showPrintView, setShowPrintView] = useState(false)
+  const [calculationMethod, setCalculationMethod] = useState<'thirukanitham' | 'vakkiyam'>('thirukanitham')
+  
+  const activeResult = calculationMethod === 'thirukanitham' ? thirukanithamResult : vakkiyamResult;
+
 
   // Manual Placements State
   // Record<PlanetAbbr, HouseIndex (0-11)>
@@ -89,14 +97,29 @@ export default function HoroscopePage() {
       if (user) {
         setUserId(user.id)
         
-        const { data: profile } = await supabase
-          .from("personal_details")
-          .select("date_of_birth")
-          .eq("user_id", user.id)
-          .maybeSingle()
+        // Parse search params for prefill (e.g., from Profile Setup)
+        let initDob = null
+        let initTob = null
+        let initCity = null
+        if (typeof window !== 'undefined') {
+            const searchParams = new URLSearchParams(window.location.search)
+            initDob = searchParams.get('dob')
+            initTob = searchParams.get('tob')
+            initCity = searchParams.get('city')
+        }
 
-        if (profile?.date_of_birth) {
-          setDob(parseISO(profile.date_of_birth))
+        if (initDob) {
+            setDob(parseISO(initDob))
+        } else {
+            const { data: profile } = await supabase
+              .from("personal_details")
+              .select("date_of_birth")
+              .eq("user_id", user.id)
+              .maybeSingle()
+    
+            if (profile?.date_of_birth) {
+              setDob(parseISO(profile.date_of_birth))
+            }
         }
 
         const { data: horo } = await supabase
@@ -105,12 +128,33 @@ export default function HoroscopePage() {
           .eq("user_id", user.id)
           .maybeSingle()
 
-        if (horo) {
-            setTob(horo.time_of_birth || "12:00")
-            setPob(prev => ({
-              ...prev,
-              city: horo.place_of_birth || "Chennai"
-            }))
+        if (initTob) setTob(initTob)
+        else if (horo?.time_of_birth) setTob(horo.time_of_birth)
+
+        let city = initCity || horo?.place_of_birth || "Chennai"
+        
+        // Auto fetch coordinates for the profile city
+        try {
+            const res = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1&addressdetails=1`, {
+                headers: {
+                    'Accept': 'application/json'
+                } // User-Agent dynamically clamped by browser, relying on query params safely
+            });
+            const data = res.data;
+            if (data && data[0]) {
+                setPob({
+                    city: city,
+                    state: data[0].address?.state || "Tamil Nadu",
+                    country: data[0].address?.country || "India",
+                    latitude: parseFloat(data[0].lat),
+                    longitude: parseFloat(data[0].lon)
+                });
+            } else {
+                setPob(prev => ({ ...prev, city }));
+            }
+        } catch (e: any) {
+            // Silently fall back to standard Chennai instead of throwing loud unhandled UI errors
+            setPob(prev => ({ ...prev, city }));
         }
       }
       setIsLoadingProfile(false)
@@ -299,7 +343,8 @@ export default function HoroscopePage() {
             planets: [], 
             isManual: true
         }
-        setResult(dummyResult)
+        setThirukanithamResult(dummyResult)
+        setVakkiyamResult(dummyResult)
         toast.success("Manual chart ready for use!")
         return
     }
@@ -323,22 +368,25 @@ export default function HoroscopePage() {
       const cleanTime = `${timeParts[0].padStart(2, '0')}:${timeParts[1]?.padStart(2, '0') || '00'}:00`
       const fullDateTime = `${formattedDate}T${cleanTime}`
       
-      const data = await generateHoroscope(fullDateTime, location, timezone)
-      setResult(data)
+      const thiruData = await generateHoroscope(fullDateTime, location, timezone, 'thirukanitham')
+      const vakkiyamData = await generateHoroscope(fullDateTime, location, timezone, 'vakkiyam')
+      
+      setThirukanithamResult(thiruData)
+      setVakkiyamResult(vakkiyamData)
 
-      // Sync calculated planets to manual grid for immediate editing
-      if (data.planets) {
+      // Sync calculated planets to manual grid for immediate editing (using Thirukanitham as default UI state)
+      if (thiruData.planets) {
           const syncedPlacements: Record<string, number[]> = {}
           PLANETS.forEach(p => syncedPlacements[p.abbr] = [])
           
-          data.planets.forEach((p: any) => {
+          thiruData.planets.forEach((p: any) => {
               const match = PLANETS.find(target => target.name === p.name);
               if (match) {
                   syncedPlacements[match.abbr] = [p.rasiIndex];
               }
           });
           
-          const lagnamPlanet = data.planets.find((p: any) => p.isLagnam || p.name === 'Lagnam');
+          const lagnamPlanet = thiruData.planets.find((p: any) => p.isLagnam || p.name === 'Lagnam');
           if (lagnamPlanet) {
               syncedPlacements['ல'] = [lagnamPlanet.rasiIndex];
           }
@@ -357,15 +405,15 @@ export default function HoroscopePage() {
   }
 
   const handleSave = async () => {
-    if (!result || !userId) return
+    if (!activeResult || !userId) return
 
     setIsSaving(true)
     try {
       const horoscopeData = {
         user_id: userId,
-        star: result.star,
-        zodiac_sign: result.rashi,
-        lagnam: result.lagnam,
+        star: activeResult.star,
+        zodiac_sign: activeResult.rashi,
+        lagnam: activeResult.lagnam,
         time_of_birth: entryMode === 'auto' ? tob : null,
         place_of_birth: entryMode === 'auto' ? pob.city : "Manual Entry",
         manual_grid: manualPlacements, // Always save the current grid state
@@ -482,6 +530,8 @@ export default function HoroscopePage() {
                                 <GlobalLocationSelector 
                                     onLocationChange={setPob}
                                     initialCity={pob.city}
+                                    initialState={pob.state}
+                                    initialCountry={pob.country}
                                 />
                             </div>
                         </motion.div>
@@ -566,18 +616,34 @@ export default function HoroscopePage() {
                         <p className="text-sm font-black text-indigo-900 tracking-tighter">{entryMode === 'auto' ? 'Precision AI' : 'Pro Editor'}</p>
                     </div>
                     <div className="flex gap-3">
-                        <div className="flex items-center gap-1.5 text-[8px] font-black text-[#FF1493] uppercase tracking-widest">
-                            <Sun className="h-3 w-3" /> Traditional
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[8px] font-black text-[#4B0082] uppercase tracking-widest">
-                            <Moon className="h-3 w-3" /> Professional
-                        </div>
+                        <button 
+                            onClick={() => setCalculationMethod('thirukanitham')}
+                            className={cn(
+                                "flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full transition-all border",
+                                calculationMethod === 'thirukanitham' 
+                                    ? "bg-[#4B0082]/10 text-[#4B0082] border-[#4B0082]/20" 
+                                    : "bg-white text-gray-500 border-white hover:bg-gray-50"
+                            )}
+                        >
+                            <Sun className="h-3 w-3" /> Thirukanitham (Drik)
+                        </button>
+                        <button 
+                            onClick={() => setCalculationMethod('vakkiyam')}
+                            className={cn(
+                                "flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full transition-all border",
+                                calculationMethod === 'vakkiyam' 
+                                    ? "bg-[#FF1493]/10 text-[#FF1493] border-[#FF1493]/20" 
+                                    : "bg-white text-gray-500 border-white hover:bg-gray-50"
+                            )}
+                        >
+                            <Moon className="h-3 w-3" /> Vakkiyam (Paampu)
+                        </button>
                     </div>
                 </div>
             </motion.div>
 
             <AnimatePresence mode="wait">
-                {!result && entryMode === 'auto' ? (
+                {!activeResult && entryMode === 'auto' ? (
                     <motion.div 
                         key="empty"
                         initial={{ opacity: 0 }}
@@ -589,107 +655,35 @@ export default function HoroscopePage() {
                         <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.4em]">Awaiting Birth Details</h3>
                         <p className="text-[9px] text-gray-300 font-bold uppercase tracking-widest mt-2">Switch to Manual Mode or enter data to begin</p>
                     </motion.div>
-                ) : (
+                ) : activeResult ? (
                     <motion.div 
                         key="result"
                         initial={{ opacity: 0, scale: 0.99 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="space-y-6"
+                        className="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-gray-100"
                     >
-                        {/* Interaction Card */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div className="md:col-span-3 bg-gradient-to-br from-[#4B0082] to-[#FF1493] rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden flex items-center justify-between">
-                                <div className="relative z-10">
-                                    <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 text-white/50">Computed Profile</p>
-                                    <h2 className="text-2xl md:text-3xl font-black tracking-tighter">
-                                        {result?.star || "Manual Chart"} <span className="text-white/30 mx-2">/</span> {result?.rashi || "Custom"}
-                                    </h2>
-                                    <div className="flex items-center gap-3 mt-3">
-                                        <div className="bg-white/10 px-2 py-0.5 rounded-md border border-white/20 text-[9px] font-black uppercase tracking-widest">
-                                            {result?.lagnam} Lagna
-                                        </div>
-                                        <div className="bg-white/10 px-2 py-0.5 rounded-md border border-white/20 text-[9px] font-black uppercase tracking-widest">
-                                            {pob.city}
-                                        </div>
-                                    </div>
-                                </div>
-                                <Star className="absolute -right-4 -top-4 h-32 w-32 text-white/10 rotate-12" />
-                            </div>
-
-                            <div className="sds-glass rounded-[2rem] p-5 flex flex-col justify-center gap-4 border-white/40">
-                                <Button 
-                                    onClick={handleSave} 
-                                    disabled={isSaving}
-                                    className="w-full h-11 bg-white text-[#4B0082] rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-gray-50 flex items-center justify-center gap-2"
-                                >
-                                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                                    Save
-                                </Button>
-                                <div className="flex gap-2">
-                                    <Button variant="outline" className="flex-1 h-10 rounded-xl border-indigo-100 bg-white/50 text-[#4B0082] font-black text-[9px] uppercase">
-                                        <Printer className="h-3.5 w-3.5" />
-                                    </Button>
-                                    <Button variant="outline" className="flex-1 h-10 rounded-xl border-indigo-100 bg-white/50 text-[#4B0082] font-black text-[9px] uppercase">
-                                        <Share2 className="h-3.5 w-3.5" />
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Charts Area */}
-                        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                            <div className="xl:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <VedicChart 
-                                    title="Rasi Chart (இராசி)" 
-                                    planets={result?.planets} 
-                                    type="rasi"
-                                    isManual={entryMode === 'manual' || !!result}
-                                />
-                                <VedicChart 
-                                    title="Amsam Chart (அம்சம்)" 
-                                    planets={result?.planets} 
-                                    type="amsam"
-                                />
-                            </div>
-
-                            {/* Panchang sidebar */}
-                            <div className="xl:col-span-4 h-full">
-                                <Card className="sds-glass rounded-[2rem] overflow-hidden shadow-xl h-full bg-white/30 backdrop-blur-3xl border-none">
-                                    <CardHeader className="bg-gradient-to-br from-[#4B0082]/90 to-[#6A5ACD]/90 text-white p-4 pb-5">
-                                        <div className="flex items-center gap-2">
-                                            <Star className="h-3.5 w-3.5 text-white" />
-                                            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em]">Computed Data</CardTitle>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent className="p-0">
-                                        <div className="divide-y divide-gray-100">
-                                            {[
-                                                { label: "Star", value: result?.star, icon: <Sparkles className="h-3 w-3 text-amber-500" /> },
-                                                { label: "Rashi", value: result?.rashi, icon: <Moon className="h-3 w-3 text-blue-500" /> },
-                                                { label: "Lagnam", value: result?.lagnam, icon: <Sun className="h-3 w-3 text-orange-500" /> },
-                                                { label: "Yoga", value: result?.yoga, icon: <Zap className="h-3 w-3 text-purple-500" /> },
-                                                { label: "Karana", value: result?.karana, icon: <Compass className="h-3 w-3 text-emerald-500" /> },
-                                            ].map((item, idx) => (
-                                                <div key={idx} className="p-3 px-5 flex items-center justify-between hover:bg-white/50 transition-colors group">
-                                                    <div>
-                                                        <span className="block text-[7px] font-black text-gray-400 uppercase tracking-[0.2em] mb-0.5">{item.label}</span>
-                                                        <span className="block text-[11px] font-black text-[#4B0082] uppercase tracking-tight">{item.value || "---"}</span>
-                                                    </div>
-                                                    <div>{item.icon}</div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        {entryMode === 'manual' && (
-                                            <div className="p-6 text-center bg-gray-50/50 italic text-[9px] text-gray-400 font-medium">
-                                                Panchang data is only available in Auto mode
-                                            </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        </div>
+                        <DetailedHoroscopeView 
+                            data={{
+                                ...activeResult,
+                                dob: dob ? format(dob, "dd MMM yyyy") : '',
+                                tob,
+                                pob: pob.city,
+                                calculationMethod: calculationMethod
+                            }} 
+                            hideCloseButton={true}
+                        />
+                         <div className="p-4 bg-gray-50 flex items-center justify-end border-t border-gray-100">
+                           <Button 
+                             onClick={handleSave} 
+                             disabled={isSaving}
+                             className="bg-gradient-to-r from-[#4B0082] to-[#FF1493] hover:opacity-90 rounded-xl h-11 font-bold shadow-lg gap-2 px-6"
+                           >
+                             {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                             {isSaving ? "Saving..." : `Save ${calculationMethod === 'thirukanitham' ? 'Thirukanitham' : 'Vakkiyam'} to Profile`}
+                           </Button>
+                         </div>
                     </motion.div>
-                )}
+                ) : null}
             </AnimatePresence>
         </div>
       </div>

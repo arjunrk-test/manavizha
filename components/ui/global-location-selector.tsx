@@ -23,15 +23,17 @@ interface LocationSelectorProps {
     longitude: number
   }) => void
   initialCity?: string
+  initialState?: string
+  initialCountry?: string
 }
 
-export function GlobalLocationSelector({ onLocationChange, initialCity }: LocationSelectorProps) {
+export function GlobalLocationSelector({ onLocationChange, initialCity, initialState, initialCountry }: LocationSelectorProps) {
   const [countries, setCountries] = useState<any[]>([])
   const [states, setStates] = useState<any[]>([])
   const [cities, setCities] = useState<any[]>([])
   
-  const [selectedCountry, setSelectedCountry] = useState("")
-  const [selectedState, setSelectedState] = useState("")
+  const [selectedCountry, setSelectedCountry] = useState(initialCountry || "")
+  const [selectedState, setSelectedState] = useState(initialState || "")
   const [selectedCity, setSelectedCity] = useState(initialCity || "")
   
   const [loading, setLoading] = useState({ countries: false, states: false, cities: false, coords: false })
@@ -40,13 +42,25 @@ export function GlobalLocationSelector({ onLocationChange, initialCity }: Locati
   const API_BASE = "https://countriesnow.space/api/v0.1"
 
   useEffect(() => {
+    if (initialCountry && initialCountry !== selectedCountry) setSelectedCountry(initialCountry)
+  }, [initialCountry])
+
+  useEffect(() => {
+    if (initialState && initialState !== selectedState) setSelectedState(initialState)
+  }, [initialState])
+
+  useEffect(() => {
+    if (initialCity && initialCity !== selectedCity) setSelectedCity(initialCity)
+  }, [initialCity])
+
+  useEffect(() => {
     const fetchCountries = async () => {
       setLoading(prev => ({ ...prev, countries: true }))
       try {
         const res = await axios.get(`${API_BASE}/countries/positions`)
         setCountries(res.data.data)
-      } catch (err) {
-        console.error("Failed to fetch countries", err)
+      } catch (err: any) {
+        console.warn("Failed to fetch countries", err.message || err)
       } finally {
         setLoading(prev => ({ ...prev, countries: false }))
       }
@@ -58,14 +72,16 @@ export function GlobalLocationSelector({ onLocationChange, initialCity }: Locati
     const fetchStates = async () => {
       if (!selectedCountry) return
       setLoading(prev => ({ ...prev, states: true }))
-      setStates([])
-      setSelectedState("")
-      setSelectedCity("")
+      // Do not reset selected state/city here to allow autofill to persist
       try {
         const res = await axios.post(`${API_BASE}/countries/states`, { country: selectedCountry })
         setStates(res.data.data.states)
-      } catch (err) {
-        console.error("Failed to fetch states", err)
+      } catch (err: any) {
+        if (err.response && err.response.status === 404) {
+          setStates([])
+        } else {
+          console.warn("Failed to fetch states", err.message || err)
+        }
       } finally {
         setLoading(prev => ({ ...prev, states: false }))
       }
@@ -77,16 +93,20 @@ export function GlobalLocationSelector({ onLocationChange, initialCity }: Locati
     const fetchCities = async () => {
       if (!selectedState || !selectedCountry) return
       setLoading(prev => ({ ...prev, cities: true }))
-      setCities([])
-      setSelectedCity("")
+      // Do not reset selected city here to allow autofill to persist
       try {
         const res = await axios.post(`${API_BASE}/countries/state/cities`, {
           country: selectedCountry,
           state: selectedState
         })
         setCities(res.data.data)
-      } catch (err) {
-        console.error("Failed to fetch cities", err)
+      } catch (err: any) {
+        if (err.response && err.response.status === 404) {
+          // Normal case for some country/state combinations with no city data
+          setCities([])
+        } else {
+          console.warn("Failed to fetch cities", err.message || err)
+        }
       } finally {
         setLoading(prev => ({ ...prev, cities: false }))
       }
@@ -131,9 +151,25 @@ export function GlobalLocationSelector({ onLocationChange, initialCity }: Locati
     }
   }
 
-  const filteredCountries = countries.filter(c => c.name.toLowerCase().includes(search.country.toLowerCase()))
-  const filteredStates = states.filter(s => s.name.toLowerCase().includes(search.state.toLowerCase()))
-  const filteredCities = cities.filter(c => c.toLowerCase().includes(search.city.toLowerCase()))
+  const sortMatches = (items: any[], query: string, nameSelector: (item: any) => string) => {
+    if (!query) return items;
+    const lowerQuery = query.toLowerCase();
+    return items
+      .filter(item => nameSelector(item).toLowerCase().includes(lowerQuery))
+      .sort((a, b) => {
+        const aName = nameSelector(a).toLowerCase();
+        const bName = nameSelector(b).toLowerCase();
+        const aStarts = aName.startsWith(lowerQuery);
+        const bStarts = bName.startsWith(lowerQuery);
+        if (aStarts && !bStarts) return -1;
+        if (!aStarts && bStarts) return 1;
+        return aName.localeCompare(bName);
+      });
+  };
+
+  const filteredCountries = sortMatches(countries, search.country, c => c.name);
+  const filteredStates = sortMatches(states, search.state, s => s.name);
+  const filteredCities = sortMatches(cities, search.city, c => c);
 
   return (
     <div className="flex flex-col gap-6">
@@ -158,6 +194,7 @@ export function GlobalLocationSelector({ onLocationChange, initialCity }: Locati
                         className="h-10 pl-10 text-sm rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-medium"
                         value={search.country}
                         onChange={(e) => setSearch(prev => ({ ...prev, country: e.target.value }))}
+                        onKeyDown={(e) => e.stopPropagation()}
                     />
                 </div>
             </div>
@@ -167,6 +204,8 @@ export function GlobalLocationSelector({ onLocationChange, initialCity }: Locati
                     key={c.name}
                     onSelect={() => {
                     setSelectedCountry(c.name)
+                    setSelectedState("")
+                    setSelectedCity("")
                     setSearch(prev => ({ ...prev, country: "" }))
                     }}
                     className="flex items-center justify-between py-3 px-4 cursor-pointer rounded-2xl hover:bg-[#4B0082]/5 focus:bg-[#4B0082]/5 transition-colors"
@@ -180,7 +219,6 @@ export function GlobalLocationSelector({ onLocationChange, initialCity }: Locati
         </DropdownMenu>
       </div>
 
-      {/* State Selector */}
       <div className="space-y-2">
         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">State / Province</label>
         <DropdownMenu>
@@ -201,6 +239,7 @@ export function GlobalLocationSelector({ onLocationChange, initialCity }: Locati
                         className="h-10 pl-10 text-sm rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-medium"
                         value={search.state}
                         onChange={(e) => setSearch(prev => ({ ...prev, state: e.target.value }))}
+                        onKeyDown={(e) => e.stopPropagation()}
                     />
                 </div>
             </div>
@@ -210,6 +249,7 @@ export function GlobalLocationSelector({ onLocationChange, initialCity }: Locati
                     key={s.name}
                     onSelect={() => {
                     setSelectedState(s.name)
+                    setSelectedCity("")
                     setSearch(prev => ({ ...prev, state: "" }))
                     }}
                     className="flex items-center justify-between py-3 px-4 cursor-pointer rounded-2xl hover:bg-[#4B0082]/5 focus:bg-[#4B0082]/5 transition-colors"
@@ -244,6 +284,7 @@ export function GlobalLocationSelector({ onLocationChange, initialCity }: Locati
                         className="h-10 pl-10 text-sm rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-medium"
                         value={search.city}
                         onChange={(e) => setSearch(prev => ({ ...prev, city: e.target.value }))}
+                        onKeyDown={(e) => e.stopPropagation()}
                     />
                 </div>
             </div>

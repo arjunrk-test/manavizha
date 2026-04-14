@@ -8,8 +8,10 @@ import { FormData } from "@/types/profile"
 import { Upload, X, Zap, Loader2 } from "lucide-react"
 import { useMasterData } from "@/hooks/use-master-data"
 import { SelectDropdown } from "@/components/ui/select-dropdown"
-import { generateHoroscope, Location } from "@/lib/astrology"
+import { Location } from "@/lib/astrology" // Note: import removed generateHoroscope
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+import { GlobalLocationSelector } from "@/components/ui/global-location-selector"
 
 const MAJOR_CITIES: Record<string, Location> = {
   "Chennai": { latitude: 13.0827, longitude: 80.2707 },
@@ -33,6 +35,7 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
   const [preview, setPreview] = useState<string | null>(formData.jaadhagam || null)
   const [isGenerating, setIsGenerating] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter()
 
   // Fetch horoscope master data using the common hook
   const { data: zodiacSignOptions } = useMasterData({ tableName: "master_zodiac_moon_sign" })
@@ -92,23 +95,8 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
       return
     }
 
-    setIsGenerating(true)
-    try {
-      const location = MAJOR_CITIES[formData.placeOfBirth] || MAJOR_CITIES["Chennai"]
-      const fullDateTime = `${formData.dateOfBirth}T${formData.timeOfBirth}:00`
-      const data = await generateHoroscope(fullDateTime, location)
-      
-      onChange("star", data.star)
-      onChange("zodiacSign", data.rashi)
-      onChange("lagnam", data.lagnam)
-      
-      toast.success(`Generated: ${data.star} - ${data.rashi}`)
-    } catch (err) {
-      console.error("Error generating horoscope:", err)
-      toast.error("Failed to generate horoscope details")
-    } finally {
-      setIsGenerating(false)
-    }
+    // Navigate to the generator page with prefilled data
+    router.push(`/dashboard/horoscope?dob=${encodeURIComponent(formData.dateOfBirth)}&tob=${encodeURIComponent(formData.timeOfBirth)}&city=${encodeURIComponent(formData.placeOfBirth)}`)
   }
 
   return (
@@ -212,15 +200,13 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="placeOfBirth" className="sds-label">Place of Birth *</Label>
-          <Input
-            id="placeOfBirth"
-            value={formData.placeOfBirth || ""}
-            onChange={(e) => onChange("placeOfBirth", e.target.value)}
-            placeholder="e.g., Madurai, Tamil Nadu"
-            required
-            className="sds-input w-full"
+        <div className="space-y-4">
+          <Label className="sds-label text-indigo-900 border-indigo-100 flex items-center gap-2">Place of Birth *</Label>
+          <GlobalLocationSelector 
+            initialCity={formData.placeOfBirth || ""}
+            onLocationChange={(loc) => {
+              onChange("placeOfBirth", loc.city)
+            }}
           />
         </div>
 
