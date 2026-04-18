@@ -12,8 +12,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser()
+        if (error) throw error
+        setUser(user)
+      } catch (err) {
+        console.error("Error fetching user in DashboardPage:", err)
+      }
     }
     fetchUser()
   }, [])

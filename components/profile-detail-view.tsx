@@ -347,9 +347,9 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                             </Button>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-[3.5rem] w-[3.5rem] rounded-full bg-white border-gray-100 shadow-lg hover:bg-gray-50 transition-all text-gray-900"><MoreVertical className="h-5 w-5" /></Button></DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-64 rounded-[2rem] p-3 z-50 shadow-2xl border-none">
-                                    <DropdownMenuItem className="rounded-2xl p-4 text-gray-400 font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:bg-gray-50"><UserMinus className="h-5 w-5 mr-3" /> Skip Profile</DropdownMenuItem>
-                                    <DropdownMenuItem className="rounded-2xl p-4 text-rose-500 font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:bg-rose-50"><UserX className="h-5 w-5 mr-3" /> Block Member</DropdownMenuItem>
+                                <DropdownMenuContent align="end" className="w-64 rounded-[2rem] p-3 z-50 shadow-2xl bg-white border border-gray-100 overflow-hidden">
+                                    <DropdownMenuItem className="rounded-2xl p-4 text-gray-500 font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:bg-gray-50 transition-colors"><UserMinus className="h-5 w-5 mr-3" /> Skip Profile</DropdownMenuItem>
+                                    <DropdownMenuItem className="rounded-2xl p-4 text-rose-500 font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:bg-rose-50 transition-colors"><UserX className="h-5 w-5 mr-3" /> Block Member</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>

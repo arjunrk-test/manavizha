@@ -1280,7 +1280,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                                 <MoreVertical className="h-5 w-5" />
                                             </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-64 sds-glass rounded-3xl p-2 z-50 border-white/50 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                                        <DropdownMenuContent align="end" className="w-64 bg-white rounded-3xl p-2 z-50 border border-black/[0.05] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
                                             <DropdownMenuItem
                                                 onClick={(e) => { 
                                                     e.stopPropagation(); 
@@ -1291,7 +1291,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                                         toast.error('Premium Required', { description: 'Upgrade for instant secure messaging.' });
                                                     }
                                                 }}
-                                                className="gap-3 cursor-pointer rounded-xl p-4 focus:bg-[#4B0082] focus:text-white font-bold text-[10px] uppercase tracking-widest transition-all"
+                                                className="gap-3 cursor-pointer rounded-xl p-4 text-gray-700 focus:bg-[#4B0082] focus:text-white font-bold text-[10px] uppercase tracking-widest transition-all"
                                             >
                                                 <MessageCircle className="h-4 w-4 opacity-50" /> Secure Message
                                                 {!isPremium && <Crown className="h-3 w-3 ml-auto text-amber-500" />}
@@ -1299,15 +1299,15 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                             <DropdownMenuSeparator className="bg-black/[0.03] mx-2" />
                                             <DropdownMenuItem
                                                 onClick={(e) => { e.stopPropagation(); handleIgnore(e, profile.user_id); }}
-                                                className="gap-3 cursor-pointer rounded-xl p-4 focus:bg-gray-50 text-gray-400 font-bold text-[10px] uppercase tracking-widest transition-all"
+                                                className="gap-3 cursor-pointer rounded-xl p-4 text-gray-500 hover:text-gray-900 focus:bg-[#4B0082] focus:text-white font-bold text-[10px] uppercase tracking-widest transition-all"
                                             >
-                                                <UserMinus className="h-4 w-4 opacity-40" /> Archive Profile
+                                                <UserMinus className="h-4 w-4 opacity-50" /> Archive Profile
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
                                                 onClick={(e) => { e.stopPropagation(); handleBlock(e, profile.user_id); }}
-                                                className="gap-3 cursor-pointer rounded-xl p-4 focus:bg-rose-50 focus:text-rose-600 text-rose-400/50 font-bold text-[10px] uppercase tracking-widest transition-all"
+                                                className="gap-3 cursor-pointer rounded-xl p-4 text-rose-500 focus:bg-rose-500 focus:text-white font-bold text-[10px] uppercase tracking-widest transition-all"
                                             >
-                                                <UserX className="h-4 w-4 opacity-40" /> Block Entity
+                                                <UserX className="h-4 w-4 opacity-50" /> Block Entity
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>

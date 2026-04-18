@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react"
 import { Heart, User, MapPin, Briefcase, Sparkles, HeartHandshake, X, GraduationCap, Star, Phone, MessageCircle, Coffee, ChevronLeft, ChevronRight, Inbox, Send, Filter, CheckCircle2, XCircle, Clock, ArrowRight, Shield, Crown, Users2, Bookmark } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
@@ -59,9 +60,13 @@ interface ProfileCard {
     lifestyleMatch?: {
         totalScore: number
     }
+    interaction_date?: string
+    viewed_me_date?: string
+    shortlisted_me_date?: string
 }
 
 export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
+    const router = useRouter()
     const [activeSection, setActiveSection] = useState<Section>(
         initialTab === "mutual" ? "mutual" : 
         initialTab === "liked" ? "sent" : 
@@ -150,9 +155,19 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
     const fetchLikes = async () => {
         setIsLoading(true)
         try {
-            const res = await fetch(`/api/likes?userId=${userId}`)
-            const data = await res.json()
-            if (!res.ok) throw new Error(data.error)
+            const [likeRes, viewRes, shortRes] = await Promise.all([
+                fetch(`/api/likes?userId=${userId}`),
+                fetch(`/api/views?userId=${userId}`),
+                fetch(`/api/shortlists?userId=${userId}`)
+            ]);
+            
+            const data = await likeRes.json()
+            if (!likeRes.ok) throw new Error(data.error)
+
+            const viewData = viewRes.ok ? await viewRes.json() : { viewedMe: [] }
+            const shortData = shortRes.ok ? await shortRes.json() : { shortlistedMe: [], shortlistedIds: [] }
+
+            setShortlistedIds(shortData.shortlistedIds || [])
 
             const iLikeds: LikeData[] = data.iLiked || []
             const likedMes: LikeData[] = data.likedMe || []
@@ -242,7 +257,10 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                     last_active_at: settings?.last_active_at,
                     horoscope: horo,
                     education: edu,
-                    interaction_status: "unknown" // Updated during filtering
+                    interaction_status: "unknown",
+                    interaction_date: iLikeds.find(l => l.id === uid)?.created_at || likedMes.find(l => l.id === uid)?.created_at,
+                    viewed_me_date: viewData.viewedMe?.find((v: any) => v.viewer_user_id === uid)?.created_at,
+                    shortlisted_me_date: shortData.shortlistedMe?.find((s: any) => s.user_id === uid)?.created_at
                 }
             }
 
@@ -357,14 +375,8 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
         let list: { id: string, status: string }[] = []
         
         if (activeSection === "mutual") {
-            const iLikedOk = iLikedData.map(l => l.id)
-            const likedMeOk = likedMeData.map(l => l.id)
-            
-            // Mutual = both have liked each other
             list = iLikedData
-                .filter(l => 
-                    likedMeData.some(m => m.id === l.id)
-                )
+                .filter(l => likedMeData.some(m => m.id === l.id))
                 .map(l => ({ id: l.id, status: "accepted" }))
         } else if (activeSection === "received") {
             list = likedMeData.map(l => ({ id: l.id, status: l.status }))
@@ -387,7 +399,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
             const theirLike = likedMeData.find(l => l.id === item.id)
             
             let effectiveStatus = item.status
-            if (myLike && theirLike) {
+            if (myLike && theirLike && myLike.status === 'accepted' && theirLike.status === 'accepted') {
                 effectiveStatus = 'accepted'
             }
 
@@ -515,6 +527,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                         <NavItem label="All" count={counts.sent.all} section="sent" status="all" />
                         <NavItem label="Pending" count={counts.sent.pending} section="sent" status="pending" />
                         <NavItem label="Accepted/Replied" count={counts.sent.accepted} section="sent" status="accepted" />
+                        <NavItem label="Declined" count={counts.sent.declined} section="sent" status="declined" />
                     </div>
                 </aside>
 
@@ -568,7 +581,11 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                                             profile={profile} 
                                             section={activeSection}
                                             onAction={handleUpdateStatus}
-                                            onView={handleOpenProfile}
+                                            onView={(p) => {
+                                                const sequenceIds = filteredProfiles.map(profile => profile.user_id);
+                                                sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(sequenceIds));
+                                                router.push(`/dashboard/profile/${p.user_id}`);
+                                            }}
                                             onMessage={(p) => {
                                                 setMessageTarget({ id: p.user_id, name: p.name })
                                                 setIsMessageDialogOpen(true)
@@ -697,9 +714,10 @@ interface LikesHorizontalCardProps {
     onShortlist: (e: React.MouseEvent, targetId: string) => void
 }
 
-function LikesHorizontalCard({ profile, section, onAction, onView, onMessage, actionLoading, index, shortlistedIds, onShortlist }: LikesHorizontalCardProps) {
+export function LikesHorizontalCard({ profile, section, onAction, onView, onMessage, actionLoading, index, shortlistedIds, onShortlist }: LikesHorizontalCardProps) {
     const [cardPhotoIndex, setCardPhotoIndex] = useState(0)
     const hasMultiplePhotos = profile.photos && profile.photos.length > 1
+    const pronoun = profile.sex?.toLowerCase() === 'female' ? 'She' : 'He'
 
     const handleContactClick = (type: string) => {
         toast.info(`${type.toUpperCase()} contact feature available for mutual matches.`)
@@ -801,6 +819,13 @@ function LikesHorizontalCard({ profile, section, onAction, onView, onMessage, ac
                                 {formatActivityTime(profile.last_active_at)}
                             </div>
                         )}
+                        
+                        {profile.viewed_me_date && (
+                            <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest text-[#4B0082] bg-white/90 shadow-md px-3 py-1.5 rounded-full border border-indigo-100/50">
+                                <Eye className="h-3.5 w-3.5" />
+                                Profile viewed you on {formatToDDMMYYYY(profile.viewed_me_date)}
+                            </div>
+                        )}
                     </div>
                     <div className="mb-4">
                         <div className="flex items-center gap-3 mb-2">
@@ -812,14 +837,14 @@ function LikesHorizontalCard({ profile, section, onAction, onView, onMessage, ac
                                 <span className="text-[8px] font-black uppercase tracking-[0.3em] text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-100/50">Elite</span>
                             )}
                         </div>
-                        <div className="flex flex-wrap items-center gap-4">
+                        <div className="flex flex-wrap items-center gap-3">
                             <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-900/60">
                                 <MapPinIcon className="h-3 w-3 text-indigo-500/40" />
                                 {profile.location.split(',')[0]}
                             </div>
                             <div className="h-1 w-1 bg-indigo-100 rounded-full" />
                             <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600">
-                                <Shield className="h-3 w-3 opacity-60" />
+                                <ShieldCheck className="h-3 w-3 opacity-60" />
                                 Trust Vector {calculateTrustScore(
                                     !!profile.photo_verified, 
                                     profile.completion_percentage || 80, 
@@ -837,7 +862,51 @@ function LikesHorizontalCard({ profile, section, onAction, onView, onMessage, ac
                         ))}
                     </div>
                     
-                    <div className="mt-auto pt-6 border-t border-black/[0.04] flex flex-wrap items-center justify-between gap-4">
+                    <div className="mt-auto pt-6 border-t border-black/[0.04]">
+                        {/* Interaction timeline labels (Match Profiles Style) */}
+                        <div className="flex flex-col gap-2 mb-6">
+                            {profile.shortlisted_me_date && (
+                                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#4B0082]">
+                                    <Bookmark className="h-3.5 w-3.5 text-[#4B0082]" />
+                                    {pronoun} shortlisted you on {formatToDDMMYYYY(profile.shortlisted_me_date)}
+                                </div>
+                            )}
+
+                            {section === 'sent' && (
+                                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-emerald-600">
+                                    <Heart className="h-3.5 w-3.5 fill-emerald-600" />
+                                    {profile.interaction_status === 'accepted' ? (
+                                        <>{pronoun} accepted your interest {profile.interaction_date ? `on ${formatToDDMMYYYY(profile.interaction_date)}` : 'Recently'}</>
+                                    ) : profile.interaction_status === 'declined' ? (
+                                        <span className="text-gray-500">{pronoun} declined your interest {profile.interaction_date ? `on ${formatToDDMMYYYY(profile.interaction_date)}` : 'Recently'}</span>
+                                    ) : (
+                                        <span className="text-indigo-900/50">You sent an interest {profile.interaction_date ? `on ${formatToDDMMYYYY(profile.interaction_date)}` : ''} - <span className="text-amber-500 ml-1">Pending</span></span>
+                                    )}
+                                </div>
+                            )}
+
+                            {section === 'received' && (
+                                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-emerald-600">
+                                    <Heart className="h-3.5 w-3.5 fill-emerald-600" />
+                                    {profile.interaction_status === 'accepted' ? (
+                                        <>You accepted {pronoun.toLowerCase()} interest {profile.interaction_date ? `on ${formatToDDMMYYYY(profile.interaction_date)}` : 'Recently'}</>
+                                    ) : profile.interaction_status === 'declined' ? (
+                                        <span className="text-gray-500">You declined {pronoun.toLowerCase()} interest {profile.interaction_date ? `on ${formatToDDMMYYYY(profile.interaction_date)}` : 'Recently'}</span>
+                                    ) : (
+                                        <>{pronoun} showed interest {profile.interaction_date ? `on ${formatToDDMMYYYY(profile.interaction_date)}` : 'Recently'}</>
+                                    )}
+                                </div>
+                            )}
+
+                            {section === 'mutual' && (
+                                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-emerald-600">
+                                    <Star className="h-3.5 w-3.5 fill-emerald-600" />
+                                    Mutual Interest Found!
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                             <Button
                                 onClick={(e) => { e.stopPropagation(); handleContactClick('whatsapp'); }}
@@ -907,13 +976,14 @@ function LikesHorizontalCard({ profile, section, onAction, onView, onMessage, ac
                         <Button 
                             variant="ghost"
                             className="h-12 px-6 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] text-gray-400 hover:text-[#4B0082] hover:bg-indigo-50/50 transition-all"
-                            onClick={() => onView(profile)}
+                            onClick={(e) => { e.stopPropagation(); onView(profile); }}
                         >
                             Full Profile
                             <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
                         </Button>
                     </div>
                 </div>
+            </div>
             </div>
         </motion.div>
     )

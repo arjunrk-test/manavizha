@@ -7,8 +7,9 @@ import { supabase } from '@/lib/supabase'
  * This is designed to be called periodically from the client.
  */
 export async function updateActivity() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) return
 
     const now = new Date().toISOString()
 
@@ -27,4 +28,7 @@ export async function updateActivity() {
             .update({ last_active_at: now })
             .eq('user_id', user.id)
     ])
+    } catch (err) {
+        // Silently fail for background activity updates
+    }
 }

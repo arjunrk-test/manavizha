@@ -80,8 +80,12 @@ export default function HoroscopePage() {
 
   useEffect(() => {
     async function getProfile() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) {
+          setIsLoadingProfile(false)
+          return
+        }
         setUserId(user.id)
         
         // Parse search params for prefill (e.g., from Profile Setup)
@@ -143,6 +147,8 @@ export default function HoroscopePage() {
             // Silently fall back to standard Chennai instead of throwing loud unhandled UI errors
             setPob(prev => ({ ...prev, city }));
         }
+      } catch (err) {
+        console.error("Error in getProfile:", err)
       }
       setIsLoadingProfile(false)
     }
