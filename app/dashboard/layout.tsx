@@ -27,54 +27,80 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      
-      if (!authUser) {
-        router.push("/")
-        return
-      }
-
-      // Determine the correct dashboard for the user based on their specific role
-      const dashboardPath = await getUserDashboard(authUser.id)
-      
-      if (dashboardPath !== "/dashboard") {
-        router.push(dashboardPath)
-        return
-      }
-
-      setUser(authUser)
-      setIsLoading(false)
-
-      // Check if account was deactivated — auto-reactivate on login and notify
       try {
-        const settingsRes = await fetch(`/api/settings?userId=${authUser.id}`)
-        if (settingsRes.ok) {
-          const settingsData = await settingsRes.json()
-          if (settingsData.is_deactivated) {
-            // Reactivate automatically on login
-            await fetch('/api/settings', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                userId: authUser.id,
-                updates: { is_deactivated: false, deactivated_until: null }
-              })
-            })
-            // Short delay so the toast is visible after page load
-            setTimeout(() => {
-              import('sonner').then(({ toast }) => {
-                toast.success('Welcome back! Your profile has been reactivated and is now visible to all members.', {
-                  duration: 6000,
-                  description: 'You can deactivate again anytime from Profile Settings.'
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+        
+        if (authError || !authUser) {
+          // If there's an auth error (like Invalid Refresh Token), sign out to clear stale data
+          if (authError) {
+             console.warn("Auth check error, signing out:", authError.message)
+             await supabase.auth.signOut()
+          }
+          router.push("/")
+          return
+        }
+
+        // Determine the correct dashboard for the user based on their specific role
+        const dashboardPath = await getUserDashboard(authUser.id)
+        
+        if (dashboardPath !== "/dashboard") {
+          router.push(dashboardPath)
+          return
+        }
+
+        setUser(authUser)
+        setIsLoading(false)
+
+        // Check if account was deactivated — auto-reactivate on login and notify
+        try {
+          const settingsRes = await fetch(`/api/settings?userId=${authUser.id}`)
+          if (settingsRes.ok) {
+            const settingsData = await settingsRes.json()
+            if (settingsData.is_deactivated) {
+              // Reactivate automatically on login
+              await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  userId: authUser.id,
+                  updates: { is_deactivated: false, deactivated_until: null }
                 })
               })
-            }, 1200)
+              // Short delay so the toast is visible after page load
+              setTimeout(() => {
+                import('sonner').then(({ toast }) => {
+                  toast.success('Welcome back! Your profile has been reactivated and is now visible to all members.', {
+                    duration: 6000,
+                    description: 'You can deactivate again anytime from Profile Settings.'
+                  })
+                })
+              }, 1200)
+            }
           }
+        } catch (err) {
+          // Silent catch for secondary settings check
         }
-      } catch { }
+      } catch (err) {
+        console.error("Critical error in checkUser:", err)
+        router.push("/")
+      }
     }
 
     checkUser()
+
+    // Add listener for auth state changes to handle logout across tabs or token errors
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESH_ERRORED' as any)) {
+        router.push("/")
+      }
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUser(session.user)
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [router])
 
   useEffect(() => {
@@ -94,31 +120,46 @@ export default function DashboardLayout({
       if (!user?.id) return
       setIsNotificationsLoading(true)
       try {
-        const [vRes, lRes, pRes] = await Promise.all([
+        const [vRes, lRes] = await Promise.all([
           fetch(`/api/views?userId=${user.id}`),
-          fetch(`/api/likes?userId=${user.id}`),
-          fetch("/api/profiles")
+          fetch(`/api/likes?userId=${user.id}`)
         ])
 
-        if (vRes.ok && lRes.ok && pRes.ok) {
+        if (vRes.ok && lRes.ok) {
           const viewsData = await vRes.json()
           const likesData = await lRes.json()
-          const profiles = await pRes.json()
-
+          
           const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-
           const recentViews = (viewsData.viewedMe || []).filter((v: any) => !v.is_read && new Date(v.created_at) > thirtyDaysAgo)
           const recentLikes = (likesData.received || []).filter((l: any) => !l.is_read && new Date(l.created_at) > thirtyDaysAgo)
 
-          setWhoViewedMe(recentViews.map((rv: any) => {
-            const p = profiles.find((c: any) => c.user_id === rv.viewer_user_id)
-            return p ? { ...p, interaction_at: rv.created_at, interaction_type: 'view' } : null
-          }).filter(Boolean))
+          // Collect unique user IDs to fetch profiles for
+          const viewerUserIds = recentViews.map((v: any) => v.viewer_user_id)
+          const likerUserIds = recentLikes.map((l: any) => l.user_id)
+          const uniqueUserIds = [...new Set([...viewerUserIds, ...likerUserIds])]
 
-          setWhoExpressedInterest(recentLikes.map((rl: any) => {
-            const p = profiles.find((c: any) => c.user_id === rl.user_id)
-            return p ? { ...p, interaction_at: rl.created_at, interaction_type: 'interest' } : null
-          }).filter(Boolean))
+          if (uniqueUserIds.length > 0) {
+            // Fetch relevant profiles directly from Supabase
+            const { data: profiles, error: pError } = await supabase
+              .from('personal_details')
+              .select('user_id, name, age, photos, address, profession')
+              .in('user_id', uniqueUserIds)
+
+            if (!pError && profiles) {
+              setWhoViewedMe(recentViews.map((rv: any) => {
+                const p = profiles.find((c: any) => c.user_id === rv.viewer_user_id)
+                return p ? { ...p, interaction_at: rv.created_at, interaction_type: 'view' } : null
+              }).filter(Boolean))
+
+              setWhoExpressedInterest(recentLikes.map((rl: any) => {
+                const p = profiles.find((c: any) => c.user_id === rl.user_id)
+                return p ? { ...p, interaction_at: rl.created_at, interaction_type: 'interest' } : null
+              }).filter(Boolean))
+            }
+          } else {
+             setWhoViewedMe([])
+             setWhoExpressedInterest([])
+          }
         }
       } catch (err) {
         console.error("Error fetching header notifications:", err)
@@ -271,20 +312,22 @@ export default function DashboardLayout({
               </Button>
             )}
             <Button 
-                onClick={() => router.push(`/dashboard/profile/${user.id}`)} 
+                onClick={() => user?.id && router.push(`/dashboard/profile/${user.id}`)} 
+                disabled={!user?.id}
                 variant="outline" 
                 size="sm" 
-                className="h-8 gap-2 border-indigo-500/20 hover:bg-indigo-50 text-[#4B0082] font-bold text-[10px] uppercase tracking-widest px-4 shadow-sm"
+                className="h-8 gap-2 border-indigo-500/20 hover:bg-indigo-50 text-[#4B0082] font-bold text-[10px] uppercase tracking-widest px-4 shadow-sm disabled:opacity-50"
             >
               <User className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Preview Profile</span>
-              <span className="sm:hidden">Preview</span>
+              <span className="hidden sm:inline">{user?.id ? "Preview Profile" : "Loading..."}</span>
+              <span className="sm:hidden">{user?.id ? "Preview" : "..."}</span>
             </Button>
             <Button 
                 onClick={() => router.push("/dashboard/setup")} 
+                disabled={!user?.id}
                 variant="outline" 
                 size="sm" 
-                className="h-8 gap-2 border-indigo-500/20 hover:bg-indigo-50 text-[#4B0082] font-bold text-[10px] uppercase tracking-widest px-4 shadow-sm"
+                className="h-8 gap-2 border-indigo-500/20 hover:bg-indigo-50 text-[#4B0082] font-bold text-[10px] uppercase tracking-widest px-4 shadow-sm disabled:opacity-50"
             >
               <Edit className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Update Profile</span>

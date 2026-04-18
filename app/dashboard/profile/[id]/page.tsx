@@ -646,9 +646,31 @@ export default function ProfileViewPage() {
                                 </div>
                             )}
                             {iLikedDate && iLikedStatus !== 'accepted' && likedMeStatus !== 'accepted' && !isMutual && (
-                                <div className="flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest text-rose-500">
+                                <div className={cn(
+                                    "flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest",
+                                    iLikedStatus === 'declined' ? "text-gray-500" : "text-rose-500"
+                                )}>
                                     <Heart className="h-4 w-4" />
-                                    <span>You sent {(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'him' : 'her'} an interest — {formatToDDMMYYYY(iLikedDate).replace(/-/g, '.')}</span>
+                                    <span>
+                                        {iLikedStatus === 'declined' 
+                                            ? `${(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'He' : 'She'} declined your interest on ${formatToDDMMYYYY(iLikedDate).replace(/-/g, '.')}`
+                                            : `You sent ${(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'him' : 'her'} an interest — ${formatToDDMMYYYY(iLikedDate).replace(/-/g, '.')} (Pending)`
+                                        }
+                                    </span>
+                                </div>
+                            )}
+                            {likedMeDate && likedMeStatus !== 'accepted' && iLikedStatus !== 'accepted' && !isMutual && (
+                                <div className={cn(
+                                    "flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest",
+                                    likedMeStatus === 'declined' ? "text-gray-500" : "text-emerald-500"
+                                )}>
+                                    <Heart className="h-4 w-4" />
+                                    <span>
+                                        {likedMeStatus === 'declined' 
+                                            ? `You declined ${(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'his' : 'her'} interest on ${formatToDDMMYYYY(likedMeDate).replace(/-/g, '.')}`
+                                            : `${(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'He' : 'She'} sent you an interest — ${formatToDDMMYYYY(likedMeDate).replace(/-/g, '.')} (Pending)`
+                                        }
+                                    </span>
                                 </div>
                             )}
                             {(isMutual || iLikedStatus === 'accepted' || likedMeStatus === 'accepted') && (
@@ -691,11 +713,11 @@ export default function ProfileViewPage() {
                                         <MoreVertical className="h-5 w-5" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-64 rounded-[2rem] p-3 z-50 shadow-2xl border-none">
-                                    <DropdownMenuItem onClick={handleIgnore} className="rounded-2xl p-4 text-gray-400 font-bold text-[10px] uppercase tracking-widest cursor-pointer">
+                                <DropdownMenuContent align="end" className="w-64 rounded-[2rem] p-3 z-50 shadow-2xl bg-white border border-gray-100 overflow-hidden">
+                                    <DropdownMenuItem onClick={handleIgnore} className="rounded-2xl p-4 text-gray-500 font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:bg-gray-50 transition-colors">
                                         <UserMinus className="h-5 w-5 mr-3" /> Skip Profile
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={handleBlock} className="rounded-2xl p-4 text-rose-500 font-bold text-[10px] uppercase tracking-widest cursor-pointer">
+                                    <DropdownMenuItem onClick={handleBlock} className="rounded-2xl p-4 text-rose-500 font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:bg-rose-50 transition-colors">
                                         <UserX className="h-5 w-5 mr-3" /> Block Member
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>

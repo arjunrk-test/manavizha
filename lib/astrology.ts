@@ -29,6 +29,8 @@ export interface HoroscopeDetails {
   planets: PlanetPosition[]; // ALL 9 Grahas + Lagnam + Maandi
   panchang: any;
   kundali: any;
+  dasaPeriods?: any[];
+  papaPulligal?: any;
 }
 
 // English/Sanskrit -> Tamil mappings with Tamil Script
@@ -51,6 +53,20 @@ export const RASHI_TAMIL: Record<string, string> = {
 
 export const NAKSHATRAS = Object.keys(NAKSHATRA_TAMIL);
 export const RASHIS = Object.keys(RASHI_TAMIL);
+
+export const PLANETS = [
+    { name: "Sun", abbr: "சூ", tamil: "சூரியன்" },
+    { name: "Moon", abbr: "சந்", tamil: "சந்திரன்" },
+    { name: "Mars", abbr: "செ", tamil: "செவ்வாய்" },
+    { name: "Mercury", abbr: "பு", tamil: "புதன்" },
+    { name: "Jupiter", abbr: "குரு", tamil: "குரு" },
+    { name: "Venus", abbr: "சு", tamil: "சுக்கிரன்" },
+    { name: "Saturn", abbr: "சனி", tamil: "சனி" },
+    { name: "Rahu", abbr: "ரா", tamil: "ராகு" },
+    { name: "Ketu", abbr: "கே", tamil: "கேது" },
+    { name: "Lagnam", abbr: "ல", tamil: "லக்னம்" },
+    { name: "Maandi", abbr: "மா", tamil: "மாந்தி" }
+];
 
 // --- Core Math Functions ---
 
@@ -92,7 +108,7 @@ function calculatePlanets(jd: number) {
     planets.push({ name: "Mercury", tamil: "Budhan", abbr: "பு", lon: (252.25 + 149472.93 * t) % 360 });
     planets.push({ name: "Venus", tamil: "Sukran", abbr: "சு", lon: (181.97 + 58517.81 * t) % 360 });
     planets.push({ name: "Mars", tamil: "Sevvai", abbr: "செ", lon: (355.45 + 19140.3 * t) % 360 });
-    planets.push({ name: "Jupiter", tamil: "Guru", abbr: "குரு", lon: (34.35 + 3034.9 * t) % 360 });
+    planets.push({ name: "Jupiter", tamil: "Guru", abbr: "வி", lon: (34.35 + 3034.9 * t) % 360 });
     planets.push({ name: "Saturn", tamil: "Sani", abbr: "சனி", lon: (49.95 + 1222.11 * t) % 360 });
     planets.push({ name: "Rahu", tamil: "Rahu", abbr: "ரா", lon: (125.04 - 1934.13 * t) % 360 });
     planets.push({ name: "Ketu", tamil: "Ketu", abbr: "கே", lon: (125.04 - 1934.13 * t + 180) % 360 });
@@ -140,7 +156,7 @@ function getNavamsamIndex(siderealLon: number): number {
     return (3 + pada) % 12;
 }
 
-export async function generateHoroscope(dateTime: string, location: Location, timezone: string = "+05:30"): Promise<HoroscopeDetails> {
+export async function generateHoroscope(dateTime: string, location: Location, timezone: string = "+05:30", method: 'thirukanitham' | 'vakkiyam' = 'thirukanitham'): Promise<HoroscopeDetails> {
     let date: Date;
     try {
         const fullString = dateTime.includes('+') || dateTime.includes('Z') ? dateTime : `${dateTime}${timezone}`;
@@ -150,8 +166,74 @@ export async function generateHoroscope(dateTime: string, location: Location, ti
         throw new Error("Invalid birth date or time format.");
     }
 
+    const DASA_SEQUENCE = [
+        { name: 'Ketu', abbr: 'கே', years: 7 },
+        { name: 'Venus', abbr: 'சு', years: 20 },
+        { name: 'Sun', abbr: 'சூ', years: 6 },
+        { name: 'Moon', abbr: 'சந்', years: 10 },
+        { name: 'Mars', abbr: 'செ', years: 7 },
+        { name: 'Rahu', abbr: 'ரா', years: 18 },
+        { name: 'Jupiter', abbr: 'வி', years: 16 },
+        { name: 'Saturn', abbr: 'சனி', years: 19 },
+        { name: 'Mercury', abbr: 'பு', years: 17 }
+    ];
+
+    const calculateVimshottariDasa = (birthDate: Date, moonSiderealLongitude: number) => {
+        const nakshatraDegreeLength = 360 / 27; // 13.333333
+        const starIdx = Math.floor(moonSiderealLongitude / nakshatraDegreeLength);
+        const startDasaIdx = starIdx % 9;
+        
+        const degreePassed = moonSiderealLongitude % nakshatraDegreeLength;
+        const fractionPassed = degreePassed / nakshatraDegreeLength;
+        
+        const firstDasa = DASA_SEQUENCE[startDasaIdx];
+        
+        const msPerYear = 365.25636 * 24 * 60 * 60 * 1000;
+        let trackDate = new Date(birthDate.getTime() - (fractionPassed * firstDasa.years * msPerYear));
+        
+        const dasaPeriods: any[] = [];
+        
+        for (let i = 0; i < 9; i++) {
+            const dasaIdx = (startDasaIdx + i) % 9;
+            const currentDasa = DASA_SEQUENCE[dasaIdx];
+            
+            for (let j = 0; j < 9; j++) {
+                const bhuktiIdx = (dasaIdx + j) % 9;
+                const currentBhukti = DASA_SEQUENCE[bhuktiIdx];
+                
+                const bhuktiYears = (currentDasa.years * currentBhukti.years) / 120;
+                const bhuktiMs = bhuktiYears * msPerYear;
+                
+                const startDate = new Date(trackDate);
+                trackDate = new Date(trackDate.getTime() + bhuktiMs);
+                const endDate = new Date(trackDate);
+                
+                const formatStr = (d: Date) => `${d.getDate().toString().padStart(2, '0')}-${(d.getMonth()+1).toString().padStart(2, '0')}-${d.getFullYear()}`;
+                
+                if (endDate > birthDate) {
+                    const displayStartDate = startDate < birthDate ? birthDate : startDate;
+                    dasaPeriods.push({
+                        dasa: currentDasa.abbr,
+                        bhukti: currentBhukti.abbr,
+                        start: formatStr(displayStartDate),
+                        end: formatStr(endDate),
+                        endMs: endDate.getTime() // Useful for sorting or future extensions
+                    });
+                }
+            }
+        }
+        
+        return dasaPeriods;
+    };
+
     const jd = calculateJD(date);
-    const ayan = calculateAyanamsha(jd);
+    let ayan = calculateAyanamsha(jd);
+    // Accurate approximation for Vakyam panchangam based on Surya Siddhanta difference 
+    // Usually varies slowly but 1° 17' (~1.283 degrees) difference from Lahiri is the recognized modern Nadi/Vakya standard
+    if (method === 'vakkiyam') {
+        ayan -= 1.283;
+    }
+    
     
     const rawPlanets = [
         { name: "Sun", tamil: "Suriyan", abbr: "சூ", lon: calculateSun(jd) },
@@ -174,6 +256,61 @@ export async function generateHoroscope(dateTime: string, location: Location, ti
             isLagnam: p.isLagnam
         };
     });
+
+    const calculatePapaPulligal = (planetsList: PlanetPosition[]) => {
+        const lagna = planetsList.find(p => p.isLagnam)?.rasiIndex || 0;
+        const moonRasi = planetsList.find(p => p.name === 'Moon')?.rasiIndex || 0;
+        const venusRasi = planetsList.find(p => p.name === 'Venus')?.rasiIndex || 0;
+        
+        const getRelativeHouse = (planetRasi: number, refRasi: number) => {
+            return ((planetRasi - refRasi + 12) % 12) + 1;
+        };
+        
+        const doshaHouses = [1, 2, 4, 7, 8, 12];
+        const targets = ['Mars', 'Saturn', 'Sun', 'Rahu'];
+        const tamilNames: Record<string, string> = { 'Mars': 'செவ்வாய்', 'Saturn': 'சனி', 'Sun': 'சூரியன்', 'Rahu': 'ராகு' };
+        
+        const rows: any[] = [];
+        let totalP1 = 0, totalP2 = 0, totalP3 = 0;
+        
+        targets.forEach(t => {
+            const planet = planetsList.find(p => p.name === t);
+            if (!planet) return;
+            
+            const prasi = planet.rasiIndex;
+            
+            const v1 = getRelativeHouse(prasi, lagna);
+            const p1 = doshaHouses.includes(v1) ? 1.0 : 0.0;
+            
+            const v2 = getRelativeHouse(prasi, moonRasi);
+            const p2 = doshaHouses.includes(v2) ? 1.0 : 0.0;
+            
+            const v3 = getRelativeHouse(prasi, venusRasi);
+            const p3 = doshaHouses.includes(v3) ? 1.0 : 0.0;
+            
+            totalP1 += p1;
+            totalP2 += p2;
+            totalP3 += p3;
+            
+            rows.push({
+                p: tamilNames[t],
+                v1, p1: p1.toFixed(1),
+                v2, p2: p2.toFixed(1),
+                v3, p3: p3.toFixed(1)
+            });
+        });
+        
+        return {
+            rows,
+            total: {
+                p1: totalP1.toFixed(1),
+                p2: totalP2.toFixed(1),
+                p3: totalP3.toFixed(1)
+            },
+            sevvaiDosham: (Number(rows[0]?.p1) + Number(rows[0]?.p2) + Number(rows[0]?.p3)) > 1 ? "தோஷம் உள்ளது" : "தோஷம் இல்லை",
+            rahuDosham: (Number(rows[3]?.p1) + Number(rows[3]?.p2) + Number(rows[3]?.p3)) > 1 ? "தோஷம் உள்ளது" : "தோஷம் இல்லை"
+        };
+    };
 
     const moon = planets.find(p => p.name === "Moon")!;
     const sun = planets.find(p => p.name === "Sun")!;
@@ -198,7 +335,9 @@ export async function generateHoroscope(dateTime: string, location: Location, ti
         sunset: "6:24 PM",
         planets,
         panchang: { nakshatra: starName, tithi: tithiIdx },
-        kundali: { ascendant: lagName }
+        kundali: { ascendant: lagName },
+        dasaPeriods: calculateVimshottariDasa(date, moon.siderealLongitude),
+        papaPulligal: calculatePapaPulligal(planets)
     };
 }
 

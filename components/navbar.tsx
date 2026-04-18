@@ -87,10 +87,10 @@ export function Navbar() {
           </motion.div>
 
           <div className="hidden md:flex items-center gap-8">
-            {["Features", "Testimonials", "About", "Contact"].map((item, index) => (
+            {["Features", "Testimonials", "Horoscope", "About", "Contact"].map((item, index) => (
               <motion.a
                 key={item}
-                href={`#${item.toLowerCase()}`}
+                href={item === "Horoscope" ? "/horoscope" : `#${item.toLowerCase()}`}
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -178,10 +178,10 @@ export function Navbar() {
               exit={{ opacity: 0, height: 0 }}
               className="md:hidden py-6 space-y-4 border-t border-gray-100 dark:border-gray-800 mt-2"
             >
-              {["Features", "Testimonials", "About", "Contact"].map((item) => (
+              {["Features", "Testimonials", "Horoscope", "About", "Contact"].map((item) => (
                 <a
                   key={item}
-                  href={`#${item.toLowerCase()}`}
+                  href={item === "Horoscope" ? "/horoscope" : `#${item.toLowerCase()}`}
                   className="block text-[#4B0082] font-bold text-[10px] uppercase tracking-widest py-2"
                   onClick={() => setIsOpen(false)}
                 >

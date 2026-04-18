@@ -23,7 +23,12 @@ const customFetch = (url: any, options: any = {}) => {
         }
         return (fetch as any)(url, options)
     } catch (e) {
-        return (fetch as any)(url, options)
+        try {
+            return (fetch as any)(url, options)
+        } catch (err) {
+            console.error("Critical fetch error in customFetch:", err)
+            throw err
+        }
     }
 }
 

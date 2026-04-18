@@ -5,11 +5,22 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { FormData } from "@/types/profile"
-import { Upload, X, Zap, Loader2 } from "lucide-react"
 import { useMasterData } from "@/hooks/use-master-data"
 import { SelectDropdown } from "@/components/ui/select-dropdown"
-import { generateHoroscope, Location } from "@/lib/astrology"
+import { GlobalLocationSelector } from "@/components/ui/global-location-selector"
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogTitle, 
+} from "@/components/ui/dialog"
+import { DetailedHoroscopeView } from "@/components/detailed-horoscope-view"
+import { generateHoroscope, PLANETS, Location } from "@/lib/astrology"
+import { supabase } from "@/lib/supabase"
+import axios from "axios"
+import { Eye, Upload, X, Zap, Loader2 } from "lucide-react"
+import { format } from "date-fns"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 const MAJOR_CITIES: Record<string, Location> = {
   "Chennai": { latitude: 13.0827, longitude: 80.2707 },
@@ -32,7 +43,11 @@ interface HoroscopeDetailsStepProps {
 export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsStepProps) {
   const [preview, setPreview] = useState<string | null>(formData.jaadhagam || null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isViewingDetailed, setIsViewingDetailed] = useState(false)
+  const [detailedHoroscopeData, setDetailedHoroscopeData] = useState<any>(null)
+  const [isFetchingDetailed, setIsFetchingDetailed] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter()
 
   // Fetch horoscope master data using the common hook
   const { data: zodiacSignOptions } = useMasterData({ tableName: "master_zodiac_moon_sign" })
@@ -92,22 +107,79 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
       return
     }
 
-    setIsGenerating(true)
+    // Navigate to the generator page with prefilled data
+    router.push(`/dashboard/horoscope?dob=${encodeURIComponent(formData.dateOfBirth)}&tob=${encodeURIComponent(formData.timeOfBirth)}&city=${encodeURIComponent(formData.placeOfBirth)}`)
+  }
+
+  const handleViewDetailed = async (method: 'thirukanitham' | 'vakkiyam' = 'thirukanitham') => {
+    if (!formData.dateOfBirth || !formData.timeOfBirth || !formData.placeOfBirth) {
+      toast.error("Birth details missing. Please generate or fill them first.")
+      return
+    }
+
+    setIsFetchingDetailed(true)
     try {
-      const location = MAJOR_CITIES[formData.placeOfBirth] || MAJOR_CITIES["Chennai"]
-      const fullDateTime = `${formData.dateOfBirth}T${formData.timeOfBirth}:00`
-      const data = await generateHoroscope(fullDateTime, location)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      // 1. Fetch saved info to get manual_grid
+      const { data: savedHoro } = await supabase
+        .from("horoscope_details")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle()
+
+      // 2. Geocode the city to get lat/long
+      const geoRes = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(formData.placeOfBirth)}&limit=1&addressdetails=1`);
+      const geoData = geoRes.data;
+      if (!geoData || !geoData[0]) throw new Error("Could not determine location coordinates.");
       
-      onChange("star", data.star)
-      onChange("zodiacSign", data.rashi)
-      onChange("lagnam", data.lagnam)
+      const location = { 
+        latitude: parseFloat(geoData[0].lat), 
+        longitude: parseFloat(geoData[0].lon) 
+      };
+
+      // 3. Generate the horoscope
+      const datePart = formData.dateOfBirth.includes('T') ? formData.dateOfBirth.split('T')[0] : formData.dateOfBirth;
+      const cleanTime = formData.timeOfBirth.length === 5 ? `${formData.timeOfBirth}:00` : formData.timeOfBirth;
+      const fullDateTime = `${datePart}T${cleanTime}`;
       
-      toast.success(`Generated: ${data.star} - ${data.rashi}`)
-    } catch (err) {
-      console.error("Error generating horoscope:", err)
-      toast.error("Failed to generate horoscope details")
+      const result = await generateHoroscope(fullDateTime, location, "+05:30", method);
+
+      // 4. Apply manual grid overrides if they exist
+      if (savedHoro?.manual_grid) {
+        result.planets = result.planets.map(p => {
+          const match = PLANETS.find(target => target.name === p.name);
+          const overrideIdx = match ? savedHoro.manual_grid[match.abbr] : null;
+          if (overrideIdx && Array.isArray(overrideIdx) && overrideIdx.length > 0) {
+            return { ...p, rasiIndex: overrideIdx[0] };
+          }
+          return p;
+        });
+        
+        // Handle Lagnam specifically if stored differently
+        if (savedHoro.manual_grid['ல']) {
+           const lagPlanet = result.planets.find(p => p.isLagnam || p.name === 'Lagnam');
+           if (lagPlanet) {
+             lagPlanet.rasiIndex = savedHoro.manual_grid['ல'][0];
+           }
+        }
+      }
+
+      setDetailedHoroscopeData({
+        ...result,
+        name: formData.name || 'User',
+        dob: format(new Date(formData.dateOfBirth), "dd MMM yyyy"),
+        tob: formData.timeOfBirth,
+        pob: formData.placeOfBirth,
+        calculationMethod: method
+      });
+      setIsViewingDetailed(true);
+    } catch (err: any) {
+      console.error("Error viewing horoscope:", err);
+      toast.error(err.message || "Failed to load detailed horoscope.");
     } finally {
-      setIsGenerating(false)
+      setIsFetchingDetailed(false);
     }
   }
 
@@ -188,16 +260,51 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
               <p className="text-[9px] text-amber-500 font-bold uppercase tracking-widest mt-1">Instant details from Birth Time</p>
             </div>
           </div>
-          <Button
-            type="button"
-            onClick={handleAutoGenerate}
-            disabled={isGenerating}
-            className="relative z-10 h-14 px-10 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_15px_30px_-10px_rgba(245,158,11,0.5)] transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:grayscale group"
-          >
-            {isGenerating ? <Loader2 className="h-5 w-5 animate-spin mr-3" /> : <Zap className="h-5 w-5 mr-3 transition-transform group-hover:scale-125" />}
-            {isGenerating ? "Calculating..." : "Start Calculation"}
-          </Button>
+          <div className="flex flex-col md:flex-row gap-3 relative z-10 w-full md:w-auto">
+            <Button
+                type="button"
+                onClick={() => handleViewDetailed('thirukanitham')}
+                disabled={isFetchingDetailed}
+                variant="outline"
+                className="h-14 px-6 rounded-2xl border-indigo-500/30 text-indigo-700 bg-white/50 backdrop-blur-sm font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:bg-indigo-50 active:scale-95 disabled:opacity-50"
+            >
+                {isFetchingDetailed ? <Loader2 className="h-5 w-5 animate-spin mr-3" /> : <Eye className="h-5 w-5 mr-3" />}
+                Thirukanitham
+            </Button>
+            <Button
+                type="button"
+                onClick={() => handleViewDetailed('vakkiyam')}
+                disabled={isFetchingDetailed}
+                variant="outline"
+                className="h-14 px-6 rounded-2xl border-rose-500/30 text-rose-700 bg-white/50 backdrop-blur-sm font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:bg-rose-50 active:scale-95 disabled:opacity-50"
+            >
+                {isFetchingDetailed ? <Loader2 className="h-5 w-5 animate-spin mr-3" /> : <Eye className="h-5 w-5 mr-3" />}
+                Vakkiyam
+            </Button>
+            <Button
+                type="button"
+                onClick={handleAutoGenerate}
+                disabled={isGenerating}
+                className="h-14 px-8 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-[0_15px_30px_-10px_rgba(245,158,11,0.5)] transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:grayscale group"
+            >
+                {isGenerating ? <Loader2 className="h-5 w-5 animate-spin mr-3" /> : <Zap className="h-5 w-5 mr-3 transition-transform group-hover:scale-125" />}
+                {isGenerating ? "Calculate" : "Calculate"}
+            </Button>
+          </div>
         </div>
+
+        <Dialog open={isViewingDetailed} onOpenChange={setIsViewingDetailed}>
+          <DialogContent className="max-w-4xl p-1 bg-transparent border-none shadow-none overflow-y-auto max-h-[90vh]">
+            <DialogTitle className="sr-only">Detailed Horoscope View</DialogTitle>
+            {detailedHoroscopeData && (
+              <DetailedHoroscopeView 
+                data={detailedHoroscopeData} 
+                onClose={() => setIsViewingDetailed(false)}
+                hideCloseButton={false}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Input Fields Pair */}
         <div className="space-y-2">
@@ -212,15 +319,17 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="placeOfBirth" className="sds-label">Place of Birth *</Label>
-          <Input
-            id="placeOfBirth"
-            value={formData.placeOfBirth || ""}
-            onChange={(e) => onChange("placeOfBirth", e.target.value)}
-            placeholder="e.g., Madurai, Tamil Nadu"
-            required
-            className="sds-input w-full"
+        <div className="space-y-4">
+          <Label className="sds-label text-indigo-900 border-indigo-100 flex items-center gap-2">Place of Birth *</Label>
+          <GlobalLocationSelector 
+            initialCity={formData.placeOfBirth || ""}
+            initialState={formData.birthState || ""}
+            initialCountry={formData.birthCountry || ""}
+            onLocationChange={(loc) => {
+              onChange("placeOfBirth", loc.city)
+              onChange("birthState", loc.state)
+              onChange("birthCountry", loc.country)
+            }}
           />
         </div>
 

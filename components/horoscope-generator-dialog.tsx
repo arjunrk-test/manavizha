@@ -10,6 +10,7 @@ import { generateHoroscope, Location } from "@/lib/astrology"
 import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
+import { DetailedHoroscopeView } from "@/components/detailed-horoscope-view"
 
 interface HoroscopeGeneratorDialogProps {
   isOpen: boolean
@@ -66,6 +67,7 @@ export function HoroscopeGeneratorDialog({ isOpen, onClose, userId, onSave }: Ho
   const [isGenerating, setIsGenerating] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [showDetailed, setShowDetailed] = useState(false)
 
   const handleGenerate = async () => {
     if (!dob || !tob) {
@@ -122,15 +124,23 @@ export function HoroscopeGeneratorDialog({ isOpen, onClose, userId, onSave }: Ho
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md bg-white dark:bg-gray-900 border-none shadow-2xl p-0 overflow-hidden">
-        <div className="bg-gradient-to-r from-[#4B0082] to-[#FF1493] p-6 text-white text-center relative">
-          <Sparkles className="absolute top-4 right-4 h-6 w-6 opacity-30 animate-pulse" />
-          <DialogTitle className="text-2xl font-bold font-outfit">Tamil Horoscope Generator</DialogTitle>
-          <DialogDescription className="text-white/80 text-sm mt-1">
-            Calculate your Star, Rashi, and Lagnam the traditional way.
-          </DialogDescription>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+        if (!open) {
+            onClose();
+            setTimeout(() => setShowDetailed(false), 300);
+        }
+    }}>
+      <DialogContent className={`${showDetailed ? 'max-w-4xl p-1 bg-transparent shadow-none' : 'sm:max-w-md bg-white dark:bg-gray-900 shadow-2xl p-0'} border-none overflow-y-auto max-h-[90vh]`}>
+        
+        {!showDetailed ? (
+          <>
+            <div className="bg-gradient-to-r from-[#4B0082] to-[#FF1493] p-6 text-white text-center relative">
+              <Sparkles className="absolute top-4 right-4 h-6 w-6 opacity-30 animate-pulse" />
+              <DialogTitle className="text-2xl font-bold font-outfit">Tamil Horoscope Generator</DialogTitle>
+              <DialogDescription className="text-white/80 text-sm mt-1">
+                Calculate your Star, Rashi, and Lagnam the traditional way.
+              </DialogDescription>
+            </div>
 
         <div className="p-6 space-y-6">
           {!result ? (
@@ -227,22 +237,31 @@ export function HoroscopeGeneratorDialog({ isOpen, onClose, userId, onSave }: Ho
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-4 mt-6">
                 <Button 
-                  variant="outline" 
-                  onClick={() => setResult(null)} 
-                  className="flex-1 rounded-xl h-11"
+                  onClick={() => setShowDetailed(true)}
+                  className="w-full bg-amber-500 hover:bg-amber-600 text-white rounded-xl h-12 font-bold shadow-lg shadow-amber-500/20"
                 >
-                  Recalculate
+                  View Detailed Horoscope (Thirukanitham)
                 </Button>
-                <Button 
-                  onClick={handleSave} 
-                  disabled={isSaving}
-                  className="flex-[2] bg-gradient-to-r from-[#4B0082] to-[#FF1493] hover:opacity-90 rounded-xl h-11 font-bold shadow-lg gap-2"
-                >
-                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                  {isSaving ? "Saving..." : "Save to Profile"}
-                </Button>
+                
+                <div className="flex gap-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setResult(null)} 
+                    className="flex-1 rounded-xl h-11 border-gray-200"
+                  >
+                    Recalculate
+                  </Button>
+                  <Button 
+                    onClick={handleSave} 
+                    disabled={isSaving}
+                    className="flex-[2] bg-gradient-to-r from-[#4B0082] to-[#FF1493] hover:opacity-90 rounded-xl h-11 font-bold shadow-lg gap-2"
+                  >
+                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                    {isSaving ? "Saving..." : "Save to Profile"}
+                  </Button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -253,6 +272,18 @@ export function HoroscopeGeneratorDialog({ isOpen, onClose, userId, onSave }: Ho
             * Calculations are based on Drik Panchang rules using the Lahiri Ayanamsha.
           </p>
         </DialogFooter>
+        </>
+        ) : (
+          <DetailedHoroscopeView 
+             data={{
+               ...result,
+               dob,
+               tob,
+               pob
+             }} 
+             onClose={() => setShowDetailed(false)} 
+          />
+        )}
       </DialogContent>
     </Dialog>
   )
