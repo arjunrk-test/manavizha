@@ -66,3 +66,17 @@ export function getProfileSummaryStr(profile: any): string {
   
   return parts.join(" • ")
 }
+
+/**
+ * Generates a bullet-separated string of profile attributes containing strictly Role and Height.
+ */
+export function getRoleAndHeightStr(profile: any): string {
+  const parts = []
+  if (profile.profession && profile.profession !== "Not specified") {
+    parts.push(profile.profession)
+  }
+  if (profile.height) {
+    parts.push(`${profile.height} cm`)
+  }
+  return parts.join(" • ")
+}

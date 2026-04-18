@@ -11,7 +11,7 @@ import { HeartHandshake } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { calculateTrustScore, getProfileSummaryStr } from "@/lib/utils/profile-utils"
+import { calculateTrustScore, getProfileSummaryStr, getRoleAndHeightStr } from "@/lib/utils/profile-utils"
 import { toast } from "sonner"
 import { checkTamilPorutham } from "@/lib/astrology"
 import { getDistanceInKm, getCoordinatesForCity } from "@/lib/locations"
@@ -1182,7 +1182,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                         </div>
 
                         <div className="flex flex-wrap gap-2 mb-6">
-                            {getAgeHeightCasteEducationProfessionCityStr(profile).split(" â€¢ ").slice(2).map((tag, i) => (
+                            {getRoleAndHeightStr(profile).split(" • ").filter(Boolean).map((tag, i) => (
                                 <span key={i} className="px-3.5 py-1.5 rounded-full bg-indigo-50/30 text-indigo-900/70 text-[8px] font-bold tracking-widest uppercase border border-indigo-100/30 group-hover:bg-white group-hover:border-indigo-200 transition-all">
                                     {tag}
                                 </span>
@@ -1194,7 +1194,11 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                 {likedIds.includes(profile.user_id) && (
                                     <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-indigo-900/40">
                                         <Heart className="h-3.5 w-3.5 fill-indigo-900/40" />
-                                        You sent her an interest {iLikedDateMap[profile.user_id] ? `- ${formatToDDMMYYYY(iLikedDateMap[profile.user_id])}` : 'Recently'}
+                                        {iLikedStatusMap[profile.user_id] === 'declined' ? (
+                                            <span className="text-gray-500">He declined your interest {iLikedDateMap[profile.user_id] ? `on ${formatToDDMMYYYY(iLikedDateMap[profile.user_id])}` : 'Recently'}</span>
+                                        ) : (
+                                            <>You sent her an interest {iLikedDateMap[profile.user_id] ? `- ${formatToDDMMYYYY(iLikedDateMap[profile.user_id])}` : 'Recently'}</>
+                                        )}
                                     </div>
                                 )}
                                 {likedMeIds.includes(profile.user_id) && (
@@ -1234,9 +1238,10 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                                 handleCustomerLike(e, profile.user_id);
                                             }
                                         }}
-                                        disabled={actionLoadingId === profile.user_id}
+                                        disabled={actionLoadingId === profile.user_id || iLikedStatusMap[profile.user_id] === 'declined'}
                                         className={cn(
                                             "h-12 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 shadow-xl border-none",
+                                            iLikedStatusMap[profile.user_id] === 'declined' ? "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none" :
                                             (likedIds.includes(profile.user_id) || (likedMeIds.includes(profile.user_id) && likedIds.includes(profile.user_id))) 
                                                 ? "bg-[#FF4500] text-white hover:bg-[#FF6347] hover:scale-105 active:scale-95" 
                                                 : (likedMeIds.includes(profile.user_id) && likedMeStatusMap[profile.user_id] === 'pending'
@@ -1244,7 +1249,9 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                                     : "bg-[#4B0082] text-white hover:bg-[#3b0062] hover:scale-105 active:scale-95")
                                         )}
                                     >
-                                        {(likedIds.includes(profile.user_id) || (likedMeIds.includes(profile.user_id) && likedIds.includes(profile.user_id))) ? (
+                                        {iLikedStatusMap[profile.user_id] === 'declined' ? (
+                                            <span className="capitalize">Declined</span>
+                                        ) : (likedIds.includes(profile.user_id) || (likedMeIds.includes(profile.user_id) && likedIds.includes(profile.user_id))) ? (
                                             <span className="flex items-center gap-2">
                                                 <MessageCircle className="h-4 w-4" />
                                                 Send Message
