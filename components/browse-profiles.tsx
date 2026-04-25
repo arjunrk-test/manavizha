@@ -465,29 +465,42 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
     useEffect(() => {
         const fetchProfiles = async () => {
             try {
-                // 1. Get current user gender
-                const { data: userData } = await supabase
-                    .from("personal_details")
-                    .select("sex, food_preference")
-                    .eq("user_id", userId)
-                    .maybeSingle()
-
-                // Get user's location for nearby matching
-                const { data: myContact } = await supabase
-                    .from("contact_details")
-                    .select("current_district, current_state")
-                    .eq("user_id", userId)
-                    .maybeSingle()
+                const [
+                    { data: personal },
+                    { data: myContact },
+                    { data: myEduData },
+                    { data: myEmpData },
+                    { data: myBusData },
+                    { data: myStuData },
+                    { data: family }
+                ] = await Promise.all([
+                    supabase.from("personal_details").select("sex, food_preference, completion_percentage").eq("user_id", userId).maybeSingle(),
+                    supabase.from("contact_details").select("current_district, current_state, completion_percentage").eq("user_id", userId).maybeSingle(),
+                    supabase.from("education_details").select("education").eq("user_id", userId),
+                    supabase.from("profession_employee").select("completion_percentage, sector, salary, work_location").eq("user_id", userId).maybeSingle(),
+                    supabase.from("profession_business").select("completion_percentage, business_type, annual_returns, business_location").eq("user_id", userId).maybeSingle(),
+                    supabase.from("profession_student").select("completion_percentage").eq("user_id", userId).maybeSingle(),
+                    supabase.from("family_details").select("completion_percentage").eq("user_id", userId).maybeSingle()
+                ])
                 
+                let isCoreComplete = true;
+                if ((personal?.completion_percentage || 0) < 100) isCoreComplete = false;
+                if ((myContact?.completion_percentage || 0) < 100) isCoreComplete = false;
+                if (!myEduData || myEduData.length === 0 || !myEduData.some(e => e.education && e.education !== "")) isCoreComplete = false;
+                if ((myEmpData?.completion_percentage || 0) < 100 && (myBusData?.completion_percentage || 0) < 100 && (myStuData?.completion_percentage || 0) < 100) isCoreComplete = false;
+                if ((family?.completion_percentage || 0) < 100) isCoreComplete = false;
+
                 if (myContact && myContact.current_district) {
                     setCurrentUserLocation(`${myContact.current_district}${myContact.current_state ? `, ${myContact.current_state}` : ''}`)
                 }
 
-                if (!userData || !userData.sex) {
+                if (!personal || !personal.sex || !isCoreComplete) {
                     setIsProfileIncomplete(true)
                     setIsLoading(false)
                     return
                 }
+
+                const userData = personal
 
                 setIsProfileIncomplete(false)
                 const myGender = userData.sex?.toLowerCase() || ""
@@ -1481,7 +1494,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                     <User className="h-10 w-10 text-amber-600" />
                                 </div>
                                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Complete Your Profile</h3>
-                                <p className="text-gray-500 mt-2 max-w-md mx-auto">To find matches, we need to know your gender and basic details. Please complete your personal information first.</p>
+                                <p className="text-gray-500 mt-2 max-w-md mx-auto">To find and view matches, please verify your Personal, Contact, Educational, Professional, and Family details first.</p>
                                 <Button 
                                     onClick={() => window.location.href = '/dashboard/profile/edit'} 
                                     className="mt-8 bg-[#4B0082] hover:bg-[#380062] rounded-xl px-8"
