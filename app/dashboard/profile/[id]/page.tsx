@@ -617,8 +617,8 @@ export default function ProfileViewPage() {
                                 )}
                             </div>
 
-                            <div className="space-y-2">
-                                <h1 className="text-4xl sm:text-[4.2rem] font-black text-[#1A1A1A] tracking-tighter leading-[0.9] break-words">
+                            <div className="space-y-2 py-2">
+                                <h1 className="text-4xl sm:text-6xl font-black text-[#1A1A1A] tracking-tighter leading-tight break-words overflow-visible">
                                     {profile.name || profile.userName || "Unknown"}
                                 </h1>
                                 
@@ -636,94 +636,102 @@ export default function ProfileViewPage() {
                     </div>
 
                     {/* Right Column: Interaction Dates + Action Buttons */}
-                    <div className="flex flex-col items-end gap-10">
-                        {/* Stacked Interaction Statuses */}
-                        <div className="space-y-4 text-right">
-                            {shortlistedMeDate && (
-                                <div className="flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest text-indigo-600">
-                                    <HeartHandshake className="h-4 w-4 shadow-sm" />
-                                    <span>{(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'He' : 'She'} shortlisted you on {formatToDDMMYYYY(shortlistedMeDate).replace(/-/g, '.')}</span>
-                                </div>
-                            )}
-                            {iLikedDate && iLikedStatus !== 'accepted' && likedMeStatus !== 'accepted' && !isMutual && (
-                                <div className={cn(
-                                    "flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest",
-                                    iLikedStatus === 'declined' ? "text-gray-500" : "text-rose-500"
-                                )}>
-                                    <Heart className="h-4 w-4" />
-                                    <span>
-                                        {iLikedStatus === 'declined' 
-                                            ? `${(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'He' : 'She'} declined your interest on ${formatToDDMMYYYY(iLikedDate).replace(/-/g, '.')}`
-                                            : `You sent ${(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'him' : 'her'} an interest — ${formatToDDMMYYYY(iLikedDate).replace(/-/g, '.')} (Pending)`
-                                        }
-                                    </span>
-                                </div>
-                            )}
-                            {likedMeDate && likedMeStatus !== 'accepted' && iLikedStatus !== 'accepted' && !isMutual && (
-                                <div className={cn(
-                                    "flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest",
-                                    likedMeStatus === 'declined' ? "text-gray-500" : "text-emerald-500"
-                                )}>
-                                    <Heart className="h-4 w-4" />
-                                    <span>
-                                        {likedMeStatus === 'declined' 
-                                            ? `You declined ${(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'his' : 'her'} interest on ${formatToDDMMYYYY(likedMeDate).replace(/-/g, '.')}`
-                                            : `${(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'He' : 'She'} sent you an interest — ${formatToDDMMYYYY(likedMeDate).replace(/-/g, '.')} (Pending)`
-                                        }
-                                    </span>
-                                </div>
-                            )}
-                            {(isMutual || iLikedStatus === 'accepted' || likedMeStatus === 'accepted') && (
-                                <div className="flex items-center justify-end gap-3 text-[10.5px] font-black uppercase tracking-widest text-emerald-600">
-                                    <CheckCircle2 className="h-4 w-4" />
-                                    <span>{(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'He' : 'She'} accepted your interest on {formatToDDMMYYYY(likedMeDate || iLikedDate).replace(/-/g, '.')}</span>
-                                </div>
-                            )}
-                            {lastViewedMeDate && (
-                                <div className="flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest text-sky-600">
-                                    <Eye className="h-4 w-4" />
-                                    <span>{(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'He' : 'She'} viewed your profile {formatToDDMMYYYY(lastViewedMeDate).replace(/-/g, '.')}</span>
-                                </div>
-                            )}
-                        </div>
+                    {!isOwnProfile && (
+                        <div className="flex flex-col items-end gap-10">
+                            {/* Stacked Interaction Statuses */}
+                            <div className="space-y-4 text-right">
+                                {shortlistedMeDate && (
+                                    <div className="flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest text-indigo-600">
+                                        <HeartHandshake className="h-4 w-4 shadow-sm" />
+                                        <span>{(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'He' : 'She'} shortlisted you on {formatToDDMMYYYY(shortlistedMeDate).replace(/-/g, '.')}</span>
+                                    </div>
+                                )}
+                                {iLikedDate && iLikedStatus !== 'accepted' && likedMeStatus !== 'accepted' && !isMutual && (
+                                    <div className={cn(
+                                        "flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest",
+                                        iLikedStatus === 'declined' ? "text-gray-500" : "text-rose-500"
+                                    )}>
+                                        <Heart className="h-4 w-4" />
+                                        <span>
+                                            {iLikedStatus === 'declined' 
+                                                ? `${(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'He' : 'She'} declined your interest on ${formatToDDMMYYYY(iLikedDate).replace(/-/g, '.')}`
+                                                : `You sent ${(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'him' : 'her'} an interest — ${formatToDDMMYYYY(iLikedDate).replace(/-/g, '.')} (Pending)`
+                                            }
+                                        </span>
+                                    </div>
+                                )}
+                                {likedMeDate && likedMeStatus !== 'accepted' && iLikedStatus !== 'accepted' && !isMutual && (
+                                    <div className={cn(
+                                        "flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest",
+                                        likedMeStatus === 'declined' ? "text-gray-500" : "text-emerald-500"
+                                    )}>
+                                        <Heart className="h-4 w-4" />
+                                        <span>
+                                            {likedMeStatus === 'declined' 
+                                                ? `You declined ${(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'his' : 'her'} interest on ${formatToDDMMYYYY(likedMeDate).replace(/-/g, '.')}`
+                                                : `${(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'He' : 'She'} sent you an interest — ${formatToDDMMYYYY(likedMeDate).replace(/-/g, '.')} (Pending)`
+                                            }
+                                        </span>
+                                    </div>
+                                )}
+                                {(isMutual || iLikedStatus === 'accepted' || likedMeStatus === 'accepted') && (
+                                    <div className="flex items-center justify-end gap-3 text-[10.5px] font-black uppercase tracking-widest text-emerald-600">
+                                        <CheckCircle2 className="h-4 w-4" />
+                                        <span>{(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'He' : 'She'} accepted your interest on {formatToDDMMYYYY(likedMeDate || iLikedDate).replace(/-/g, '.')}</span>
+                                    </div>
+                                )}
+                                {lastViewedMeDate && (
+                                    <div className="flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest text-sky-600">
+                                        <Eye className="h-4 w-4" />
+                                        <span>{(profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male') ? 'He' : 'She'} viewed your profile {formatToDDMMYYYY(lastViewedMeDate).replace(/-/g, '.')}</span>
+                                    </div>
+                                )}
+                            </div>
 
-                        {/* Button Action Bar */}
-                        <div className="flex items-center gap-4">
-                            <Button 
-                                onClick={handleShortlist}
-                                className={`h-[3.5rem] px-8 rounded-full font-bold text-[10px] uppercase tracking-[0.2em] shadow-xl transition-all group ${
-                                    isShortlisted 
-                                    ? 'bg-[#4B0082] text-white hover:bg-[#3B0062] shadow-[#4B0082]/20' 
-                                    : 'bg-white text-gray-400 border border-gray-100 hover:bg-gray-50'
-                                }`}
-                            >
-                                <Bookmark className={`h-4 w-4 mr-2 transition-transform group-hover:scale-110 ${isShortlisted ? 'fill-current' : ''}`} />
-                                {isShortlisted ? 'Shortlisted' : 'Shortlist'}
-                            </Button>
-                            <Button
-                                onClick={() => (isLiked || isMutual) ? handleSendMessage() : handleLike()}
-                                className="h-[3.5rem] px-10 rounded-full bg-[#FF4500] text-white font-bold text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-orange-100 hover:scale-[1.02] active:scale-95 transition-all"
-                            >
-                                <MessageCircle className="h-4 w-4 mr-3" />
-                                {(isLiked || isMutual) ? 'Send Message' : 'Send Interest'}
-                            </Button>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="icon" className="h-[3.5rem] w-[3.5rem] rounded-full bg-white border-gray-100 shadow-lg hover:bg-gray-50 transition-all text-gray-900">
-                                        <MoreVertical className="h-5 w-5" />
+                            {/* Button Action Bar */}
+                            <div className="flex items-center gap-4">
+                                <Button 
+                                    onClick={handleShortlist}
+                                    className={`h-[3.5rem] px-8 rounded-full font-bold text-[10px] uppercase tracking-[0.2em] shadow-xl transition-all group ${
+                                        isShortlisted 
+                                        ? 'bg-[#4B0082] text-white hover:bg-[#3B0062] shadow-[#4B0082]/20' 
+                                        : 'bg-white text-gray-400 border border-gray-100 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    <Bookmark className={`h-4 w-4 mr-2 transition-transform group-hover:scale-110 ${isShortlisted ? 'fill-current' : ''}`} />
+                                    {isShortlisted ? 'Shortlisted' : 'Shortlist'}
+                                </Button>
+                                {iLikedStatus === 'declined' || likedMeStatus === 'declined' ? (
+                                    <Button disabled className="h-[3.5rem] px-10 rounded-full bg-gray-100 text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] cursor-not-allowed shadow-none border border-gray-200">
+                                        Declined
                                     </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-64 rounded-[2rem] p-3 z-50 shadow-2xl bg-white border border-gray-100 overflow-hidden">
-                                    <DropdownMenuItem onClick={handleIgnore} className="rounded-2xl p-4 text-gray-500 font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:bg-gray-50 transition-colors">
-                                        <UserMinus className="h-5 w-5 mr-3" /> Skip Profile
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={handleBlock} className="rounded-2xl p-4 text-rose-500 font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:bg-rose-50 transition-colors">
-                                        <UserX className="h-5 w-5 mr-3" /> Block Member
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                ) : (
+                                    <Button
+                                        onClick={() => (isLiked || isMutual) ? handleSendMessage() : handleLike()}
+                                        className="h-[3.5rem] px-10 rounded-full bg-[#FF4500] text-white font-bold text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-orange-100 hover:scale-[1.02] active:scale-95 transition-all"
+                                    >
+                                        <MessageCircle className="h-4 w-4 mr-3" />
+                                        {(isLiked || isMutual) ? 'Send Message' : 'Send Interest'}
+                                    </Button>
+                                )}
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" size="icon" className="h-[3.5rem] w-[3.5rem] rounded-full bg-white border-gray-100 shadow-lg hover:bg-gray-50 transition-all text-gray-900">
+                                            <MoreVertical className="h-5 w-5" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-64 rounded-[2rem] p-3 z-50 shadow-2xl bg-white border border-gray-100 overflow-hidden">
+                                        <DropdownMenuItem onClick={handleIgnore} className="rounded-2xl p-4 text-gray-500 font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:bg-gray-50 transition-colors">
+                                            <UserMinus className="h-5 w-5 mr-3" /> Skip Profile
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={handleBlock} className="rounded-2xl p-4 text-rose-500 font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:bg-rose-50 transition-colors">
+                                            <UserX className="h-5 w-5 mr-3" /> Block Member
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
 

@@ -116,6 +116,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
   const [shortlistedIds, setShortlistedIds] = useState<string[]>([])
   const [shortlistLoadingId, setShortlistLoadingId] = useState<string | null>(null)
+  const [isCoreProfileComplete, setIsCoreProfileComplete] = useState(false)
 
   useEffect(() => {
     const calculateProgress = async () => {
@@ -268,6 +269,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
         const hasStartedProfile = personalProgress > 0 || contactProgress > 0
         let referralProgress = hasStartedProfile ? 100 : 0
         stepProgresses.push(referralProgress)
+
+        const coreComplete = personalProgress === 100 && contactProgress === 100 && eduProgress === 100 && profProgress === 100 && familyProgress === 100
+        setIsCoreProfileComplete(coreComplete)
 
         const totalProgress = stepProgresses.reduce((sum, p) => sum + p, 0)
         // Only round and divide if they have started to avoid baseline 10%
@@ -751,16 +755,16 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             </div>
             
             <div className="p-2 space-y-0.5">
-              {completionPercentage === 0 ? (
+              {!isCoreProfileComplete ? (
                 <div className="text-[10px] text-amber-600 mb-2 bg-amber-50/50 p-3 rounded-2xl border border-amber-100 font-bold leading-relaxed text-center">
-                  Complete your profile to see matches.
+                  Verify first 5 steps of your profile to access these features.
                 </div>
               ) : null}
               <Button
                 variant="ghost"
                 className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
                 onClick={onNavigateToMutualMatches}
-                disabled={completionPercentage === 0}
+                disabled={!isCoreProfileComplete}
               >
                 <HeartHandshake className="h-4 w-4 mr-3 text-[#4B0082]" />
                 <div className="flex-1 flex items-center justify-between">
@@ -772,7 +776,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 variant="ghost"
                 className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
                 onClick={onNavigateToILiked}
-                disabled={completionPercentage === 0}
+                disabled={!isCoreProfileComplete}
               >
                 <Heart className="h-4 w-4 mr-3 text-rose-400" />
                 <div className="flex-1 flex items-center justify-between">
@@ -784,7 +788,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 variant="ghost"
                 className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
                 onClick={onNavigateToLikedMe}
-                disabled={completionPercentage === 0}
+                disabled={!isCoreProfileComplete}
               >
                 <Sparkles className="h-4 w-4 mr-3 text-indigo-400" />
                 <div className="flex-1 flex items-center justify-between">
@@ -797,7 +801,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 variant="ghost"
                 className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
                 onClick={onNavigateToPartnerPreferences}
-                disabled={completionPercentage === 0}
+                disabled={!isCoreProfileComplete}
               >
                 <Search className="h-4 w-4 mr-3 text-indigo-400" />
                 <div className="font-bold text-[11px] text-gray-700">Preferences</div>
@@ -807,7 +811,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 variant="ghost"
                 className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
                 onClick={() => onNavigateToBrowse()}
-                disabled={completionPercentage === 0}
+                disabled={!isCoreProfileComplete}
               >
                 <Users2 className="h-4 w-4 mr-3 text-indigo-400" />
                 <div className="font-bold text-[11px] text-gray-700">Browse</div>
@@ -832,7 +836,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 variant="ghost"
                 className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
                 onClick={onNavigateToSelections}
-                disabled={completionPercentage === 0}
+                disabled={!isCoreProfileComplete}
               >
                 <Heart className="h-4 w-4 mr-3 text-rose-400" />
                 <div className="font-bold text-[11px] text-gray-700">Selections</div>
@@ -842,7 +846,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 variant="ghost"
                 className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#4B0082]/5 hover:text-[#4B0082] group transition-all"
                 onClick={onNavigateToParents}
-                disabled={completionPercentage === 0}
+                disabled={!isCoreProfileComplete}
               >
                 <UserCircle2 className="h-4 w-4 mr-3 text-indigo-400" />
                 <div className="font-bold text-[11px] text-gray-700">Parents</div>
@@ -985,91 +989,113 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
 
           {/* --- Match Sections --- */}
-          <div className="space-y-2">
-            <ProfileCarousel
-                title="Daily Recommendations"
-                subtitle="Recommended matches for today"
-                profiles={dailyRecs}
-                onProfileClick={(p) => router.push(`/dashboard/daily-recommendations?id=${p.user_id}`)}
-                onViewAll={() => router.push("/dashboard/daily-recommendations")}
-                isLoading={isSectionsLoading}
-                shortlistedIds={shortlistedIds}
-                onShortlist={handleShortlist}
-                shortlistLoadingId={shortlistLoadingId}
-            />
+          {!isCoreProfileComplete ? (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="sds-glass rounded-[2rem] p-10 mt-8 text-center border-dashed border-2 border-amber-200 bg-amber-50/30"
+            >
+              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="h-8 w-8 text-amber-500" />
+              </div>
+              <h3 className="text-xl font-black text-indigo-900 mb-2">Complete Your Profile First</h3>
+              <p className="text-sm text-gray-500 font-medium mb-6 max-w-md mx-auto">
+                Please verify your Personal, Contact, Educational, Professional, and Family details to view matches and interact with other profiles.
+              </p>
+              <Button 
+                onClick={onNavigateToProfileSetup} 
+                className="h-12 px-8 rounded-xl bg-[#4B0082] text-white font-black text-[10px] uppercase tracking-widest hover:bg-[#3B0062] transition-all shadow-xl shadow-indigo-500/20"
+              >
+                Complete Profile
+              </Button>
+            </motion.div>
+          ) : (
+            <div className="space-y-2">
+              <ProfileCarousel
+                  title="Daily Recommendations"
+                  subtitle="Recommended matches for today"
+                  profiles={dailyRecs}
+                  onProfileClick={(p) => router.push(`/dashboard/daily-recommendations?id=${p.user_id}`)}
+                  onViewAll={() => router.push("/dashboard/daily-recommendations")}
+                  isLoading={isSectionsLoading}
+                  shortlistedIds={shortlistedIds}
+                  onShortlist={handleShortlist}
+                  shortlistLoadingId={shortlistLoadingId}
+              />
 
-            <ProfileCarousel
-                title="All Matches"
-                subtitle="Members who match your partner preferences"
-                profiles={allMatches}
-                onProfileClick={(p) => {
-                    // Set sequence for contextual navigation
-                    if (typeof window !== 'undefined') {
-                        sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(allMatches.map(m => m.user_id)));
-                    }
-                    router.push(`/dashboard/profile/${p.user_id}`);
-                }}
-                onViewAll={() => onNavigateToBrowse()}
-                isLoading={isSectionsLoading}
-                shortlistedIds={shortlistedIds}
-                onShortlist={handleShortlist}
-                shortlistLoadingId={shortlistLoadingId}
-            />
+              <ProfileCarousel
+                  title="All Matches"
+                  subtitle="Members who match your partner preferences"
+                  profiles={allMatches}
+                  onProfileClick={(p) => {
+                      // Set sequence for contextual navigation
+                      if (typeof window !== 'undefined') {
+                          sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(allMatches.map(m => m.user_id)));
+                      }
+                      router.push(`/dashboard/profile/${p.user_id}`);
+                  }}
+                  onViewAll={() => onNavigateToBrowse()}
+                  isLoading={isSectionsLoading}
+                  shortlistedIds={shortlistedIds}
+                  onShortlist={handleShortlist}
+                  shortlistLoadingId={shortlistLoadingId}
+              />
 
-            <ProfileCarousel
-                title="New Matches"
-                subtitle="Members who joined in the last 30 days"
-                profiles={newMatches}
-                onProfileClick={(p) => {
-                    // Set sequence for contextual navigation
-                    if (typeof window !== 'undefined') {
-                        sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(newMatches.map(m => m.user_id)));
-                    }
-                    router.push(`/dashboard/profile/${p.user_id}`);
-                }}
-                onViewAll={() => onNavigateToBrowse('newly-joined')}
-                isLoading={isSectionsLoading}
-                shortlistedIds={shortlistedIds}
-                onShortlist={handleShortlist}
-                shortlistLoadingId={shortlistLoadingId}
-            />
+              <ProfileCarousel
+                  title="New Matches"
+                  subtitle="Members who joined in the last 30 days"
+                  profiles={newMatches}
+                  onProfileClick={(p) => {
+                      // Set sequence for contextual navigation
+                      if (typeof window !== 'undefined') {
+                          sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(newMatches.map(m => m.user_id)));
+                      }
+                      router.push(`/dashboard/profile/${p.user_id}`);
+                  }}
+                  onViewAll={() => onNavigateToBrowse('newly-joined')}
+                  isLoading={isSectionsLoading}
+                  shortlistedIds={shortlistedIds}
+                  onShortlist={handleShortlist}
+                  shortlistLoadingId={shortlistLoadingId}
+              />
 
-            <ProfileCarousel
-                title="Who Viewed me"
-                subtitle="Members who have viewed your profile"
-                profiles={whoViewedMe}
-                onProfileClick={(p) => {
-                    // Set sequence for contextual navigation
-                    if (typeof window !== 'undefined') {
-                        sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(whoViewedMe.map(m => m.user_id)));
-                    }
-                    router.push(`/dashboard/profile/${p.user_id}`);
-                }}
-                onViewAll={() => onNavigateToBrowse('viewed-you')}
-                isLoading={isSectionsLoading}
-                shortlistedIds={shortlistedIds}
-                onShortlist={handleShortlist}
-                shortlistLoadingId={shortlistLoadingId}
-            />
+              <ProfileCarousel
+                  title="Who Viewed me"
+                  subtitle="Members who have viewed your profile"
+                  profiles={whoViewedMe}
+                  onProfileClick={(p) => {
+                      // Set sequence for contextual navigation
+                      if (typeof window !== 'undefined') {
+                          sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(whoViewedMe.map(m => m.user_id)));
+                      }
+                      router.push(`/dashboard/profile/${p.user_id}`);
+                  }}
+                  onViewAll={() => onNavigateToBrowse('viewed-you')}
+                  isLoading={isSectionsLoading}
+                  shortlistedIds={shortlistedIds}
+                  onShortlist={handleShortlist}
+                  shortlistLoadingId={shortlistLoadingId}
+              />
 
-            <ProfileCarousel
-                title="Profiles I Viewed"
-                subtitle="Members whose profile you have visited"
-                profiles={profilesIViewed}
-                onProfileClick={(p) => {
-                    // Set sequence for contextual navigation
-                    if (typeof window !== 'undefined') {
-                        sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(profilesIViewed.map(m => m.user_id)));
-                    }
-                    router.push(`/dashboard/profile/${p.user_id}`);
-                }}
-                onViewAll={() => onNavigateToBrowse('viewed-by-you')}
-                isLoading={isSectionsLoading}
-                shortlistedIds={shortlistedIds}
-                onShortlist={handleShortlist}
-                shortlistLoadingId={shortlistLoadingId}
-            />
-          </div>
+              <ProfileCarousel
+                  title="Profiles I Viewed"
+                  subtitle="Members whose profile you have visited"
+                  profiles={profilesIViewed}
+                  onProfileClick={(p) => {
+                      // Set sequence for contextual navigation
+                      if (typeof window !== 'undefined') {
+                          sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(profilesIViewed.map(m => m.user_id)));
+                      }
+                      router.push(`/dashboard/profile/${p.user_id}`);
+                  }}
+                  onViewAll={() => onNavigateToBrowse('viewed-by-you')}
+                  isLoading={isSectionsLoading}
+                  shortlistedIds={shortlistedIds}
+                  onShortlist={handleShortlist}
+                  shortlistLoadingId={shortlistLoadingId}
+              />
+            </div>
+          )}
           {/* Marriage/Success Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}

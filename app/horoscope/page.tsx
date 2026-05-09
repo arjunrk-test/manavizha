@@ -30,14 +30,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { createWorker } from 'tesseract.js'
+import tzlookup from 'tz-lookup'
 import { DetailedHoroscopeView } from "@/components/detailed-horoscope-view"
 import { Navbar } from "@/components/navbar"
 
 export default function PublicHoroscopePage() {
+  const [name, setName] = useState("")
   const [entryMode, setEntryMode] = useState<'auto' | 'manual'>('auto')
   const [dob, setDob] = useState<Date | undefined>(undefined)
   const [tob, setTob] = useState("12:00")
-  const [timezone, setTimezone] = useState("+05:30")
   const [pob, setPob] = useState({
     city: "Chennai",
     state: "Tamil Nadu",
@@ -146,8 +147,31 @@ export default function PublicHoroscopePage() {
       const cleanTime = `${timeParts[0].padStart(2, '0')}:${timeParts[1]?.padStart(2, '0') || '00'}:00`
       const fullDateTime = `${formattedDate}T${cleanTime}`
       
-      const thiruData = await generateHoroscope(fullDateTime, location, timezone, 'thirukanitham')
-      const vakkiyamData = await generateHoroscope(fullDateTime, location, timezone, 'vakkiyam')
+      let computedTimezone = "+05:30"; // default fallback
+      try {
+          const tzName = tzlookup(pob.latitude, pob.longitude);
+          const formatter = new Intl.DateTimeFormat('en-US', {
+              timeZone: tzName,
+              timeZoneName: 'shortOffset'
+          });
+          const offsetPart = formatter.formatToParts(dob).find(p => p.type === 'timeZoneName')?.value;
+          if (offsetPart && offsetPart !== 'GMT') {
+              let cleaned = offsetPart.replace('GMT', '');
+              if (!cleaned.includes(':')) cleaned += ':00';
+              const parts = cleaned.split(':');
+              const sign = parts[0].startsWith('-') ? '-' : '+';
+              const h = Math.abs(parseInt(parts[0], 10)).toString().padStart(2, '0');
+              const m = (parts[1] || '00').padStart(2, '0');
+              computedTimezone = `${sign}${h}:${m}`;
+          } else if (offsetPart === 'GMT') {
+              computedTimezone = "+00:00";
+          }
+      } catch (e) {
+          console.warn("Timezone lookup failed, using fallback +05:30");
+      }
+
+      const thiruData = await generateHoroscope(fullDateTime, location, computedTimezone, 'thirukanitham')
+      const vakkiyamData = await generateHoroscope(fullDateTime, location, computedTimezone, 'vakkiyam')
       
       setThirukanithamResult(thiruData)
       setVakkiyamResult(vakkiyamData)
@@ -233,24 +257,21 @@ export default function PublicHoroscopePage() {
                       exit={{ opacity: 0, height: 0 }}
                       className="space-y-4"
                     >
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black text-indigo-900/40 uppercase tracking-widest ml-1">Name</label>
+                        <input 
+                          type="text"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder="Enter name"
+                          className="w-full h-12 rounded-xl border border-indigo-100 bg-white px-4 text-xs font-medium text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+                      
                       <PremiumDatePicker label="Date of Birth" date={dob} onDateChange={setDob} />
                       <PremiumTimePicker label="Time of Birth" time={tob} onTimeChange={setTob} />
                       
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-indigo-900/40 uppercase tracking-widest ml-1">Timezone</label>
-                        <Select value={timezone} onValueChange={setTimezone}>
-                          <SelectTrigger className="h-12 rounded-2xl border-indigo-50 bg-indigo-50/10 text-gray-900 font-bold text-[11px]">
-                            <SelectValue placeholder="GMT" />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-2xl border-none shadow-2xl">
-                            <SelectItem value="+05:30">IST (+5:30)</SelectItem>
-                            <SelectItem value="+00:00">UTC (+0:00)</SelectItem>
-                            <SelectItem value="+08:00">SGT (+8:00)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <label className="text-[10px] font-black text-indigo-900/40 uppercase tracking-widest ml-1">Birth Location</label>
                         <GlobalLocationSelector 
                           onLocationChange={setPob}
@@ -258,6 +279,19 @@ export default function PublicHoroscopePage() {
                           initialState={pob.state}
                           initialCountry={pob.country}
                         />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black text-indigo-900/40 uppercase tracking-widest ml-1 flex items-center gap-2">Calculation Method</label>
+                        <Select value={calculationMethod} onValueChange={(val: any) => setCalculationMethod(val)}>
+                          <SelectTrigger className="h-12 rounded-xl border-indigo-50 bg-indigo-50/10 text-gray-900 font-bold text-[11px]">
+                            <SelectValue placeholder="Method" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl border-none shadow-2xl">
+                            <SelectItem value="thirukanitham">Thirukanitham (Drik)</SelectItem>
+                            <SelectItem value="vakkiyam">Vakkiyam</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </motion.div>
                   ) : (
@@ -328,6 +362,7 @@ export default function PublicHoroscopePage() {
                     <DetailedHoroscopeView 
                       data={{
                         ...activeResult,
+                        name: name,
                         dob: dob ? format(dob, "dd MMM yyyy") : '',
                         tob,
                         pob: pob.city,

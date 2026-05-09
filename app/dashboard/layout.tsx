@@ -121,8 +121,8 @@ export default function DashboardLayout({
       setIsNotificationsLoading(true)
       try {
         const [vRes, lRes] = await Promise.all([
-          fetch(`/api/views?userId=${user.id}`),
-          fetch(`/api/likes?userId=${user.id}`)
+          fetch(`/api/views?userId=${user.id}`).catch(() => ({ ok: false, json: async () => ({}) } as any)),
+          fetch(`/api/likes?userId=${user.id}`).catch(() => ({ ok: false, json: async () => ({}) } as any))
         ])
 
         if (vRes.ok && lRes.ok) {

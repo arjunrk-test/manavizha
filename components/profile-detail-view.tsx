@@ -342,9 +342,15 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                                 <BookmarkIcon className={cn("h-4 w-4 mr-2 transition-transform group-hover:scale-110", isShortlisted && "fill-current")} />
                                 {isShortlisted ? 'Shortlisted' : 'Shortlist'}
                             </Button>
-                            <Button onClick={() => (isLiked || iLikedStatus === 'accepted' || isMutual) ? setIsMessageDialogOpen(true) : handleLike()} className="h-[3.5rem] px-10 rounded-full bg-[#FF4500] text-white font-bold text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-orange-100 hover:scale-[1.02] active:scale-95 transition-all">
-                                <MessageCircle className="h-4 w-4 mr-3" /> {(isLiked || iLikedStatus === 'accepted' || isMutual) ? 'Send Message' : 'Send Interest'}
-                            </Button>
+                            {iLikedStatus === 'declined' || likedMeStatus === 'declined' ? (
+                                <Button disabled className="h-[3.5rem] px-10 rounded-full bg-gray-100 text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] cursor-not-allowed shadow-none border border-gray-200">
+                                    Declined
+                                </Button>
+                            ) : (
+                                <Button onClick={() => (isLiked || iLikedStatus === 'accepted' || isMutual) ? setIsMessageDialogOpen(true) : handleLike()} className="h-[3.5rem] px-10 rounded-full bg-[#FF4500] text-white font-bold text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-orange-100 hover:scale-[1.02] active:scale-95 transition-all">
+                                    <MessageCircle className="h-4 w-4 mr-3" /> {(isLiked || iLikedStatus === 'accepted' || isMutual) ? 'Send Message' : 'Send Interest'}
+                                </Button>
+                            )}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-[3.5rem] w-[3.5rem] rounded-full bg-white border-gray-100 shadow-lg hover:bg-gray-50 transition-all text-gray-900"><MoreVertical className="h-5 w-5" /></Button></DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-64 rounded-[2rem] p-3 z-50 shadow-2xl bg-white border border-gray-100 overflow-hidden">

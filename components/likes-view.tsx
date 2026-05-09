@@ -11,7 +11,7 @@ import { supabase } from "@/lib/supabase"
 import { MessageDialog } from "@/components/message-dialog"
 import { formatToDDMMYYYY, formatActivityTime } from "@/lib/utils/date-utils"
 import { cn } from "@/lib/utils"
-import { calculateTrustScore, getProfileSummaryStr } from "@/lib/utils/profile-utils"
+import { calculateTrustScore, getProfileSummaryStr, getRoleAndHeightStr } from "@/lib/utils/profile-utils"
 import { MatchScoreBadge } from "@/components/match-score-badge"
 import { Eye, MapPin as MapPinIcon, ShieldCheck, HeartHandshake as HeartHandshakeIcon, MessageCircle as MessageCircleIcon } from "lucide-react"
 
@@ -35,6 +35,7 @@ interface ProfileCard {
     user_id: string
     name: string
     age?: number
+    height?: number
     profession: string
     location: string
     sex?: string
@@ -192,18 +193,20 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                 { data: horoData },
                 { data: socialHabitsData },
                 { data: interestsData },
-                { data: eduData }
+                { data: eduData },
+                { data: usersData }
             ] = await Promise.all([
-                supabase.from("personal_details").select("user_id, name, age, sex, caste, completion_percentage").in("user_id", allIds),
-                supabase.from("photos").select("user_id, user_photos, photo_verified").in("user_id", allIds),
-                supabase.from("profession_employee").select("user_id, designation, company, sector, salary, work_location").in("user_id", allIds),
-                supabase.from("profession_business").select("user_id, designation, business_name, business_type, annual_returns, business_location").in("user_id", allIds),
-                supabase.from("contact_details").select("user_id, current_district, current_state").in("user_id", allIds),
-                supabase.from("user_settings").select("user_id, is_premium, last_active_at").in("user_id", allIds),
-                supabase.from("horoscope_details").select("user_id, zodiac_sign, star").in("user_id", allIds),
-                supabase.from("social_habits").select("user_id, smoking, drinking").in("user_id", allIds),
-                supabase.from("interests").select("user_id, interests, hobbies").in("user_id", allIds),
-                supabase.from("education_details").select("user_id, education, degree").in("user_id", allIds)
+                supabase.from("personal_details").select("*").in("user_id", allIds),
+                supabase.from("photos").select("*").in("user_id", allIds),
+                supabase.from("profession_employee").select("*").in("user_id", allIds),
+                supabase.from("profession_business").select("*").in("user_id", allIds),
+                supabase.from("contact_details").select("*").in("user_id", allIds),
+                supabase.from("user_settings").select("*").in("user_id", allIds),
+                supabase.from("horoscope_details").select("*").in("user_id", allIds),
+                supabase.from("social_habits").select("*").in("user_id", allIds),
+                supabase.from("interests").select("*").in("user_id", allIds),
+                supabase.from("education_details").select("*").in("user_id", allIds),
+                supabase.from("users").select("id, name").in("id", allIds)
             ])
 
             const buildCard = (uid: string): ProfileCard => {
@@ -238,10 +241,12 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                     location = `${contact.current_district}${contact.current_state ? `, ${contact.current_state}` : ""}`
                 }
 
+                const userRow = usersData?.find(u => u.id === uid)
                 return {
                     user_id: uid,
-                    name: personal?.name || "Unknown",
+                    name: personal?.name || userRow?.name || "Unknown",
                     age: personal?.age,
+                    height: personal?.height,
                     sex: personal?.sex || "Not specified",
                     caste: personal?.caste,
                     completion_percentage: personal?.completion_percentage || 70,
@@ -855,7 +860,7 @@ export function LikesHorizontalCard({ profile, section, onAction, onView, onMess
                     </div>
 
                     <div className="flex flex-wrap gap-2 mb-6">
-                        {getProfileSummaryStr(profile).split(" • ").map((tag, i) => (
+                        {getRoleAndHeightStr(profile).split(" • ").filter(Boolean).map((tag, i) => (
                             <span key={i} className="px-3.5 py-1.5 rounded-full bg-indigo-50/30 text-indigo-900/70 text-[8px] font-bold tracking-widest uppercase border border-indigo-100/30 group-hover:bg-white group-hover:border-indigo-200 transition-all">
                                 {tag}
                             </span>
