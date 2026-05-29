@@ -47,7 +47,7 @@ export function SkinColorDropdown({
                   className="w-5 h-5 rounded-lg border border-indigo-100 shadow-sm transition-transform duration-500 group-hover:scale-110"
                   style={{ backgroundColor: selectedOption.color }}
                 />
-                <span className="text-[11px] font-black uppercase tracking-widest text-[#4B0082]">
+                <span className="text-[11px] font-black uppercase tracking-widest text-[#3bba9c]">
                   {selectedOption.label}
                 </span>
               </>
@@ -55,7 +55,7 @@ export function SkinColorDropdown({
               <span className="text-gray-400 text-xs font-medium tracking-tight">Select Tone</span>
             )}
           </div>
-          <ChevronDown className={`h-4 w-4 text-[#4B0082]/40 transition-transform duration-500 ${isOpen ? "rotate-180" : ""}`} />
+          <ChevronDown className={`h-4 w-4 text-[#3bba9c]/40 transition-transform duration-500 ${isOpen ? "rotate-180" : ""}`} />
         </button>
         {isOpen && (
           <div className="absolute z-[100] w-full mt-3 sds-glass rounded-3xl shadow-2xl border-indigo-50/50 backdrop-blur-3xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -70,8 +70,8 @@ export function SkinColorDropdown({
                   }}
                   className={`w-full px-5 py-3.5 rounded-2xl flex items-center justify-between gap-4 text-left transition-all duration-300 group ${
                     value === option.value 
-                    ? "bg-[#4B0082] text-white shadow-lg shadow-indigo-900/10" 
-                    : "hover:bg-indigo-50/50 text-gray-500 hover:text-[#4B0082]"
+                    ? "bg-[#3bba9c] text-white shadow-lg shadow-emerald-900/10" 
+                    : "hover:bg-indigo-50/50 text-gray-500 hover:text-[#3bba9c]"
                   }`}
                 >
                   <span className="text-[10px] font-black uppercase tracking-widest">{option.label}</span>

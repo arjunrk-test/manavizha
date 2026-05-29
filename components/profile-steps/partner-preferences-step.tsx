@@ -56,10 +56,10 @@ function MultiSelectDropdown({ label, options, selected, onChange, searchable = 
       <button type="button" onClick={() => setOpen((o) => !o)}
         className="sds-input w-full h-14 px-5 flex items-center justify-between rounded-2xl border border-indigo-50/60 bg-white/60 hover:bg-white/80 transition-all text-left">
         <div className="min-w-0">
-          <span className="text-[9px] font-black uppercase tracking-widest text-[#4B0082]/40 block leading-none mb-0.5">{label}</span>
+          <span className="text-[9px] font-black uppercase tracking-widest text-[#3bba9c]/40 block leading-none mb-0.5">{label}</span>
           <span className="text-[11px] font-black text-gray-700 truncate block max-w-[220px]">{displayLabel}</span>
         </div>
-        {open ? <ChevronUp className="h-4 w-4 text-[#4B0082]/40 flex-shrink-0" /> : <ChevronDown className="h-4 w-4 text-[#4B0082]/40 flex-shrink-0" />}
+        {open ? <ChevronUp className="h-4 w-4 text-[#3bba9c]/40 flex-shrink-0" /> : <ChevronDown className="h-4 w-4 text-[#3bba9c]/40 flex-shrink-0" />}
       </button>
       {open && (
         <div className="absolute z-50 mt-2 w-full rounded-2xl border border-indigo-50/60 bg-white/98 backdrop-blur-2xl shadow-2xl shadow-indigo-300/20 overflow-hidden">
@@ -68,7 +68,7 @@ function MultiSelectDropdown({ label, options, selected, onChange, searchable = 
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                 <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder={`Search ${label}`}
-                  className="w-full pl-9 pr-4 py-2.5 text-[11px] font-semibold rounded-xl bg-gray-50 border border-gray-100 focus:outline-none focus:border-[#4B0082]/30 placeholder:text-gray-300" />
+                  className="w-full pl-9 pr-4 py-2.5 text-[11px] font-semibold rounded-xl bg-gray-50 border border-gray-100 focus:outline-none focus:border-[#3bba9c]/30 placeholder:text-gray-300" />
               </div>
             </div>
           )}
@@ -77,8 +77,8 @@ function MultiSelectDropdown({ label, options, selected, onChange, searchable = 
               const checked = isChecked(opt)
               return (
                 <button key={opt} type="button" onClick={() => toggle(opt)}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-[#4B0082]/5 transition-colors text-left group">
-                  <div className={`h-4 w-4 rounded flex-shrink-0 border flex items-center justify-center transition-all ${checked ? "bg-emerald-500 border-emerald-500" : "bg-white border-gray-300 group-hover:border-[#4B0082]/30"}`}>
+                  className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-[#3bba9c]/5 transition-colors text-left group">
+                  <div className={`h-4 w-4 rounded flex-shrink-0 border flex items-center justify-center transition-all ${checked ? "bg-emerald-500 border-emerald-500" : "bg-white border-gray-300 group-hover:border-[#3bba9c]/30"}`}>
                     {checked && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
                   </div>
                   <span className="text-[11px] font-semibold text-gray-700">{opt}</span>
@@ -103,10 +103,10 @@ function PrefSelect({ label, value, options, onChange, disabled }: { label: stri
     <div className={`space-y-3 transition-opacity duration-300 ${disabled ? "opacity-40 cursor-not-allowed" : "opacity-100"}`}>
       <Label className="sds-label ml-1">{label}</Label>
       <Select value={value || "Any"} onValueChange={(v) => onChange(v === "Any" ? "" : v)} disabled={disabled}>
-        <SelectTrigger className="sds-input w-full h-14 border-indigo-50/50 transition-all focus:border-[#4B0082]"><SelectValue placeholder="Any" /></SelectTrigger>
+        <SelectTrigger className="sds-input w-full h-14 border-indigo-50/50 transition-all focus:border-[#3bba9c]"><SelectValue placeholder="Any" /></SelectTrigger>
         <SelectContent className="sds-glass rounded-2xl border-indigo-50/50 shadow-2xl p-2 z-[100] backdrop-blur-2xl max-h-72">
           {options.map((opt) => (
-            <SelectItem key={opt} value={opt} className="rounded-xl p-3 focus:bg-[#4B0082] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">{opt}</SelectItem>
+            <SelectItem key={opt} value={opt} className="rounded-xl p-3 focus:bg-[#3bba9c] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">{opt}</SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -180,18 +180,18 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
 
   const SectionHead = ({ num, sub, title }: { num: string; sub: string; title: string }) => (
     <div className="flex items-center gap-4 mb-2">
-      <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
-        <span className="text-[#4B0082] font-black text-xs">{num}</span>
+      <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
+        <span className="text-[#3bba9c] font-black text-xs">{num}</span>
       </div>
       <div>
-        <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">{sub}</h4>
+        <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">{sub}</h4>
         <h3 className="text-xl font-light text-gray-900 tracking-tight">{title}</h3>
       </div>
       <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
     </div>
   )
 
-  const card = "grid grid-cols-1 md:grid-cols-2 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50 shadow-[0_20px_50px_-20px_rgba(75,0,130,0.05)]"
+  const card = "grid grid-cols-1 md:grid-cols-2 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50 shadow-[0_20px_50px_-20px_rgba(59,186,156,0.05)]"
 
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -302,7 +302,7 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
               <SelectTrigger className="sds-input w-full h-14 border-indigo-50/50"><SelectValue placeholder="Any" /></SelectTrigger>
               <SelectContent className="sds-glass rounded-2xl border-indigo-50/50 shadow-2xl p-2 z-[100] backdrop-blur-2xl max-h-72">
                 {INCOME_OPTIONS.map((opt) => (
-                  <SelectItem key={opt} value={opt} className="rounded-xl p-3 focus:bg-[#4B0082] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">{opt}</SelectItem>
+                  <SelectItem key={opt} value={opt} className="rounded-xl p-3 focus:bg-[#3bba9c] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">{opt}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

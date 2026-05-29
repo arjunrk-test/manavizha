@@ -148,7 +148,7 @@ export default function ReferralPartnerDashboardPage() {
   return (
     <div className="min-h-screen relative">
       {/* Animated gradient background */}
-      <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+      <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
 
       {/* White overlay to lighten the gradient */}
       <div className="fixed inset-0 bg-white/40 dark:bg-[#181818]/40" />
@@ -311,8 +311,8 @@ export default function ReferralPartnerDashboardPage() {
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-gray-600 dark:text-gray-400 font-medium">Total Profiles</h3>
-                <div className="bg-[#4B0082]/10 p-3 rounded-full">
-                  <Users className="h-6 w-6 text-[#4B0082]" />
+                <div className="bg-[#3bba9c]/10 p-3 rounded-full">
+                  <Users className="h-6 w-6 text-[#3bba9c]" />
                 </div>
               </div>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
@@ -372,13 +372,13 @@ export default function ReferralPartnerDashboardPage() {
                 <span>© 2024 Manavizha. All rights reserved.</span>
               </div>
               <div className="flex items-center gap-6">
-                <a href="/privacy-policy" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                <a href="/privacy-policy" className="hover:text-[#3bba9c] dark:hover:text-[#3bba9c] transition-colors">
                   Privacy Policy
                 </a>
-                <a href="/terms-of-service" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                <a href="/terms-of-service" className="hover:text-[#3bba9c] dark:hover:text-[#3bba9c] transition-colors">
                   Terms of Service
                 </a>
-                <a href="/contact" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                <a href="/contact" className="hover:text-[#3bba9c] dark:hover:text-[#3bba9c] transition-colors">
                   Contact Us
                 </a>
               </div>

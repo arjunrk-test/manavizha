@@ -8,7 +8,7 @@ export function CTASection() {
   return (
     <section className="py-16 sm:py-24 lg:py-32 relative overflow-hidden">
       {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
       
       {/* Overlay pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />

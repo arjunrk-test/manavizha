@@ -57,7 +57,7 @@ export function PremiumDatePicker({ date, onDateChange, label }: PremiumDatePick
                         newDate.setMonth(parseInt(e.target.value))
                         setViewDate(newDate)
                     }}
-                    className="bg-transparent font-bold text-[11px] uppercase tracking-widest text-[#4B0082] border-none outline-none cursor-pointer hover:text-pink-500 transition-colors"
+                    className="bg-transparent font-bold text-[11px] uppercase tracking-widest text-[#3bba9c] border-none outline-none cursor-pointer hover:text-pink-500 transition-colors"
                 >
                     {Array.from({ length: 12 }, (_, i) => (
                         <option key={i} value={i} className="text-gray-900 bg-white">{format(new Date(2000, i, 1), "MMM")}</option>
@@ -71,7 +71,7 @@ export function PremiumDatePicker({ date, onDateChange, label }: PremiumDatePick
                         newDate.setFullYear(parseInt(e.target.value))
                         setViewDate(newDate)
                     }}
-                    className="bg-transparent font-bold text-[11px] uppercase tracking-widest text-[#4B0082] border-none outline-none cursor-pointer hover:text-pink-500 transition-colors"
+                    className="bg-transparent font-bold text-[11px] uppercase tracking-widest text-[#3bba9c] border-none outline-none cursor-pointer hover:text-pink-500 transition-colors"
                 >
                     {Array.from({ length: 101 }, (_, i) => 2026 - i).map(year => (
                         <option key={year} value={year} className="text-gray-900 bg-white">{year}</option>
@@ -103,7 +103,7 @@ export function PremiumDatePicker({ date, onDateChange, label }: PremiumDatePick
                 className={`
                   h-9 w-9 rounded-xl flex items-center justify-center text-xs font-semibold transition-all
                   ${isSameDay(day, date || new Date(0)) 
-                    ? "bg-gradient-to-br from-[#4B0082] to-[#FF1493] text-white shadow-lg" 
+                    ? "bg-gradient-to-br from-[#3bba9c] to-[#FF1493] text-white shadow-lg" 
                     : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"}
                 `}
               >

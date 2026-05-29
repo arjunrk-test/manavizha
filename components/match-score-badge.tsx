@@ -25,7 +25,7 @@ export function MatchScoreBadge({ lifestyleScore, poruthamScore, isPremium, onCl
         </PopoverTrigger>
         <PopoverContent className="bg-white p-3 rounded-2xl shadow-2xl border-indigo-100 max-w-[200px] z-[100]">
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-[#4B0082]">
+            <div className="flex items-center gap-2 text-[#3bba9c]">
               <Sparkles className="h-4 w-4" />
               <p className="text-[10px] font-black uppercase tracking-wider">Unlock Compatibility</p>
             </div>
@@ -46,7 +46,7 @@ export function MatchScoreBadge({ lifestyleScore, poruthamScore, isPremium, onCl
 
   const getPoruthamColor = (score: number) => {
     if (score >= 7) return "text-indigo-600 bg-indigo-50 border-indigo-100"
-    if (score >= 5) return "text-purple-600 bg-purple-50 border-purple-100"
+    if (score >= 5) return "text-purple-600 bg-emerald-50 border-emerald-100"
     return "text-gray-600 bg-gray-50 border-gray-100"
   }
 

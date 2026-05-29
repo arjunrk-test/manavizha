@@ -115,7 +115,7 @@ export function ProfileCarousel({
                     {onViewAll && profiles.length > 0 && (
                         <button
                             onClick={onViewAll}
-                            className="flex items-center gap-1 text-[#4B0082] font-black text-[13px] uppercase tracking-widest hover:text-[#FF1493] transition-colors group px-2"
+                            className="flex items-center gap-1 text-[#3bba9c] font-black text-[13px] uppercase tracking-widest hover:text-[#FF1493] transition-colors group px-2"
                         >
                             View all
                             <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -128,7 +128,7 @@ export function ProfileCarousel({
                     {/* Navigation Buttons */}
                     {canScrollLeft && (
                         <button
-                            className="absolute left-6 top-[40%] -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/90 shadow-xl border border-gray-100 flex items-center justify-center text-gray-700 hover:bg-[#4B0082] hover:text-white transition-all duration-300 hidden md:flex"
+                            className="absolute left-6 top-[40%] -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/90 shadow-xl border border-gray-100 flex items-center justify-center text-gray-700 hover:bg-[#3bba9c] hover:text-white transition-all duration-300 hidden md:flex"
                             onClick={() => scroll("left")}
                         >
                             <ChevronLeft className="h-6 w-6" />
@@ -136,7 +136,7 @@ export function ProfileCarousel({
                     )}
                     {canScrollRight && (
                         <button
-                            className="absolute right-6 top-[40%] -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/90 shadow-xl border border-gray-100 flex items-center justify-center text-gray-700 hover:bg-[#4B0082] hover:text-white transition-all duration-300 hidden md:flex"
+                            className="absolute right-6 top-[40%] -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/90 shadow-xl border border-gray-100 flex items-center justify-center text-gray-700 hover:bg-[#3bba9c] hover:text-white transition-all duration-300 hidden md:flex"
                             onClick={() => scroll("right")}
                         >
                             <ChevronRight className="h-6 w-6" />

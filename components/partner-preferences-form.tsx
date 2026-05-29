@@ -73,7 +73,7 @@ function MultiSelectDropdown({ label, options, selected, onChange, searchable = 
               const checked = isChecked(opt)
               return (
                 <button key={opt} type="button" onClick={() => toggle(opt)}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#4B0082]/5 transition-colors text-left group">
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#3bba9c]/5 transition-colors text-left group">
                   <div className={`h-4 w-4 rounded flex-shrink-0 border flex items-center justify-center transition-all ${checked ? "bg-emerald-500 border-emerald-500" : "bg-white border-gray-300"}`}>
                     {checked && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
                   </div>
@@ -97,11 +97,11 @@ function MultiSelectDropdown({ label, options, selected, onChange, searchable = 
 function SectionHeader({ num, sub, title }: { num: string; sub: string; title: string }) {
   return (
     <div className="flex items-center gap-4 mb-6">
-      <div className="w-9 h-9 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10 flex-shrink-0">
-        <span className="text-[#4B0082] font-black text-[10px]">{num}</span>
+      <div className="w-9 h-9 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10 flex-shrink-0">
+        <span className="text-[#3bba9c] font-black text-[10px]">{num}</span>
       </div>
       <div>
-        <p className="text-[9px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30">{sub}</p>
+        <p className="text-[9px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30">{sub}</p>
         <h3 className="text-lg font-light text-gray-900 tracking-tight">{title}</h3>
       </div>
       <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-2" />
@@ -125,12 +125,12 @@ function PrefSelect({ label, value, options, onChange, wide, disabled }: {
     <Field label={label} wide={wide}>
       <div className={`transition-opacity duration-300 ${disabled ? "opacity-40 cursor-not-allowed" : "opacity-100"}`}>
         <Select value={value || "Any"} onValueChange={(v) => onChange(v === "Any" ? "" : v)} disabled={disabled}>
-          <SelectTrigger className="w-full h-11 px-4 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:border-[#4B0082]/30 transition-all">
+          <SelectTrigger className="w-full h-11 px-4 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:border-[#3bba9c]/30 transition-all">
             <SelectValue placeholder="Any" />
           </SelectTrigger>
           <SelectContent className="sds-glass rounded-2xl border-indigo-50/50 shadow-2xl p-2 z-[100] max-h-72">
             {options.map((opt) => (
-              <SelectItem key={opt} value={opt} className="rounded-xl p-3 focus:bg-[#4B0082] focus:text-white text-[10px] font-black uppercase tracking-widest">{opt}</SelectItem>
+              <SelectItem key={opt} value={opt} className="rounded-xl p-3 focus:bg-[#3bba9c] focus:text-white text-[10px] font-black uppercase tracking-widest">{opt}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -338,14 +338,14 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
     finally { setIsSaving(false) }
   }
 
-  if (isLoading) return <div className="flex justify-center items-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4B0082]" /></div>
+  if (isLoading) return <div className="flex justify-center items-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3bba9c]" /></div>
 
-  const card = "sds-glass rounded-[2.5rem] p-8 border border-indigo-50/50 shadow-[0_20px_50px_-20px_rgba(75,0,130,0.05)] mb-10"
+  const card = "sds-glass rounded-[2.5rem] p-8 border border-indigo-50/50 shadow-[0_20px_50px_-20px_rgba(59,186,156,0.05)] mb-10"
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <Button onClick={onBack} variant="ghost" className="mb-3 -ml-3 hover:bg-transparent hover:text-[#4B0082] text-gray-500">
+        <Button onClick={onBack} variant="ghost" className="mb-3 -ml-3 hover:bg-transparent hover:text-[#3bba9c] text-gray-500">
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to Dashboard
         </Button>
         <div className="flex items-center gap-3">
@@ -437,7 +437,7 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
         </div>
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={isSaving} className="h-14 px-12 rounded-[2rem] bg-[#4B0082] text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all disabled:opacity-40">
+          <Button type="submit" disabled={isSaving} className="h-14 px-12 rounded-[2rem] bg-[#3bba9c] text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all disabled:opacity-40">
             <Save className={`mr-3 h-4 w-4 ${isSaving ? "animate-pulse" : ""}`} />
             {isSaving ? "Saving…" : "Save Preferences"}
           </Button>

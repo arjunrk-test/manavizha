@@ -188,7 +188,7 @@ export function GlobalLocationSelector({ onLocationChange, initialCity, initialS
           >
             <div className="p-3 border-b sticky top-0 bg-white z-10">
                 <div className="relative group">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#4B0082]/40 group-focus-within:text-[#4B0082] transition-colors" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#3bba9c]/40 group-focus-within:text-[#3bba9c] transition-colors" />
                     <Input 
                         placeholder="Search country..." 
                         className="h-10 pl-10 text-sm rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-medium"
@@ -208,10 +208,10 @@ export function GlobalLocationSelector({ onLocationChange, initialCity, initialS
                     setSelectedCity("")
                     setSearch(prev => ({ ...prev, country: "" }))
                     }}
-                    className="flex items-center justify-between py-3 px-4 cursor-pointer rounded-2xl hover:bg-[#4B0082]/5 focus:bg-[#4B0082]/5 transition-colors"
+                    className="flex items-center justify-between py-3 px-4 cursor-pointer rounded-2xl hover:bg-[#3bba9c]/5 focus:bg-[#3bba9c]/5 transition-colors"
                 >
                     <span className="text-sm font-medium text-gray-700">{c.name}</span>
-                    {selectedCountry === c.name && <Check className="h-4 w-4 text-[#4B0082]" />}
+                    {selectedCountry === c.name && <Check className="h-4 w-4 text-[#3bba9c]" />}
                 </DropdownMenuItem>
                 ))}
             </div>
@@ -233,7 +233,7 @@ export function GlobalLocationSelector({ onLocationChange, initialCity, initialS
           >
             <div className="p-3 border-b sticky top-0 bg-white z-10">
                 <div className="relative group">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#4B0082]/40 group-focus-within:text-[#4B0082] transition-colors" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#3bba9c]/40 group-focus-within:text-[#3bba9c] transition-colors" />
                     <Input 
                         placeholder="Search state..." 
                         className="h-10 pl-10 text-sm rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-medium"
@@ -252,10 +252,10 @@ export function GlobalLocationSelector({ onLocationChange, initialCity, initialS
                     setSelectedCity("")
                     setSearch(prev => ({ ...prev, state: "" }))
                     }}
-                    className="flex items-center justify-between py-3 px-4 cursor-pointer rounded-2xl hover:bg-[#4B0082]/5 focus:bg-[#4B0082]/5 transition-colors"
+                    className="flex items-center justify-between py-3 px-4 cursor-pointer rounded-2xl hover:bg-[#3bba9c]/5 focus:bg-[#3bba9c]/5 transition-colors"
                 >
                     <span className="text-sm font-medium text-gray-700">{s.name}</span>
-                    {selectedState === s.name && <Check className="h-4 w-4 text-[#4B0082]" />}
+                    {selectedState === s.name && <Check className="h-4 w-4 text-[#3bba9c]" />}
                 </DropdownMenuItem>
                 ))}
             </div>
@@ -278,7 +278,7 @@ export function GlobalLocationSelector({ onLocationChange, initialCity, initialS
           >
             <div className="p-3 border-b sticky top-0 bg-white z-10">
                 <div className="relative group">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#4B0082]/40 group-focus-within:text-[#4B0082] transition-colors" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#3bba9c]/40 group-focus-within:text-[#3bba9c] transition-colors" />
                     <Input 
                         placeholder="Search city..." 
                         className="h-10 pl-10 text-sm rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-medium"
@@ -297,10 +297,10 @@ export function GlobalLocationSelector({ onLocationChange, initialCity, initialS
                     setSearch(prev => ({ ...prev, city: "" }))
                     fetchCoords(c)
                     }}
-                    className="flex items-center justify-between py-3 px-4 cursor-pointer rounded-2xl hover:bg-[#4B0082]/5 focus:bg-[#4B0082]/5 transition-colors"
+                    className="flex items-center justify-between py-3 px-4 cursor-pointer rounded-2xl hover:bg-[#3bba9c]/5 focus:bg-[#3bba9c]/5 transition-colors"
                 >
                     <span className="text-sm font-medium text-gray-700">{c}</span>
-                    {selectedCity === c && <Check className="h-4 w-4 text-[#4B0082]" />}
+                    {selectedCity === c && <Check className="h-4 w-4 text-[#3bba9c]" />}
                 </DropdownMenuItem>
                 ))}
             </div>

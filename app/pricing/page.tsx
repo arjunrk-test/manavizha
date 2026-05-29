@@ -99,7 +99,7 @@ export default function PricingPage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white leading-tight"
             >
-              Find Your Perfect Match with <span className="bg-gradient-to-r from-[#FF1493] to-[#4B0082] bg-clip-text text-transparent">Premium</span>
+              Find Your Perfect Match with <span className="bg-gradient-to-r from-[#FF1493] to-[#3bba9c] bg-clip-text text-transparent">Premium</span>
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
@@ -123,7 +123,7 @@ export default function PricingPage() {
               >
                 {/* Popular Badge */}
                 {plan.badge && (
-                  <div className="absolute top-0 right-0 left-0 bg-gradient-to-r from-[#FF1493] to-[#4B0082] py-1.5 text-center text-[10px] md:text-xs font-bold text-white uppercase tracking-widest z-10">
+                  <div className="absolute top-0 right-0 left-0 bg-gradient-to-r from-[#FF1493] to-[#3bba9c] py-1.5 text-center text-[10px] md:text-xs font-bold text-white uppercase tracking-widest z-10">
                     {plan.badge}
                   </div>
                 )}

@@ -100,7 +100,7 @@ function MenuSection({ title, submenus, isOpen, onToggle, currentStep, onSubmenu
                   onClick={() => onSubmenuClick(submenu.id)}
                   className={`w-full text-left p-3 rounded-lg ${
                     isActive
-                      ? "bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] text-white shadow-lg"
+                      ? "bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] text-white shadow-lg"
                       : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"
                   }`}
                 >
@@ -200,7 +200,7 @@ export default function AdminMasterDataPage() {
       <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Database className="h-6 w-6 text-[#4B0082]" />
+            <Database className="h-6 w-6 text-[#3bba9c]" />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Master Data</h1>
           </div>
           <Button
@@ -316,7 +316,7 @@ export default function AdminMasterDataPage() {
                             {getCurrentStepConfig() && (
                               <Button
                                 onClick={() => setIsAddDialogOpen(true)}
-                                className="flex items-center gap-2 bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:opacity-90 text-white"
+                                className="flex items-center gap-2 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] hover:opacity-90 text-white"
                               >
                                 <Plus className="h-4 w-4" />
                                 {getCurrentStepConfig()?.addButtonText}

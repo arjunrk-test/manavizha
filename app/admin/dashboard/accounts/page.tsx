@@ -322,7 +322,7 @@ export default function AdminAccountsPage() {
       <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Users className="h-6 w-6 text-[#4B0082]" />
+            <Users className="h-6 w-6 text-[#3bba9c]" />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Accounts</h1>
           </div>
           <Button
@@ -353,7 +353,7 @@ export default function AdminAccountsPage() {
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder={activeTab === "admin" ? "Search admins..." : "Search partners..."}
-                  className="w-full pl-9 pr-9 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4B0082]/20 focus:border-[#4B0082] transition-all"
+                  className="w-full pl-9 pr-9 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3bba9c]/20 focus:border-[#3bba9c] transition-all"
                 />
                 {searchQuery && (
                   <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -370,7 +370,7 @@ export default function AdminAccountsPage() {
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Admin Accounts</h2>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Manage administrator access and permissions.</p>
                   </div>
-                  <Button onClick={() => handleOpenAdminDialog("add")} className="bg-[#4B0082] hover:bg-[#4B0082]/90">
+                  <Button onClick={() => handleOpenAdminDialog("add")} className="bg-[#3bba9c] hover:bg-[#3bba9c]/90">
                     <Users className="h-4 w-4 mr-2" /> Add Admin
                   </Button>
                 </div>
@@ -428,7 +428,7 @@ export default function AdminAccountsPage() {
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Referral Partners</h2>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Manage referral partner accounts and their custom percentages.</p>
                   </div>
-                  <Button onClick={() => setIsPartnerDialogOpen(true)} className="bg-[#4B0082] hover:bg-[#4B0082]/90">
+                  <Button onClick={() => setIsPartnerDialogOpen(true)} className="bg-[#3bba9c] hover:bg-[#3bba9c]/90">
                     <Users className="h-4 w-4 mr-2" /> Add Referral Partner
                   </Button>
                 </div>
@@ -469,7 +469,7 @@ export default function AdminAccountsPage() {
                             <TableCell className="text-blue-600 dark:text-blue-400 font-medium">{partner.menReferrals}</TableCell>
                             <TableCell className="text-pink-600 dark:text-pink-400 font-medium">{partner.womenReferrals}</TableCell>
                             <TableCell>
-                              <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus-within:ring-2 focus-within:ring-[#4B0082] overflow-hidden w-20">
+                              <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus-within:ring-2 focus-within:ring-[#3bba9c] overflow-hidden w-20">
                                 <input
                                   type="number"
                                   className="w-full bg-transparent px-2 py-1 text-sm outline-none text-right"
@@ -536,13 +536,13 @@ export default function AdminAccountsPage() {
                 <span>© 2024 Manavizha. All rights reserved.</span>
               </div>
               <div className="flex items-center gap-6">
-                <a href="/privacy-policy" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                <a href="/privacy-policy" className="hover:text-[#3bba9c] dark:hover:text-[#3bba9c] transition-colors">
                   Privacy Policy
                 </a>
-                <a href="/terms-of-service" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                <a href="/terms-of-service" className="hover:text-[#3bba9c] dark:hover:text-[#3bba9c] transition-colors">
                   Terms of Service
                 </a>
-                <a href="/contact" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                <a href="/contact" className="hover:text-[#3bba9c] dark:hover:text-[#3bba9c] transition-colors">
                   Contact Us
                 </a>
               </div>
@@ -634,7 +634,7 @@ export default function AdminAccountsPage() {
                   <select
                     value={adminFormData.role}
                     onChange={e => setAdminFormData(prev => ({ ...prev, role: e.target.value as AdminRole }))}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4B0082]/20 focus:border-[#4B0082]"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-[#3bba9c]/20 focus:border-[#3bba9c]"
                   >
                     <option value="super_admin">Super Admin (Full Access)</option>
                     <option value="editor">Editor (Can edit and manage users)</option>
@@ -656,7 +656,7 @@ export default function AdminAccountsPage() {
               <Button
                 onClick={handleAdminSubmit}
                 disabled={isSubmittingAdmin}
-                className={adminDialogMode === "revoke" ? "bg-red-600 hover:bg-red-700 text-white" : "bg-[#4B0082] hover:bg-[#4B0082]/90"}
+                className={adminDialogMode === "revoke" ? "bg-red-600 hover:bg-red-700 text-white" : "bg-[#3bba9c] hover:bg-[#3bba9c]/90"}
               >
                 {isSubmittingAdmin ? "Saving..." : (adminDialogMode === "revoke" ? "Revoke Access" : "Save Admin")}
               </Button>
@@ -710,7 +710,7 @@ export default function AdminAccountsPage() {
               </Button>
               <Button
                 onClick={handlePartnerSubmit}
-                className="bg-[#4B0082] hover:bg-[#4B0082]/90"
+                className="bg-[#3bba9c] hover:bg-[#3bba9c]/90"
                 disabled={isSubmittingPartner}
               >
                 {isSubmittingPartner ? "Saving..." : "Save Partner"}

@@ -33,7 +33,7 @@ export function MatchBreakdownDialog({ isOpen, onClose, compatibility, otherName
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md bg-white dark:bg-gray-900 border-none shadow-2xl p-0 overflow-hidden">
-        <div className="bg-gradient-to-br from-[#4B0082] to-[#6A5ACD] p-6 text-white text-center">
+        <div className="bg-gradient-to-br from-[#3bba9c] to-[#6A5ACD] p-6 text-white text-center">
           <Heart className="h-10 w-10 text-pink-400 mx-auto mb-3 animate-pulse" />
           <DialogTitle className="text-2xl font-bold font-outfit">Detailed Compatibility</DialogTitle>
           <DialogDescription className="text-white/80 text-sm mt-1">
@@ -45,7 +45,7 @@ export function MatchBreakdownDialog({ isOpen, onClose, compatibility, otherName
           <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700/50">
             <div>
               <p className="text-[10px] uppercase font-bold text-gray-400">Match Score</p>
-              <p className="text-3xl font-black text-[#4B0082] dark:text-purple-400">{score}<span className="text-lg text-gray-400">/10</span></p>
+              <p className="text-3xl font-black text-[#3bba9c] dark:text-emerald-400">{score}<span className="text-lg text-gray-400">/10</span></p>
             </div>
             <div className="text-right">
               <p className="text-[10px] uppercase font-bold text-gray-400">Overall Result</p>

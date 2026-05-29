@@ -109,7 +109,7 @@ function FunnelContent() {
             <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
                 <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Users className="h-6 w-6 text-[#4B0082]" />
+                        <Users className="h-6 w-6 text-[#3bba9c]" />
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Manage Profiles</h1>
                         <span className="text-sm text-gray-500 dark:text-gray-400">— {stageConfig.label}</span>
                     </div>
@@ -131,7 +131,7 @@ function FunnelContent() {
                                 <button
                                     onClick={() => router.push(`/admin/dashboard/funnel?stage=${s.key}`)}
                                     className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${s.key === stage
-                                        ? "bg-gradient-to-r from-[#4B0082] to-[#FF1493] text-white shadow"
+                                        ? "bg-gradient-to-r from-[#3bba9c] to-[#FF1493] text-white shadow"
                                         : "bg-white/80 dark:bg-gray-800/80 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"
                                         }`}
                                 >
@@ -144,7 +144,7 @@ function FunnelContent() {
 
                     {/* Summary banner */}
                     <div className="bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 rounded-xl px-5 py-4 mb-5 flex items-center gap-3">
-                        <span className="text-2xl font-bold text-[#4B0082] dark:text-purple-400">{users.length}</span>
+                        <span className="text-2xl font-bold text-[#3bba9c] dark:text-emerald-400">{users.length}</span>
                         <span className="text-gray-600 dark:text-gray-400 text-sm">
                             user{users.length !== 1 ? "s" : ""} stopped at <span className="font-semibold text-gray-800 dark:text-gray-200">{stageConfig.label}</span> and haven't moved forward
                         </span>

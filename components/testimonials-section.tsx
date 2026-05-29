@@ -32,7 +32,7 @@ export function TestimonialsSection() {
   return (
     <section id="testimonials" className="py-16 sm:py-24 lg:py-32 relative overflow-hidden">
       {/* Animated gradient background - lighter version */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#4B0082]/50 via-[#FF1493]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#3bba9c]/50 via-[#FF1493]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
       
       {/* White overlay to lighten */}
       <div className="absolute inset-0 bg-white/50 dark:bg-[#181818]/50" />
@@ -42,7 +42,7 @@ export function TestimonialsSection() {
       
       {/* Modern decorative elements */}
       <div className="absolute top-20 left-5 w-24 h-24 sm:w-32 sm:h-32 border border-[#FFA500]/10 rounded-full blur-xl hidden md:block" />
-      <div className="absolute bottom-20 right-5 w-20 h-20 sm:w-28 sm:h-28 border border-[#4B0082]/10 rotate-45 blur-lg hidden lg:block" />
+      <div className="absolute bottom-20 right-5 w-20 h-20 sm:w-28 sm:h-28 border border-[#3bba9c]/10 rotate-45 blur-lg hidden lg:block" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
@@ -56,12 +56,12 @@ export function TestimonialsSection() {
             initial={{ opacity: 0, scale: 0.8 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm text-[#1F4068] dark:text-[#4B0082] font-medium mb-4 sm:mb-6 shadow-lg text-sm sm:text-base"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm text-[#1F4068] dark:text-[#3bba9c] font-medium mb-4 sm:mb-6 shadow-lg text-sm sm:text-base"
           >
             <Sparkles className="h-4 w-4" />
             <span>Success Stories</span>
           </motion.div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient px-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient px-4">
             Love Stories
           </h2>
           <p className="text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto px-4">
@@ -80,7 +80,7 @@ export function TestimonialsSection() {
               >
                 <Card className="h-full border-0 shadow-xl hover:shadow-2xl transition-all duration-300 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm overflow-hidden relative hover:scale-[1.03] group">
                   {/* Decorative gradient */}
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] opacity-80 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] opacity-80 group-hover:opacity-100 transition-opacity duration-300" />
                   
                   {/* Decorative corner */}
                   <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-[#FF1493]/5 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -89,7 +89,7 @@ export function TestimonialsSection() {
                     <div className="text-4xl sm:text-5xl lg:text-6xl mb-4 sm:mb-5 transform group-hover:scale-110 transition-transform duration-300 inline-block">
                       {testimonial.image}
                     </div>
-                    <Quote className="h-6 w-6 sm:h-8 sm:w-8 text-[#1F4068]/40 dark:text-[#4B0082]/40 mb-4 sm:mb-5 group-hover:text-[#1F4068]/60 dark:group-hover:text-[#4B0082]/60 transition-colors duration-300" />
+                    <Quote className="h-6 w-6 sm:h-8 sm:w-8 text-[#1F4068]/40 dark:text-[#3bba9c]/40 mb-4 sm:mb-5 group-hover:text-[#1F4068]/60 dark:group-hover:text-[#3bba9c]/60 transition-colors duration-300" />
                     <p className="text-gray-700 dark:text-gray-300 mb-5 sm:mb-6 lg:mb-8 italic text-base sm:text-lg lg:text-xl leading-relaxed font-light">
                       "{testimonial.text}"
                     </p>
@@ -127,7 +127,7 @@ export function TestimonialsSection() {
               >
                 <Card className="h-full border-0 shadow-xl hover:shadow-2xl transition-all duration-300 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm overflow-hidden relative hover:scale-[1.03] group">
                   {/* Decorative gradient */}
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] opacity-80 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] opacity-80 group-hover:opacity-100 transition-opacity duration-300" />
                   
                   {/* Decorative corner */}
                   <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-[#FF1493]/5 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -136,7 +136,7 @@ export function TestimonialsSection() {
                     <div className="text-4xl sm:text-5xl lg:text-6xl mb-4 sm:mb-5 transform group-hover:scale-110 transition-transform duration-300 inline-block">
                       {testimonial.image}
                     </div>
-                    <Quote className="h-6 w-6 sm:h-8 sm:w-8 text-[#1F4068]/40 dark:text-[#4B0082]/40 mb-4 sm:mb-5 group-hover:text-[#1F4068]/60 dark:group-hover:text-[#4B0082]/60 transition-colors duration-300" />
+                    <Quote className="h-6 w-6 sm:h-8 sm:w-8 text-[#1F4068]/40 dark:text-[#3bba9c]/40 mb-4 sm:mb-5 group-hover:text-[#1F4068]/60 dark:group-hover:text-[#3bba9c]/60 transition-colors duration-300" />
                     <p className="text-gray-700 dark:text-gray-300 mb-5 sm:mb-6 lg:mb-8 italic text-base sm:text-lg lg:text-xl leading-relaxed font-light">
                       "{testimonial.text}"
                     </p>

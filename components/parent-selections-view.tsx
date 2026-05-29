@@ -170,7 +170,7 @@ export function ParentSelectionsView({ userId, onBack }: ParentSelectionsViewPro
                 <Button
                     variant="ghost"
                     onClick={onBack}
-                    className="mb-4 hover:bg-[#4B0082]/10"
+                    className="mb-4 hover:bg-[#3bba9c]/10"
                 >
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back to Dashboard
@@ -188,7 +188,7 @@ export function ParentSelectionsView({ userId, onBack }: ParentSelectionsViewPro
 
             {isLoading ? (
                 <div className="flex justify-center p-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#4B0082]" />
+                    <Loader2 className="h-8 w-8 animate-spin text-[#3bba9c]" />
                 </div>
             ) : selections.length === 0 ? (
                 <Card className="bg-gray-50 dark:bg-gray-800/50 border-dashed">
@@ -218,7 +218,7 @@ export function ParentSelectionsView({ userId, onBack }: ParentSelectionsViewPro
                             >
                                 <Card className="h-full overflow-hidden hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-[#FF1493]/30">
                                     <div className="absolute top-4 right-4 z-20">
-                                        <span className="px-3 py-1 bg-white/90 dark:bg-gray-900/90 text-[#4B0082] rounded-full text-xs font-semibold shadow-sm backdrop-blur-sm shadow-xl">
+                                        <span className="px-3 py-1 bg-white/90 dark:bg-gray-900/90 text-[#3bba9c] rounded-full text-xs font-semibold shadow-sm backdrop-blur-sm shadow-xl">
                                             Selected by {selection.parent?.role || "Parent"}
                                         </span>
                                     </div>
@@ -260,7 +260,7 @@ export function ParentSelectionsView({ userId, onBack }: ParentSelectionsViewPro
                                         <div className="flex gap-3">
                                             <Button
                                                 variant="outline"
-                                                className="flex-1 border-[#4B0082] text-[#4B0082] hover:bg-[#4B0082] hover:text-white group"
+                                                className="flex-1 border-[#3bba9c] text-[#3bba9c] hover:bg-[#3bba9c] hover:text-white group"
                                                 onClick={() => router.push(`/dashboard/profiles/${profile.id}`)}
                                             >
                                                 <Info className="h-4 w-4 mr-2" />

@@ -452,8 +452,8 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                 className={cn(
                     "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group",
                     isActive 
-                        ? "bg-[#4B0082] text-white shadow-lg shadow-indigo-200" 
-                        : "text-gray-500 hover:bg-indigo-50/50 hover:text-[#4B0082]"
+                        ? "bg-[#3bba9c] text-white shadow-lg shadow-emerald-200" 
+                        : "text-gray-500 hover:bg-indigo-50/50 hover:text-[#3bba9c]"
                 )}
             >
                 <div className="flex items-center gap-3">
@@ -479,19 +479,19 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
             {/* Page Header */}
             <div className="mb-12 border-b border-black/5 pb-8 flex items-end justify-between">
                 <div className="flex-1">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#4B0082]/40 mb-2">Connection Matrix</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#3bba9c]/40 mb-2">Connection Matrix</h4>
                     <h2 className="text-5xl font-light text-gray-900 tracking-tight flex items-center gap-4">
-                        Interests <span className="text-[#4B0082] font-black">&</span> Matches
+                        Interests <span className="text-[#3bba9c] font-black">&</span> Matches
                     </h2>
                 </div>
                 <div className="flex items-center gap-6 text-right">
                     <div className="hidden xl:block">
                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Platform Analytics</p>
-                        <p className="text-xs font-bold text-[#4B0082]">Real-time match scoring active</p>
+                        <p className="text-xs font-bold text-[#3bba9c]">Real-time match scoring active</p>
                     </div>
                     <Button 
                         onClick={() => window.location.href = "/dashboard/browse"}
-                        className="h-14 px-8 rounded-2xl bg-[#4B0082] hover:bg-indigo-700 text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-indigo-200 group flex items-center gap-3 transition-all active:scale-95"
+                        className="h-14 px-8 rounded-2xl bg-[#3bba9c] hover:bg-[#2fa085] text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-emerald-200 group flex items-center gap-3 transition-all active:scale-95"
                     >
                         <Sparkles className="h-4 w-4 group-hover:rotate-12 transition-transform" />
                         Find New Interests
@@ -539,7 +539,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                 {/* Main Content Area */}
                 <div className="flex-1 min-w-0">
                     <div className="mb-6 flex items-center justify-between">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-[#4B0082]">
+                        <h3 className="text-sm font-black uppercase tracking-widest text-[#3bba9c]">
                             {activeSection === 'mutual' ? 'Mutual Connections' : 
                              activeSection === 'received' ? `Received Interests > ${activeStatus}` : 
                              `Sent Interests > ${activeStatus}`}
@@ -552,7 +552,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
 
                     {isLoading ? (
                         <div className="flex justify-center items-center py-20" >
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4B0082]"></div>
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3bba9c]"></div>
                         </div>
                     ) : filteredProfiles.length === 0 ? (
                         <motion.div
@@ -572,7 +572,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                             <Button 
                                 onClick={() => window.location.href = "/dashboard/browse"}
                                 variant="outline"
-                                className="h-12 px-8 rounded-xl border-indigo-100 text-[#4B0082] font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50"
+                                className="h-12 px-8 rounded-xl border-indigo-100 text-[#3bba9c] font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50"
                             >
                                 <Users2 className="h-4 w-4 mr-2" /> Browse Profiles
                             </Button>
@@ -664,7 +664,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                                                         setMessageTarget({ id: selectedProfile.user_id, name: selectedProfile.name })
                                                         setIsMessageDialogOpen(true)
                                                     }}
-                                                    className="flex-1 h-14 rounded-2xl bg-[#4B0082] hover:bg-indigo-700 text-white font-black text-[11px] uppercase tracking-widest shadow-xl shadow-indigo-200"
+                                                    className="flex-1 h-14 rounded-2xl bg-[#3bba9c] hover:bg-[#2fa085] text-white font-black text-[11px] uppercase tracking-widest shadow-xl shadow-emerald-200"
                                                 >
                                                     Open Communications
                                                 </Button>
@@ -672,7 +672,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                                                     variant="outline" 
                                                     className={cn(
                                                         "h-14 w-14 rounded-2xl border-indigo-100 flex items-center justify-center transition-all",
-                                                        shortlistedIds.includes(selectedProfile.user_id) ? "text-[#FF1493] bg-pink-50 border-pink-100 shadow-sm" : "text-gray-300 border-gray-100 hover:text-[#4B0082] hover:bg-indigo-50"
+                                                        shortlistedIds.includes(selectedProfile.user_id) ? "text-[#FF1493] bg-pink-50 border-pink-100 shadow-sm" : "text-gray-300 border-gray-100 hover:text-[#3bba9c] hover:bg-indigo-50"
                                                     )}
                                                     onClick={(e) => handleShortlist(e, selectedProfile.user_id)}
                                                     disabled={shortlistLoadingId === selectedProfile.user_id}
@@ -741,7 +741,7 @@ export function LikesHorizontalCard({ profile, section, onAction, onView, onMess
             className="w-full"
         >
             <div
-                className="sds-glass rounded-3xl overflow-hidden hover:shadow-[0_40px_80px_-20px_rgba(75,0,130,0.15)] transition-all duration-700 cursor-pointer group flex flex-col md:flex-row h-auto md:h-[260px] border-2 border-indigo-100/20 hover:border-[#4B0082]/30 active:scale-[0.99] bg-white/95"
+                className="sds-glass rounded-3xl overflow-hidden hover:shadow-[0_40px_80px_-20px_rgba(59,186,156,0.15)] transition-all duration-700 cursor-pointer group flex flex-col md:flex-row h-auto md:h-[260px] border-2 border-indigo-100/20 hover:border-[#3bba9c]/30 active:scale-[0.99] bg-white/95"
                 onClick={() => onView(profile)}
             >
                 {/* Left: Image Section */}
@@ -754,7 +754,7 @@ export function LikesHorizontalCard({ profile, section, onAction, onView, onMess
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-[cubic-bezier(0.33,1,0.68,1)]"
                             />
                             {hasMultiplePhotos && (
-                                <div className="absolute bottom-4 right-4 sds-glass text-[9px] px-3 py-1.5 rounded-full z-10 font-black tracking-[0.2em] text-[#4B0082] bg-white/90 shadow-xl border-indigo-50/50">
+                                <div className="absolute bottom-4 right-4 sds-glass text-[9px] px-3 py-1.5 rounded-full z-10 font-black tracking-[0.2em] text-[#3bba9c] bg-white/90 shadow-xl border-indigo-50/50">
                                     {cardPhotoIndex + 1} / {profile.photos.length}
                                 </div>
                             )}
@@ -811,7 +811,7 @@ export function LikesHorizontalCard({ profile, section, onAction, onView, onMess
                                 disabled={actionLoading}
                                 className={cn(
                                     "p-0 h-auto hover:bg-transparent transition-all hover:scale-110 flex items-start -mt-2",
-                                    shortlistedIds.includes(profile.user_id) ? "text-[#FF1493]" : "text-gray-300 hover:text-[#4B0082]"
+                                    shortlistedIds.includes(profile.user_id) ? "text-[#FF1493]" : "text-gray-300 hover:text-[#3bba9c]"
                                 )}
                             >
                                 <Bookmark className={cn("h-[64px] w-[32px]", shortlistedIds.includes(profile.user_id) && "fill-current")} />
@@ -826,7 +826,7 @@ export function LikesHorizontalCard({ profile, section, onAction, onView, onMess
                         )}
                         
                         {profile.viewed_me_date && (
-                            <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest text-[#4B0082] bg-white/90 shadow-md px-3 py-1.5 rounded-full border border-indigo-100/50">
+                            <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest text-[#3bba9c] bg-white/90 shadow-md px-3 py-1.5 rounded-full border border-indigo-100/50">
                                 <Eye className="h-3.5 w-3.5" />
                                 Profile viewed you on {formatToDDMMYYYY(profile.viewed_me_date)}
                             </div>
@@ -834,10 +834,10 @@ export function LikesHorizontalCard({ profile, section, onAction, onView, onMess
                     </div>
                     <div className="mb-4">
                         <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-2xl font-light text-gray-900 tracking-tighter leading-none group-hover:text-[#4B0082] transition-colors duration-500">
+                            <h3 className="text-2xl font-light text-gray-900 tracking-tighter leading-none group-hover:text-[#3bba9c] transition-colors duration-500">
                                 {profile.name}
                             </h3>
-                            <span className="text-lg font-black text-[#4B0082]/20 tracking-tighter">{profile.age && `${profile.age}`}</span>
+                            <span className="text-lg font-black text-[#3bba9c]/20 tracking-tighter">{profile.age && `${profile.age}`}</span>
                             {profile.isPremium && (
                                 <span className="text-[8px] font-black uppercase tracking-[0.3em] text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-100/50">Elite</span>
                             )}
@@ -871,8 +871,8 @@ export function LikesHorizontalCard({ profile, section, onAction, onView, onMess
                         {/* Interaction timeline labels (Match Profiles Style) */}
                         <div className="flex flex-col gap-2 mb-6">
                             {profile.shortlisted_me_date && (
-                                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#4B0082]">
-                                    <Bookmark className="h-3.5 w-3.5 text-[#4B0082]" />
+                                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#3bba9c]">
+                                    <Bookmark className="h-3.5 w-3.5 text-[#3bba9c]" />
                                     {pronoun} shortlisted you on {formatToDDMMYYYY(profile.shortlisted_me_date)}
                                 </div>
                             )}
@@ -925,7 +925,7 @@ export function LikesHorizontalCard({ profile, section, onAction, onView, onMess
                                 onClick={(e) => { e.stopPropagation(); handleContactClick('call'); }}
                                 variant="outline"
                                 size="icon"
-                                className="h-12 w-12 rounded-2xl border-none bg-indigo-50 text-[#4B0082] hover:bg-[#4B0082] hover:text-white transition-all duration-300 shadow-sm"
+                                className="h-12 w-12 rounded-2xl border-none bg-indigo-50 text-[#3bba9c] hover:bg-[#3bba9c] hover:text-white transition-all duration-300 shadow-sm"
                             >
                                 <Phone className="h-5 w-5" />
                             </Button>
@@ -980,7 +980,7 @@ export function LikesHorizontalCard({ profile, section, onAction, onView, onMess
                         
                         <Button 
                             variant="ghost"
-                            className="h-12 px-6 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] text-gray-400 hover:text-[#4B0082] hover:bg-indigo-50/50 transition-all"
+                            className="h-12 px-6 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] text-gray-400 hover:text-[#3bba9c] hover:bg-indigo-50/50 transition-all"
                             onClick={(e) => { e.stopPropagation(); onView(profile); }}
                         >
                             Full Profile

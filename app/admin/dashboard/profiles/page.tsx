@@ -56,7 +56,7 @@ function FilterInput({ value, onChange, placeholder, icon: Icon = Search, type =
                 value={value || ""}
                 onChange={e => onChange(e.target.value)}
                 placeholder={placeholder || "Search..."}
-                className={`w-full ${Icon ? 'pl-9' : 'pl-3'} pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4B0082]/20 focus:border-[#4B0082] transition-all ${className}`}
+                className={`w-full ${Icon ? 'pl-9' : 'pl-3'} pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3bba9c]/20 focus:border-[#3bba9c] transition-all ${className}`}
             />
         </div>
     )
@@ -67,7 +67,7 @@ function FilterSelect({ value, onChange, options, placeholder }: { value: string
         <select
             value={value}
             onChange={e => onChange(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#4B0082]/20 focus:border-[#4B0082] transition-all appearance-none"
+            className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#3bba9c]/20 focus:border-[#3bba9c] transition-all appearance-none"
             style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: `right 0.5rem center`, backgroundRepeat: `no-repeat`, backgroundSize: `1.5em 1.5em`, paddingRight: `2.5rem` }}
         >
             <option value="">{placeholder}</option>
@@ -84,11 +84,11 @@ function getPremiumBadge(isPremium: boolean, plan: string | null, expiresAt: str
     if (isExpired) return <span className="bg-red-500 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 w-fit shadow-sm"><AlertTriangle className="h-3 w-3"/> Expired</span>
 
     if (plan === 'till_you_marry') return <span className="bg-gradient-to-r from-[#FF1493] to-[#FF69B4] text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 w-fit shadow-md shadow-pink-200 dark:shadow-none"><Crown className="h-3 w-3"/> Lifetime</span>
-    if (plan === 'elite') return <span className="bg-gradient-to-r from-[#4B0082] to-[#8A2BE2] text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 w-fit shadow-md shadow-purple-200 dark:shadow-none"><Gem className="h-3 w-3"/> Elite</span>
+    if (plan === 'elite') return <span className="bg-gradient-to-r from-[#3bba9c] to-[#2fa085] text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 w-fit shadow-md shadow-emerald-200 dark:shadow-none"><Gem className="h-3 w-3"/> Elite</span>
     if (plan === 'prime_gold') return <span className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 w-fit shadow-md shadow-amber-200 dark:shadow-none"><Star className="h-3 w-3"/> Gold</span>
     if (plan === 'prime' || plan === '3_months') return <span className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 w-fit shadow-md shadow-blue-200 dark:shadow-none"><Shield className="h-3 w-3"/> Prime</span>
     
-    return <span className="bg-[#4B0082] text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 w-fit shadow-md shadow-purple-200 dark:shadow-none"><Crown className="h-3 w-3"/> Premium</span>
+    return <span className="bg-[#3bba9c] text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 w-fit shadow-md shadow-emerald-200 dark:shadow-none"><Crown className="h-3 w-3"/> Premium</span>
 }
 
 function AdminProfilesContent() {
@@ -285,12 +285,12 @@ function AdminProfilesContent() {
             <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
                 <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        {genderFilter === "Male" ? <User className="h-6 w-6 text-blue-600" /> : genderFilter === "Female" ? <User className="h-6 w-6 text-pink-600" /> : <Users className="h-6 w-6 text-[#4B0082]" />}
+                        {genderFilter === "Male" ? <User className="h-6 w-6 text-blue-600" /> : genderFilter === "Female" ? <User className="h-6 w-6 text-pink-600" /> : <Users className="h-6 w-6 text-[#3bba9c]" />}
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
                             <p className="text-sm text-gray-500">
                                 {filteredProfiles.length} of {allProfiles.length} profiles
-                                {hasFilters && <span className="ml-1 text-[#4B0082]">(filtered)</span>}
+                                {hasFilters && <span className="ml-1 text-[#3bba9c]">(filtered)</span>}
                             </p>
                         </div>
                     </div>
@@ -313,7 +313,7 @@ function AdminProfilesContent() {
                     {/* Filter Bar */}
                     <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/60 dark:border-gray-700/60 p-5">
                         <div className="flex items-center gap-2 mb-4">
-                            <Search className="h-5 w-5 text-[#4B0082]" />
+                            <Search className="h-5 w-5 text-[#3bba9c]" />
                             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Filter Profiles</h2>
                             {hasFilters && (
                                 <span className="ml-auto text-sm text-gray-500 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full">
@@ -332,7 +332,7 @@ function AdminProfilesContent() {
                             </div>
                             <div className="space-y-1.5 min-w-[140px]">
                                 <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Age</label>
-                                <div className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden focus-within:ring-2 focus-within:ring-[#4B0082]/20 focus-within:border-[#4B0082] transition-all">
+                                <div className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden focus-within:ring-2 focus-within:ring-[#3bba9c]/20 focus-within:border-[#3bba9c] transition-all">
                                     <select
                                         value={filters.ageOp}
                                         onChange={e => setFilter("ageOp", e.target.value)}
@@ -411,7 +411,7 @@ function AdminProfilesContent() {
                                                         className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
                                                         onClick={() => router.push(`/admin/dashboard/profiles/${profile.user_id}`)}
                                                     >
-                                                        <TableCell className="font-medium text-[#4B0082] dark:text-purple-400">{profile.name || "Unknown"}</TableCell>
+                                                        <TableCell className="font-medium text-[#3bba9c] dark:text-emerald-400">{profile.name || "Unknown"}</TableCell>
                                                         <TableCell>{profile.phone}</TableCell>
                                                         <TableCell>{profile.age || "N/A"}</TableCell>
                                                         <TableCell>{profile.profession}</TableCell>
@@ -470,7 +470,7 @@ function AdminProfilesContent() {
                                                         className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                                                         onClick={() => router.push(`/admin/dashboard/profiles/${profile.user_id}`)}
                                                     >
-                                                        <TableCell className="font-medium text-[#4B0082] dark:text-purple-400 flex items-center gap-2">
+                                                        <TableCell className="font-medium text-[#3bba9c] dark:text-emerald-400 flex items-center gap-2">
                                                             {profile.name || "Unknown"}
                                                             <span className="bg-[#FF1493]/10 text-[#FF1493] text-[10px] uppercase font-bold px-1.5 py-0.5 rounded">Married</span>
                                                         </TableCell>
@@ -516,7 +516,7 @@ function AdminProfilesContent() {
                         <AlertDialogCancel className="w-full sm:w-auto mt-0 border-2 border-gray-400 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold">Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={confirmMarkAsMarried}
-                            className="w-full sm:w-auto bg-gradient-to-r from-[#FF1493] to-[#4B0082] hover:opacity-90 text-white border-0 font-semibold shadow-lg shadow-[#FF1493]/20"
+                            className="w-full sm:w-auto bg-gradient-to-r from-[#FF1493] to-[#3bba9c] hover:opacity-90 text-white border-0 font-semibold shadow-lg shadow-[#FF1493]/20"
                         >
                             Yes, Mark as Married
                         </AlertDialogAction>
@@ -529,7 +529,7 @@ function AdminProfilesContent() {
                 <DialogContent className="sm:max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl rounded-2xl">
                     <DialogHeader>
                         <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <Crown className="h-5 w-5 text-[#4B0082] dark:text-purple-400"/>
+                            <Crown className="h-5 w-5 text-[#3bba9c] dark:text-emerald-400"/>
                             Manage Subscription
                         </DialogTitle>
                     </DialogHeader>
@@ -540,7 +540,7 @@ function AdminProfilesContent() {
                             <select 
                                 value={subPlan}
                                 onChange={(e) => setSubPlan(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#4B0082] focus:border-transparent transition-all"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#3bba9c] focus:border-transparent transition-all"
                             >
                                 <option value="none">Free (Revoke Premium)</option>
                                 <option value="prime">Prime (₹2,000)</option>
@@ -556,7 +556,7 @@ function AdminProfilesContent() {
                                 <select 
                                     value={subDuration}
                                     onChange={(e) => setSubDuration(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#4B0082] focus:border-transparent transition-all"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#3bba9c] focus:border-transparent transition-all"
                                 >
                                     <option value="1">1 Month</option>
                                     <option value="3">3 Months</option>
@@ -572,7 +572,7 @@ function AdminProfilesContent() {
                         <Button variant="ghost" onClick={() => setIsManageSubOpen(false)} className="rounded-lg">
                             Cancel
                         </Button>
-                        <Button onClick={handleSaveSubscription} className="bg-gradient-to-r from-[#4B0082] to-[#FF1493] hover:opacity-90 text-white rounded-lg">
+                        <Button onClick={handleSaveSubscription} className="bg-gradient-to-r from-[#3bba9c] to-[#FF1493] hover:opacity-90 text-white rounded-lg">
                             Save Changes
                         </Button>
                     </DialogFooter>

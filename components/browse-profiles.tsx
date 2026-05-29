@@ -236,7 +236,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                     </span>
                                 )}
                                 {profile.premiumPlan === 'elite' && (
-                                    <span className="bg-gradient-to-r from-[#4B0082] to-[#8A2BE2] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-purple-500/30">
+                                    <span className="bg-gradient-to-r from-[#3bba9c] to-[#2fa085] text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-purple-500/30">
                                         <Gem className="h-2.5 w-2.5" /> Elite
                                     </span>
                                 )}
@@ -287,7 +287,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                 onClick={(e) => { e.stopPropagation(); handleShortlist(e, profile.user_id); }} 
                                 className={cn(
                                     "h-7 w-7 p-0 rounded-full transition-all",
-                                    shortlistedIds.includes(profile.user_id) ? "text-[#FF1493] bg-pink-50" : "text-gray-400 hover:text-[#4B0082] hover:bg-indigo-50"
+                                    shortlistedIds.includes(profile.user_id) ? "text-[#FF1493] bg-pink-50" : "text-gray-400 hover:text-[#3bba9c] hover:bg-indigo-50"
                                 )}
                             >
                                 <Bookmark className={cn("h-4 w-4", shortlistedIds.includes(profile.user_id) && "fill-current")} />
@@ -1069,7 +1069,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                 className="w-full"
             >
                 <div
-                    className="sds-glass rounded-3xl overflow-hidden hover:shadow-[0_40px_80px_-20px_rgba(75,0,130,0.15)] transition-all duration-700 cursor-pointer group flex flex-col md:flex-row h-auto md:h-[260px] border-2 border-indigo-100/20 hover:border-[#4B0082]/30 active:scale-[0.99] bg-white/95"
+                    className="sds-glass rounded-3xl overflow-hidden hover:shadow-[0_40px_80px_-20px_rgba(59,186,156,0.15)] transition-all duration-700 cursor-pointer group flex flex-col md:flex-row h-auto md:h-[260px] border-2 border-indigo-100/20 hover:border-[#3bba9c]/30 active:scale-[0.99] bg-white/95"
                     onClick={(e) => handleOpenProfile(profile, e)}
                 >
                     {/* Left: Image Section */}
@@ -1082,7 +1082,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-[cubic-bezier(0.33,1,0.68,1)]"
                                 />
                                 {hasMultiplePhotos && (
-                                    <div className="absolute bottom-4 right-4 sds-glass text-[9px] px-3 py-1.5 rounded-full z-10 font-black tracking-[0.2em] text-[#4B0082] bg-white/90 shadow-xl border-indigo-50/50">
+                                    <div className="absolute bottom-4 right-4 sds-glass text-[9px] px-3 py-1.5 rounded-full z-10 font-black tracking-[0.2em] text-[#3bba9c] bg-white/90 shadow-xl border-indigo-50/50">
                                         {cardPhotoIndex + 1} / {profile.photos.length}
                                     </div>
                                 )}
@@ -1127,7 +1127,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                         <div className="absolute top-6 right-8 z-20 flex flex-col items-end gap-2">
                             <div className="flex items-center gap-6">
                                 {shortlistedMeIds.includes(profile.user_id) && (
-                                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-[#4B0082]">
+                                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-[#3bba9c]">
                                         She shortlisted you {shortlistedMeDateMap[profile.user_id] ? `on ${formatToDDMMYYYY(shortlistedMeDateMap[profile.user_id])}` : 'Recently'}
                                     </div>
                                 )}
@@ -1144,7 +1144,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                     disabled={shortlistLoadingId === profile.user_id}
                                     className={cn(
                                         "p-0 h-auto hover:bg-transparent transition-all hover:scale-110 flex items-start -mt-2",
-                                        shortlistedIds.includes(profile.user_id) ? "text-[#FF1493]" : "text-gray-300 hover:text-[#4B0082]"
+                                        shortlistedIds.includes(profile.user_id) ? "text-[#FF1493]" : "text-gray-300 hover:text-[#3bba9c]"
                                     )}
                                 >
                                     <Bookmark className={cn("h-[64px] w-[32px]", shortlistedIds.includes(profile.user_id) && "fill-current")} />
@@ -1168,10 +1168,10 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
 
                         <div className="mb-4">
                             <div className="flex items-center gap-3 mb-2">
-                                <h3 className="text-2xl font-light text-gray-900 tracking-tighter leading-none group-hover:text-[#4B0082] transition-colors duration-500">
+                                <h3 className="text-2xl font-light text-gray-900 tracking-tighter leading-none group-hover:text-[#3bba9c] transition-colors duration-500">
                                     {profile.name || "Unknown"}
                                 </h3>
-                                <span className="text-lg font-black text-[#4B0082]/20 tracking-tighter">{profile.age && `${profile.age}`}</span>
+                                <span className="text-lg font-black text-[#3bba9c]/20 tracking-tighter">{profile.age && `${profile.age}`}</span>
                                 {profile.isPremium && (
                                     <span className="text-[8px] font-black uppercase tracking-[0.3em] text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-100/50">Elite</span>
                                 )}
@@ -1236,7 +1236,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                         onClick={(e) => { e.stopPropagation(); handleContactClick('call'); }}
                                         variant="outline"
                                         size="icon"
-                                        className="h-12 w-12 rounded-2xl border-none bg-indigo-50 text-[#4B0082] hover:bg-[#4B0082] hover:text-white transition-all duration-300 shadow-sm"
+                                        className="h-12 w-12 rounded-2xl border-none bg-indigo-50 text-[#3bba9c] hover:bg-[#3bba9c] hover:text-white transition-all duration-300 shadow-sm"
                                     >
                                         <Phone className="h-5 w-5" />
                                     </Button>
@@ -1259,7 +1259,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                                 ? "bg-[#FF4500] text-white hover:bg-[#FF6347] hover:scale-105 active:scale-95" 
                                                 : (likedMeIds.includes(profile.user_id) && likedMeStatusMap[profile.user_id] === 'pending'
                                                     ? "bg-emerald-600 text-white hover:bg-emerald-700 hover:scale-105 active:scale-95 shadow-emerald-200"
-                                                    : "bg-[#4B0082] text-white hover:bg-[#3b0062] hover:scale-105 active:scale-95")
+                                                    : "bg-[#3bba9c] text-white hover:bg-[#2fa085] hover:scale-105 active:scale-95")
                                         )}
                                     >
                                         {iLikedStatusMap[profile.user_id] === 'declined' ? (
@@ -1288,7 +1288,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                 <div className="flex items-center gap-2">
                                     <Button 
                                         variant="ghost"
-                                        className="h-12 px-6 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] text-gray-400 hover:text-[#4B0082] hover:bg-indigo-50/50 transition-all"
+                                        className="h-12 px-6 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] text-gray-400 hover:text-[#3bba9c] hover:bg-indigo-50/50 transition-all"
                                         onClick={(e) => handleOpenProfile(profile, e)}
                                     >
                                         Full Profile
@@ -1311,7 +1311,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                                         toast.error('Premium Required', { description: 'Upgrade for instant secure messaging.' });
                                                     }
                                                 }}
-                                                className="gap-3 cursor-pointer rounded-xl p-4 text-gray-700 focus:bg-[#4B0082] focus:text-white font-bold text-[10px] uppercase tracking-widest transition-all"
+                                                className="gap-3 cursor-pointer rounded-xl p-4 text-gray-700 focus:bg-[#3bba9c] focus:text-white font-bold text-[10px] uppercase tracking-widest transition-all"
                                             >
                                                 <MessageCircle className="h-4 w-4 opacity-50" /> Secure Message
                                                 {!isPremium && <Crown className="h-3 w-3 ml-auto text-amber-500" />}
@@ -1319,7 +1319,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                             <DropdownMenuSeparator className="bg-black/[0.03] mx-2" />
                                             <DropdownMenuItem
                                                 onClick={(e) => { e.stopPropagation(); handleIgnore(e, profile.user_id); }}
-                                                className="gap-3 cursor-pointer rounded-xl p-4 text-gray-500 hover:text-gray-900 focus:bg-[#4B0082] focus:text-white font-bold text-[10px] uppercase tracking-widest transition-all"
+                                                className="gap-3 cursor-pointer rounded-xl p-4 text-gray-500 hover:text-gray-900 focus:bg-[#3bba9c] focus:text-white font-bold text-[10px] uppercase tracking-widest transition-all"
                                             >
                                                 <UserMinus className="h-4 w-4 opacity-50" /> Archive Profile
                                             </DropdownMenuItem>
@@ -1345,10 +1345,10 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
         return (
             <div className="flex flex-col items-center justify-center py-40 space-y-4">
                 <div className="relative w-12 h-12">
-                    <div className="absolute inset-0 border-4 border-[#4B0082]/10 rounded-full"></div>
-                    <div className="absolute inset-0 border-4 border-[#4B0082] border-t-transparent rounded-full animate-spin"></div>
+                    <div className="absolute inset-0 border-4 border-[#3bba9c]/10 rounded-full"></div>
+                    <div className="absolute inset-0 border-4 border-[#3bba9c] border-t-transparent rounded-full animate-spin"></div>
                 </div>
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#4B0082]/40">Finding Matches</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#3bba9c]/40">Finding Matches</p>
             </div>
         )
     }
@@ -1407,9 +1407,9 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Sidebar */}
                     <aside className="w-full lg:w-[19rem] shrink-0 space-y-8 lg:sticky lg:top-24">
-                        <div className="sds-glass rounded-[2.5rem] overflow-hidden p-3 border-2 border-indigo-100/30 shadow-[0_32px_64px_-12px_rgba(75,0,130,0.12)]">
+                        <div className="sds-glass rounded-[2.5rem] overflow-hidden p-3 border-2 border-indigo-100/30 shadow-[0_32px_64px_-12px_rgba(59,186,156,0.12)]">
                             <div className="p-4 border-b border-black/[0.03] mb-4">
-                                <h4 className="text-[10px] font-black uppercase tracking-[0.5em] text-[#4B0082] opacity-50">Quick Actions</h4>
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.5em] text-[#3bba9c] opacity-50">Quick Actions</h4>
                             </div>
                             <div className="space-y-6 p-2">
                                 {menuGroups.map((group) => (
@@ -1422,13 +1422,13 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                                     onClick={() => setActiveCategory(item.id)}
                                                     className={`w-full group text-left px-4 h-11 rounded-xl transition-all duration-500 flex items-center gap-3 relative overflow-hidden ${
                                                         activeCategory === item.id 
-                                                        ? "bg-[#4B0082] text-white shadow-lg shadow-indigo-900/20 z-10" 
-                                                        : "hover:bg-[#4B0082]/5 text-gray-700 hover:text-[#4B0082]"
+                                                        ? "bg-[#3bba9c] text-white shadow-lg shadow-indigo-900/20 z-10" 
+                                                        : "hover:bg-[#3bba9c]/5 text-gray-700 hover:text-[#3bba9c]"
                                                     }`}
                                                 >
-                                                    <item.icon className={`h-4 w-4 shrink-0 transition-all duration-300 ${activeCategory === item.id ? "text-white" : "text-[#4B0082]"}`} />
+                                                    <item.icon className={`h-4 w-4 shrink-0 transition-all duration-300 ${activeCategory === item.id ? "text-white" : "text-[#3bba9c]"}`} />
                                                     <div className="flex-1 min-w-0">
-                                                        <div className={`text-[11px] font-bold truncate transition-colors duration-300 ${activeCategory === item.id ? "text-white" : "group-hover:text-[#4B0082]"}`}>
+                                                        <div className={`text-[11px] font-bold truncate transition-colors duration-300 ${activeCategory === item.id ? "text-white" : "group-hover:text-[#3bba9c]"}`}>
                                                             {item.label}
                                                         </div>
                                                     </div>
@@ -1449,7 +1449,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                     <div className="flex-1 space-y-6">
                         <div className="flex items-end justify-between pb-6 border-b border-black/[0.06]">
                             <div className="space-y-4">
-                                <h2 className="text-5xl font-light text-[#4B0082] tracking-tighter leading-none">
+                                <h2 className="text-5xl font-light text-[#3bba9c] tracking-tighter leading-none">
                                     {(() => {
                                         const activeItem = menuGroups.flatMap(g => g.items).find(i => i.id === activeCategory);
                                         const count = filteredProfiles.length;
@@ -1474,8 +1474,8 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                         onClick={() => setApplyPreferences(!applyPreferences)}
                                         className={`h-12 px-8 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all duration-500 border-2 ${
                                             applyPreferences 
-                                            ? "bg-indigo-50 border-indigo-200 text-[#4B0082] shadow-lg shadow-indigo-500/10" 
-                                            : "bg-white border-indigo-50 text-indigo-300 hover:border-indigo-200 hover:text-[#4B0082]"
+                                            ? "bg-indigo-50 border-indigo-200 text-[#3bba9c] shadow-lg shadow-indigo-500/10" 
+                                            : "bg-white border-indigo-50 text-indigo-300 hover:border-indigo-200 hover:text-[#3bba9c]"
                                         }`}
                                     >
                                         {applyPreferences ? (
@@ -1497,7 +1497,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                 <p className="text-gray-500 mt-2 max-w-md mx-auto">To find and view matches, please verify your Personal, Contact, Educational, Professional, and Family details first.</p>
                                 <Button 
                                     onClick={() => window.location.href = '/dashboard/profile/edit'} 
-                                    className="mt-8 bg-[#4B0082] hover:bg-[#380062] rounded-xl px-8"
+                                    className="mt-8 bg-[#3bba9c] hover:bg-[#2fa085] rounded-xl px-8"
                                 >
                                     Update Profile
                                 </Button>
@@ -1529,7 +1529,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                 const ContactRow = ({ profile }: { profile: any }) => (
                     <div className="flex flex-wrap gap-4 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                         {profile.phone ? (
-                            <a href={`tel:${profile.phone}`} onClick={e => e.stopPropagation()} className="flex items-center gap-1.5 text-sm text-[#4B0082] font-semibold hover:underline">
+                            <a href={`tel:${profile.phone}`} onClick={e => e.stopPropagation()} className="flex items-center gap-1.5 text-sm text-[#3bba9c] font-semibold hover:underline">
                                 <Phone className="h-4 w-4" />{profile.phone}
                             </a>
                         ) : <span className="text-xs text-gray-400">No phone on file</span>}
@@ -1558,12 +1558,12 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                         <img src={profile.photos[0]} alt={profile.name} className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
                                             onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&size=400&background=random` }} />
                                     ) : (
-                                        <div className="w-full h-full flex flex-col items-center justify-center opacity-20"><User className="h-20 w-20 text-[#4B0082]" /></div>
+                                        <div className="w-full h-full flex flex-col items-center justify-center opacity-20"><User className="h-20 w-20 text-[#3bba9c]" /></div>
                                     )}
 
                                     {profile.isPremium && (
                                         <div className="absolute top-4 left-4 z-10">
-                                            <span className="bg-[#4B0082] text-white text-[8px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-full shadow-lg">Premium Active</span>
+                                            <span className="bg-[#3bba9c] text-white text-[8px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-full shadow-lg">Premium Active</span>
                                         </div>
                                     )}
                                 </div>
@@ -1572,7 +1572,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                 <div className="flex-1 p-8 space-y-8 max-h-[600px] overflow-y-auto">
                                     <div>
                                         <h4 className="text-4xl font-light text-gray-900 tracking-tight leading-none mb-3">
-                                            {profile.name}<span className="font-black text-[#4B0082]">{profile.age && `, ${profile.age}`}</span>
+                                            {profile.name}<span className="font-black text-[#3bba9c]">{profile.age && `, ${profile.age}`}</span>
                                         </h4>
                                         <div className="flex flex-wrap gap-2">
                                             {profile.marital_status && <span className="text-[9px] font-black uppercase tracking-widest bg-black/5 text-gray-500 px-3 py-1.5 rounded-full">{profile.marital_status}</span>}
@@ -1590,7 +1590,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                             { icon: Star, label: "Horoscope", value: profile.horoscope?.star || "Unknown" }
                                         ].map((point, i) => (
                                             <div key={i} className="space-y-1">
-                                                <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-[#4B0082]/40">
+                                                <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-[#3bba9c]/40">
                                                     <point.icon className="h-3 w-3" />
                                                     {point.label}
                                                 </div>
@@ -1602,12 +1602,12 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                     {/* Action */}
                                     <div className="pt-4 border-t border-black/5 flex items-center justify-between">
                                         <div className="space-y-1">
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-[#4B0082]">Status</p>
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-[#3bba9c]">Status</p>
                                             <p className="text-xs text-gray-400">Mutual interest significantly increases outcome success.</p>
                                         </div>
                                         <Button
                                             onClick={() => setSelectedProfile(profile)}
-                                            className="h-12 px-8 rounded-2xl bg-[#4B0082] text-white font-black text-[10px] uppercase tracking-widest hover:shadow-xl hover:shadow-indigo-500/30 transition-all"
+                                            className="h-12 px-8 rounded-2xl bg-[#3bba9c] text-white font-black text-[10px] uppercase tracking-widest hover:shadow-xl hover:shadow-indigo-500/30 transition-all"
                                         >
                                             View Full Profile
                                         </Button>
@@ -1624,17 +1624,17 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                         <div className="space-y-8">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4 mb-2">
-                                    <div className="w-12 h-12 rounded-[1.25rem] bg-[#4B0082] flex items-center justify-center shadow-lg shadow-indigo-900/20">
+                                    <div className="w-12 h-12 rounded-[1.25rem] bg-[#3bba9c] flex items-center justify-center shadow-lg shadow-indigo-900/20">
                                         <User className="text-white h-6 w-6" />
                                     </div>
                                     <div className="flex-1">
                                         <h1 className="text-3xl font-light text-gray-900 tracking-tight leading-none mb-1">
                                             Find your partner
                                         </h1>
-                                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/40">Browse Profiles</p>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/40">Browse Profiles</p>
                                     </div>
                                 </div>
-                                <div className="text-[10px] font-black uppercase tracking-widest text-[#4B0082] bg-indigo-50 px-4 py-2 rounded-full">
+                                <div className="text-[10px] font-black uppercase tracking-widest text-[#3bba9c] bg-indigo-50 px-4 py-2 rounded-full">
                                     {unselected.length} AVAILABLE
                                 </div>
                             </div>
@@ -1781,7 +1781,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                         <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
                                             {selectedProfile.name}{selectedProfile.age && <span className="text-gray-500 font-normal">, {selectedProfile.age}</span>}
                                         </h2>
-                                        <p className="text-[#4B0082] font-medium text-lg">{selectedProfile.profession}</p>
+                                        <p className="text-[#3bba9c] font-medium text-lg">{selectedProfile.profession}</p>
                                     </div>
 
                                     <div className="space-y-8">
@@ -2055,12 +2055,12 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                                     {/* Contact Details */}
                                                     <section>
                                                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                                            <Phone className="h-5 w-5 mr-2 text-[#4B0082]" /> Contact Details
+                                                            <Phone className="h-5 w-5 mr-2 text-[#3bba9c]" /> Contact Details
                                                         </h3>
 
                                                         {/* Phone & WhatsApp */}
-                                                        <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm bg-purple-50 dark:bg-purple-900/10 p-4 rounded-xl mb-4">
-                                                            {mutualFullData.fullContact?.phone && <div><span className="block text-gray-500 mb-1">Phone</span><a href={`tel:${mutualFullData.fullContact.phone}`} className="font-semibold text-[#4B0082] hover:underline">{mutualFullData.fullContact.phone}</a></div>}
+                                                        <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm bg-emerald-50 dark:bg-purple-900/10 p-4 rounded-xl mb-4">
+                                                            {mutualFullData.fullContact?.phone && <div><span className="block text-gray-500 mb-1">Phone</span><a href={`tel:${mutualFullData.fullContact.phone}`} className="font-semibold text-[#3bba9c] hover:underline">{mutualFullData.fullContact.phone}</a></div>}
                                                             {mutualFullData.fullContact?.whatsapp_number && <div><span className="block text-gray-500 mb-1">WhatsApp</span><a href={`https://wa.me/${mutualFullData.fullContact.whatsapp_number.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="font-semibold text-green-600 hover:underline flex items-center gap-1"><MessageCircle className="h-3.5 w-3.5" /> {mutualFullData.fullContact.whatsapp_number}</a></div>}
                                                         </div>
 
@@ -2173,7 +2173,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                             </div>
                                         ) : (
                                             <Button
-                                                className="w-full bg-[#4B0082] hover:bg-indigo-700 text-white py-6 rounded-[1.5rem] font-bold tracking-widest text-[11px] uppercase shadow-lg shadow-indigo-500/20"
+                                                className="w-full bg-[#3bba9c] hover:bg-[#2fa085] text-white py-6 rounded-[1.5rem] font-bold tracking-widest text-[11px] uppercase shadow-lg shadow-emerald-500/20"
                                                 onClick={(e) => handleParentSelect(e, selectedProfile.user_id)}
                                                 disabled={actionLoadingId === selectedProfile.user_id}
                                             >
@@ -2184,7 +2184,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                     ) : (
                                         <div className="flex gap-4">
                                             <Button
-                                                className="flex-1 bg-[#4B0082] hover:bg-indigo-700 text-white py-6 rounded-[1.5rem] font-bold tracking-widest text-[11px] uppercase shadow-lg shadow-indigo-500/20"
+                                                className="flex-1 bg-[#3bba9c] hover:bg-[#2fa085] text-white py-6 rounded-[1.5rem] font-bold tracking-widest text-[11px] uppercase shadow-lg shadow-emerald-500/20"
                                                 onClick={(e) => handleCustomerLike(e, selectedProfile.user_id)}
                                                 disabled={actionLoadingId === selectedProfile.user_id}
                                             >
@@ -2195,7 +2195,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                                 variant="outline"
                                                 className={cn(
                                                     "h-12 w-12 p-0 rounded-2xl transition-all border",
-                                                    shortlistedIds.includes(selectedProfile.user_id) ? "text-[#FF1493] bg-pink-50 border-pink-100 shadow-sm" : "border-gray-200 text-gray-400 hover:text-[#4B0082] hover:bg-indigo-50"
+                                                    shortlistedIds.includes(selectedProfile.user_id) ? "text-[#FF1493] bg-pink-50 border-pink-100 shadow-sm" : "border-gray-200 text-gray-400 hover:text-[#3bba9c] hover:bg-indigo-50"
                                                 )}
                                                 onClick={(e) => handleShortlist(e, selectedProfile.user_id)}
                                                 disabled={shortlistLoadingId === selectedProfile.user_id}
