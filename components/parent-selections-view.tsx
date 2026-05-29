@@ -170,14 +170,14 @@ export function ParentSelectionsView({ userId, onBack }: ParentSelectionsViewPro
                 <Button
                     variant="ghost"
                     onClick={onBack}
-                    className="mb-4 hover:bg-[#3bba9c]/10"
+                    className="mb-4 hover:bg-[#3bb9ac]/10"
                 >
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back to Dashboard
                 </Button>
                 <div className="flex justify-between items-center">
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                        <Heart className="h-8 w-8 text-[#FF1493]" fill="#FF1493" />
+                        <Heart className="h-8 w-8 text-[#3bb9ac]" fill="#3bb9ac" />
                         Selected By Parents
                     </h1>
                 </div>
@@ -188,7 +188,7 @@ export function ParentSelectionsView({ userId, onBack }: ParentSelectionsViewPro
 
             {isLoading ? (
                 <div className="flex justify-center p-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#3bba9c]" />
+                    <Loader2 className="h-8 w-8 animate-spin text-[#3bb9ac]" />
                 </div>
             ) : selections.length === 0 ? (
                 <Card className="bg-gray-50 dark:bg-gray-800/50 border-dashed">
@@ -216,9 +216,9 @@ export function ParentSelectionsView({ userId, onBack }: ParentSelectionsViewPro
                                 transition={{ duration: 0.4, delay: index * 0.1 }}
                                 className="group relative"
                             >
-                                <Card className="h-full overflow-hidden hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-[#FF1493]/30">
+                                <Card className="h-full overflow-hidden hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-[#3bb9ac]/30">
                                     <div className="absolute top-4 right-4 z-20">
-                                        <span className="px-3 py-1 bg-white/90 dark:bg-gray-900/90 text-[#3bba9c] rounded-full text-xs font-semibold shadow-sm backdrop-blur-sm shadow-xl">
+                                        <span className="px-3 py-1 bg-white/90 dark:bg-gray-900/90 text-[#3bb9ac] rounded-full text-xs font-semibold shadow-sm backdrop-blur-sm shadow-xl">
                                             Selected by {selection.parent?.role || "Parent"}
                                         </span>
                                     </div>
@@ -260,14 +260,14 @@ export function ParentSelectionsView({ userId, onBack }: ParentSelectionsViewPro
                                         <div className="flex gap-3">
                                             <Button
                                                 variant="outline"
-                                                className="flex-1 border-[#3bba9c] text-[#3bba9c] hover:bg-[#3bba9c] hover:text-white group"
+                                                className="flex-1 border-[#3bb9ac] text-[#3bb9ac] hover:bg-[#3bb9ac] hover:text-white group"
                                                 onClick={() => router.push(`/dashboard/profiles/${profile.id}`)}
                                             >
                                                 <Info className="h-4 w-4 mr-2" />
                                                 View Full
                                             </Button>
                                             <Button
-                                                className="flex-1 bg-[#FF1493] hover:bg-[#E01183] text-white"
+                                                className="flex-1 bg-[#3bb9ac] hover:bg-[#E01183] text-white"
                                                 onClick={() => handleLikeProfile(profile.id, selection.parent?.role || 'Parent')}
                                             >
                                                 <Heart className="h-4 w-4 mr-2" />

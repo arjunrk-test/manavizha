@@ -242,7 +242,7 @@ export default function DashboardLayout({
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bba9c] mx-auto mb-4" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bb9ac] mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400 font-medium">Loading your dashboard...</p>
         </div>
       </div>
@@ -252,7 +252,7 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen flex flex-col relative">
       {/* Animated gradient background */}
-      <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+      <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] via-[#3bb9ac] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
       <div className="fixed inset-0 bg-white/40 dark:bg-[#181818]/40" />
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px] opacity-30" />
@@ -294,12 +294,12 @@ export default function DashboardLayout({
       <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
         <div className="w-full px-6 md:px-8 py-1.5 flex items-center justify-between">
           <div className="flex flex-col cursor-pointer hover:opacity-80 transition-opacity" onClick={() => router.push("/dashboard")}>
-            <h1 className="text-xl md:text-2xl font-black tracking-tighter bg-gradient-to-r from-[#3bba9c] via-[#FF1493] to-[#3bba9c] bg-clip-text text-transparent">
+            <h1 className="text-xl md:text-2xl font-black tracking-tighter bg-gradient-to-r from-[#3bb9ac] via-[#3bb9ac] to-[#3bb9ac] bg-clip-text text-transparent">
               Manavizha
             </h1>
             {!isLanding && (
-              <span className="text-[9px] font-bold uppercase tracking-widest text-[#3bba9c]/60 flex items-center gap-1">
-                <span className="w-1 h-1 rounded-full bg-[#FF1493]"></span>
+              <span className="text-[9px] font-bold uppercase tracking-widest text-[#3bb9ac]/60 flex items-center gap-1">
+                <span className="w-1 h-1 rounded-full bg-[#3bb9ac]"></span>
                 {viewName}
               </span>
             )}
@@ -316,7 +316,7 @@ export default function DashboardLayout({
                 disabled={!user?.id}
                 variant="outline" 
                 size="sm" 
-                className="h-8 gap-2 border-indigo-500/20 hover:bg-indigo-50 text-[#3bba9c] font-bold text-[10px] uppercase tracking-widest px-4 shadow-sm disabled:opacity-50"
+                className="h-8 gap-2 border-indigo-500/20 hover:bg-indigo-50 text-[#3bb9ac] font-bold text-[10px] uppercase tracking-widest px-4 shadow-sm disabled:opacity-50"
             >
               <User className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{user?.id ? "Preview Profile" : "Loading..."}</span>
@@ -327,7 +327,7 @@ export default function DashboardLayout({
                 disabled={!user?.id}
                 variant="outline" 
                 size="sm" 
-                className="h-8 gap-2 border-indigo-500/20 hover:bg-indigo-50 text-[#3bba9c] font-bold text-[10px] uppercase tracking-widest px-4 shadow-sm disabled:opacity-50"
+                className="h-8 gap-2 border-indigo-500/20 hover:bg-indigo-50 text-[#3bb9ac] font-bold text-[10px] uppercase tracking-widest px-4 shadow-sm disabled:opacity-50"
             >
               <Edit className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Update Profile</span>
@@ -337,12 +337,12 @@ export default function DashboardLayout({
                 onClick={() => router.push("/dashboard/messages")} 
                 variant="outline" 
                 size="icon" 
-                className="h-8 w-8 border-indigo-500/20 hover:bg-indigo-50 text-[#3bba9c] group relative rounded-full"
+                className="h-8 w-8 border-indigo-500/20 hover:bg-indigo-50 text-[#3bb9ac] group relative rounded-full"
                 title="Messages"
             >
               <MessageSquare className="h-4 w-4" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#FF1493] text-[8px] font-bold text-white shadow-lg">
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#3bb9ac] text-[8px] font-bold text-white shadow-lg">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
@@ -353,12 +353,12 @@ export default function DashboardLayout({
                 <Button 
                     variant="outline" 
                     size="icon" 
-                    className="h-8 w-8 border-indigo-500/20 hover:bg-indigo-50 text-[#3bba9c] group relative rounded-full"
+                    className="h-8 w-8 border-indigo-500/20 hover:bg-indigo-50 text-[#3bb9ac] group relative rounded-full"
                     title="Notifications"
                 >
                   <Bell className="h-4 w-4" />
                   {(whoViewedMe.length + whoExpressedInterest.length) > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[8px] font-bold text-white shadow-lg">
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-white shadow-lg">
                       {whoViewedMe.length + whoExpressedInterest.length}
                     </span>
                   )}
@@ -367,7 +367,7 @@ export default function DashboardLayout({
               <PopoverContent align="end" className="w-[320px] rounded-[2rem] p-4 bg-white/95 backdrop-blur-3xl shadow-2xl border-indigo-100/50 z-[60]">
                   <div className="space-y-4">
                     <div className="px-2 py-1">
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#3bba9c]">Notifications</h4>
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#3bb9ac]">Notifications</h4>
                       <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">Activity from last 30 days</p>
                     </div>
 
@@ -375,7 +375,7 @@ export default function DashboardLayout({
                       {/* Section 1: Interests */}
                       {whoExpressedInterest.length > 0 && (
                         <div className="space-y-2">
-                           <div className="px-2 text-[9px] font-black text-rose-500 uppercase tracking-widest">Interest Received</div>
+                           <div className="px-2 text-[9px] font-black text-primary uppercase tracking-widest">Interest Received</div>
                            {whoExpressedInterest.slice(0, 5).map(p => (
                              <div key={p.user_id} className="group p-3 rounded-2xl hover:bg-indigo-50/50 transition-all flex items-center gap-3 cursor-pointer" onClick={() => handleNotificationClick('interest', p.user_id)}>
                                 <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100">
@@ -425,7 +425,7 @@ export default function DashboardLayout({
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="w-full rounded-xl text-[10px] font-black uppercase tracking-widest text-[#3bba9c] hover:bg-indigo-50"
+                      className="w-full rounded-xl text-[10px] font-black uppercase tracking-widest text-[#3bb9ac] hover:bg-indigo-50"
                       onClick={() => router.push("/dashboard/browse")}
                     >
                       See All Activity
@@ -440,9 +440,9 @@ export default function DashboardLayout({
                 className="h-8 w-8 hover:bg-indigo-50 rounded-full"
                 title="Profile Settings"
             >
-              <Settings className="h-4 w-4 text-[#3bba9c]/60" />
+              <Settings className="h-4 w-4 text-[#3bb9ac]/60" />
             </Button>
-            <Button onClick={handleLogout} size="sm" className="h-8 bg-[#3bba9c] hover:bg-[#1F4068] text-white border-0 shadow-sm transition-all active:scale-95 font-bold text-[10px] uppercase tracking-widest px-4 rounded-full">
+            <Button onClick={handleLogout} size="sm" className="h-8 bg-[#3bb9ac] hover:bg-[#1F4068] text-white border-0 shadow-sm transition-all active:scale-95 font-bold text-[10px] uppercase tracking-widest px-4 rounded-full">
               <LogOut className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Logout</span>
               <span className="sm:hidden text-[10px]">Logout</span>
@@ -461,9 +461,9 @@ export default function DashboardLayout({
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-600 dark:text-gray-400">
             <span>© 2024 Manavizha. All rights reserved.</span>
             <div className="flex items-center gap-6">
-              <a href="/privacy-policy" className="hover:text-[#3bba9c] transition-colors">Privacy Policy</a>
-              <a href="/terms-of-service" className="hover:text-[#3bba9c] transition-colors">Terms of Service</a>
-              <a href="/contact" className="hover:text-[#3bba9c] transition-colors">Contact Us</a>
+              <a href="/privacy-policy" className="hover:text-[#3bb9ac] transition-colors">Privacy Policy</a>
+              <a href="/terms-of-service" className="hover:text-[#3bb9ac] transition-colors">Terms of Service</a>
+              <a href="/contact" className="hover:text-[#3bb9ac] transition-colors">Contact Us</a>
             </div>
           </div>
         </div>

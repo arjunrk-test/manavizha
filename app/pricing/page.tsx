@@ -46,9 +46,9 @@ const plans = [
     duration: "1 Year Validity",
     price: "10,000",
     originalPrice: "12,999",
-    icon: <Gem className="h-6 w-6 text-purple-500" />,
-    gradient: "from-purple-500/10 to-indigo-500/10",
-    border: "border-purple-200 dark:border-purple-900/50",
+    icon: <Gem className="h-6 w-6 text-primary" />,
+    gradient: "from-primary to-indigo-500/10",
+    border: "border-primary dark:border-primary",
     badge: "Premium Choice",
     features: [
       "Dedicated Sr. Relationship manager",
@@ -63,9 +63,9 @@ const plans = [
     duration: "Lifetime Validity",
     price: "10,000",
     originalPrice: "15,999",
-    icon: <Crown className="h-6 w-6 text-pink-500" />,
-    gradient: "from-pink-500/10 to-rose-500/10",
-    border: "border-pink-200 dark:border-pink-900/50",
+    icon: <Crown className="h-6 w-6 text-primary" />,
+    gradient: "from-primary to-primary",
+    border: "border-primary dark:border-primary",
     badge: "Best Value",
     features: [
       "Lifetime access to all Prime features",
@@ -86,7 +86,7 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 selection:bg-[#FF1493]/30">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 selection:bg-[#3bb9ac]/30">
       <AnimatedBackground />
       <Navbar />
       
@@ -99,7 +99,7 @@ export default function PricingPage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white leading-tight"
             >
-              Find Your Perfect Match with <span className="bg-gradient-to-r from-[#FF1493] to-[#3bba9c] bg-clip-text text-transparent">Premium</span>
+              Find Your Perfect Match with <span className="bg-gradient-to-r from-[#3bb9ac] to-[#3bb9ac] bg-clip-text text-transparent">Premium</span>
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
@@ -123,7 +123,7 @@ export default function PricingPage() {
               >
                 {/* Popular Badge */}
                 {plan.badge && (
-                  <div className="absolute top-0 right-0 left-0 bg-gradient-to-r from-[#FF1493] to-[#3bba9c] py-1.5 text-center text-[10px] md:text-xs font-bold text-white uppercase tracking-widest z-10">
+                  <div className="absolute top-0 right-0 left-0 bg-gradient-to-r from-[#3bb9ac] to-[#3bb9ac] py-1.5 text-center text-[10px] md:text-xs font-bold text-white uppercase tracking-widest z-10">
                     {plan.badge}
                   </div>
                 )}

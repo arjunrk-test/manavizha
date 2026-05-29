@@ -384,7 +384,7 @@ export function MasterDataManager({
             <Button
               onClick={handleSave}
               disabled={isSaving || !inputValue.trim() || (showColourCode && !colourCodeValue.trim()) || (showCategory && !categoryValue.trim())}
-              className="bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] hover:opacity-90 text-white"
+              className="bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] hover:opacity-90 text-white"
             >
               {isSaving ? "Saving..." : editingId ? "Update" : "Save"}
             </Button>

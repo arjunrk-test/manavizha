@@ -21,19 +21,19 @@ function Section({ title, canEdit, editing, saving, onEdit, onSave, onCancel, ch
     return (
         <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/60 dark:border-gray-700/60 p-6 mb-6">
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">
-                <h2 className="text-lg font-semibold text-[#3bba9c] dark:text-emerald-400">{title}</h2>
+                <h2 className="text-lg font-semibold text-[#3bb9ac] dark:text-emerald-400">{title}</h2>
                 {canEdit && (
                     editing ? (
                         <div className="flex gap-2">
                             <Button size="sm" variant="outline" onClick={onCancel} className="h-7 px-2 text-xs flex items-center gap-1">
                                 <X className="h-3 w-3" /> Cancel
                             </Button>
-                            <Button size="sm" onClick={onSave} disabled={saving} className="h-7 px-2 text-xs flex items-center gap-1 bg-[#3bba9c] hover:bg-[#3a0066] text-white">
+                            <Button size="sm" onClick={onSave} disabled={saving} className="h-7 px-2 text-xs flex items-center gap-1 bg-[#3bb9ac] hover:bg-[#3a0066] text-white">
                                 <Check className="h-3 w-3" /> {saving ? "Saving…" : "Save"}
                             </Button>
                         </div>
                     ) : (
-                        <Button size="sm" variant="ghost" onClick={onEdit} className="h-7 px-2 text-xs text-gray-500 hover:text-[#3bba9c] flex items-center gap-1">
+                        <Button size="sm" variant="ghost" onClick={onEdit} className="h-7 px-2 text-xs text-gray-500 hover:text-[#3bb9ac] flex items-center gap-1">
                             <Pencil className="h-3 w-3" /> Edit
                         </Button>
                     )
@@ -229,7 +229,7 @@ export default function ReferralPartnerProfileDetailPage() {
 
     if (isLoading) return (
         <div className="min-h-screen flex items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bba9c]" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bb9ac]" />
         </div>
     )
 
@@ -238,7 +238,7 @@ export default function ReferralPartnerProfileDetailPage() {
 
     return (
         <div className="min-h-screen relative">
-            <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+            <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] via-[#3bb9ac] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
             <div className="fixed inset-0 bg-white/40 dark:bg-[#181818]/40" />
             <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
             <div className="fixed inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px] opacity-30" />
@@ -251,7 +251,7 @@ export default function ReferralPartnerProfileDetailPage() {
             <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
                 <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <User className="h-6 w-6 text-[#3bba9c]" />
+                        <User className="h-6 w-6 text-[#3bb9ac]" />
                         <div>
                             <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                                 {personal?.name || userRow?.name || "Profile"}
@@ -323,7 +323,7 @@ export default function ReferralPartnerProfileDetailPage() {
                     {/* Education (read-only) */}
                     {raw.edu && raw.edu.length > 0 && (
                         <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/60 dark:border-gray-700/60 p-6 mb-6">
-                            <h2 className="text-lg font-semibold text-[#3bba9c] dark:text-emerald-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Educational Details</h2>
+                            <h2 className="text-lg font-semibold text-[#3bb9ac] dark:text-emerald-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Educational Details</h2>
                             {raw.edu.map((edu: any, i: number) => (
                                 <div key={i} className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-100 last:border-0">
                                     <F label="Education" value={edu.education === "Other" ? edu.education_other : edu.education} />
@@ -340,7 +340,7 @@ export default function ReferralPartnerProfileDetailPage() {
                     {/* Professional Details (read-only) */}
                     {(raw.emp || raw.bus || raw.stu) && (
                         <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/60 dark:border-gray-700/60 p-6 mb-6">
-                            <h2 className="text-lg font-semibold text-[#3bba9c] dark:text-emerald-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Professional Details</h2>
+                            <h2 className="text-lg font-semibold text-[#3bb9ac] dark:text-emerald-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Professional Details</h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {raw.emp && (
                                     <>
@@ -427,7 +427,7 @@ export default function ReferralPartnerProfileDetailPage() {
                     {/* Photos */}
                     {raw.photos && (raw.photos.userPhotos?.length > 0 || raw.photos.familyPhoto || raw.photos.aadharFront || raw.photos.aadharBack) && (
                         <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/60 dark:border-gray-700/60 p-6 mb-6">
-                            <h2 className="text-lg font-semibold text-[#3bba9c] dark:text-emerald-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Photos</h2>
+                            <h2 className="text-lg font-semibold text-[#3bb9ac] dark:text-emerald-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Photos</h2>
 
                             {raw.photos.userPhotos?.length > 0 && (
                                 <div className="mb-4">

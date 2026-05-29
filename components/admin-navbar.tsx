@@ -51,7 +51,7 @@ export function AdminNavbar() {
                 className="h-10 w-auto object-contain"
                 priority
               />
-              <span className="text-xl font-bold bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+              <span className="text-xl font-bold bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
                 Manavizha Admin
               </span>
             </motion.div>
@@ -65,7 +65,7 @@ export function AdminNavbar() {
             >
               <Button
                 variant="ghost"
-                className="text-gray-600 dark:text-gray-300 hover:text-[#3bba9c] font-semibold flex items-center gap-2"
+                className="text-gray-600 dark:text-gray-300 hover:text-[#3bb9ac] font-semibold flex items-center gap-2"
                 onClick={() => window.location.href = "/admin/verification"}
               >
                 <ShieldCheck className="h-4 w-4" />

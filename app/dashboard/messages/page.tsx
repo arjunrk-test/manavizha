@@ -234,7 +234,7 @@ export default function MessagesPage() {
 
     if (isLoading) {
         return <div className="flex h-[calc(100vh-64px)] items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3bba9c]"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3bb9ac]"></div>
         </div>
     }
 
@@ -244,7 +244,7 @@ export default function MessagesPage() {
             <div className={`w-full md:w-80 lg:w-96 border-r border-gray-200 dark:border-gray-800 flex flex-col bg-gray-50/50 dark:bg-gray-900/50 ${activeConversation ? 'hidden md:flex' : 'flex'}`}>
                 <div className="p-6 border-b border-gray-200 dark:border-gray-800 space-y-4">
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <MessageSquare className="h-6 w-6 text-[#3bba9c]" />
+                        <MessageSquare className="h-6 w-6 text-[#3bb9ac]" />
                         Messages
                     </h2>
                     <div className="relative">
@@ -292,7 +292,7 @@ export default function MessagesPage() {
                                         formatActivityTime(conv.last_active_at) === "Online" ? "bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.6)]" : "bg-gray-300"
                                     }`}></div>
                                     {conv.unread_count > 0 && (
-                                        <span className="absolute -top-1 -right-1 bg-[#FF1493] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center ring-2 ring-white dark:ring-gray-900 shadow-lg">
+                                        <span className="absolute -top-1 -right-1 bg-[#3bb9ac] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center ring-2 ring-white dark:ring-gray-900 shadow-lg">
                                             {conv.unread_count}
                                         </span>
                                     )}
@@ -362,7 +362,7 @@ export default function MessagesPage() {
                                 return (
                                     <div key={m.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                                         <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm ${isMe
-                                            ? 'bg-gradient-to-r from-[#3bba9c] to-[#2fa085] text-white rounded-tr-none'
+                                            ? 'bg-gradient-to-r from-[#3bb9ac] to-[#2fa085] text-white rounded-tr-none'
                                             : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-tl-none border border-gray-100 dark:border-gray-700'
                                             }`}>
                                             <p className="text-sm leading-relaxed">{m.content}</p>
@@ -406,7 +406,7 @@ export default function MessagesPage() {
                                     <Button
                                         type="submit"
                                         disabled={!newMessage.trim() || isSending}
-                                        className="h-11 w-11 rounded-xl bg-[#3bba9c] hover:bg-[#6A0DAD] text-white shrink-0 p-0"
+                                        className="h-11 w-11 rounded-xl bg-[#3bb9ac] hover:bg-[#6A0DAD] text-white shrink-0 p-0"
                                     >
                                         <Send className="h-5 w-5" />
                                     </Button>
@@ -417,7 +417,7 @@ export default function MessagesPage() {
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-gray-50/50 dark:bg-gray-900/50">
                         <div className="w-24 h-24 bg-white dark:bg-gray-800 rounded-3xl shadow-xl flex items-center justify-center mb-6 animate-pulse">
-                            <MessageSquare className="h-12 w-12 text-[#3bba9c]/20" />
+                            <MessageSquare className="h-12 w-12 text-[#3bb9ac]/20" />
                         </div>
                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Welcome to your Inbox</h2>
                         <p className="max-w-xs text-gray-500 text-sm leading-relaxed">

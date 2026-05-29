@@ -56,16 +56,16 @@ export function CompatibilitySheet({
             {/* Header Section */}
             <div className="text-center space-y-4">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-indigo-50/50 rounded-full border border-indigo-100/50 mb-2">
-                <Sparkles className="h-4 w-4 text-[#3bba9c]" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#3bba9c]">AI Compatibility Engine</span>
+                <Sparkles className="h-4 w-4 text-[#3bb9ac]" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#3bb9ac]">AI Compatibility Engine</span>
               </div>
-              <h2 className="text-4xl font-black text-gray-900 tracking-tight">Why we picked <span className="text-[#3bba9c]">{userName}</span></h2>
+              <h2 className="text-4xl font-black text-gray-900 tracking-tight">Why we picked <span className="text-[#3bb9ac]">{userName}</span></h2>
               <p className="text-gray-500 text-sm font-medium">Our algorithm analyzed 142 data points to find your match.</p>
             </div>
 
             {/* Main Scores Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-8 bg-gradient-to-br from-[#3bba9c] to-indigo-800 rounded-[2.5rem] text-white shadow-2xl shadow-indigo-900/20 text-center space-y-2 relative overflow-hidden group">
+              <div className="p-8 bg-gradient-to-br from-[#3bb9ac] to-indigo-800 rounded-[2.5rem] text-white shadow-2xl shadow-indigo-900/20 text-center space-y-2 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-150 transition-transform duration-1000" />
                 <p className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Lifestyle Match</p>
                 <div className="text-5xl font-black tracking-tighter">{lifestyleScore}%</div>
@@ -73,7 +73,7 @@ export function CompatibilitySheet({
               <div className="p-8 bg-white rounded-[2.5rem] border-2 border-indigo-100 text-center space-y-2 shadow-xl shadow-emerald-900/10 flex flex-col items-center justify-center">
                 <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Horoscope Porutham</p>
                 {isPremium ? (
-                  <div className="text-5xl font-black tracking-tighter text-[#3bba9c]">{poruthamScore}/10</div>
+                  <div className="text-5xl font-black tracking-tighter text-[#3bb9ac]">{poruthamScore}/10</div>
                 ) : (
                   <div className="mt-2">
                     <span className="text-[9px] font-black uppercase tracking-[0.2em] bg-amber-100 text-amber-700 px-3 py-1 rounded-full">Premium Only</span>
@@ -102,7 +102,7 @@ export function CompatibilitySheet({
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center shadow-none border border-indigo-100">
-                          <Icon className="h-6 w-6 text-[#3bba9c]" />
+                          <Icon className="h-6 w-6 text-[#3bb9ac]" />
                         </div>
                         <div>
                           <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{item.label}</p>
@@ -127,15 +127,15 @@ export function CompatibilitySheet({
             {poruthamDetails && isPremium && (
               <div className="p-8 bg-indigo-50 rounded-[3rem] border-2 border-indigo-100/50 space-y-6 shadow-inner">
                 <div className="flex items-center gap-3">
-                  <Shield className="h-5 w-5 text-[#3bba9c]" />
-                  <h3 className="text-sm font-black uppercase tracking-[0.1em] text-[#3bba9c]">Traditional Porutham Analysis</h3>
+                  <Shield className="h-5 w-5 text-[#3bb9ac]" />
+                  <h3 className="text-sm font-black uppercase tracking-[0.1em] text-[#3bb9ac]">Traditional Porutham Analysis</h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(poruthamDetails).map(([name, matched], idx) => (
                     <Badge 
                       key={idx} 
                       variant={matched ? "default" : "outline"}
-                      className={`h-8 px-4 border shadow-none font-bold uppercase tracking-wider text-[9px] ${matched ? 'bg-[#3bba9c] text-white border-[#3bba9c]' : 'bg-white text-gray-300 border-gray-100'}`}
+                      className={`h-8 px-4 border shadow-none font-bold uppercase tracking-wider text-[9px] ${matched ? 'bg-[#3bb9ac] text-white border-[#3bb9ac]' : 'bg-white text-gray-300 border-gray-100'}`}
                     >
                       {name}
                     </Badge>
@@ -158,7 +158,7 @@ export function CompatibilitySheet({
               </div>
             )}
 
-            <Button onClick={onClose} className="w-full h-14 rounded-2xl bg-[#3bba9c] text-white font-black text-[10px] uppercase tracking-widest hover:bg-indigo-900 transition-all shadow-xl shadow-indigo-900/20">
+            <Button onClick={onClose} className="w-full h-14 rounded-2xl bg-[#3bb9ac] text-white font-black text-[10px] uppercase tracking-widest hover:bg-indigo-900 transition-all shadow-xl shadow-indigo-900/20">
               Got it, thanks!
             </Button>
           </div>

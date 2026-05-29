@@ -60,7 +60,7 @@ export function MarriedConfirmationDialog({
                             ))}
                         </ul>
                     </div>
-                    <p className="text-[10px] text-rose-500 font-bold mt-3 text-center italic">This action cannot be undone.</p>
+                    <p className="text-[10px] text-primary font-bold mt-3 text-center italic">This action cannot be undone.</p>
                 </div>
             </AlertDialogDescription>
 

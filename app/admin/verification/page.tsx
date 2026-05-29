@@ -154,7 +154,7 @@ export default function AdminVerificationPage() {
         <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                    <ShieldCheck className="h-8 w-8 text-[#3bba9c]" />
+                    <ShieldCheck className="h-8 w-8 text-[#3bb9ac]" />
                     Verification Queue
                 </h1>
                 <p className="text-gray-500 mt-1">Review pending photo verification requests from users.</p>
@@ -165,12 +165,12 @@ export default function AdminVerificationPage() {
                     <input 
                         type="text" 
                         placeholder="Search by name or ID..." 
-                        className="pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3bba9c]/20 transition-all w-64"
+                        className="pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3bb9ac]/20 transition-all w-64"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <div className="bg-[#3bba9c]/10 text-[#3bba9c] dark:bg-[#3bba9c]/20 dark:text-purple-300 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2">
+                <div className="bg-[#3bb9ac]/10 text-[#3bb9ac] dark:bg-[#3bb9ac]/20 dark:text-primary px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2">
                     <Clock className="h-4 w-4" />
                     {requests.length} Pending
                 </div>
@@ -180,7 +180,7 @@ export default function AdminVerificationPage() {
         <Card className="border-none shadow-xl bg-white dark:bg-gray-900 overflow-hidden">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3bba9c]"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3bb9ac]"></div>
             <p className="text-gray-500 font-medium text-sm">Fetching verification queue...</p>
           </div>
         ) : filteredRequests.length === 0 ? (
@@ -191,7 +191,7 @@ export default function AdminVerificationPage() {
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white">All Caught Up!</h3>
             <p className="text-gray-500 mt-2 max-w-md">There are no pending verification requests {searchQuery ? "matching your search" : "at the moment"}.</p>
             {searchQuery && (
-                 <Button onClick={() => setSearchQuery("")} variant="link" className="mt-2 text-[#3bba9c]">Clear Search</Button>
+                 <Button onClick={() => setSearchQuery("")} variant="link" className="mt-2 text-[#3bb9ac]">Clear Search</Button>
             )}
             {!searchQuery && (
                  <Button onClick={fetchRequests} variant="outline" className="mt-8 rounded-xl px-8">Refresh List</Button>
@@ -212,7 +212,7 @@ export default function AdminVerificationPage() {
                         <TableRow key={request.user_id} className="group hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors border-b border-gray-100 dark:border-gray-800">
                             <TableCell className="py-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#3bba9c] to-purple-400 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#3bb9ac] to-primary flex items-center justify-center text-white font-bold text-sm shadow-md">
                                         {request.name.charAt(0)}
                                     </div>
                                     <div>
@@ -233,7 +233,7 @@ export default function AdminVerificationPage() {
                                     onClick={() => setSelectedRequest(request)}
                                     variant="outline" 
                                     size="sm"
-                                    className="rounded-lg h-9 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-[#3bba9c] hover:text-[#3bba9c] group/btn transition-all"
+                                    className="rounded-lg h-9 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-[#3bb9ac] hover:text-[#3bb9ac] group/btn transition-all"
                                 >
                                     Review Photos
                                     <Eye className="h-3.5 w-3.5 ml-2 group-hover/btn:scale-110 transition-transform" />
@@ -253,7 +253,7 @@ export default function AdminVerificationPage() {
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-none bg-white dark:bg-gray-900 shadow-2xl">
             {selectedRequest && (
                 <>
-                    <DialogHeader className="p-6 bg-gradient-to-r from-[#3bba9c] to-[#6A5ACD] text-white">
+                    <DialogHeader className="p-6 bg-gradient-to-r from-[#3bb9ac] to-[#6A5ACD] text-white">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white font-bold text-xl border border-white/30">
@@ -278,7 +278,7 @@ export default function AdminVerificationPage() {
                                     <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
                                         <ImageIcon className="h-3 w-3 text-blue-500" /> Original Profile
                                     </h4>
-                                    <a href={selectedRequest.comparison_photo_url} target="_blank" rel="noreferrer" className="text-[10px] text-[#3bba9c] hover:underline flex items-center gap-1 font-medium">
+                                    <a href={selectedRequest.comparison_photo_url} target="_blank" rel="noreferrer" className="text-[10px] text-[#3bb9ac] hover:underline flex items-center gap-1 font-medium">
                                         Full Image <ExternalLink className="h-2.5 w-2.5" />
                                     </a>
                                 </div>

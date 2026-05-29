@@ -80,7 +80,7 @@ export function Navbar() {
                 className="h-10 w-auto object-contain"
                 priority
               />
-              <span className="text-xl font-black tracking-tighter bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+              <span className="text-xl font-black tracking-tighter bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
                 Manavizha
               </span>
             </motion.div>
@@ -94,10 +94,10 @@ export function Navbar() {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="text-gray-700 dark:text-gray-300 hover:text-[#3bba9c] transition-colors font-bold uppercase tracking-widest text-[10px] relative group"
+                className="text-gray-700 dark:text-gray-300 hover:text-[#3bb9ac] transition-colors font-bold uppercase tracking-widest text-[10px] relative group"
               >
                 {item}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#1F4068] to-[#3bba9c] group-hover:w-full transition-all duration-300" />
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#1F4068] to-[#3bb9ac] group-hover:w-full transition-all duration-300" />
               </motion.a>
             ))}
             
@@ -113,7 +113,7 @@ export function Navbar() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="rounded-full border-indigo-500/20 bg-white/40 hover:bg-indigo-50 text-[#3bba9c] font-bold text-[10px] uppercase tracking-widest px-6 h-9 backdrop-blur-sm"
+                      className="rounded-full border-indigo-500/20 bg-white/40 hover:bg-indigo-50 text-[#3bb9ac] font-bold text-[10px] uppercase tracking-widest px-6 h-9 backdrop-blur-sm"
                       onClick={() => window.location.href = `/dashboard/profile/${user.id}`}
                     >
                       Profile Preview
@@ -121,7 +121,7 @@ export function Navbar() {
                   )}
                   <Button
                     size="sm"
-                    className="rounded-full bg-[#3bba9c] hover:bg-[#1F4068] text-white shadow-lg hover:shadow-emerald-500/20 transition-all px-6 h-9 font-bold text-[10px] uppercase tracking-widest"
+                    className="rounded-full bg-[#3bb9ac] hover:bg-[#1F4068] text-white shadow-lg hover:shadow-emerald-500/20 transition-all px-6 h-9 font-bold text-[10px] uppercase tracking-widest"
                     onClick={() => window.location.href = dashboardPath}
                   >
                     Dashboard
@@ -130,7 +130,7 @@ export function Navbar() {
               ) : (
                 <Button
                   size="sm"
-                  className="rounded-full bg-[#3bba9c] hover:bg-[#1F4068] text-white shadow-lg hover:shadow-emerald-500/20 transition-all px-8 h-9 font-bold text-[10px] uppercase tracking-widest"
+                  className="rounded-full bg-[#3bb9ac] hover:bg-[#1F4068] text-white shadow-lg hover:shadow-emerald-500/20 transition-all px-8 h-9 font-bold text-[10px] uppercase tracking-widest"
                   onClick={() => setIsLoginOpen(true)}
                 >
                   Login
@@ -140,7 +140,7 @@ export function Navbar() {
           </div>
 
           <button
-            className="md:hidden p-2 text-[#3bba9c]"
+            className="md:hidden p-2 text-[#3bb9ac]"
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle menu"
           >
@@ -182,7 +182,7 @@ export function Navbar() {
                 <a
                   key={item}
                   href={item === "Horoscope" ? "/horoscope" : `#${item.toLowerCase()}`}
-                  className="block text-[#3bba9c] font-bold text-[10px] uppercase tracking-widest py-2"
+                  className="block text-[#3bb9ac] font-bold text-[10px] uppercase tracking-widest py-2"
                   onClick={() => setIsOpen(false)}
                 >
                   {item}
@@ -195,7 +195,7 @@ export function Navbar() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="w-full rounded-full border-indigo-500/20 text-[#3bba9c] font-bold text-[10px] uppercase tracking-widest"
+                        className="w-full rounded-full border-indigo-500/20 text-[#3bb9ac] font-bold text-[10px] uppercase tracking-widest"
                         onClick={() => {
                           window.location.href = `/dashboard/profile/${user.id}`
                           setIsOpen(false)
@@ -206,7 +206,7 @@ export function Navbar() {
                     )}
                     <Button
                       size="sm"
-                      className="w-full rounded-full bg-[#3bba9c] text-white font-bold text-[10px] uppercase tracking-widest"
+                      className="w-full rounded-full bg-[#3bb9ac] text-white font-bold text-[10px] uppercase tracking-widest"
                       onClick={() => {
                         window.location.href = dashboardPath
                         setIsOpen(false)
@@ -218,7 +218,7 @@ export function Navbar() {
                 ) : (
                   <Button
                     size="sm"
-                    className="w-full rounded-full bg-[#3bba9c] text-white font-bold text-[10px] uppercase tracking-widest"
+                    className="w-full rounded-full bg-[#3bb9ac] text-white font-bold text-[10px] uppercase tracking-widest"
                     onClick={() => {
                       setIsLoginOpen(true)
                       setIsOpen(false)

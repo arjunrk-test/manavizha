@@ -42,7 +42,7 @@ function FilterInput({ value, onChange, placeholder, icon: Icon = Search, type =
                 value={value || ""}
                 onChange={e => onChange(e.target.value)}
                 placeholder={placeholder || "Search..."}
-                className={`w-full ${Icon ? 'pl-9' : 'pl-3'} pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3bba9c]/20 focus:border-[#3bba9c] transition-all ${className}`}
+                className={`w-full ${Icon ? 'pl-9' : 'pl-3'} pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3bb9ac]/20 focus:border-[#3bb9ac] transition-all ${className}`}
             />
         </div>
     )
@@ -53,7 +53,7 @@ function FilterSelect({ value, onChange, options, placeholder }: { value: string
         <select
             value={value}
             onChange={e => onChange(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#3bba9c]/20 focus:border-[#3bba9c] transition-all appearance-none"
+            className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#3bb9ac]/20 focus:border-[#3bb9ac] transition-all appearance-none"
             style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: `right 0.5rem center`, backgroundRepeat: `no-repeat`, backgroundSize: `1.5em 1.5em`, paddingRight: `2.5rem` }}
         >
             <option value="">{placeholder}</option>
@@ -206,13 +206,13 @@ function ReferralPartnerProfilesListContent() {
 
     if (isLoading) return (
         <div className="min-h-screen flex items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bba9c]" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bb9ac]" />
         </div>
     )
 
     return (
         <div className="min-h-screen relative">
-            <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+            <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] via-[#3bb9ac] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
             <div className="fixed inset-0 bg-white/40 dark:bg-[#181818]/40" />
             <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
             <div className="fixed inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px] opacity-30" />
@@ -225,12 +225,12 @@ function ReferralPartnerProfilesListContent() {
             <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
                 <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        {genderFilter === "Male" ? <User className="h-6 w-6 text-blue-600" /> : genderFilter === "Female" ? <User className="h-6 w-6 text-pink-600" /> : <Users className="h-6 w-6 text-[#3bba9c]" />}
+                        {genderFilter === "Male" ? <User className="h-6 w-6 text-blue-600" /> : genderFilter === "Female" ? <User className="h-6 w-6 text-primary" /> : <Users className="h-6 w-6 text-[#3bb9ac]" />}
                         <div>
                             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h1>
                             <p className="text-xs text-gray-500">
                                 {filteredProfiles.length} of {allProfiles.length} profile{allProfiles.length !== 1 ? "s" : ""}
-                                {hasFilters && <span className="ml-1 text-[#3bba9c]">(filtered)</span>}
+                                {hasFilters && <span className="ml-1 text-[#3bb9ac]">(filtered)</span>}
                             </p>
                         </div>
                     </div>
@@ -253,7 +253,7 @@ function ReferralPartnerProfilesListContent() {
                     {/* Filter Bar */}
                     <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/60 dark:border-gray-700/60 p-5">
                         <div className="flex items-center gap-2 mb-4">
-                            <Search className="h-5 w-5 text-[#3bba9c]" />
+                            <Search className="h-5 w-5 text-[#3bb9ac]" />
                             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Filter Profiles</h2>
                             {hasFilters && (
                                 <span className="ml-auto text-sm text-gray-500 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full">
@@ -272,7 +272,7 @@ function ReferralPartnerProfilesListContent() {
                             </div>
                             <div className="space-y-1.5 min-w-[140px]">
                                 <label className="text-xs font-medium text-gray-600 dark:text-gray-400 ml-1">Age</label>
-                                <div className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden focus-within:ring-2 focus-within:ring-[#3bba9c]/20 focus-within:border-[#3bba9c] transition-all">
+                                <div className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden focus-within:ring-2 focus-within:ring-[#3bb9ac]/20 focus-within:border-[#3bb9ac] transition-all">
                                     <select
                                         value={filters.ageOp}
                                         onChange={e => setFilter("ageOp", e.target.value)}
@@ -355,11 +355,11 @@ function ReferralPartnerProfilesListContent() {
                                                         className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
                                                         onClick={() => router.push(`/referral-partner/profiles/${profile.user_id}`)}
                                                     >
-                                                        <TableCell className="font-medium text-[#3bba9c] dark:text-emerald-400">{profile.name || "Unknown"}</TableCell>
+                                                        <TableCell className="font-medium text-[#3bb9ac] dark:text-emerald-400">{profile.name || "Unknown"}</TableCell>
                                                         <TableCell>{profile.phone}</TableCell>
                                                         <TableCell>{profile.age || "N/A"}</TableCell>
                                                         <TableCell>
-                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${profile.sex?.toLowerCase().includes("female") ? "bg-[#FF1493]/10 text-[#FF1493]" : "bg-blue-100 text-blue-700"
+                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${profile.sex?.toLowerCase().includes("female") ? "bg-[#3bb9ac]/10 text-[#3bb9ac]" : "bg-blue-100 text-blue-700"
                                                                 }`}>
                                                                 {profile.sex || "N/A"}
                                                             </span>
@@ -370,7 +370,7 @@ function ReferralPartnerProfilesListContent() {
                                                         <TableCell className="text-right">
                                                             <button
                                                                 onClick={(e) => handleMarkAsMarriedClick(e, profile.user_id)}
-                                                                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md border-2 border-[#FF1493]/40 text-[#FF1493] bg-[#FF1493]/10 hover:bg-[#FF1493]/20 hover:border-[#FF1493]/60 transition-colors cursor-pointer"
+                                                                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md border-2 border-[#3bb9ac]/40 text-[#3bb9ac] bg-[#3bb9ac]/10 hover:bg-[#3bb9ac]/20 hover:border-[#3bb9ac]/60 transition-colors cursor-pointer"
                                                             >
                                                                 <HeartHandshake className="h-4 w-4" />
                                                                 Mark as Married
@@ -412,14 +412,14 @@ function ReferralPartnerProfilesListContent() {
                                                         className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                                                         onClick={() => router.push(`/referral-partner/profiles/${profile.user_id}`)}
                                                     >
-                                                        <TableCell className="font-medium text-[#3bba9c] dark:text-emerald-400 flex items-center gap-2">
+                                                        <TableCell className="font-medium text-[#3bb9ac] dark:text-emerald-400 flex items-center gap-2">
                                                             {profile.name || "Unknown"}
-                                                            <span className="bg-[#FF1493]/10 text-[#FF1493] text-[10px] uppercase font-bold px-1.5 py-0.5 rounded">Married</span>
+                                                            <span className="bg-[#3bb9ac]/10 text-[#3bb9ac] text-[10px] uppercase font-bold px-1.5 py-0.5 rounded">Married</span>
                                                         </TableCell>
                                                         <TableCell>{profile.phone}</TableCell>
                                                         <TableCell>{profile.age || "N/A"}</TableCell>
                                                         <TableCell>
-                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${profile.sex?.toLowerCase().includes("female") ? "bg-[#FF1493]/10 text-[#FF1493]" : "bg-blue-100 text-blue-700"
+                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${profile.sex?.toLowerCase().includes("female") ? "bg-[#3bb9ac]/10 text-[#3bb9ac]" : "bg-blue-100 text-blue-700"
                                                                 }`}>
                                                                 {profile.sex || "N/A"}
                                                             </span>
@@ -441,10 +441,10 @@ function ReferralPartnerProfilesListContent() {
 
             {/* Confirmation Dialog */}
             <AlertDialog open={!!selectedProfileForMarriage} onOpenChange={(open) => !open && setSelectedProfileForMarriage(null)}>
-                <AlertDialogContent className="bg-white dark:bg-gray-900 border-2 border-[#FF1493]/30 dark:border-[#FF1493]/60 shadow-2xl">
+                <AlertDialogContent className="bg-white dark:bg-gray-900 border-2 border-[#3bb9ac]/30 dark:border-[#3bb9ac]/60 shadow-2xl">
                     <AlertDialogHeader>
-                        <div className="mx-auto w-12 h-12 bg-[#FF1493]/10 dark:bg-[#FF1493]/20 rounded-full flex items-center justify-center mb-4">
-                            <AlertTriangle className="h-6 w-6 text-[#FF1493]" />
+                        <div className="mx-auto w-12 h-12 bg-[#3bb9ac]/10 dark:bg-[#3bb9ac]/20 rounded-full flex items-center justify-center mb-4">
+                            <AlertTriangle className="h-6 w-6 text-[#3bb9ac]" />
                         </div>
                         <AlertDialogTitle className="text-center text-xl text-gray-900 dark:text-white">
                             Confirm Marriage Status
@@ -463,7 +463,7 @@ function ReferralPartnerProfilesListContent() {
                         <AlertDialogCancel className="w-full sm:w-auto mt-0 border-2 border-gray-400 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold">Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={confirmMarkAsMarried}
-                            className="w-full sm:w-auto bg-gradient-to-r from-[#FF1493] to-[#3bba9c] hover:opacity-90 text-white border-0 font-semibold shadow-lg shadow-[#FF1493]/20"
+                            className="w-full sm:w-auto bg-gradient-to-r from-[#3bb9ac] to-[#3bb9ac] hover:opacity-90 text-white border-0 font-semibold shadow-lg shadow-[#3bb9ac]/20"
                         >
                             Yes, Mark as Married
                         </AlertDialogAction>
@@ -478,7 +478,7 @@ export default function ReferralPartnerProfilesListPage() {
     return (
         <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bba9c]" />
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bb9ac]" />
             </div>
         }>
             <ReferralPartnerProfilesListContent />

@@ -129,16 +129,16 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
   return (
     <div className="space-y-8">
       {educationDetails.map((edu, index) => (
-        <div key={`education-${index}`} className="sds-glass rounded-[2.5rem] p-10 border-2 border-indigo-50/50 space-y-10 relative overflow-hidden group shadow-[0_20px_50px_rgba(59,186,156,0.05)] bg-gradient-to-br from-white/40 to-transparent">
+        <div key={`education-${index}`} className="sds-glass rounded-[2.5rem] p-10 border-2 border-indigo-50/50 space-y-10 relative overflow-hidden group shadow-[0_20px_50px_rgba(59,185,172,0.05)] bg-gradient-to-br from-white/40 to-transparent">
           <div className="flex items-center justify-between border-b border-black/[0.03] pb-8">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
-                <GraduationCap className="h-6 w-6 text-[#3bba9c]" />
+              <div className="w-12 h-12 rounded-2xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
+                <GraduationCap className="h-6 w-6 text-[#3bb9ac]" />
               </div>
               <div>
-                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-1">Education</h4>
+                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-1">Education</h4>
                 <h3 className="text-2xl font-light text-gray-900 tracking-tight">
-                  Qualification <span className="font-bold text-[#3bba9c]/40">{index + 1}</span>
+                  Qualification <span className="font-bold text-[#3bb9ac]/40">{index + 1}</span>
                 </h3>
               </div>
             </div>
@@ -148,7 +148,7 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
                 variant="ghost"
                 size="sm"
                 onClick={() => removeEducation(index)}
-                className="h-12 px-6 rounded-2xl text-rose-500 hover:bg-rose-50/80 font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border border-transparent hover:border-rose-100"
+                className="h-12 px-6 rounded-2xl text-primary hover:bg-primary font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border border-transparent hover:border-primary"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Remove
@@ -255,7 +255,7 @@ export function EducationalDetailsStep({ formData, onChange }: EducationalDetail
       <Button
         type="button"
         onClick={addEducation}
-        className="h-24 w-full rounded-[2.5rem] bg-[#3bba9c]/[0.02] text-[#3bba9c] border-2 border-dashed border-indigo-100 hover:bg-indigo-50/50 hover:border-indigo-300 transition-all duration-500 font-black text-[11px] uppercase tracking-[0.4em] group"
+        className="h-24 w-full rounded-[2.5rem] bg-[#3bb9ac]/[0.02] text-[#3bb9ac] border-2 border-dashed border-indigo-100 hover:bg-indigo-50/50 hover:border-indigo-300 transition-all duration-500 font-black text-[11px] uppercase tracking-[0.4em] group"
       >
         <Plus className="h-6 w-6 mr-4 transition-transform group-hover:rotate-90 group-hover:scale-110" />
         Add More Education

@@ -258,7 +258,7 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
 
     if (isLoading) return (
         <div className="h-full flex flex-col items-center justify-center space-y-4 py-20">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-100 border-t-[#3bba9c]" />
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-100 border-t-[#3bb9ac]" />
             <p className="text-gray-400 text-sm font-medium animate-pulse">Loading Profile...</p>
         </div>
     )
@@ -279,9 +279,9 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
         <div className="min-h-screen pb-24 relative w-full h-full overflow-y-auto no-scrollbar">
             {/* Background Orbs */}
             <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#1A3060]/40 via-[#3bba9c]/40 via-[#FF1493]/40 to-[#FFA500]/40 bg-[length:200%_auto] animate-gradient" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#1A3060]/40 via-[#3bb9ac]/40 via-[#3bb9ac]/40 to-[#FFA500]/40 bg-[length:200%_auto] animate-gradient" />
                 <div className="absolute inset-0 bg-[#FAFAFA]/40" />
-                <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-[#3bba9c]/20 rounded-full blur-[140px] animate-float" />
+                <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-[#3bb9ac]/20 rounded-full blur-[140px] animate-float" />
                 <div className="absolute top-1/2 -right-32 w-[700px] h-[700px] bg-amber-500/10 rounded-full blur-[140px] animate-float" style={{ animationDelay: '-10s' }} />
                 <div className="absolute -bottom-32 left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-indigo-500/10 rounded-full blur-[150px]" />
             </div>
@@ -304,11 +304,11 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                                         {formatActivityTime(profile.last_active) === "Online" ? "Online Now" : formatActivityTime(profile.last_active)}
                                     </Badge>
                                 )}
-                                <div className="h-7 px-3 rounded-full bg-[#F3F4FF] text-[#3bba9c] text-[9px] font-black flex items-center tracking-widest uppercase border border-[#E0E2FF]">
+                                <div className="h-7 px-3 rounded-full bg-[#F3F4FF] text-[#3bb9ac] text-[9px] font-black flex items-center tracking-widest uppercase border border-[#E0E2FF]">
                                     <ShieldCheck className="h-3.5 w-3.5 mr-2" /> Verified
                                 </div>
                                 {profile.isPremium && (
-                                    <div className={cn("h-7 px-3 rounded-full text-white text-[9px] font-black flex items-center tracking-widest uppercase shadow-md", profile.premiumPlan === 'elite' ? 'bg-[#3bba9c]' : profile.premiumPlan === 'prime_gold' ? 'bg-amber-500' : 'bg-pink-500')}>
+                                    <div className={cn("h-7 px-3 rounded-full text-white text-[9px] font-black flex items-center tracking-widest uppercase shadow-md", profile.premiumPlan === 'elite' ? 'bg-[#3bb9ac]' : profile.premiumPlan === 'prime_gold' ? 'bg-amber-500' : 'bg-primary')}>
                                         <Gem className="h-3.5 w-3.5 mr-2" /> {profile.premiumPlan?.replace(/_/g, ' ')}
                                     </div>
                                 )}
@@ -319,11 +319,11 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                                 </h1>
                                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-gray-900/40 text-lg font-bold tracking-tight">
                                     <span className="text-gray-900">{detailedAge}</span>
-                                    <span className="w-1.5 h-1.5 rounded-full bg-[#3bba9c]/10" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#3bb9ac]/10" />
                                     <span className="text-gray-900">{detailedHeight}</span>
-                                    <span className="w-1.5 h-1.5 rounded-full bg-[#3bba9c]/10" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#3bb9ac]/10" />
                                     <span className="text-gray-900">{profile.marital_status}</span>
-                                    <span className="w-1.5 h-1.5 rounded-full bg-[#3bba9c]/10" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#3bb9ac]/10" />
                                     <span className="text-gray-900 lowercase font-medium">Created by <span className="text-indigo-900 font-black uppercase text-xs tracking-widest">{profile.created_by}</span></span>
                                 </div>
                             </div>
@@ -333,12 +333,12 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                     <div className="flex flex-col items-end gap-10">
                         <div className="space-y-4 text-right">
                             {shortlistedMeDate && <div className="flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest text-indigo-600"><HeartHandshake className="h-4 w-4 shadow-sm" /> <span>{profile.sex?.toLowerCase() === 'male' ? 'He' : 'She'} shortlisted you on {formatToDDMMYYYY(shortlistedMeDate).replace(/-/g, '.')}</span></div>}
-                            {iLikedDate && iLikedStatus !== 'accepted' && likedMeStatus !== 'accepted' && !isMutual && <div className="flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest text-rose-500"><Heart className="h-4 w-4" /> <span>You sent {isMale ? 'him' : 'her'} an interest — {formatToDDMMYYYY(iLikedDate).replace(/-/g, '.')}</span></div>}
+                            {iLikedDate && iLikedStatus !== 'accepted' && likedMeStatus !== 'accepted' && !isMutual && <div className="flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest text-primary"><Heart className="h-4 w-4" /> <span>You sent {isMale ? 'him' : 'her'} an interest — {formatToDDMMYYYY(iLikedDate).replace(/-/g, '.')}</span></div>}
                             {(isMutual || iLikedStatus === 'accepted' || likedMeStatus === 'accepted') && <div className="flex items-center justify-end gap-3 text-[10.5px] font-black uppercase tracking-widest text-emerald-600"><CheckCircle2 className="h-4 w-4" /> <span>{isMale ? 'He' : 'She'} accepted your interest on {formatToDDMMYYYY(likedMeDate || iLikedDate).replace(/-/g, '.')}</span></div>}
                             {lastViewedMeDate && <div className="flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest text-sky-600"><Eye className="h-4 w-4" /> <span>{isMale ? 'He' : 'She'} viewed your profile {formatToDDMMYYYY(lastViewedMeDate).replace(/-/g, '.')}</span></div>}
                         </div>
                         <div className="flex items-center gap-4">
-                            <Button onClick={handleShortlist} className={cn("h-[3.5rem] px-8 rounded-full font-bold text-[10px] uppercase tracking-[0.2em] shadow-xl transition-all group", isShortlisted ? 'bg-[#3bba9c] text-white hover:bg-[#2fa085] shadow-[#3bba9c]/20' : 'bg-white text-gray-400 border border-gray-100 hover:bg-gray-50')}>
+                            <Button onClick={handleShortlist} className={cn("h-[3.5rem] px-8 rounded-full font-bold text-[10px] uppercase tracking-[0.2em] shadow-xl transition-all group", isShortlisted ? 'bg-[#3bb9ac] text-white hover:bg-[#2fa085] shadow-[#3bb9ac]/20' : 'bg-white text-gray-400 border border-gray-100 hover:bg-gray-50')}>
                                 <BookmarkIcon className={cn("h-4 w-4 mr-2 transition-transform group-hover:scale-110", isShortlisted && "fill-current")} />
                                 {isShortlisted ? 'Shortlisted' : 'Shortlist'}
                             </Button>
@@ -355,7 +355,7 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                                 <DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-[3.5rem] w-[3.5rem] rounded-full bg-white border-gray-100 shadow-lg hover:bg-gray-50 transition-all text-gray-900"><MoreVertical className="h-5 w-5" /></Button></DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-64 rounded-[2rem] p-3 z-50 shadow-2xl bg-white border border-gray-100 overflow-hidden">
                                     <DropdownMenuItem className="rounded-2xl p-4 text-gray-500 font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:bg-gray-50 transition-colors"><UserMinus className="h-5 w-5 mr-3" /> Skip Profile</DropdownMenuItem>
-                                    <DropdownMenuItem className="rounded-2xl p-4 text-rose-500 font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:bg-rose-50 transition-colors"><UserX className="h-5 w-5 mr-3" /> Block Member</DropdownMenuItem>
+                                    <DropdownMenuItem className="rounded-2xl p-4 text-primary font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:bg-primary transition-colors"><UserX className="h-5 w-5 mr-3" /> Block Member</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
@@ -388,7 +388,7 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                             {photos.length > 1 && (
                                 <div className="flex gap-4 px-2 pb-2 overflow-x-auto no-scrollbar">
                                     {photos.map((p, i) => (
-                                        <button key={i} onClick={() => setCurrentPhotoIndex(i)} className={cn("w-16 h-16 rounded-2xl overflow-hidden border-[3px] shrink-0 transition-all", i === currentPhotoIndex ? "border-[#3bba9c] scale-105 shadow-md" : "border-transparent opacity-50 hover:opacity-100")}>
+                                        <button key={i} onClick={() => setCurrentPhotoIndex(i)} className={cn("w-16 h-16 rounded-2xl overflow-hidden border-[3px] shrink-0 transition-all", i === currentPhotoIndex ? "border-[#3bb9ac] scale-105 shadow-md" : "border-transparent opacity-50 hover:opacity-100")}>
                                             <img src={p} className="w-full h-full object-cover" />
                                         </button>
                                     ))}
@@ -547,8 +547,8 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
 }
 
 function Section({ title, icon, theme, children }: { title: string, icon: React.ReactNode, theme: string, children: React.ReactNode }) {
-    const bgColor = theme === 'indigo' ? 'bg-indigo-50' : theme === 'amber' ? 'bg-amber-50' : theme === 'emerald' ? 'bg-emerald-50' : theme === 'rose' ? 'bg-rose-50' : 'bg-sky-50';
-    const textColor = theme === 'indigo' ? 'text-indigo-600' : theme === 'amber' ? 'text-amber-600' : theme === 'emerald' ? 'text-emerald-600' : theme === 'rose' ? 'text-rose-600' : 'text-sky-600';
+    const bgColor = theme === 'indigo' ? 'bg-indigo-50' : theme === 'amber' ? 'bg-amber-50' : theme === 'emerald' ? 'bg-emerald-50' : theme === 'rose' ? 'bg-primary' : 'bg-sky-50';
+    const textColor = theme === 'indigo' ? 'text-indigo-600' : theme === 'amber' ? 'text-amber-600' : theme === 'emerald' ? 'text-emerald-600' : theme === 'rose' ? 'text-primary' : 'text-sky-600';
     
     return (
         <div className="bg-white rounded-[3rem] p-8 shadow-sm border border-gray-50 space-y-10">
@@ -570,10 +570,10 @@ function DetailRow({ label, value, isLocked, isPremiumViewer }: { label: string,
             if (isPremiumViewer && revealed) return (
                 <div className="flex flex-wrap items-center justify-end gap-2">
                     <span className="text-sm font-bold text-[#1A1A1A] break-words">{value}</span>
-                    <button onClick={() => setRevealed(false)} className="shrink-0 text-[11px] text-[#3bba9c] hover:underline uppercase tracking-widest font-black bg-indigo-50 px-2 py-0.5 rounded">Hide</button>
+                    <button onClick={() => setRevealed(false)} className="shrink-0 text-[11px] text-[#3bb9ac] hover:underline uppercase tracking-widest font-black bg-indigo-50 px-2 py-0.5 rounded">Hide</button>
                 </div>
             )
-            if (isPremiumViewer && !revealed) return <button onClick={() => setRevealed(true)} className="flex items-center gap-2 px-3 py-1 bg-[#F3F4FF] rounded-lg border border-[#E0E2FF] text-[#3bba9c] text-[9px] font-black uppercase tracking-widest shadow-sm hover:bg-[#E0E2FF] transition-all"><Crown className="h-3 w-3" /> Reveal</button>
+            if (isPremiumViewer && !revealed) return <button onClick={() => setRevealed(true)} className="flex items-center gap-2 px-3 py-1 bg-[#F3F4FF] rounded-lg border border-[#E0E2FF] text-[#3bb9ac] text-[9px] font-black uppercase tracking-widest shadow-sm hover:bg-[#E0E2FF] transition-all"><Crown className="h-3 w-3" /> Reveal</button>
             return <div className="flex items-center gap-2 text-gray-300 text-[10px] font-black uppercase tracking-widest"><Lock className="h-3 w-3" /> Locked</div>
         }
         return <span className="text-sm font-bold text-[#1A1A1A] tracking-tight">{value}</span>
@@ -592,7 +592,7 @@ function PrefRow({ label, value, isMatch }: { label: string, value?: string, isM
     return (
         <div className="flex items-center justify-between py-3 px-2 rounded-xl hover:bg-gray-50 transition-colors group/row">
             <div className="flex items-center gap-4">
-                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center shrink-0", isUnspecified ? 'bg-gray-100 text-gray-300' : isMatch ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-rose-500 text-white shadow-lg shadow-rose-500/20')}>
+                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center shrink-0", isUnspecified ? 'bg-gray-100 text-gray-300' : isMatch ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-primary text-white shadow-lg shadow-primary')}>
                     {isUnspecified ? <Info className="h-4 w-4" /> : isMatch ? <CheckCircle2 className="h-4 w-4" /> : <UserX className="h-4 w-4" />}
                 </div>
                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hoverRow:text-gray-900 transition-colors">{label}</span>

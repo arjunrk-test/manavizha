@@ -36,14 +36,14 @@ export function LanguageDropdown({
         >
           <div className="flex items-center gap-2 flex-wrap">
             {selectedCount > 0 ? (
-              <span className="text-[11px] font-black uppercase tracking-widest text-[#3bba9c]">
+              <span className="text-[11px] font-black uppercase tracking-widest text-[#3bb9ac]">
                 {selectedCount} DESIGNATED
               </span>
             ) : (
               <span className="text-gray-400 text-xs font-medium tracking-tight">{placeholder}</span>
             )}
           </div>
-          <ChevronDown className={`h-4 w-4 text-[#3bba9c]/40 transition-transform duration-500 ${isOpen ? "rotate-180" : ""}`} />
+          <ChevronDown className={`h-4 w-4 text-[#3bb9ac]/40 transition-transform duration-500 ${isOpen ? "rotate-180" : ""}`} />
         </button>
         {isOpen && (
           <div className="absolute z-[100] w-full mt-3 sds-glass rounded-3xl shadow-2xl border-indigo-50/50 backdrop-blur-3xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -55,8 +55,8 @@ export function LanguageDropdown({
                   onClick={() => onToggle(lang)}
                   className={`w-full px-5 py-3.5 rounded-2xl flex items-center gap-4 text-left transition-all duration-300 group ${
                     selectedLanguages.includes(lang) 
-                    ? "bg-[#3bba9c] text-white shadow-lg shadow-emerald-900/10" 
-                    : "hover:bg-indigo-50/50 text-gray-500 hover:text-[#3bba9c]"
+                    ? "bg-[#3bb9ac] text-white shadow-lg shadow-emerald-900/10" 
+                    : "hover:bg-indigo-50/50 text-gray-500 hover:text-[#3bb9ac]"
                   }`}
                 >
                   <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${

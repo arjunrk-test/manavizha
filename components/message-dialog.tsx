@@ -70,7 +70,7 @@ export function MessageDialog({
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px] rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-gray-900">
-                <div className="bg-gradient-to-r from-[#3bba9c] to-[#FF1493] p-6 text-white text-center">
+                <div className="bg-gradient-to-r from-[#3bb9ac] to-[#3bb9ac] p-6 text-white text-center">
                     <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-3">
                         <MessageCircle className="h-8 w-8 text-white" />
                     </div>
@@ -109,7 +109,7 @@ export function MessageDialog({
                     <Button 
                         onClick={handleSend} 
                         disabled={!message.trim() || isSending || !isPremium}
-                        className="rounded-xl h-11 px-8 bg-gradient-to-r from-[#3bba9c] to-[#FF1493] hover:opacity-90 text-white font-bold group"
+                        className="rounded-xl h-11 px-8 bg-gradient-to-r from-[#3bb9ac] to-[#3bb9ac] hover:opacity-90 text-white font-bold group"
                     >
                         {isSending ? "SENDING..." : (
                             <>

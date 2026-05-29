@@ -17,17 +17,17 @@ const features = [
     icon: Search,
     title: "Smart Matching",
     description: "Advanced AI-powered algorithm helps you find compatible matches based on your preferences, values, and lifestyle.",
-    color: "from-[#3bba9c] to-[#1F4068]",
-    bgColor: "from-[#3bba9c]/10 to-[#1F4068]/10 dark:from-[#3bba9c]/30 dark:to-[#1F4068]/30",
-    iconBg: "bg-[#3bba9c]",
+    color: "from-[#3bb9ac] to-[#1F4068]",
+    bgColor: "from-[#3bb9ac]/10 to-[#1F4068]/10 dark:from-[#3bb9ac]/30 dark:to-[#1F4068]/30",
+    iconBg: "bg-[#3bb9ac]",
   },
   {
     icon: Heart,
     title: "Privacy First",
     description: "Your data is secure with us. We prioritize your privacy and confidentiality with end-to-end encryption.",
-    color: "from-[#FF1493] to-[#3bba9c]",
-    bgColor: "from-[#FF1493]/10 to-[#3bba9c]/10 dark:from-[#FF1493]/30 dark:to-[#3bba9c]/30",
-    iconBg: "bg-[#FF1493]",
+    color: "from-[#3bb9ac] to-[#3bb9ac]",
+    bgColor: "from-[#3bb9ac]/10 to-[#3bb9ac]/10 dark:from-[#3bb9ac]/30 dark:to-[#3bb9ac]/30",
+    iconBg: "bg-[#3bb9ac]",
   },
   {
     icon: Verified,
@@ -41,8 +41,8 @@ const features = [
     icon: MessageCircle,
     title: "Easy Communication",
     description: "Connect and communicate with potential matches through our secure, user-friendly messaging platform.",
-    color: "from-[#FFA500] to-[#FF1493]",
-    bgColor: "from-[#FFA500]/10 to-[#FF1493]/10 dark:from-[#FFA500]/30 dark:to-[#FF1493]/30",
+    color: "from-[#FFA500] to-[#3bb9ac]",
+    bgColor: "from-[#FFA500]/10 to-[#3bb9ac]/10 dark:from-[#FFA500]/30 dark:to-[#3bb9ac]/30",
     iconBg: "bg-[#FFA500]",
   },
   {
@@ -59,7 +59,7 @@ export function FeaturesSection() {
   return (
     <section id="features" className="py-16 sm:py-24 lg:py-32 relative overflow-hidden">
       {/* Animated gradient background - lighter version */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#3bba9c]/50 via-[#FF1493]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#3bb9ac]/50 via-[#3bb9ac]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
       
       {/* White overlay to lighten */}
       <div className="absolute inset-0 bg-white/50 dark:bg-[#181818]/50" />
@@ -69,7 +69,7 @@ export function FeaturesSection() {
       
       {/* Modern geometric elements */}
       <div className="absolute top-10 right-10 w-20 h-20 sm:w-32 sm:h-32 border border-[#1F4068]/10 rounded-full blur-2xl hidden md:block" />
-      <div className="absolute bottom-10 left-10 w-16 h-16 sm:w-24 sm:h-24 border border-[#FF1493]/10 rotate-45 blur-xl hidden lg:block" />
+      <div className="absolute bottom-10 left-10 w-16 h-16 sm:w-24 sm:h-24 border border-[#3bb9ac]/10 rotate-45 blur-xl hidden lg:block" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
@@ -83,11 +83,11 @@ export function FeaturesSection() {
             initial={{ opacity: 0, scale: 0.8 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-[#1F4068]/20 to-[#3bba9c]/20 dark:from-[#1F4068]/50 dark:to-[#3bba9c]/50 text-[#1F4068] dark:text-[#3bba9c] font-medium mb-4 sm:mb-6 text-sm sm:text-base"
+            className="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-[#1F4068]/20 to-[#3bb9ac]/20 dark:from-[#1F4068]/50 dark:to-[#3bb9ac]/50 text-[#1F4068] dark:text-[#3bb9ac] font-medium mb-4 sm:mb-6 text-sm sm:text-base"
           >
             Why Choose Us
           </motion.span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient px-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient px-4">
             Everything You Need
           </h2>
           <p className="mt-4 text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed px-4">
@@ -107,7 +107,7 @@ export function FeaturesSection() {
                   className="flex-shrink-0 w-[90vw] sm:w-[400px] md:w-[420px] lg:w-[380px] xl:w-[400px] group relative"
                 >
                   {/* Gradient border effect */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300 -z-10" />
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300 -z-10" />
                   
                   {/* Main card */}
                   <div className="relative h-full rounded-2xl bg-white/80 dark:bg-[#181818]/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-800/50 overflow-hidden transition-all duration-300 group-hover:border-transparent group-hover:shadow-2xl">
@@ -132,7 +132,7 @@ export function FeaturesSection() {
                       </div>
                       
                       {/* Title */}
-                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-[#1F4068] group-hover:to-[#3bba9c] transition-all duration-300">
+                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-[#1F4068] group-hover:to-[#3bb9ac] transition-all duration-300">
                         {feature.title}
                       </h3>
                       
@@ -142,10 +142,10 @@ export function FeaturesSection() {
                       </p>
                       
                       {/* Learn more link with modern design */}
-                      <div className="inline-flex items-center gap-2 text-sm font-semibold text-[#1F4068] dark:text-[#3bba9c] cursor-pointer group/link">
+                      <div className="inline-flex items-center gap-2 text-sm font-semibold text-[#1F4068] dark:text-[#3bb9ac] cursor-pointer group/link">
                         <span className="relative">
                           Learn more
-                          <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#1F4068] to-[#3bba9c] group-hover/link:w-full transition-all duration-300" />
+                          <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#1F4068] to-[#3bb9ac] group-hover/link:w-full transition-all duration-300" />
                         </span>
                         <ArrowRight className="h-4 w-4 group-hover/link:translate-x-1 transition-transform duration-300" />
                       </div>
@@ -167,7 +167,7 @@ export function FeaturesSection() {
                   className="flex-shrink-0 w-[90vw] sm:w-[400px] md:w-[420px] lg:w-[380px] xl:w-[400px] group relative"
                 >
                   {/* Gradient border effect */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300 -z-10" />
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300 -z-10" />
                   
                   {/* Main card */}
                   <div className="relative h-full rounded-2xl bg-white/80 dark:bg-[#181818]/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-800/50 overflow-hidden transition-all duration-300 group-hover:border-transparent group-hover:shadow-2xl">
@@ -192,7 +192,7 @@ export function FeaturesSection() {
                       </div>
                       
                       {/* Title */}
-                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-[#1F4068] group-hover:to-[#3bba9c] transition-all duration-300">
+                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-[#1F4068] group-hover:to-[#3bb9ac] transition-all duration-300">
                         {feature.title}
                       </h3>
                       
@@ -202,10 +202,10 @@ export function FeaturesSection() {
                       </p>
                       
                       {/* Learn more link with modern design */}
-                      <div className="inline-flex items-center gap-2 text-sm font-semibold text-[#1F4068] dark:text-[#3bba9c] cursor-pointer group/link">
+                      <div className="inline-flex items-center gap-2 text-sm font-semibold text-[#1F4068] dark:text-[#3bb9ac] cursor-pointer group/link">
                         <span className="relative">
                           Learn more
-                          <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#1F4068] to-[#3bba9c] group-hover/link:w-full transition-all duration-300" />
+                          <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#1F4068] to-[#3bb9ac] group-hover/link:w-full transition-all duration-300" />
                         </span>
                         <ArrowRight className="h-4 w-4 group-hover/link:translate-x-1 transition-transform duration-300" />
                       </div>

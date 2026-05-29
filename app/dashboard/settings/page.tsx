@@ -271,7 +271,7 @@ export default function SettingsPage() {
             </div>
             <button
                 onClick={() => onChange(!checked)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-[#3bba9c]' : 'bg-gray-200 dark:bg-gray-700'}`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-[#3bb9ac]' : 'bg-gray-200 dark:bg-gray-700'}`}
             >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
@@ -280,7 +280,7 @@ export default function SettingsPage() {
 
     if (isLoading) return (
         <div className="min-h-screen flex items-center justify-center">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-100 border-t-[#3bba9c]" />
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-100 border-t-[#3bb9ac]" />
         </div>
     )
 
@@ -306,9 +306,9 @@ export default function SettingsPage() {
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`flex items-center gap-3 px-5 py-4 text-sm font-medium transition-all text-left ${activeTab === tab.id ? 'bg-[#3bba9c]/5 text-[#3bba9c] border-l-4 border-[#3bba9c]' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 border-l-4 border-transparent'}`}
+                                        className={`flex items-center gap-3 px-5 py-4 text-sm font-medium transition-all text-left ${activeTab === tab.id ? 'bg-[#3bb9ac]/5 text-[#3bb9ac] border-l-4 border-[#3bb9ac]' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 border-l-4 border-transparent'}`}
                                     >
-                                        <tab.icon className={`h-5 w-5 ${activeTab === tab.id ? 'text-[#3bba9c]' : 'text-gray-400'}`} />
+                                        <tab.icon className={`h-5 w-5 ${activeTab === tab.id ? 'text-[#3bb9ac]' : 'text-gray-400'}`} />
                                         {tab.label}
                                     </button>
                                 ))}
@@ -379,7 +379,7 @@ export default function SettingsPage() {
                                                 type="radio" name="callPref"
                                                 checked={settings.call_preference === opt}
                                                 onChange={() => handleSave({ call_preference: opt })}
-                                                className="h-4 w-4 text-[#3bba9c] focus:ring-[#3bba9c]"
+                                                className="h-4 w-4 text-[#3bb9ac] focus:ring-[#3bb9ac]"
                                             />
                                             <span className="text-sm font-medium">{opt}</span>
                                         </label>
@@ -396,14 +396,14 @@ export default function SettingsPage() {
                                     <p className="text-sm text-gray-500 mb-6 mt-2">Control who can view your verified mobile number.</p>
                                     <div className="space-y-4">
                                         <label className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800/20 rounded-xl cursor-pointer">
-                                            <input type="radio" checked={settings.mobile_privacy === 'show_all'} onChange={() => handleSave({ mobile_privacy: 'show_all' })} className="mt-1 h-4 w-4 text-[#3bba9c]" />
+                                            <input type="radio" checked={settings.mobile_privacy === 'show_all'} onChange={() => handleSave({ mobile_privacy: 'show_all' })} className="mt-1 h-4 w-4 text-[#3bb9ac]" />
                                             <div>
                                                 <span className="text-sm font-bold block">Let paid members view and contact me natively</span>
                                                 <span className="text-xs text-gray-500">Recommended for 10x better responses.</span>
                                             </div>
                                         </label>
                                         <label className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800/20 rounded-xl cursor-pointer">
-                                            <input type="radio" checked={settings.mobile_privacy === 'hidden'} onChange={() => handleSave({ mobile_privacy: 'hidden' })} className="mt-1 h-4 w-4 text-[#3bba9c]" />
+                                            <input type="radio" checked={settings.mobile_privacy === 'hidden'} onChange={() => handleSave({ mobile_privacy: 'hidden' })} className="mt-1 h-4 w-4 text-[#3bb9ac]" />
                                             <div>
                                                 <span className="text-sm font-bold block">Don't show my mobile number</span>
                                                 <span className="text-xs text-gray-500">Paid members can contact you only through secured messages.</span>
@@ -417,14 +417,14 @@ export default function SettingsPage() {
                                     <p className="text-sm text-gray-500 mb-6 mt-2">Manage how your astrological charts are displayed.</p>
                                     <div className="space-y-4">
                                         <label className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800/20 rounded-xl cursor-pointer">
-                                            <input type="radio" checked={settings.horoscope_privacy === 'visible_all'} onChange={() => handleSave({ horoscope_privacy: 'visible_all' })} className="mt-1 h-4 w-4 text-[#3bba9c]" />
+                                            <input type="radio" checked={settings.horoscope_privacy === 'visible_all'} onChange={() => handleSave({ horoscope_privacy: 'visible_all' })} className="mt-1 h-4 w-4 text-[#3bb9ac]" />
                                             <div>
                                                 <span className="text-sm font-bold block">Visible to all (Recommended)</span>
                                                 <span className="text-xs text-gray-500">Allows automatic compatibility matching to function properly across the platform.</span>
                                             </div>
                                         </label>
                                         <label className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800/20 rounded-xl cursor-pointer">
-                                            <input type="radio" checked={settings.horoscope_privacy === 'contacted_only'} onChange={() => handleSave({ horoscope_privacy: 'contacted_only' })} className="mt-1 h-4 w-4 text-[#3bba9c]" />
+                                            <input type="radio" checked={settings.horoscope_privacy === 'contacted_only'} onChange={() => handleSave({ horoscope_privacy: 'contacted_only' })} className="mt-1 h-4 w-4 text-[#3bb9ac]" />
                                             <div>
                                                 <span className="text-sm font-bold block">Visible only to active connections</span>
                                                 <span className="text-xs text-gray-500">Only members whom you've contacted or responded to can view it.</span>
@@ -444,14 +444,14 @@ export default function SettingsPage() {
                                 </div>
                                 <div className="space-y-4 max-w-lg">
                                     <label className="flex items-start gap-3 p-4 border border-gray-100 dark:border-gray-800 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                        <input type="radio" checked={settings.profile_privacy === 'show_all'} onChange={() => handleSave({ profile_privacy: 'show_all' })} className="mt-1 h-4 w-4 text-[#3bba9c]" />
+                                        <input type="radio" checked={settings.profile_privacy === 'show_all'} onChange={() => handleSave({ profile_privacy: 'show_all' })} className="mt-1 h-4 w-4 text-[#3bb9ac]" />
                                         <div>
                                             <span className="text-sm font-bold block">Show my Profile to all including visitors <span className="text-[10px] ml-2 px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full">Recommended</span></span>
                                             <span className="text-xs text-gray-500">This helps prospects share your profile securely with their family members who aren't registered.</span>
                                         </div>
                                     </label>
                                     <label className="flex items-start gap-3 p-4 border border-gray-100 dark:border-gray-800 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                        <input type="radio" checked={settings.profile_privacy === 'registered_only'} onChange={() => handleSave({ profile_privacy: 'registered_only' })} className="mt-1 h-4 w-4 text-[#3bba9c]" />
+                                        <input type="radio" checked={settings.profile_privacy === 'registered_only'} onChange={() => handleSave({ profile_privacy: 'registered_only' })} className="mt-1 h-4 w-4 text-[#3bb9ac]" />
                                         <div>
                                             <span className="text-sm font-bold block">Show my Profile to registered members only.</span>
                                         </div>
@@ -463,14 +463,14 @@ export default function SettingsPage() {
                         {/* PASSWORD TAB */}
                         {activeTab === "password" && (
                             <div className="space-y-6 animate-in fade-in flex flex-col items-center justify-center py-10 text-center">
-                                <div className="h-20 w-20 bg-[#3bba9c]/10 rounded-full flex items-center justify-center mb-4">
-                                    <Key className="h-10 w-10 text-[#3bba9c]" />
+                                <div className="h-20 w-20 bg-[#3bb9ac]/10 rounded-full flex items-center justify-center mb-4">
+                                    <Key className="h-10 w-10 text-[#3bb9ac]" />
                                 </div>
                                 <h2 className="text-2xl font-black">Change Your Password</h2>
                                 <p className="text-gray-500 max-w-sm">For security reasons, we send a secure, one-time password reset link to your verified email address.</p>
                                 <Button 
                                     onClick={handleSendPasswordReset} 
-                                    className="h-14 px-8 mt-6 bg-[#3bba9c] hover:bg-[#3a0066] rounded-full font-bold shadow-xl"
+                                    className="h-14 px-8 mt-6 bg-[#3bb9ac] hover:bg-[#3a0066] rounded-full font-bold shadow-xl"
                                 >
                                     <Mail className="h-5 w-5 mr-3" />
                                     Send Identity Reset Link
@@ -506,19 +506,19 @@ export default function SettingsPage() {
                         {/* BLOCKED TAB */}
                         {activeTab === "blocked" && (
                             <div className="space-y-6 animate-in fade-in">
-                                <h2 className="text-xl font-bold mb-2 text-rose-600">Blocked Profiles</h2>
+                                <h2 className="text-xl font-bold mb-2 text-primary">Blocked Profiles</h2>
                                 <p className="text-sm text-gray-500 mb-6">Profiles blocked here are restricted from viewing your data completely, and you will not see them either. Mutual invisibility is strictly enforced.</p>
                                 {blockedProfiles.length === 0 ? (
-                                    <div className="text-center py-20 px-4 bg-rose-50/50 rounded-2xl border border-dashed border-rose-200">
-                                        <UserX className="h-10 w-10 text-rose-300 mx-auto mb-3" />
+                                    <div className="text-center py-20 px-4 bg-primary rounded-2xl border border-dashed border-primary">
+                                        <UserX className="h-10 w-10 text-primary mx-auto mb-3" />
                                         <span className="text-gray-500 font-medium tracking-tight">You haven't blocked any profiles yet.</span>
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
                                         {blockedProfiles.map(p => (
-                                            <div key={p.user_id} className="flex items-center justify-between p-4 bg-rose-50/50 dark:bg-rose-900/10 rounded-xl border border-rose-100/50">
-                                                <span className="font-bold text-rose-900 dark:text-rose-100">{p.name || "Unknown Profile"}</span>
-                                                <Button variant="outline" size="sm" onClick={() => unblockProfile(p.user_id)} className="h-8 text-xs font-bold rounded-lg border-rose-200 text-rose-700 hover:bg-rose-100">
+                                            <div key={p.user_id} className="flex items-center justify-between p-4 bg-primary dark:bg-primary rounded-xl border border-primary">
+                                                <span className="font-bold text-primary dark:text-primary">{p.name || "Unknown Profile"}</span>
+                                                <Button variant="outline" size="sm" onClick={() => unblockProfile(p.user_id)} className="h-8 text-xs font-bold rounded-lg border-primary text-primary hover:bg-primary">
                                                     Unblock
                                                 </Button>
                                             </div>
@@ -533,8 +533,8 @@ export default function SettingsPage() {
                             <div className="space-y-6 animate-in fade-in">
 
                                 {/* Account Status Banner */}
-                                <div className={`flex items-center gap-3 p-4 rounded-2xl border font-semibold text-sm ${isCurrentlyDeactivated ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-green-50 border-green-200 text-green-700'}`}>
-                                    <div className={`h-2.5 w-2.5 rounded-full ${isCurrentlyDeactivated ? 'bg-rose-500' : 'bg-green-500 animate-pulse'}`} />
+                                <div className={`flex items-center gap-3 p-4 rounded-2xl border font-semibold text-sm ${isCurrentlyDeactivated ? 'bg-primary border-primary text-primary' : 'bg-green-50 border-green-200 text-green-700'}`}>
+                                    <div className={`h-2.5 w-2.5 rounded-full ${isCurrentlyDeactivated ? 'bg-primary' : 'bg-green-500 animate-pulse'}`} />
                                     {isCurrentlyDeactivated
                                         ? `Your account is currently Deactivated — hidden from all members until ${new Date(settings.deactivated_until).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`
                                         : 'Your account is currently Active and visible to members'}

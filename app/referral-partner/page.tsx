@@ -42,24 +42,24 @@ const benefits = [
     icon: TrendingUp,
     title: "Grow Your Business",
     description: "Scale your referral business with our comprehensive partner program and dedicated support team.",
-    color: "from-[#3bba9c] to-[#1F4068]",
-    bgColor: "from-[#3bba9c]/10 to-[#1F4068]/10 dark:from-[#3bba9c]/30 dark:to-[#1F4068]/30",
-    iconBg: "bg-[#3bba9c]",
+    color: "from-[#3bb9ac] to-[#1F4068]",
+    bgColor: "from-[#3bb9ac]/10 to-[#1F4068]/10 dark:from-[#3bb9ac]/30 dark:to-[#1F4068]/30",
+    iconBg: "bg-[#3bb9ac]",
   },
   {
     icon: Shield,
     title: "Trusted Platform",
     description: "Partner with a verified, secure platform trusted by thousands of families across the country.",
-    color: "from-[#FF1493] to-[#3bba9c]",
-    bgColor: "from-[#FF1493]/10 to-[#3bba9c]/10 dark:from-[#FF1493]/30 dark:to-[#3bba9c]/30",
-    iconBg: "bg-[#FF1493]",
+    color: "from-[#3bb9ac] to-[#3bb9ac]",
+    bgColor: "from-[#3bb9ac]/10 to-[#3bb9ac]/10 dark:from-[#3bb9ac]/30 dark:to-[#3bb9ac]/30",
+    iconBg: "bg-[#3bb9ac]",
   },
   {
     icon: Award,
     title: "Recognition & Rewards",
     description: "Earn badges, recognition, and exclusive rewards as you reach milestones in your referral journey.",
-    color: "from-[#FFA500] to-[#FF1493]",
-    bgColor: "from-[#FFA500]/10 to-[#FF1493]/10 dark:from-[#FFA500]/30 dark:to-[#FF1493]/30",
+    color: "from-[#FFA500] to-[#3bb9ac]",
+    bgColor: "from-[#FFA500]/10 to-[#3bb9ac]/10 dark:from-[#FFA500]/30 dark:to-[#3bb9ac]/30",
     iconBg: "bg-[#FFA500]",
   },
   {
@@ -110,7 +110,7 @@ export default function ReferralPartnerPage() {
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-14">
         {/* Animated gradient background */}
-        <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+        <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] via-[#3bb9ac] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
         
         {/* White overlay to lighten the gradient */}
         <div className="fixed inset-0 bg-white/40 dark:bg-[#181818]/40" />
@@ -231,8 +231,8 @@ export default function ReferralPartnerPage() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 text-sm font-medium text-gray-700 dark:text-gray-300 mb-6 sm:mb-8 shadow-sm"
             >
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF1493] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FF1493]"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3bb9ac] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#3bb9ac]"></span>
               </span>
               Join 500+ Active Partners
             </motion.div>
@@ -243,7 +243,7 @@ export default function ReferralPartnerPage() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 sm:mb-8 leading-tight"
             >
-              <span className="bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+              <span className="bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
                 Become a Referral Partner
               </span>
               <br />
@@ -271,7 +271,7 @@ export default function ReferralPartnerPage() {
               <Button
                 size="lg"
                 onClick={() => setIsLoginOpen(true)}
-                className="rounded-full bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] hover:from-[#3bba9c] hover:via-[#FF1493] hover:to-[#1F4068] text-white border-0 shadow-lg hover:shadow-xl transition-all px-8 py-6 text-lg font-semibold group"
+                className="rounded-full bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] hover:from-[#3bb9ac] hover:via-[#3bb9ac] hover:to-[#1F4068] text-white border-0 shadow-lg hover:shadow-xl transition-all px-8 py-6 text-lg font-semibold group"
               >
                 Get Started Now
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -279,7 +279,7 @@ export default function ReferralPartnerPage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border-2 border-gray-300 dark:border-gray-700 hover:border-[#3bba9c] text-gray-900 dark:text-white px-8 py-6 text-lg font-semibold"
+                className="rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border-2 border-gray-300 dark:border-gray-700 hover:border-[#3bb9ac] text-gray-900 dark:text-white px-8 py-6 text-lg font-semibold"
               >
                 Learn More
               </Button>
@@ -291,7 +291,7 @@ export default function ReferralPartnerPage() {
       {/* Benefits Section */}
       <section className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
         {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#3bba9c]/50 via-[#FF1493]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#3bb9ac]/50 via-[#3bb9ac]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
         
         {/* White overlay */}
         <div className="absolute inset-0 bg-white/50 dark:bg-[#181818]/50" />
@@ -348,7 +348,7 @@ export default function ReferralPartnerPage() {
       {/* How It Works Section */}
       <section className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
         {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] via-[#3bb9ac] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
         
         {/* White overlay */}
         <div className="absolute inset-0 bg-white/40 dark:bg-[#181818]/40" />
@@ -386,13 +386,13 @@ export default function ReferralPartnerPage() {
                 >
                   <div className="relative h-full p-6 sm:p-8 rounded-2xl bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 shadow-sm hover:shadow-xl transition-all duration-300 text-center">
                     <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] flex items-center justify-center text-white font-bold text-lg shadow-lg">
                         {step.number}
                       </div>
                     </div>
                     <div className="mt-6 mb-4 flex justify-center">
-                      <div className="p-4 rounded-xl bg-gradient-to-br from-[#3bba9c]/10 to-[#FF1493]/10 dark:from-[#3bba9c]/30 dark:to-[#FF1493]/30">
-                        <Icon className="h-8 w-8 text-[#3bba9c] dark:text-[#FF1493]" />
+                      <div className="p-4 rounded-xl bg-gradient-to-br from-[#3bb9ac]/10 to-[#3bb9ac]/10 dark:from-[#3bb9ac]/30 dark:to-[#3bb9ac]/30">
+                        <Icon className="h-8 w-8 text-[#3bb9ac] dark:text-[#3bb9ac]" />
                       </div>
                     </div>
                     <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-white">
@@ -403,7 +403,7 @@ export default function ReferralPartnerPage() {
                     </p>
                   </div>
                   {index < steps.length - 1 && (
-                    <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-gradient-to-r from-[#3bba9c] to-[#FF1493] -translate-y-1/2 z-0" />
+                    <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-gradient-to-r from-[#3bb9ac] to-[#3bb9ac] -translate-y-1/2 z-0" />
                   )}
                 </motion.div>
               )
@@ -415,7 +415,7 @@ export default function ReferralPartnerPage() {
       {/* CTA Section */}
       <section className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
         {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] via-[#3bb9ac] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
         
         {/* White overlay */}
         <div className="absolute inset-0 bg-white/40 dark:bg-[#181818]/40" />
@@ -441,7 +441,7 @@ export default function ReferralPartnerPage() {
             <Button
               size="lg"
               onClick={() => setIsLoginOpen(true)}
-              className="rounded-full bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] hover:from-[#3bba9c] hover:via-[#FF1493] hover:to-[#1F4068] text-white border-0 shadow-lg hover:shadow-xl transition-all px-8 py-6 text-lg font-semibold group"
+              className="rounded-full bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] hover:from-[#3bb9ac] hover:via-[#3bb9ac] hover:to-[#1F4068] text-white border-0 shadow-lg hover:shadow-xl transition-all px-8 py-6 text-lg font-semibold group"
             >
               Become a Partner Now
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -453,7 +453,7 @@ export default function ReferralPartnerPage() {
       {/* Contact Section */}
       <section id="contact" className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
         {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#3bba9c]/50 via-[#FF1493]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#3bb9ac]/50 via-[#3bb9ac]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
         
         {/* White overlay */}
         <div className="absolute inset-0 bg-white/50 dark:bg-[#181818]/50" />
@@ -478,16 +478,16 @@ export default function ReferralPartnerPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <a
                 href="mailto:arjun.rksaravanan@gmail.com"
-                className="flex items-center gap-3 px-6 py-4 rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 text-gray-900 dark:text-white hover:border-[#3bba9c] transition-all shadow-sm hover:shadow-md"
+                className="flex items-center gap-3 px-6 py-4 rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 text-gray-900 dark:text-white hover:border-[#3bb9ac] transition-all shadow-sm hover:shadow-md"
               >
-                <Mail className="h-5 w-5 text-[#3bba9c]" />
+                <Mail className="h-5 w-5 text-[#3bb9ac]" />
                 <span className="font-medium">arjun.rksaravanan@gmail.com</span>
               </a>
               <a
                 href="tel:+918072734996"
-                className="flex items-center gap-3 px-6 py-4 rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 text-gray-900 dark:text-white hover:border-[#3bba9c] transition-all shadow-sm hover:shadow-md"
+                className="flex items-center gap-3 px-6 py-4 rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 text-gray-900 dark:text-white hover:border-[#3bb9ac] transition-all shadow-sm hover:shadow-md"
               >
-                <Phone className="h-5 w-5 text-[#3bba9c]" />
+                <Phone className="h-5 w-5 text-[#3bb9ac]" />
                 <span className="font-medium">+91 8072734996</span>
               </a>
             </div>

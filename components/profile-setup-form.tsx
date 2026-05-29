@@ -3488,9 +3488,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Sidebar Navigation */}
           <div className="lg:col-span-3">
-            <div className="sds-glass rounded-[2.5rem] p-4 border-2 border-indigo-50 sticky top-24 overflow-hidden shadow-[0_20px_50px_rgba(59,186,156,0.05)]">
+            <div className="sds-glass rounded-[2.5rem] p-4 border-2 border-indigo-50 sticky top-24 overflow-hidden shadow-[0_20px_50px_rgba(59,185,172,0.05)]">
               <div className="p-6 border-b border-black/5 mb-6">
-                <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/50 mb-1">Profile Journey</h4>
+                <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/50 mb-1">Profile Journey</h4>
                 <h3 className="text-2xl font-light text-gray-900 tracking-tight">Step Breakdown</h3>
               </div>
 
@@ -3505,10 +3505,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                       key={step.id}
                       onClick={() => handleStepClick(index)}
                       className={`w-full text-left px-5 py-4 rounded-2xl transition-all duration-300 relative group flex items-center justify-between ${isActive
-                          ? "bg-[#3bba9c] text-white shadow-xl shadow-emerald-500/20"
+                          ? "bg-[#3bb9ac] text-white shadow-xl shadow-emerald-500/20"
                           : isCompleted
                             ? "bg-emerald-50/50 text-emerald-700 hover:bg-emerald-50 border border-emerald-100"
-                            : "hover:bg-[#3bba9c]/5 text-gray-400 hover:text-[#3bba9c]"
+                            : "hover:bg-[#3bb9ac]/5 text-gray-400 hover:text-[#3bb9ac]"
                         }`}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -3517,13 +3517,13 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                           {isCompleted ? (
                             <CheckCircle className="h-4 w-4 text-emerald-600" />
                           ) : (
-                            <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${isActive ? 'border-white/40' : 'border-gray-300 group-hover:border-[#3bba9c]/30'}`}>
+                            <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${isActive ? 'border-white/40' : 'border-gray-300 group-hover:border-[#3bb9ac]/30'}`}>
                               <span className="text-[8px] font-black">{index + 1}</span>
                             </div>
                           )}
                         </div>
                         <div className="min-w-0">
-                          <div className="text-[11px] font-black uppercase tracking-widest truncate group-hover:text-[#3bba9c] transition-colors">{step.title}</div>
+                          <div className="text-[11px] font-black uppercase tracking-widest truncate group-hover:text-[#3bb9ac] transition-colors">{step.title}</div>
                           {isCompleted && !isActive && <span className="text-[9px] font-black text-emerald-500/80 uppercase tracking-tighter">Verified</span>}
                         </div>
                       </div>
@@ -3541,15 +3541,15 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               {/* Header logic */}
               <div className="flex items-end justify-between mb-12 border-b border-black/5 pb-8">
                 <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#3bba9c]/40 mb-2">Phase {currentStep + 1} / {formSteps.length}</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#3bb9ac]/40 mb-2">Phase {currentStep + 1} / {formSteps.length}</h4>
                   <h2 className="text-5xl font-light text-gray-900 tracking-tight">
                     {formSteps[currentStep].title}
                   </h2>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-[#3bba9c] mb-2">Integrity Score</div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-[#3bb9ac] mb-2">Integrity Score</div>
                   <div className="flex items-center gap-4">
-                    <div className="text-4xl font-black text-[#3bba9c] tracking-tighter">{stepProgress}%</div>
+                    <div className="text-4xl font-black text-[#3bb9ac] tracking-tighter">{stepProgress}%</div>
                   </div>
                 </div>
               </div>
@@ -3600,7 +3600,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                     (currentStep === 9 && !hasPartnerPreferencesChanged()) || 
                     (currentStep === 10 && !hasReferralDetailsChanged())
                   }
-                  className="h-16 px-12 rounded-[2rem] bg-[#3bba9c] text-white font-black text-[12px] uppercase tracking-[0.2em] shadow-2xl shadow-indigo-500/40 hover:shadow-indigo-500/60 transition-all disabled:opacity-30 disabled:grayscale"
+                  className="h-16 px-12 rounded-[2rem] bg-[#3bb9ac] text-white font-black text-[12px] uppercase tracking-[0.2em] shadow-2xl shadow-indigo-500/40 hover:shadow-indigo-500/60 transition-all disabled:opacity-30 disabled:grayscale"
                 >
                   {isSaving ? (
                     <div className="flex items-center gap-3">

@@ -73,8 +73,8 @@ const PAPA_PULLIGAL_MOCK = [
 const TRADITIONAL_COLORS = {
   bg: '#ffffff',
   chartBorder: '#7e22ce',
-  chartHeaderBg: 'rgba(59, 186, 156, 0.05)', 
-  chartHeaderText: '#3bba9c',
+  chartHeaderBg: 'rgba(59,185,172, 0.05)', 
+  chartHeaderText: '#3bb9ac',
   tableHeaderBg: '#f8f9fc',
   tableBorder: '#e2e8f0',
   text: '#1f2937',

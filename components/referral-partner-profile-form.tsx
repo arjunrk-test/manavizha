@@ -996,7 +996,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 />
                 {isLoadingAddress && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bba9c]"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bb9ac]"></div>
                   </div>
                 )}
               </div>
@@ -1011,7 +1011,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   type="button"
                   onClick={() => areas.length > 0 && setIsAreaOpen(!isAreaOpen)}
                   disabled={isLoadingAddress || areas.length === 0}
-                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3bba9c] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem] disabled:bg-gray-100 disabled:dark:bg-gray-800 disabled:cursor-not-allowed"
+                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3bb9ac] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem] disabled:bg-gray-100 disabled:dark:bg-gray-800 disabled:cursor-not-allowed"
                 >
                   <span className={formData.area ? "" : "text-gray-500"}>
                     {formData.area || (isLoadingAddress ? "Loading areas..." : areas.length === 0 ? "Enter pincode first" : "Select Area")}
@@ -1020,7 +1020,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 </button>
                 {isLoadingAddress && (
                   <div className="absolute right-8 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bba9c]"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bb9ac]"></div>
                   </div>
                 )}
                 {isAreaOpen && areas.length > 0 && (
@@ -1060,7 +1060,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 />
                 {isLoadingAddress && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bba9c]"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bb9ac]"></div>
                   </div>
                 )}
               </div>
@@ -1082,7 +1082,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 />
                 {isLoadingAddress && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bba9c]"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bb9ac]"></div>
                   </div>
                 )}
               </div>
@@ -1104,7 +1104,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 />
                 {isLoadingAddress && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bba9c]"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bb9ac]"></div>
                   </div>
                 )}
               </div>
@@ -1126,7 +1126,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 />
                 {isLoadingAddress && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bba9c]"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bb9ac]"></div>
                   </div>
                 )}
               </div>
@@ -1161,7 +1161,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 />
                 {isLoadingAddress && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bba9c]"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bb9ac]"></div>
                   </div>
                 )}
               </div>
@@ -1183,7 +1183,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 />
                 {isLoadingAddress && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bba9c]"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bb9ac]"></div>
                   </div>
                 )}
               </div>
@@ -1239,7 +1239,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
               />
               {isLoadingIFSC && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bba9c]"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3bb9ac]"></div>
                 </div>
               )}
             </div>
@@ -1365,7 +1365,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
               >
                 {uploadingField === "partner_photo" ? (
                   <>
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bba9c]" />
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bb9ac]" />
                     <span className="text-gray-600 dark:text-gray-400">Uploading...</span>
                   </>
                 ) : (
@@ -1583,7 +1583,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   >
                     {uploadingField === "aadhar_back" ? (
                       <>
-                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bba9c]" />
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bb9ac]" />
                         <span className="text-sm text-gray-500">Uploading...</span>
                       </>
                     ) : (
@@ -1700,7 +1700,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   >
                     {uploadingField === "pancard_front" ? (
                       <>
-                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bba9c]" />
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bb9ac]" />
                         <span className="text-sm text-gray-500">Uploading...</span>
                       </>
                     ) : (
@@ -1810,7 +1810,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   >
                     {uploadingField === "pancard_back" ? (
                       <>
-                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bba9c]" />
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bb9ac]" />
                         <span className="text-sm text-gray-500">Uploading...</span>
                       </>
                     ) : (

@@ -62,7 +62,7 @@ export default function ReferralPartnerProfilePage() {
   return (
     <div className="min-h-screen relative">
       {/* Animated gradient background */}
-      <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+      <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] via-[#3bb9ac] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
       
       {/* White overlay to lighten the gradient */}
       <div className="fixed inset-0 bg-white/40 dark:bg-[#181818]/40" />
@@ -212,13 +212,13 @@ export default function ReferralPartnerProfilePage() {
               <span>© 2024 Manavizha. All rights reserved.</span>
             </div>
             <div className="flex items-center gap-6">
-              <a href="/privacy-policy" className="hover:text-[#3bba9c] dark:hover:text-[#3bba9c] transition-colors">
+              <a href="/privacy-policy" className="hover:text-[#3bb9ac] dark:hover:text-[#3bb9ac] transition-colors">
                 Privacy Policy
               </a>
-              <a href="/terms-of-service" className="hover:text-[#3bba9c] dark:hover:text-[#3bba9c] transition-colors">
+              <a href="/terms-of-service" className="hover:text-[#3bb9ac] dark:hover:text-[#3bb9ac] transition-colors">
                 Terms of Service
               </a>
-              <a href="/contact" className="hover:text-[#3bba9c] dark:hover:text-[#3bba9c] transition-colors">
+              <a href="/contact" className="hover:text-[#3bb9ac] dark:hover:text-[#3bb9ac] transition-colors">
                 Contact Us
               </a>
             </div>
