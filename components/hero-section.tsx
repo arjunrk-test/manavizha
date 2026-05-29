@@ -24,7 +24,7 @@ export function HeroSection() {
       className="relative min-h-screen flex items-center justify-center overflow-hidden pt-14"
     >
       {/* Animated gradient background - lighter version */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#4B0082]/50 via-[#FF1493]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#3bba9c]/50 via-[#FF1493]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
       
       {/* White overlay to lighten */}
       <div className="absolute inset-0 bg-white/50 dark:bg-[#181818]/50" />
@@ -34,7 +34,7 @@ export function HeroSection() {
 
       {/* Floating orbs - optimized for performance */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-[10%] w-72 h-72 bg-gradient-to-br from-[#1F4068]/30 to-[#4B0082]/30 rounded-full mix-blend-multiply filter blur-2xl will-change-transform" 
+        <div className="absolute top-20 left-[10%] w-72 h-72 bg-gradient-to-br from-[#1F4068]/30 to-[#3bba9c]/30 rounded-full mix-blend-multiply filter blur-2xl will-change-transform" 
           style={{
             animation: 'float 20s ease-in-out infinite',
             transform: 'translate3d(0, 0, 0)',
@@ -82,10 +82,10 @@ export function HeroSection() {
             transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 sm:mb-8 md:mb-10 leading-[1.05] tracking-tight"
           >
-            <span className="block bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#1F4068] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+            <span className="block bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#1F4068] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
               Find Your Perfect
             </span>
-            <span className="block mt-2 sm:mt-3 md:mt-4 bg-gradient-to-r from-[#4B0082] via-[#FF1493] via-[#FFA500] to-[#4B0082] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient" style={{ animationDelay: '1s' }}>
+            <span className="block mt-2 sm:mt-3 md:mt-4 bg-gradient-to-r from-[#3bba9c] via-[#FF1493] via-[#FFA500] to-[#3bba9c] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient" style={{ animationDelay: '1s' }}>
               Life Partner
             </span>
           </motion.h1>
@@ -110,7 +110,7 @@ export function HeroSection() {
           >
             <Button 
               size="lg"
-              className="w-full sm:w-auto rounded-full bg-gradient-to-r from-[#1F4068] to-[#4B0082] hover:from-[#1F4068]/90 hover:to-[#4B0082]/90 shadow-lg hover:shadow-xl transition-all duration-200 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7"
+              className="w-full sm:w-auto rounded-full bg-gradient-to-r from-[#1F4068] to-[#3bba9c] hover:from-[#1F4068]/90 hover:to-[#3bba9c]/90 shadow-lg hover:shadow-xl transition-all duration-200 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7"
             >
               <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
               Start Your Journey
@@ -238,7 +238,7 @@ export function HeroSection() {
                 {/* Search Button */}
                 <Button
                   type="submit"
-                  className="w-full h-14 rounded-xl bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#1F4068] bg-[length:200%_auto] animate-gradient text-white font-bold uppercase tracking-[0.2em] text-sm shadow-xl hover:shadow-indigo-500/20 transition-all active:scale-[0.98]"
+                  className="w-full h-14 rounded-xl bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#1F4068] bg-[length:200%_auto] animate-gradient text-white font-bold uppercase tracking-[0.2em] text-sm shadow-xl hover:shadow-emerald-500/20 transition-all active:scale-[0.98]"
                 >
                   <Search className="h-4 w-4 mr-2" />
                   Search {searchType}s
@@ -250,7 +250,7 @@ export function HeroSection() {
                     Need a profile?{" "}
                     <a
                       href="#"
-                      className="text-[#4B0082] hover:text-[#1F4068] transition-colors border-b border-[#4B0082]/30"
+                      className="text-[#3bba9c] hover:text-[#1F4068] transition-colors border-b border-[#3bba9c]/30"
                     >
                       Create a Free Profile
                     </a>
@@ -268,9 +268,9 @@ export function HeroSection() {
             >
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
-                  { value: "10K+", label: "Active Members", color: "from-[#1F4068] to-[#4B0082]", icon: "👥" },
+                  { value: "10K+", label: "Active Members", color: "from-[#1F4068] to-[#3bba9c]", icon: "👥" },
                   { value: "5K+", label: "Successful Matches", color: "from-[#FF1493] to-[#FFA500]", icon: "💑" },
-                  { value: "98%", label: "Satisfaction Rate", color: "from-[#4B0082] to-[#1F4068]", icon: "⭐" },
+                  { value: "98%", label: "Satisfaction Rate", color: "from-[#3bba9c] to-[#1F4068]", icon: "⭐" },
                 ].map((stat, index) => (
                   <motion.div
                     key={stat.label}
@@ -280,7 +280,7 @@ export function HeroSection() {
                     whileHover={{ y: -5 }}
                     className="relative group cursor-pointer"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#1F4068]/20 to-[#4B0082]/20 dark:from-[#1F4068]/30 dark:to-[#4B0082]/30 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-300" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#1F4068]/20 to-[#3bba9c]/20 dark:from-[#1F4068]/30 dark:to-[#3bba9c]/30 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-300" />
                     <div className="relative bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-3xl p-4 sm:p-6 border border-gray-200/60 dark:border-gray-800/60 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.03] overflow-hidden">
                       {/* Decorative gradient bar */}
                       <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.color}`} />

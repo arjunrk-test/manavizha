@@ -129,17 +129,17 @@ export function ReferralStep({ formData, onChange, onPartnerNameChange }: Referr
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="space-y-8">
         <div className="flex items-center gap-4 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
-            <span className="text-[#4B0082] font-black text-xs">R1</span>
+          <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
+            <span className="text-[#3bba9c] font-black text-xs">R1</span>
           </div>
           <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Referral</h4>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Referral</h4>
             <h3 className="text-xl font-light text-gray-900 tracking-tight">Partner Details</h3>
           </div>
           <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
         </div>
 
-        <div className="sds-glass rounded-[2.5rem] p-10 border-indigo-50/50 space-y-8 shadow-[0_20px_50px_-20px_rgba(75,0,130,0.1)]">
+        <div className="sds-glass rounded-[2.5rem] p-10 border-indigo-50/50 space-y-8 shadow-[0_20px_50px_-20px_rgba(59,186,156,0.1)]">
           <div className="space-y-3">
             <Label htmlFor="referralPartnerId" className="sds-label ml-1">Referral Partner ID *</Label>
             <div className="relative group">
@@ -156,7 +156,7 @@ export function ReferralStep({ formData, onChange, onPartnerNameChange }: Referr
               />
               {isLoadingPartner && (
                 <div className="absolute right-6 top-1/2 -translate-y-1/2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#4B0082]/20 border-t-[#4B0082]"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#3bba9c]/20 border-t-[#3bba9c]"></div>
                 </div>
               )}
             </div>
@@ -190,7 +190,7 @@ export function ReferralStep({ formData, onChange, onPartnerNameChange }: Referr
                 disabled
                 className={`sds-input w-full h-16 px-6 font-bold transition-all duration-700 ${
                   partnerError ? "text-rose-500 bg-rose-50/10 border-rose-100" : 
-                  partnerName ? "text-[#4B0082] bg-indigo-50/10 border-indigo-100" : 
+                  partnerName ? "text-[#3bba9c] bg-indigo-50/10 border-indigo-100" : 
                   "text-gray-300 bg-black/[0.02] border-transparent opacity-40 cursor-not-allowed"
                 }`}
                 placeholder="Waiting for ID..."

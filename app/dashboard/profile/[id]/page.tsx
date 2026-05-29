@@ -476,7 +476,7 @@ export default function ProfileViewPage() {
 
     if (isLoading) return (
         <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-100 border-t-[#4B0082]" />
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-100 border-t-[#3bba9c]" />
             <p className="text-gray-400 text-sm font-medium animate-pulse">Loading Detailed Profile...</p>
         </div>
     )
@@ -529,11 +529,11 @@ export default function ProfileViewPage() {
         <div className="min-h-screen pb-24 relative">
             {/* Homepage-style Premium Background - Deepened */}
             <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#1A3060]/40 via-[#4B0082]/40 via-[#FF1493]/40 to-[#FFA500]/40 bg-[length:200%_auto] animate-gradient" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#1A3060]/40 via-[#3bba9c]/40 via-[#FF1493]/40 to-[#FFA500]/40 bg-[length:200%_auto] animate-gradient" />
                 <div className="absolute inset-0 bg-[#FAFAFA]/40" />
                 
                 {/* Deeper Floating Glow Orbs */}
-                <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-[#4B0082]/20 rounded-full blur-[140px] animate-float" />
+                <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-[#3bba9c]/20 rounded-full blur-[140px] animate-float" />
                 <div className="absolute top-1/2 -right-32 w-[700px] h-[700px] bg-amber-500/10 rounded-full blur-[140px] animate-float" style={{ animationDelay: '-10s' }} />
                 <div className="absolute -bottom-32 left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-indigo-500/10 rounded-full blur-[150px]" />
             </div>
@@ -557,7 +557,7 @@ export default function ProfileViewPage() {
                             disabled={!prevProfileId}
                             variant="ghost" 
                             size="icon" 
-                            className="h-12 w-12 rounded-full bg-white/50 backdrop-blur-xl border border-white/40 text-gray-500 hover:text-[#4B0082] shadow-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            className="h-12 w-12 rounded-full bg-white/50 backdrop-blur-xl border border-white/40 text-gray-500 hover:text-[#3bba9c] shadow-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                         >
                             <ChevronLeft className="h-6 w-6" />
                         </Button>
@@ -566,7 +566,7 @@ export default function ProfileViewPage() {
                             disabled={!nextProfileId}
                             variant="ghost" 
                             size="icon" 
-                            className="h-12 w-12 rounded-full bg-white/50 backdrop-blur-xl border border-white/40 text-gray-500 hover:text-[#4B0082] shadow-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            className="h-12 w-12 rounded-full bg-white/50 backdrop-blur-xl border border-white/40 text-gray-500 hover:text-[#3bba9c] shadow-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                         >
                             <ChevronRight className="h-6 w-6" />
                         </Button>
@@ -604,12 +604,12 @@ export default function ProfileViewPage() {
                                         {formatActivityTime(profile.last_active) === "Online" ? "Online Now" : formatActivityTime(profile.last_active)}
                                     </Badge>
                                 )}
-                                <div className="h-7 px-3 rounded-full bg-[#F3F4FF] text-[#4B0082] text-[9px] font-black flex items-center tracking-widest uppercase border border-[#E0E2FF]">
+                                <div className="h-7 px-3 rounded-full bg-[#F3F4FF] text-[#3bba9c] text-[9px] font-black flex items-center tracking-widest uppercase border border-[#E0E2FF]">
                                     <ShieldCheck className="h-3.5 w-3.5 mr-2" /> Verified
                                 </div>
                                 {profile.isPremium && (
                                     <div className={`h-7 px-3 rounded-full text-white text-[9px] font-black flex items-center tracking-widest uppercase shadow-md ${
-                                        profile.premiumPlan === 'elite' ? 'bg-[#4B0082]' : 
+                                        profile.premiumPlan === 'elite' ? 'bg-[#3bba9c]' : 
                                         profile.premiumPlan === 'prime_gold' ? 'bg-amber-500' : 'bg-pink-500'
                                     }`}>
                                         <Gem className="h-3.5 w-3.5 mr-2" /> {profile.premiumPlan?.replace(/_/g, ' ')}
@@ -624,11 +624,11 @@ export default function ProfileViewPage() {
                                 
                                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-gray-900/40 text-lg font-bold tracking-tight">
                                     <span className="text-gray-900">{detailedAge}</span>
-                                    <span className="w-1.5 h-1.5 rounded-full bg-[#4B0082]/10" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#3bba9c]/10" />
                                     <span className="text-gray-900">{detailedHeight}</span>
-                                    <span className="w-1.5 h-1.5 rounded-full bg-[#4B0082]/10" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#3bba9c]/10" />
                                     <span className="text-gray-900">{profile.marital_status}</span>
-                                    <span className="w-1.5 h-1.5 rounded-full bg-[#4B0082]/10" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#3bba9c]/10" />
                                     <span className="text-gray-900 lowercase font-medium">Created by <span className="text-indigo-900 font-black uppercase text-xs tracking-widest">{profile.created_by || "Self"}</span></span>
                                 </div>
                             </div>
@@ -694,7 +694,7 @@ export default function ProfileViewPage() {
                                     onClick={handleShortlist}
                                     className={`h-[3.5rem] px-8 rounded-full font-bold text-[10px] uppercase tracking-[0.2em] shadow-xl transition-all group ${
                                         isShortlisted 
-                                        ? 'bg-[#4B0082] text-white hover:bg-[#3B0062] shadow-[#4B0082]/20' 
+                                        ? 'bg-[#3bba9c] text-white hover:bg-[#2fa085] shadow-[#3bba9c]/20' 
                                         : 'bg-white text-gray-400 border border-gray-100 hover:bg-gray-50'
                                     }`}
                                 >
@@ -797,7 +797,7 @@ export default function ProfileViewPage() {
                                         <button 
                                             key={i} 
                                             onClick={() => setCurrentPhotoIndex(i)} 
-                                            className={`w-16 h-16 rounded-2xl overflow-hidden border-[3px] transition-all shrink-0 ${i === currentPhotoIndex ? 'border-[#4B0082] scale-105 shadow-md' : 'border-transparent opacity-50 hover:opacity-100'}`}
+                                            className={`w-16 h-16 rounded-2xl overflow-hidden border-[3px] transition-all shrink-0 ${i === currentPhotoIndex ? 'border-[#3bba9c] scale-105 shadow-md' : 'border-transparent opacity-50 hover:opacity-100'}`}
                                         >
                                             <img src={p} className="w-full h-full object-cover" />
                                         </button>
@@ -813,7 +813,7 @@ export default function ProfileViewPage() {
                         {/* 1. Heritage & Personal Details */}
                         <div className="bg-white rounded-[3rem] p-8 shadow-sm border border-gray-50 space-y-10">
                             <div className="flex items-center gap-6">
-                                <div className="h-10 w-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-[#4B0082]">
+                                <div className="h-10 w-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-[#3bba9c]">
                                     <User className="h-5 w-5" />
                                 </div>
                                 <h2 className="text-xl font-black uppercase tracking-widest text-[#1A1A1A]">Personal Profile</h2>
@@ -1004,7 +1004,7 @@ export default function ProfileViewPage() {
                                                     <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400 opacity-60">Match Score</p>
                                                     <p className="text-2xl font-black text-gray-900">{matchScore.matches}<span className="text-gray-200">/</span>{matchScore.total}</p>
                                                 </div>
-                                                <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                                                <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
                                                     <Heart className="h-5 w-5 fill-current text-white" />
                                                 </div>
                                             </div>
@@ -1090,7 +1090,7 @@ export default function ProfileViewPage() {
                                 {prevProfileId ? (
                                     <Button 
                                         onClick={() => window.location.href = `/dashboard/profile/${prevProfileId}`}
-                                        className="h-9 px-4 bg-white/80 backdrop-blur-xl border border-white rounded-full shadow-lg text-[#4B0082] font-black text-[9px] uppercase tracking-widest flex items-center gap-2"
+                                        className="h-9 px-4 bg-white/80 backdrop-blur-xl border border-white rounded-full shadow-lg text-[#3bba9c] font-black text-[9px] uppercase tracking-widest flex items-center gap-2"
                                     >
                                         <ChevronLeft className="h-4 w-4" /> Prev
                                     </Button>
@@ -1098,7 +1098,7 @@ export default function ProfileViewPage() {
                                 {nextProfileId && (
                                     <Button 
                                         onClick={() => window.location.href = `/dashboard/profile/${nextProfileId}`}
-                                        className="h-9 px-4 bg-white/80 backdrop-blur-xl border border-white rounded-full shadow-lg text-[#4B0082] font-black text-[9px] uppercase tracking-widest flex items-center gap-2"
+                                        className="h-9 px-4 bg-white/80 backdrop-blur-xl border border-white rounded-full shadow-lg text-[#3bba9c] font-black text-[9px] uppercase tracking-widest flex items-center gap-2"
                                     >
                                         Next <ChevronRight className="h-4 w-4" />
                                     </Button>
@@ -1123,7 +1123,7 @@ function DetailRow({ label, value, isLocked, isPremiumViewer, compact }: { label
                 return (
                     <span className="text-sm font-bold text-[#1A1A1A] break-words flex items-center gap-2">
                         {value}
-                        <button onClick={() => setRevealed(false)} className="text-[9px] text-[#4B0082] hover:underline uppercase tracking-widest font-black">Hide</button>
+                        <button onClick={() => setRevealed(false)} className="text-[9px] text-[#3bba9c] hover:underline uppercase tracking-widest font-black">Hide</button>
                     </span>
                 )
             }
@@ -1132,7 +1132,7 @@ function DetailRow({ label, value, isLocked, isPremiumViewer, compact }: { label
                 return (
                     <button
                         onClick={() => setRevealed(true)}
-                        className="flex items-center gap-2 px-3 py-1 bg-[#F3F4FF] rounded-lg border border-[#E0E2FF] text-[#4B0082] text-[9px] font-black uppercase tracking-widest shadow-sm hover:bg-[#E0E2FF] transition-all"
+                        className="flex items-center gap-2 px-3 py-1 bg-[#F3F4FF] rounded-lg border border-[#E0E2FF] text-[#3bba9c] text-[9px] font-black uppercase tracking-widest shadow-sm hover:bg-[#E0E2FF] transition-all"
                     >
                         <Crown className="h-3 w-3" />
                         Reveal

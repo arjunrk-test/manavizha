@@ -134,7 +134,7 @@ export function HoroscopeGeneratorDialog({ isOpen, onClose, userId, onSave }: Ho
         
         {!showDetailed ? (
           <>
-            <div className="bg-gradient-to-r from-[#4B0082] to-[#FF1493] p-6 text-white text-center relative">
+            <div className="bg-gradient-to-r from-[#3bba9c] to-[#FF1493] p-6 text-white text-center relative">
               <Sparkles className="absolute top-4 right-4 h-6 w-6 opacity-30 animate-pulse" />
               <DialogTitle className="text-2xl font-bold font-outfit">Tamil Horoscope Generator</DialogTitle>
               <DialogDescription className="text-white/80 text-sm mt-1">
@@ -158,7 +158,7 @@ export function HoroscopeGeneratorDialog({ isOpen, onClose, userId, onSave }: Ho
                   type="date" 
                   value={dob} 
                   onChange={(e) => setDob(e.target.value)}
-                  className="rounded-xl border-gray-200 focus:ring-[#4B0082]"
+                  className="rounded-xl border-gray-200 focus:ring-[#3bba9c]"
                 />
               </div>
 
@@ -171,7 +171,7 @@ export function HoroscopeGeneratorDialog({ isOpen, onClose, userId, onSave }: Ho
                   type="time" 
                   value={tob} 
                   onChange={(e) => setTob(e.target.value)}
-                  className="rounded-xl border-gray-200 focus:ring-[#4B0082]"
+                  className="rounded-xl border-gray-200 focus:ring-[#3bba9c]"
                 />
               </div>
 
@@ -183,7 +183,7 @@ export function HoroscopeGeneratorDialog({ isOpen, onClose, userId, onSave }: Ho
                   id="pob"
                   value={pob}
                   onChange={(e) => setPob(e.target.value)}
-                  className="w-full rounded-xl border-gray-200 p-2 text-sm bg-white dark:bg-gray-800 border focus:ring-2 focus:ring-[#4B0082] outline-none"
+                  className="w-full rounded-xl border-gray-200 p-2 text-sm bg-white dark:bg-gray-800 border focus:ring-2 focus:ring-[#3bba9c] outline-none"
                 >
                   {Object.keys(MAJOR_CITIES).map(city => (
                     <option key={city} value={city}>{city}</option>
@@ -194,7 +194,7 @@ export function HoroscopeGeneratorDialog({ isOpen, onClose, userId, onSave }: Ho
               <Button 
                 onClick={handleGenerate} 
                 disabled={isGenerating}
-                className="w-full h-12 bg-[#4B0082] hover:bg-[#3B0062] rounded-xl font-bold shadow-lg shadow-[#4B0082]/20 gap-2"
+                className="w-full h-12 bg-[#3bba9c] hover:bg-[#2fa085] rounded-xl font-bold shadow-lg shadow-[#3bba9c]/20 gap-2"
               >
                 {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
                 {isGenerating ? "Calculating..." : "Generate My Horoscope"}
@@ -207,10 +207,10 @@ export function HoroscopeGeneratorDialog({ isOpen, onClose, userId, onSave }: Ho
               className="space-y-6"
             >
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-purple-50 dark:bg-purple-900/10 p-4 rounded-2xl border border-purple-100 dark:border-purple-800/50 text-center">
-                  <Star className="h-5 w-5 text-[#4B0082] mx-auto mb-2" />
+                <div className="bg-emerald-50 dark:bg-purple-900/10 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/50 text-center">
+                  <Star className="h-5 w-5 text-[#3bba9c] mx-auto mb-2" />
                   <p className="text-[10px] uppercase font-bold text-gray-400">Your Star</p>
-                  <p className="text-xl font-bold text-[#4B0082] dark:text-purple-400">{result.star}</p>
+                  <p className="text-xl font-bold text-[#3bba9c] dark:text-emerald-400">{result.star}</p>
                 </div>
                 <div className="bg-pink-50 dark:bg-pink-900/10 p-4 rounded-2xl border border-pink-100 dark:border-pink-800/50 text-center">
                   <Sparkles className="h-5 w-5 text-[#FF1493] mx-auto mb-2" />
@@ -256,7 +256,7 @@ export function HoroscopeGeneratorDialog({ isOpen, onClose, userId, onSave }: Ho
                   <Button 
                     onClick={handleSave} 
                     disabled={isSaving}
-                    className="flex-[2] bg-gradient-to-r from-[#4B0082] to-[#FF1493] hover:opacity-90 rounded-xl h-11 font-bold shadow-lg gap-2"
+                    className="flex-[2] bg-gradient-to-r from-[#3bba9c] to-[#FF1493] hover:opacity-90 rounded-xl h-11 font-bold shadow-lg gap-2"
                   >
                     {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                     {isSaving ? "Saving..." : "Save to Profile"}

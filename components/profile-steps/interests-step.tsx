@@ -39,11 +39,11 @@ export function InterestsStep({ formData, onChange }: InterestsStepProps) {
       <div className="space-y-10">
         <div className="space-y-6">
           <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
-              <span className="text-[#4B0082] font-black text-xs">H1</span>
+            <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
+              <span className="text-[#3bba9c] font-black text-xs">H1</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Activities</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Activities</h4>
               <h3 className="text-xl font-light text-gray-900 tracking-tight">Hobbies</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
@@ -57,8 +57,8 @@ export function InterestsStep({ formData, onChange }: InterestsStepProps) {
                   key={hobby} 
                   className={`relative group cursor-pointer h-14 flex items-center justify-center px-4 rounded-2xl border-2 transition-all duration-300 font-bold text-[10px] uppercase tracking-widest text-center ${
                     isSelected 
-                    ? "bg-[#4B0082] border-[#4B0082] text-white shadow-lg shadow-indigo-900/20 active:scale-95" 
-                    : "sds-glass border-indigo-50/50 text-gray-500 hover:border-[#4B0082]/30 hover:text-[#4B0082] hover:-translate-y-1"
+                    ? "bg-[#3bba9c] border-[#3bba9c] text-white shadow-lg shadow-indigo-900/20 active:scale-95" 
+                    : "sds-glass border-indigo-50/50 text-gray-500 hover:border-[#3bba9c]/30 hover:text-[#3bba9c] hover:-translate-y-1"
                   }`}
                 >
                   <input
@@ -76,11 +76,11 @@ export function InterestsStep({ formData, onChange }: InterestsStepProps) {
 
         <div className="space-y-6">
           <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
-              <span className="text-[#4B0082] font-black text-xs">I2</span>
+            <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
+              <span className="text-[#3bba9c] font-black text-xs">I2</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Passions</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Passions</h4>
               <h3 className="text-xl font-light text-gray-900 tracking-tight">Interests</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
@@ -94,8 +94,8 @@ export function InterestsStep({ formData, onChange }: InterestsStepProps) {
                   key={interest} 
                   className={`relative group cursor-pointer h-14 flex items-center justify-center px-4 rounded-2xl border-2 transition-all duration-300 font-bold text-[10px] uppercase tracking-widest text-center ${
                     isSelected 
-                    ? "bg-[#4B0082] border-[#4B0082] text-white shadow-lg shadow-indigo-900/20 active:scale-95" 
-                    : "sds-glass border-indigo-50/50 text-gray-500 hover:border-[#4B0082]/30 hover:text-[#4B0082] hover:-translate-y-1"
+                    ? "bg-[#3bba9c] border-[#3bba9c] text-white shadow-lg shadow-indigo-900/20 active:scale-95" 
+                    : "sds-glass border-indigo-50/50 text-gray-500 hover:border-[#3bba9c]/30 hover:text-[#3bba9c] hover:-translate-y-1"
                   }`}
                 >
                   <input

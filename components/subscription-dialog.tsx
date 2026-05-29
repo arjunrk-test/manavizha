@@ -30,7 +30,7 @@ export function SubscriptionDialog({ isOpen, onClose, featureName = "Premium Fea
       <DialogContent className="max-w-md p-0 overflow-hidden border-none sds-glass rounded-[2.5rem] shadow-2xl backdrop-blur-3xl">
         <div className="relative p-8 overflow-hidden">
           {/* Background Accent */}
-          <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#4B0082]/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#3bba9c]/10 rounded-full blur-3xl animate-pulse" />
           <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#FF1493]/10 rounded-full blur-3xl animate-pulse" />
 
           <DialogHeader className="relative z-10 text-center space-y-4">
@@ -65,7 +65,7 @@ export function SubscriptionDialog({ isOpen, onClose, featureName = "Premium Fea
 
           <div className="mt-10 space-y-3 relative z-10">
             <Button 
-              className="w-full h-14 rounded-2xl bg-[#4B0082] hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-indigo-900/30 transition-all hover:scale-[1.02] active:scale-95"
+              className="w-full h-14 rounded-2xl bg-[#3bba9c] hover:bg-[#2fa085] text-white font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-emerald-900/30 transition-all hover:scale-[1.02] active:scale-95"
               onClick={() => {
                 // To be implemented: Redirect to pricing or checkout
                 onClose();
@@ -75,7 +75,7 @@ export function SubscriptionDialog({ isOpen, onClose, featureName = "Premium Fea
             </Button>
             <Button 
               variant="ghost" 
-              className="w-full h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest text-[#4B0082]/60 hover:text-[#4B0082] hover:bg-indigo-50"
+              className="w-full h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest text-[#3bba9c]/60 hover:text-[#3bba9c] hover:bg-indigo-50"
               onClick={onClose}
             >
               Remind Me Later

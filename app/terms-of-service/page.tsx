@@ -14,7 +14,7 @@ export default function TermsOfServicePage() {
       <Navbar />
       
       {/* Animated gradient background */}
-      <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+      <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
       
       {/* White overlay to lighten the gradient */}
       <div className="fixed inset-0 bg-white/40 dark:bg-[#181818]/40" />

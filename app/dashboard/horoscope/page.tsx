@@ -221,7 +221,7 @@ export default function HoroscopePage() {
         return (
             <div className="sds-glass rounded-[1.5rem] p-3 border-white/40 shadow-xl overflow-hidden h-full flex flex-col relative group">
                 <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-[9px] font-black text-[#4B0082]/60 uppercase tracking-[0.4em]">{title}</h3>
+                    <h3 className="text-[9px] font-black text-[#3bba9c]/60 uppercase tracking-[0.4em]">{title}</h3>
                     {isManual && (
                         <Button 
                             variant="ghost" 
@@ -234,14 +234,14 @@ export default function HoroscopePage() {
                     )}
                 </div>
                 
-                <div className="grid grid-cols-4 border border-[#4B0082]/10 rounded-xl overflow-hidden relative shadow-inner bg-white/50 flex-1">
+                <div className="grid grid-cols-4 border border-[#3bba9c]/10 rounded-xl overflow-hidden relative shadow-inner bg-white/50 flex-1">
                     {gridPositions.map((pos, idx) => {
                         if (pos.id === -1) return (
-                            <div key={idx} className="bg-[#4B0082]/5 flex items-center justify-center p-1">
+                            <div key={idx} className="bg-[#3bba9c]/5 flex items-center justify-center p-1">
                                 {idx === 5 && (
                                     <div className="text-center">
-                                        <p className="text-[7px] font-black text-[#4B0082]/30 uppercase tracking-[0.3em]">{type === 'rasi' ? "இராசி" : "அம்சம்"}</p>
-                                        <Star className="h-4 w-4 text-[#4B0082]/10 mx-auto mt-0.5" />
+                                        <p className="text-[7px] font-black text-[#3bba9c]/30 uppercase tracking-[0.3em]">{type === 'rasi' ? "இராசி" : "அம்சம்"}</p>
+                                        <Star className="h-4 w-4 text-[#3bba9c]/10 mx-auto mt-0.5" />
                                     </div>
                                 )}
                             </div>
@@ -260,11 +260,11 @@ export default function HoroscopePage() {
                                 <PopoverTrigger asChild>
                                     <div 
                                         className={cn(
-                                            "border border-[#4B0082]/10 p-0.5 flex flex-col items-center justify-center min-h-[60px] relative transition-all",
-                                            isManual ? "cursor-pointer hover:bg-indigo-50/50" : "hover:bg-[#4B0082]/5"
+                                            "border border-[#3bba9c]/10 p-0.5 flex flex-col items-center justify-center min-h-[60px] relative transition-all",
+                                            isManual ? "cursor-pointer hover:bg-indigo-50/50" : "hover:bg-[#3bba9c]/5"
                                         )}
                                     >
-                                        <span className="absolute top-1 left-1 text-[7px] text-[#4B0082]/30 font-black uppercase tracking-tighter">
+                                        <span className="absolute top-1 left-1 text-[7px] text-[#3bba9c]/30 font-black uppercase tracking-tighter">
                                             {pos.label}
                                         </span>
                                         <div className="flex flex-wrap items-center justify-center gap-1 mt-1 w-full px-0.5">
@@ -279,7 +279,7 @@ export default function HoroscopePage() {
                                                             ? "bg-amber-100 text-amber-700 border-amber-200" 
                                                             : p.name === 'Moon'
                                                                 ? "bg-blue-100 text-blue-700 border-blue-200"
-                                                                : "bg-white/80 text-[#4B0082] border-gray-100"
+                                                                : "bg-white/80 text-[#3bba9c] border-gray-100"
                                                     )}
                                                 >
                                                     {p.tamilAbbr}
@@ -468,7 +468,7 @@ export default function HoroscopePage() {
   if (isLoadingProfile) {
       return (
           <div className="flex h-screen items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-[#4B0082]" />
+              <Loader2 className="h-8 w-8 animate-spin text-[#3bba9c]" />
           </div>
       )
   }
@@ -486,7 +486,7 @@ export default function HoroscopePage() {
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
-                            {entryMode === 'auto' ? <Calendar className="h-3.5 w-3.5 text-[#4B0082]" /> : <Keyboard className="h-3.5 w-3.5 text-indigo-600" />}
+                            {entryMode === 'auto' ? <Calendar className="h-3.5 w-3.5 text-[#3bba9c]" /> : <Keyboard className="h-3.5 w-3.5 text-indigo-600" />}
                         </div>
                         <h2 className="text-[10px] font-black text-indigo-900 uppercase tracking-[0.2em]">{entryMode === 'auto' ? "Birth Data" : "Manual Entry"}</h2>
                     </div>
@@ -495,7 +495,7 @@ export default function HoroscopePage() {
                             onClick={() => setEntryMode('auto')}
                             className={cn(
                                 "p-1.5 rounded-md transition-all",
-                                entryMode === 'auto' ? "bg-white text-[#4B0082] shadow-sm" : "text-gray-400 hover:text-indigo-600"
+                                entryMode === 'auto' ? "bg-white text-[#3bba9c] shadow-sm" : "text-gray-400 hover:text-indigo-600"
                             )}
                             title="Calculate from Birth Data"
                         >
@@ -505,7 +505,7 @@ export default function HoroscopePage() {
                             onClick={() => setEntryMode('manual')}
                             className={cn(
                                 "p-1.5 rounded-md transition-all",
-                                entryMode === 'manual' ? "bg-white text-[#4B0082] shadow-sm" : "text-gray-400 hover:text-indigo-600"
+                                entryMode === 'manual' ? "bg-white text-[#3bba9c] shadow-sm" : "text-gray-400 hover:text-indigo-600"
                             )}
                             title="Enter Grid Manually"
                         >
@@ -588,7 +588,7 @@ export default function HoroscopePage() {
                             </div>
 
                             <div className="space-y-3">
-                                <p className="text-[9px] font-black text-[#4B0082]/40 uppercase tracking-[0.2em] ml-1">OCR Scan</p>
+                                <p className="text-[9px] font-black text-[#3bba9c]/40 uppercase tracking-[0.2em] ml-1">OCR Scan</p>
                                 <input 
                                     type="file" 
                                     ref={fileInputRef} 
@@ -599,7 +599,7 @@ export default function HoroscopePage() {
                                 <Button 
                                     variant="outline"
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="w-full h-12 rounded-2xl border-indigo-100 bg-white hover:bg-indigo-50 border-dashed text-[#4B0082] flex flex-col items-center justify-center gap-1 group"
+                                    className="w-full h-12 rounded-2xl border-indigo-100 bg-white hover:bg-indigo-50 border-dashed text-[#3bba9c] flex flex-col items-center justify-center gap-1 group"
                                 >
                                     <ImageIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
                                     <span className="text-[9px] font-black uppercase tracking-widest">Upload Jadhagam Photo</span>
@@ -612,7 +612,7 @@ export default function HoroscopePage() {
                 <Button 
                     onClick={handleGenerate} 
                     disabled={isGenerating || isOcrLoading}
-                    className="w-full h-12 bg-[#4B0082] hover:bg-[#3B0062] text-white rounded-xl font-black text-[11px] uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 mt-6"
+                    className="w-full h-12 bg-[#3bba9c] hover:bg-[#2fa085] text-white rounded-xl font-black text-[11px] uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 mt-6"
                 >
                     {isGenerating || isOcrLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
                     {isOcrLoading ? `Scanning ${ocrProgress}%` : (entryMode === 'auto' ? "Generate Charts" : "Preview Manual Chart")}
@@ -628,7 +628,7 @@ export default function HoroscopePage() {
                 className="p-4 md:p-5 rounded-[2rem] sds-glass relative overflow-hidden shadow-xl border-white/30 flex items-center justify-between gap-4"
             >
                 <div className="relative z-10 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#4B0082] to-[#FF1493] flex items-center justify-center shadow-lg transform rotate-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#3bba9c] to-[#FF1493] flex items-center justify-center shadow-lg transform rotate-3">
                         <Sparkles className="h-6 w-6 text-white" />
                     </div>
                     <div>
@@ -636,7 +636,7 @@ export default function HoroscopePage() {
                             <h1 className="text-xl font-black text-indigo-900 tracking-tight leading-none">
                                 Horoscope Generator
                             </h1>
-                            <div className="bg-[#4B0082]/10 text-[#4B0082] px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border border-[#4B0082]/20">
+                            <div className="bg-[#3bba9c]/10 text-[#3bba9c] px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border border-[#3bba9c]/20">
                                 {entryMode === 'auto' ? 'VEDIC AI' : 'MANUAL GRID'}
                             </div>
                         </div>
@@ -657,7 +657,7 @@ export default function HoroscopePage() {
                             className={cn(
                                 "flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full transition-all border",
                                 calculationMethod === 'thirukanitham' 
-                                    ? "bg-[#4B0082]/10 text-[#4B0082] border-[#4B0082]/20" 
+                                    ? "bg-[#3bba9c]/10 text-[#3bba9c] border-[#3bba9c]/20" 
                                     : "bg-white text-gray-500 border-white hover:bg-gray-50"
                             )}
                         >
@@ -713,7 +713,7 @@ export default function HoroscopePage() {
                            <Button 
                              onClick={handleSave} 
                              disabled={isSaving}
-                             className="bg-gradient-to-r from-[#4B0082] to-[#FF1493] hover:opacity-90 rounded-xl h-11 font-bold shadow-lg gap-2 px-6"
+                             className="bg-gradient-to-r from-[#3bba9c] to-[#FF1493] hover:opacity-90 rounded-xl h-11 font-bold shadow-lg gap-2 px-6"
                            >
                              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                              {isSaving ? "Saving..." : `Save ${calculationMethod === 'thirukanitham' ? 'Thirukanitham' : 'Vakkiyam'} to Profile`}

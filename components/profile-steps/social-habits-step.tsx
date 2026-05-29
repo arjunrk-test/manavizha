@@ -20,11 +20,11 @@ export function SocialHabitsStep({ formData, onChange }: SocialHabitsStepProps) 
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="space-y-8">
         <div className="flex items-center gap-4 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
-            <span className="text-[#4B0082] font-black text-xs">S1</span>
+          <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
+            <span className="text-[#3bba9c] font-black text-xs">S1</span>
           </div>
           <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Lifestyle</h4>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Lifestyle</h4>
             <h3 className="text-xl font-light text-gray-900 tracking-tight">Social Habits</h3>
           </div>
           <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />

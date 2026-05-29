@@ -41,7 +41,7 @@ export default function ContactPage() {
       <Navbar />
       
       {/* Animated gradient background */}
-      <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+      <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
       
       {/* White overlay to lighten the gradient */}
       <div className="fixed inset-0 bg-white/40 dark:bg-[#181818]/40" />
@@ -90,14 +90,14 @@ export default function ContactPage() {
                 
                 <div className="space-y-6">
                   <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-lg bg-gradient-to-br from-[#1F4068]/10 to-[#4B0082]/10 dark:from-[#1F4068]/30 dark:to-[#4B0082]/30">
-                      <Mail className="h-5 w-5 text-[#4B0082]" />
+                    <div className="p-3 rounded-lg bg-gradient-to-br from-[#1F4068]/10 to-[#3bba9c]/10 dark:from-[#1F4068]/30 dark:to-[#3bba9c]/30">
+                      <Mail className="h-5 w-5 text-[#3bba9c]" />
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Email</h3>
                       <a 
                         href="mailto:arjun.rksaravanan@gmail.com" 
-                        className="text-gray-600 dark:text-gray-400 hover:text-[#4B0082] transition-colors"
+                        className="text-gray-600 dark:text-gray-400 hover:text-[#3bba9c] transition-colors"
                       >
                         arjun.rksaravanan@gmail.com
                       </a>
@@ -105,14 +105,14 @@ export default function ContactPage() {
                   </div>
 
                   <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-lg bg-gradient-to-br from-[#1F4068]/10 to-[#4B0082]/10 dark:from-[#1F4068]/30 dark:to-[#4B0082]/30">
-                      <Phone className="h-5 w-5 text-[#4B0082]" />
+                    <div className="p-3 rounded-lg bg-gradient-to-br from-[#1F4068]/10 to-[#3bba9c]/10 dark:from-[#1F4068]/30 dark:to-[#3bba9c]/30">
+                      <Phone className="h-5 w-5 text-[#3bba9c]" />
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Phone</h3>
                       <a 
                         href="tel:+918072734996" 
-                        className="text-gray-600 dark:text-gray-400 hover:text-[#4B0082] transition-colors"
+                        className="text-gray-600 dark:text-gray-400 hover:text-[#3bba9c] transition-colors"
                       >
                         +91 8072734996
                       </a>
@@ -120,8 +120,8 @@ export default function ContactPage() {
                   </div>
 
                   <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-lg bg-gradient-to-br from-[#1F4068]/10 to-[#4B0082]/10 dark:from-[#1F4068]/30 dark:to-[#4B0082]/30">
-                      <MapPin className="h-5 w-5 text-[#4B0082]" />
+                    <div className="p-3 rounded-lg bg-gradient-to-br from-[#1F4068]/10 to-[#3bba9c]/10 dark:from-[#1F4068]/30 dark:to-[#3bba9c]/30">
+                      <MapPin className="h-5 w-5 text-[#3bba9c]" />
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Location</h3>
@@ -227,7 +227,7 @@ export default function ContactPage() {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full sm:w-auto bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:from-[#4B0082] hover:via-[#FF1493] hover:to-[#1F4068] text-white border-0 shadow-lg hover:shadow-xl transition-all px-8 py-6 text-lg font-semibold"
+                    className="w-full sm:w-auto bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] hover:from-[#3bba9c] hover:via-[#FF1493] hover:to-[#1F4068] text-white border-0 shadow-lg hover:shadow-xl transition-all px-8 py-6 text-lg font-semibold"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center gap-2">

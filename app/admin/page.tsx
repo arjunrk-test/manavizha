@@ -41,16 +41,16 @@ const features = [
     icon: Database,
     title: "Data Management",
     description: "Access and manage all platform data, including profiles, matches, and system configurations.",
-    color: "from-[#4B0082] to-[#1F4068]",
-    bgColor: "from-[#4B0082]/10 to-[#1F4068]/10 dark:from-[#4B0082]/30 dark:to-[#1F4068]/30",
-    iconBg: "bg-[#4B0082]",
+    color: "from-[#3bba9c] to-[#1F4068]",
+    bgColor: "from-[#3bba9c]/10 to-[#1F4068]/10 dark:from-[#3bba9c]/30 dark:to-[#1F4068]/30",
+    iconBg: "bg-[#3bba9c]",
   },
   {
     icon: BarChart3,
     title: "Analytics & Reports",
     description: "View detailed analytics, generate reports, and track platform performance metrics.",
-    color: "from-[#FF1493] to-[#4B0082]",
-    bgColor: "from-[#FF1493]/10 to-[#4B0082]/10 dark:from-[#FF1493]/30 dark:to-[#4B0082]/30",
+    color: "from-[#FF1493] to-[#3bba9c]",
+    bgColor: "from-[#FF1493]/10 to-[#3bba9c]/10 dark:from-[#FF1493]/30 dark:to-[#3bba9c]/30",
     iconBg: "bg-[#FF1493]",
   },
   {
@@ -117,7 +117,7 @@ export default function AdminPage() {
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-14">
         {/* Animated gradient background */}
-        <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+        <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
         
         {/* White overlay to lighten the gradient */}
         <div className="fixed inset-0 bg-white/40 dark:bg-[#181818]/40" />
@@ -250,7 +250,7 @@ export default function AdminPage() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 sm:mb-8 leading-tight"
             >
-              <span className="bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+              <span className="bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
                 Admin Panel
               </span>
               <br />
@@ -278,7 +278,7 @@ export default function AdminPage() {
               <Button
                 size="lg"
                 onClick={() => setIsLoginOpen(true)}
-                className="rounded-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:from-[#4B0082] hover:via-[#FF1493] hover:to-[#1F4068] text-white border-0 shadow-lg hover:shadow-xl transition-all px-8 py-6 text-lg font-semibold group"
+                className="rounded-full bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] hover:from-[#3bba9c] hover:via-[#FF1493] hover:to-[#1F4068] text-white border-0 shadow-lg hover:shadow-xl transition-all px-8 py-6 text-lg font-semibold group"
               >
                 Access Admin Panel
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -291,7 +291,7 @@ export default function AdminPage() {
       {/* Features Section */}
       <section className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
         {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#4B0082]/50 via-[#FF1493]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#3bba9c]/50 via-[#FF1493]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
         
         {/* White overlay */}
         <div className="absolute inset-0 bg-white/50 dark:bg-[#181818]/50" />
@@ -348,7 +348,7 @@ export default function AdminPage() {
       {/* Capabilities Section */}
       <section className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
         {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
         
         {/* White overlay */}
         <div className="absolute inset-0 bg-white/40 dark:bg-[#181818]/40" />
@@ -386,13 +386,13 @@ export default function AdminPage() {
                 >
                   <div className="relative h-full p-6 sm:p-8 rounded-2xl bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 shadow-sm hover:shadow-xl transition-all duration-300 text-center">
                     <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] flex items-center justify-center text-white font-bold text-lg shadow-lg">
                         {capability.number}
                       </div>
                     </div>
                     <div className="mt-6 mb-4 flex justify-center">
-                      <div className="p-4 rounded-xl bg-gradient-to-br from-[#4B0082]/10 to-[#FF1493]/10 dark:from-[#4B0082]/30 dark:to-[#FF1493]/30">
-                        <Icon className="h-8 w-8 text-[#4B0082] dark:text-[#FF1493]" />
+                      <div className="p-4 rounded-xl bg-gradient-to-br from-[#3bba9c]/10 to-[#FF1493]/10 dark:from-[#3bba9c]/30 dark:to-[#FF1493]/30">
+                        <Icon className="h-8 w-8 text-[#3bba9c] dark:text-[#FF1493]" />
                       </div>
                     </div>
                     <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-white">
@@ -403,7 +403,7 @@ export default function AdminPage() {
                     </p>
                   </div>
                   {index < capabilities.length - 1 && (
-                    <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-gradient-to-r from-[#4B0082] to-[#FF1493] -translate-y-1/2 z-0" />
+                    <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-gradient-to-r from-[#3bba9c] to-[#FF1493] -translate-y-1/2 z-0" />
                   )}
                 </motion.div>
               )
@@ -415,7 +415,7 @@ export default function AdminPage() {
       {/* CTA Section */}
       <section className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
         {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
         
         {/* White overlay */}
         <div className="absolute inset-0 bg-white/40 dark:bg-[#181818]/40" />
@@ -441,7 +441,7 @@ export default function AdminPage() {
             <Button
               size="lg"
               onClick={() => setIsLoginOpen(true)}
-              className="rounded-full bg-gradient-to-r from-[#1F4068] via-[#4B0082] to-[#FF1493] hover:from-[#4B0082] hover:via-[#FF1493] hover:to-[#1F4068] text-white border-0 shadow-lg hover:shadow-xl transition-all px-8 py-6 text-lg font-semibold group"
+              className="rounded-full bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] hover:from-[#3bba9c] hover:via-[#FF1493] hover:to-[#1F4068] text-white border-0 shadow-lg hover:shadow-xl transition-all px-8 py-6 text-lg font-semibold group"
             >
               Access Admin Panel
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />

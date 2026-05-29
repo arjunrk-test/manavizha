@@ -68,7 +68,7 @@ export function CustomSelectDropdown({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`sds-input w-full flex items-center justify-between text-left group transition-all duration-300 active:scale-[0.98] ${isOpen ? "border-[#4B0082] bg-white" : ""}`}
+          className={`sds-input w-full flex items-center justify-between text-left group transition-all duration-300 active:scale-[0.98] ${isOpen ? "border-[#3bba9c] bg-white" : ""}`}
         >
           <span className={`flex-1 truncate ${selectedOption ? "text-gray-900" : "text-gray-300 transition-colors"}`}>
             {selectedOption ? (
@@ -77,7 +77,7 @@ export function CustomSelectDropdown({
               "Select Position / Area"
             )}
           </span>
-          <ChevronDown className={`h-4 w-4 text-[#4B0082]/40 transition-transform duration-500 ml-2 flex-shrink-0 ${isOpen ? "rotate-180" : ""}`} />
+          <ChevronDown className={`h-4 w-4 text-[#3bba9c]/40 transition-transform duration-500 ml-2 flex-shrink-0 ${isOpen ? "rotate-180" : ""}`} />
         </button>
         {isOpen && (
           <div className="absolute z-50 w-full mt-3 sds-glass rounded-3xl shadow-2xl border-indigo-50/50 backdrop-blur-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -98,8 +98,8 @@ export function CustomSelectDropdown({
                     }}
                     className={`w-full px-5 py-3.5 rounded-2xl text-left text-xs font-bold transition-all duration-300 ${
                       isSelected 
-                      ? "bg-[#4B0082] text-white shadow-lg shadow-indigo-900/20" 
-                      : "hover:bg-indigo-50/50 text-gray-500 hover:text-[#4B0082]"
+                      ? "bg-[#3bba9c] text-white shadow-lg shadow-indigo-900/20" 
+                      : "hover:bg-indigo-50/50 text-gray-500 hover:text-[#3bba9c]"
                     }`}
                   >
                     {option.value}

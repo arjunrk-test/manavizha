@@ -188,11 +188,11 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         <div className="space-y-6 md:col-span-2">
           <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
-              <span className="text-[#4B0082] font-black text-xs">A1</span>
+            <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
+              <span className="text-[#3bba9c] font-black text-xs">A1</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Horoscope</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Horoscope</h4>
               <h3 className="text-xl font-light text-gray-900 tracking-tight">Jaadhagam / Photo</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
@@ -201,11 +201,11 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
           <div className="space-y-4 flex justify-center w-full">
             {preview ? (
               <div className="relative w-full max-w-lg mx-auto group">
-                <div className="absolute -inset-4 bg-gradient-to-br from-[#4B0082]/5 to-transparent rounded-[3rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                <div className="absolute -inset-4 bg-gradient-to-br from-[#3bba9c]/5 to-transparent rounded-[3rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                 <img
                   src={preview}
                   alt="Jaadhagam preview"
-                  className="relative w-full h-auto rounded-[2.5rem] border-8 border-white shadow-[0_30px_60px_-15px_rgba(75,0,130,0.15)] transition-all duration-700 group-hover:scale-[1.02] group-hover:-translate-y-2"
+                  className="relative w-full h-auto rounded-[2.5rem] border-8 border-white shadow-[0_30px_60px_-15px_rgba(59,186,156,0.15)] transition-all duration-700 group-hover:scale-[1.02] group-hover:-translate-y-2"
                 />
                 <Button
                   type="button"
@@ -218,13 +218,13 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
                 </Button>
               </div>
             ) : (
-              <div className="sds-glass border-2 border-dashed border-indigo-100 rounded-[3rem] p-16 text-center w-full max-w-xl mx-auto group hover:border-[#4B0082]/30 transition-all duration-700 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#4B0082]/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                <div className="h-24 w-24 rounded-[2rem] bg-[#4B0082]/5 flex items-center justify-center text-[#4B0082]/20 mx-auto mb-8 group-hover:scale-110 group-hover:bg-[#4B0082]/10 group-hover:rotate-6 transition-all duration-700">
+              <div className="sds-glass border-2 border-dashed border-indigo-100 rounded-[3rem] p-16 text-center w-full max-w-xl mx-auto group hover:border-[#3bba9c]/30 transition-all duration-700 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#3bba9c]/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                <div className="h-24 w-24 rounded-[2rem] bg-[#3bba9c]/5 flex items-center justify-center text-[#3bba9c]/20 mx-auto mb-8 group-hover:scale-110 group-hover:bg-[#3bba9c]/10 group-hover:rotate-6 transition-all duration-700">
                   <Upload className="h-10 w-10" />
                 </div>
                 <Label htmlFor="jaadhagam-upload" className="cursor-pointer flex flex-col gap-4 relative z-10">
-                  <span className="text-[14px] font-black uppercase tracking-[0.4em] text-[#4B0082] group-hover:tracking-[0.5em] transition-all duration-700">
+                  <span className="text-[14px] font-black uppercase tracking-[0.4em] text-[#3bba9c] group-hover:tracking-[0.5em] transition-all duration-700">
                     Upload Horoscope Image
                   </span>
                   <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest bg-white/40 px-4 py-2 rounded-full border border-indigo-50/50 w-fit mx-auto">

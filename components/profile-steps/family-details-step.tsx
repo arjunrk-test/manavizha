@@ -159,11 +159,11 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
         {/* Parental Identity Section */}
         <div className="space-y-8 md:col-span-2">
           <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
-              <span className="text-[#4B0082] font-black text-xs">P1</span>
+            <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
+              <span className="text-[#3bba9c] font-black text-xs">P1</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Family</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Family</h4>
               <h3 className="text-xl font-light text-gray-900 tracking-tight">Parents' Details</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
@@ -220,11 +220,11 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
         {/* Parental Residence Section */}
         <div className="space-y-8 md:col-span-2">
           <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
-              <span className="text-[#4B0082] font-black text-xs">P2</span>
+            <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
+              <span className="text-[#3bba9c] font-black text-xs">P2</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Location</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Location</h4>
               <h3 className="text-xl font-light text-gray-900 tracking-tight">Parents' Address</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
@@ -272,7 +272,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                 />
                 {isLoadingParentsAddress && (
                   <div className="absolute right-5 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#4B0082]/20 border-t-[#4B0082]"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#3bba9c]/20 border-t-[#3bba9c]"></div>
                   </div>
                 )}
               </div>
@@ -284,12 +284,12 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                   type="button"
                   onClick={() => parentsAreas.length > 0 && setIsParentsAreaOpen(!isParentsAreaOpen)}
                   disabled={isLoadingParentsAddress || parentsAreas.length === 0}
-                  className={`sds-input w-full flex items-center justify-between text-left transition-all duration-300 active:scale-[0.98] ${isParentsAreaOpen ? "border-[#4B0082] bg-white" : ""} disabled:opacity-40 disabled:cursor-not-allowed`}
+                  className={`sds-input w-full flex items-center justify-between text-left transition-all duration-300 active:scale-[0.98] ${isParentsAreaOpen ? "border-[#3bba9c] bg-white" : ""} disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
                   <span className={`flex-1 truncate ${formData.parentsArea ? "text-gray-900 font-bold" : "text-gray-300"}`}>
                     {formData.parentsArea || (isLoadingParentsAddress ? "Scanning..." : parentsAreas.length === 0 ? "Pending PIN" : "Select Area")}
                   </span>
-                  <ChevronDown className={`h-4 w-4 text-[#4B0082]/40 transition-transform duration-500 ml-2 flex-shrink-0 ${isParentsAreaOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-4 w-4 text-[#3bba9c]/40 transition-transform duration-500 ml-2 flex-shrink-0 ${isParentsAreaOpen ? "rotate-180" : ""}`} />
                 </button>
                 {isParentsAreaOpen && parentsAreas.length > 0 && (
                   <div className="absolute z-50 w-full mt-3 sds-glass rounded-3xl shadow-2xl border-indigo-50/50 backdrop-blur-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -301,8 +301,8 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                           onClick={() => handleAreaSelect(postOffice)}
                           className={`w-full px-5 py-3.5 rounded-2xl text-left text-xs font-bold transition-all duration-300 ${
                             formData.parentsArea === postOffice.Name 
-                            ? "bg-[#4B0082] text-white shadow-lg shadow-indigo-900/20" 
-                            : "hover:bg-indigo-50/50 text-gray-500 hover:text-[#4B0082]"
+                            ? "bg-[#3bba9c] text-white shadow-lg shadow-indigo-900/20" 
+                            : "hover:bg-indigo-50/50 text-gray-500 hover:text-[#3bba9c]"
                           }`}
                         >
                           {postOffice.Name}
@@ -347,11 +347,11 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
         {/* Heritage Matrix Section */}
         <div className="space-y-8 md:col-span-2">
           <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
-              <span className="text-[#4B0082] font-black text-xs">H3</span>
+            <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
+              <span className="text-[#3bba9c] font-black text-xs">H3</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Background</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Background</h4>
               <h3 className="text-xl font-light text-gray-900 tracking-tight">Caste & Heritage</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
@@ -427,11 +427,11 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
         {/* Structured Siblings Section */}
         <div className="space-y-8 md:col-span-2">
           <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
-              <span className="text-[#4B0082] font-black text-xs">S4</span>
+            <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
+              <span className="text-[#3bba9c] font-black text-xs">S4</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Siblings</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Siblings</h4>
               <h3 className="text-xl font-light text-gray-900 tracking-tight">Brothers & Sisters</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
@@ -443,7 +443,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                 type="button" 
                 onClick={() => addSibling('brother')}
                 variant="outline"
-                className="flex-1 h-16 rounded-2xl border-dashed border-indigo-200 hover:border-[#4B0082] hover:bg-indigo-50/30 text-[#4B0082] font-black text-[10px] uppercase tracking-widest gap-3"
+                className="flex-1 h-16 rounded-2xl border-dashed border-indigo-200 hover:border-[#3bba9c] hover:bg-indigo-50/30 text-[#3bba9c] font-black text-[10px] uppercase tracking-widest gap-3"
               >
                 <Plus className="h-4 w-4" /> Add Brother
               </Button>
@@ -451,7 +451,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                 type="button" 
                 onClick={() => addSibling('sister')}
                 variant="outline"
-                className="flex-1 h-16 rounded-2xl border-dashed border-indigo-200 hover:border-[#4B0082] hover:bg-indigo-50/30 text-[#4B0082] font-black text-[10px] uppercase tracking-widest gap-3"
+                className="flex-1 h-16 rounded-2xl border-dashed border-indigo-200 hover:border-[#3bba9c] hover:bg-indigo-50/30 text-[#3bba9c] font-black text-[10px] uppercase tracking-widest gap-3"
               >
                 <Plus className="h-4 w-4" /> Add Sister
               </Button>
@@ -503,14 +503,14 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                         <button
                           type="button"
                           onClick={() => updateSibling(sibling.id, 'isWorking', false)}
-                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${!sibling.isWorking ? 'bg-white shadow-sm text-[#4B0082]' : 'text-gray-400 hover:text-[#4B0082]/60'}`}
+                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${!sibling.isWorking ? 'bg-white shadow-sm text-[#3bba9c]' : 'text-gray-400 hover:text-[#3bba9c]/60'}`}
                         >
                           Studying
                         </button>
                         <button
                           type="button"
                           onClick={() => updateSibling(sibling.id, 'isWorking', true)}
-                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${sibling.isWorking ? 'bg-white shadow-sm text-[#4B0082]' : 'text-gray-400 hover:text-[#4B0082]/60'}`}
+                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${sibling.isWorking ? 'bg-white shadow-sm text-[#3bba9c]' : 'text-gray-400 hover:text-[#3bba9c]/60'}`}
                         >
                           Working
                         </button>
@@ -533,14 +533,14 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                         <button
                           type="button"
                           onClick={() => updateSibling(sibling.id, 'isMarried', false)}
-                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${!sibling.isMarried ? 'bg-white shadow-sm text-[#4B0082]' : 'text-gray-400 hover:text-[#4B0082]/60'}`}
+                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${!sibling.isMarried ? 'bg-white shadow-sm text-[#3bba9c]' : 'text-gray-400 hover:text-[#3bba9c]/60'}`}
                         >
                           Unmarried
                         </button>
                         <button
                           type="button"
                           onClick={() => updateSibling(sibling.id, 'isMarried', true)}
-                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${sibling.isMarried ? 'bg-white shadow-sm text-[#4B0082]' : 'text-gray-400 hover:text-[#4B0082]/60'}`}
+                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${sibling.isMarried ? 'bg-white shadow-sm text-[#3bba9c]' : 'text-gray-400 hover:text-[#3bba9c]/60'}`}
                         >
                           Married
                         </button>

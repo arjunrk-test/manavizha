@@ -136,20 +136,20 @@ export function ManageParents({ userId, onBack }: ManageParentsProps) {
                 <Button
                     variant="ghost"
                     onClick={onBack}
-                    className="mb-4 hover:bg-[#4B0082]/10"
+                    className="mb-4 hover:bg-[#3bba9c]/10"
                 >
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back to Dashboard
                 </Button>
                 <div className="flex justify-between items-center">
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                        <UserCircle2 className="h-8 w-8 text-[#4B0082]" />
+                        <UserCircle2 className="h-8 w-8 text-[#3bba9c]" />
                         Manage Parent Access
                     </h1>
                     {!showForm && parents.length < 2 && (
                         <Button
                             onClick={() => setShowForm(true)}
-                            className="bg-gradient-to-r from-[#1F4068] to-[#4B0082] hover:opacity-90"
+                            className="bg-gradient-to-r from-[#1F4068] to-[#3bba9c] hover:opacity-90"
                         >
                             <UserPlus className="h-4 w-4 mr-2" /> Add Parent
                         </Button>
@@ -166,8 +166,8 @@ export function ManageParents({ userId, onBack }: ManageParentsProps) {
                     animate={{ opacity: 1, height: 'auto' }}
                     className="mb-8"
                 >
-                    <Card className="border-2 border-[#4B0082]/20">
-                        <CardHeader className="bg-[#4B0082]/5 dark:bg-[#4B0082]/10 border-b border-[#4B0082]/10">
+                    <Card className="border-2 border-[#3bba9c]/20">
+                        <CardHeader className="bg-[#3bba9c]/5 dark:bg-[#3bba9c]/10 border-b border-[#3bba9c]/10">
                             <CardTitle>Create Parent Account</CardTitle>
                             <CardDescription>
                                 They will use the email and password below to login to their portal.
@@ -246,7 +246,7 @@ export function ManageParents({ userId, onBack }: ManageParentsProps) {
                                     </Button>
                                     <Button
                                         type="submit"
-                                        className="bg-[#4B0082] hover:bg-[#3a0066] text-white"
+                                        className="bg-[#3bba9c] hover:bg-[#3a0066] text-white"
                                         disabled={isCreating || !role || !name || !email || !password}
                                     >
                                         {isCreating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
@@ -261,7 +261,7 @@ export function ManageParents({ userId, onBack }: ManageParentsProps) {
 
             {isLoading ? (
                 <div className="flex justify-center p-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#4B0082]" />
+                    <Loader2 className="h-8 w-8 animate-spin text-[#3bba9c]" />
                 </div>
             ) : parents.length === 0 ? (
                 <Card className="bg-gray-50 dark:bg-gray-800/50 border-dashed">
@@ -276,7 +276,7 @@ export function ManageParents({ userId, onBack }: ManageParentsProps) {
                         {!showForm && (
                             <Button
                                 onClick={() => setShowForm(true)}
-                                className="bg-gradient-to-r from-[#1F4068] to-[#4B0082] hover:opacity-90"
+                                className="bg-gradient-to-r from-[#1F4068] to-[#3bba9c] hover:opacity-90"
                             >
                                 <UserPlus className="h-4 w-4 mr-2" /> Add Parent Now
                             </Button>
@@ -287,11 +287,11 @@ export function ManageParents({ userId, onBack }: ManageParentsProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {parents.map((parent) => (
                         <Card key={parent.id} className="relative overflow-hidden group">
-                            <div className="absolute top-0 left-0 w-1 h-full bg-[#4B0082]" />
+                            <div className="absolute top-0 left-0 w-1 h-full bg-[#3bba9c]" />
                             <CardContent className="p-6">
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
-                                        <span className="inline-block px-2 py-1 bg-[#4B0082]/10 text-[#4B0082] text-xs font-semibold rounded-full mb-2">
+                                        <span className="inline-block px-2 py-1 bg-[#3bba9c]/10 text-[#3bba9c] text-xs font-semibold rounded-full mb-2">
                                             {parent.role}
                                         </span>
                                         <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">

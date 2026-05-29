@@ -56,7 +56,9 @@ module.exports = {
         },
         // Custom brand colors
         ocean: "#1F4068",
-        violet: "#4B0082",
+        brand: "#3bba9c",
+        brandDark: "#2fa085",
+        violet: "#3bba9c",
         pink: "#FF1493",
         orange: "#FFA500",
       },

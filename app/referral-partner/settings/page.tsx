@@ -183,7 +183,7 @@ export default function ReferralPartnerSettingsPage() {
   return (
     <div className="min-h-screen relative">
       {/* Animated gradient background */}
-      <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#4B0082] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+      <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
       
       {/* White overlay to lighten the gradient */}
       <div className="fixed inset-0 bg-white/40 dark:bg-[#181818]/40" />
@@ -337,7 +337,7 @@ export default function ReferralPartnerSettingsPage() {
                   <Button
                     onClick={generatePartnerId}
                     disabled={isGenerating || !!partnerData?.partner_id}
-                    className="whitespace-nowrap bg-[#4B0082] hover:bg-[#5a0099] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="whitespace-nowrap bg-[#3bba9c] hover:bg-[#5a0099] text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isGenerating ? "Generating..." : "Generate ID"}
                   </Button>
@@ -376,13 +376,13 @@ export default function ReferralPartnerSettingsPage() {
                 <span>© 2024 Manavizha. All rights reserved.</span>
               </div>
               <div className="flex items-center gap-6">
-                <a href="/privacy-policy" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                <a href="/privacy-policy" className="hover:text-[#3bba9c] dark:hover:text-[#3bba9c] transition-colors">
                   Privacy Policy
                 </a>
-                <a href="/terms-of-service" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                <a href="/terms-of-service" className="hover:text-[#3bba9c] dark:hover:text-[#3bba9c] transition-colors">
                   Terms of Service
                 </a>
-                <a href="/contact" className="hover:text-[#4B0082] dark:hover:text-[#4B0082] transition-colors">
+                <a href="/contact" className="hover:text-[#3bba9c] dark:hover:text-[#3bba9c] transition-colors">
                   Contact Us
                 </a>
               </div>

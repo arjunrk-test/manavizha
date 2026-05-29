@@ -256,21 +256,21 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
       {/* Communication Section */}
       <div className="space-y-8">
         <div className="flex items-center gap-4 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
-            <span className="text-[#4B0082] font-black text-xs">01</span>
+          <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
+            <span className="text-[#3bba9c] font-black text-xs">01</span>
           </div>
           <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Contact</h4>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Contact</h4>
             <h3 className="text-xl font-light text-gray-900 tracking-tight">Phone & WhatsApp</h3>
           </div>
           <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50 shadow-[0_20px_50px_-20px_rgba(75,0,130,0.05)]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50 shadow-[0_20px_50px_-20px_rgba(59,186,156,0.05)]">
           <div className="flex flex-col space-y-3">
             <Label htmlFor="phone" className="sds-label ml-1">Phone Number *</Label>
             <div className="relative group">
-              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#4B0082]/40 font-black text-[11px] pointer-events-none z-10 transition-colors group-focus-within:text-[#4B0082] tracking-widest">
+              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#3bba9c]/40 font-black text-[11px] pointer-events-none z-10 transition-colors group-focus-within:text-[#3bba9c] tracking-widest">
                 +91
               </div>
               <Input
@@ -310,11 +310,11 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                 <div className={`w-8 h-4 rounded-full transition-all duration-300 relative ${isWhatsappSameAsPhone ? "bg-emerald-500" : "bg-gray-200"}`}>
                   <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all duration-300 ${isWhatsappSameAsPhone ? "left-4.5" : "left-0.5"}`} />
                 </div>
-                <span className="text-[8px] font-black uppercase tracking-widest text-[#4B0082]/40 group-hover/toggle:text-[#4B0082] transition-colors">Same as Phone</span>
+                <span className="text-[8px] font-black uppercase tracking-widest text-[#3bba9c]/40 group-hover/toggle:text-[#3bba9c] transition-colors">Same as Phone</span>
               </div>
             </div>
             <div className="relative group">
-              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#4B0082]/40 font-black text-[11px] pointer-events-none z-10 transition-colors group-focus-within:text-[#4B0082] tracking-widest">
+              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#3bba9c]/40 font-black text-[11px] pointer-events-none z-10 transition-colors group-focus-within:text-[#3bba9c] tracking-widest">
                 +91
               </div>
               <Input
@@ -346,11 +346,11 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
       {/* Permanent Address Section */}
       <div className="space-y-8">
         <div className="flex items-center gap-4 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
-            <span className="text-[#4B0082] font-black text-xs">02</span>
+          <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
+            <span className="text-[#3bba9c] font-black text-xs">02</span>
           </div>
           <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Permanent Address</h4>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Permanent Address</h4>
             <h3 className="text-xl font-light text-gray-900 tracking-tight">Where you live permanently</h3>
           </div>
           <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
@@ -399,7 +399,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                 />
                 {isLoadingPermanentAddress && (
                   <div className="absolute right-5 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#4B0082]/20 border-t-[#4B0082]"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#3bba9c]/20 border-t-[#3bba9c]"></div>
                   </div>
                 )}
               </div>
@@ -416,7 +416,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                   <span className={`text-[11px] font-bold tracking-widest uppercase ${formData.permanentArea ? "text-gray-900" : "text-gray-300"}`}>
                     {formData.permanentArea || (isLoadingPermanentAddress ? "Scanning..." : "Select Area")}
                   </span>
-                  <ChevronDown className={`h-4 w-4 text-[#4B0082]/40 transition-transform duration-500 ${isPermanentAreaOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-4 w-4 text-[#3bba9c]/40 transition-transform duration-500 ${isPermanentAreaOpen ? "rotate-180" : ""}`} />
                 </button>
                 {isPermanentAreaOpen && permanentAreas.length > 0 && (
                   <div className="absolute z-50 w-full mt-3 sds-glass rounded-3xl shadow-2xl border-indigo-50/50 backdrop-blur-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -428,8 +428,8 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                           onClick={() => handleAreaSelect(postOffice, "permanent")}
                           className={`w-full px-5 py-3.5 rounded-2xl text-left text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
                             formData.permanentArea === postOffice.Name 
-                            ? "bg-[#4B0082] text-white shadow-lg shadow-indigo-900/20" 
-                            : "hover:bg-indigo-50/50 text-gray-500 hover:text-[#4B0082]"
+                            ? "bg-[#3bba9c] text-white shadow-lg shadow-indigo-900/20" 
+                            : "hover:bg-indigo-50/50 text-gray-500 hover:text-[#3bba9c]"
                           }`}
                         >
                           {postOffice.Name}
@@ -476,11 +476,11 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
       <div className="space-y-8">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-[#4B0082]/5 flex items-center justify-center border border-[#4B0082]/10">
-              <span className="text-[#4B0082] font-black text-xs">03</span>
+            <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
+              <span className="text-[#3bba9c] font-black text-xs">03</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#4B0082]/30 mb-0.5">Current Location</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Current Location</h4>
               <h3 className="text-xl font-light text-gray-900 tracking-tight">Where you live now</h3>
             </div>
           </div>
@@ -505,10 +505,10 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
               }
             }}
           >
-            <div className={`w-10 h-5 rounded-full transition-all duration-300 relative ${isCurrentAddressSameAsPermanent ? "bg-[#4B0082]" : "bg-gray-200"}`}>
+            <div className={`w-10 h-5 rounded-full transition-all duration-300 relative ${isCurrentAddressSameAsPermanent ? "bg-[#3bba9c]" : "bg-gray-200"}`}>
               <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${isCurrentAddressSameAsPermanent ? "left-6" : "left-1"}`} />
             </div>
-            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#4B0082]/60 group-hover:text-[#4B0082] transition-colors">Same as Permanent</span>
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#3bba9c]/60 group-hover:text-[#3bba9c] transition-colors">Same as Permanent</span>
           </div>
         </div>
 
@@ -564,7 +564,7 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                   <span className={`text-[11px] font-bold tracking-widest uppercase ${formData.currentArea ? "text-gray-900" : "text-gray-300"}`}>
                     {formData.currentArea || (isLoadingCurrentAddress ? "Syncing..." : "Select Area")}
                   </span>
-                  <ChevronDown className={`h-4 w-4 text-[#4B0082]/40 transition-transform duration-500 ${isCurrentAreaOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-4 w-4 text-[#3bba9c]/40 transition-transform duration-500 ${isCurrentAreaOpen ? "rotate-180" : ""}`} />
                 </button>
                 {isCurrentAreaOpen && !isCurrentAddressSameAsPermanent && currentAreas.length > 0 && (
                   <div className="absolute z-50 w-full mt-3 sds-glass rounded-3xl shadow-2xl border-amber-50/50 backdrop-blur-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">

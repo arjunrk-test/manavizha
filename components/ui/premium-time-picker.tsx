@@ -50,7 +50,7 @@ export function PremiumTimePicker({ time, onTimeChange, label }: PremiumTimePick
                   onClick={() => handleHourSelect(i)}
                   className={`
                     w-full py-3 px-3 text-sm font-bold transition-all flex items-center justify-center gap-2
-                    ${hours === i ? "text-[#4B0082] bg-purple-50 dark:bg-purple-900/20" : "text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800"}
+                    ${hours === i ? "text-[#3bba9c] bg-emerald-50 dark:bg-emerald-900/20" : "text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800"}
                   `}
                 >
                   {i.toString().padStart(2, '0')}
@@ -80,7 +80,7 @@ export function PremiumTimePicker({ time, onTimeChange, label }: PremiumTimePick
           
           <div className="p-4 border-t border-gray-100 dark:border-gray-800">
             <Button 
-              className="w-full bg-gradient-to-r from-[#4B0082] to-[#FF1493] text-white rounded-xl h-10 font-bold"
+              className="w-full bg-gradient-to-r from-[#3bba9c] to-[#FF1493] text-white rounded-xl h-10 font-bold"
               onClick={() => setIsOpen(false)}
             >
               Confirm Time

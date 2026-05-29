@@ -15,8 +15,9 @@
     --marriage: 45 100% 45%; /* Saturated Gold */
     --glass-white: 0 0% 100% / 0.85; /* More Opaque Glass */
     --glass-border: 0 0% 100% / 0.4; /* Stronger Borders */
-    --primary: 275 100% 25%; /* Deep Royal Indigo */
+    --primary: 166 52% 48%; /* Brand Teal #3bba9c */
     --primary-foreground: 0 0% 100%;
+    --primary-dark: 166 52% 38%; /* Hover #2fa085 */
   }
 
 
@@ -27,7 +28,7 @@
     --card-foreground: 0 0% 100%;
     --popover: 0 0% 9%;
     --popover-foreground: 0 0% 100%;
-    --primary: 214 52% 27%;
+    --primary: 166 52% 40%;
     --primary-foreground: 0 0% 100%;
     --secondary: 271 100% 25%;
     --secondary-foreground: 0 0% 100%;
@@ -50,7 +51,7 @@
 @layer components {
   /* SDS Premium Glass - Enhanced Polish */
   .sds-glass {
-    @apply backdrop-blur-[40px] border border-white/50 shadow-[0_16px_48px_0_rgba(75,0,130,0.12)];
+    @apply backdrop-blur-[40px] border border-white/50 shadow-[0_16px_48px_0_rgba(59,186,156,0.12)];
     background: rgba(255, 255, 255, 0.85); /* Solidified for contrast */
   }
 
@@ -64,11 +65,11 @@
   }
 
   .sds-label {
-    @apply text-[10px] font-black uppercase tracking-[0.2em] text-[#4B0082] mb-2 block opacity-70;
+    @apply text-[10px] font-black uppercase tracking-[0.2em] text-[#3bba9c] mb-2 block opacity-70;
   }
 
   .sds-input {
-    @apply h-12 rounded-2xl border-2 border-indigo-100/80 bg-white px-5 text-[14px] font-bold text-gray-900 transition-all focus:border-[#4B0082] focus:ring-8 focus:ring-indigo-500/10 placeholder:text-gray-300 shadow-sm;
+    @apply h-12 rounded-2xl border-2 border-emerald-100/80 bg-white px-5 text-[14px] font-bold text-gray-900 transition-all focus:border-[#3bba9c] focus:ring-8 focus:ring-emerald-500/10 placeholder:text-gray-300 shadow-sm;
   }
 
   .sds-grain::before {
@@ -357,12 +358,12 @@ html {
 }
 
 .language-dropdown-scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #1F4068, #4B0082, #FF1493);
+  background: linear-gradient(to bottom, #1F4068, #3bba9c, #FF1493);
   border-radius: 10px;
 }
 
 .language-dropdown-scroll::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #4B0082, #FF1493, #FFA500);
+  background: linear-gradient(to bottom, #3bba9c, #FF1493, #FFA500);
 }
 
 .dark .language-dropdown-scroll::-webkit-scrollbar-track {
@@ -370,19 +371,19 @@ html {
 }
 
 .dark .language-dropdown-scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #1F4068, #4B0082, #FF1493);
+  background: linear-gradient(to bottom, #1F4068, #3bba9c, #FF1493);
 }
 
 .dark .language-dropdown-scroll::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #4B0082, #FF1493, #FFA500);
+  background: linear-gradient(to bottom, #3bba9c, #FF1493, #FFA500);
 }
 
 /* Firefox scrollbar for language dropdowns */
 .language-dropdown-scroll {
   scrollbar-width: thin;
-  scrollbar-color: #4B0082 #f1f1f1;
+  scrollbar-color: #3bba9c #f1f1f1;
 }
 
 .dark .language-dropdown-scroll {
-  scrollbar-color: #4B0082 #2d2d2d;
+  scrollbar-color: #3bba9c #2d2d2d;
 }

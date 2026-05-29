@@ -21,18 +21,18 @@ function Section({ title, editing, saving, onEdit, onSave, onCancel, children }:
     return (
         <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/60 dark:border-gray-700/60 p-6 mb-6">
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">
-                <h2 className="text-lg font-semibold text-[#4B0082] dark:text-purple-400">{title}</h2>
+                <h2 className="text-lg font-semibold text-[#3bba9c] dark:text-emerald-400">{title}</h2>
                 {editing ? (
                     <div className="flex gap-2">
                         <Button size="sm" variant="outline" onClick={onCancel} className="h-7 px-2 text-xs flex items-center gap-1">
                             <X className="h-3 w-3" /> Cancel
                         </Button>
-                        <Button size="sm" onClick={onSave} disabled={saving} className="h-7 px-2 text-xs flex items-center gap-1 bg-[#4B0082] hover:bg-[#3a0066] text-white">
+                        <Button size="sm" onClick={onSave} disabled={saving} className="h-7 px-2 text-xs flex items-center gap-1 bg-[#3bba9c] hover:bg-[#3a0066] text-white">
                             <Check className="h-3 w-3" /> {saving ? "Saving…" : "Save"}
                         </Button>
                     </div>
                 ) : (
-                    <Button size="sm" variant="ghost" onClick={onEdit} className="h-7 px-2 text-xs text-gray-500 hover:text-[#4B0082] flex items-center gap-1">
+                    <Button size="sm" variant="ghost" onClick={onEdit} className="h-7 px-2 text-xs text-gray-500 hover:text-[#3bba9c] flex items-center gap-1">
                         <Pencil className="h-3 w-3" /> Edit
                     </Button>
                 )}
@@ -215,7 +215,7 @@ export default function AdminProfileViewPage() {
 
     if (isLoading) return (
         <div className="min-h-screen flex items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#4B0082]" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bba9c]" />
         </div>
     )
 
@@ -230,7 +230,7 @@ export default function AdminProfileViewPage() {
             <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
                 <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <User className="h-6 w-6 text-[#4B0082]" />
+                        <User className="h-6 w-6 text-[#3bba9c]" />
                         <div>
                             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{personal?.name || userRow?.name || "Profile"}</h1>
                             <p className="text-xs text-gray-500">{userRow?.email}</p>
@@ -289,7 +289,7 @@ export default function AdminProfileViewPage() {
                     {/* Education (read-only – multi-row) */}
                     {raw.edu && raw.edu.length > 0 && (
                         <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/60 dark:border-gray-700/60 p-6 mb-6">
-                            <h2 className="text-lg font-semibold text-[#4B0082] dark:text-purple-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Educational Details</h2>
+                            <h2 className="text-lg font-semibold text-[#3bba9c] dark:text-emerald-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Educational Details</h2>
                             {raw.edu.map((edu: any, i: number) => (
                                 <div key={i} className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-100 dark:border-gray-700 last:border-0">
                                     <F label="Education" value={edu.education === "Other" ? edu.education_other : edu.education} />
@@ -306,7 +306,7 @@ export default function AdminProfileViewPage() {
                     {/* Professional Details (read-only) */}
                     {(raw.emp || raw.bus || raw.stu) && (
                         <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/60 dark:border-gray-700/60 p-6 mb-6">
-                            <h2 className="text-lg font-semibold text-[#4B0082] dark:text-purple-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Professional Details</h2>
+                            <h2 className="text-lg font-semibold text-[#3bba9c] dark:text-emerald-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Professional Details</h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {raw.emp && (
                                     <>
@@ -393,7 +393,7 @@ export default function AdminProfileViewPage() {
                     {/* Photos */}
                     {raw.photos && (raw.photos.userPhotos?.length > 0 || raw.photos.familyPhoto || raw.photos.aadharFront || raw.photos.aadharBack) && (
                         <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/60 dark:border-gray-700/60 p-6 mb-6">
-                            <h2 className="text-lg font-semibold text-[#4B0082] dark:text-purple-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Photos</h2>
+                            <h2 className="text-lg font-semibold text-[#3bba9c] dark:text-emerald-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Photos</h2>
 
                             {raw.photos.userPhotos?.length > 0 && (
                                 <div className="mb-4">
@@ -432,7 +432,7 @@ export default function AdminProfileViewPage() {
                     {/* Referral (read-only) */}
                     {raw.ref && (
                         <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/60 dark:border-gray-700/60 p-6 mb-6">
-                            <h2 className="text-lg font-semibold text-[#4B0082] dark:text-purple-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Referral</h2>
+                            <h2 className="text-lg font-semibold text-[#3bba9c] dark:text-emerald-400 mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">Referral</h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <F label="Referral Partner" value={raw.ref.referral_partners?.name} />
                                 <F label="Referral Partner ID" value={raw.ref.referral_partner_id} />
