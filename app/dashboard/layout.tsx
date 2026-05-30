@@ -232,6 +232,7 @@ export default function DashboardLayout({
     if (pathname.includes("/likes")) return "My Likes"
     if (pathname.includes("/horoscope")) return "Horoscope Generator"
     if (pathname.includes("/messages")) return "Messages"
+    if (pathname.includes("/settings")) return "Profile Settings"
     return ""
   }
 
