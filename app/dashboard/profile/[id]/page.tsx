@@ -3,8 +3,8 @@
 export const dynamic = 'force-dynamic'
 
 import { supabase } from "@/lib/supabase"
-import { useRouter, useParams } from "next/navigation"
-import React, { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import React, { use, useEffect, useState } from "react"
 import { 
     ArrowLeft, MapPin, Briefcase, User, GraduationCap, ArrowRight,
     Heart, Star, CheckCircle2, Phone, MessageCircle, Lock,
@@ -22,10 +22,13 @@ import { formatToDDMMYYYY, formatActivityTime } from "@/lib/utils/date-utils"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
-export default function ProfileViewPage() {
+export default function ProfileViewPage({
+    params,
+}: {
+    params: Promise<{ id: string }>
+}) {
     const router = useRouter()
-    const params = useParams()
-    const targetUserId = params.id as string
+    const { id: targetUserId } = use(params)
     const [currentUserId, setCurrentUserId] = useState<string | null>(null)
     const isOwnProfile = currentUserId === targetUserId;
 

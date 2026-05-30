@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase"
 import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { getUserDashboard } from "@/lib/auth"
-import { LogOut, ArrowLeft, Edit, Settings, MessageSquare, User, Bell } from "lucide-react"
+import { LogOut, ArrowLeft, Edit, Settings, MessageSquare, User, Bell, Heart, Eye, Sparkles, ArrowRight } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { DashboardScrollProgress } from "@/components/dashboard/dashboard-scroll-progress"
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
@@ -330,77 +330,156 @@ export default function DashboardLayout({
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent align="end" className="w-[320px] rounded-2xl p-4 bg-white shadow-[0_8px_32px_rgba(31,64,104,0.12)] border border-gray-100 z-[60]">
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-sm font-semibold text-[#1F4068]">Notifications</h4>
-                    <p className="text-xs text-gray-500 mt-0.5">Activity from the last 30 days</p>
-                  </div>
+              <PopoverContent
+                align="end"
+                sideOffset={8}
+                className="w-[340px] p-0 overflow-hidden rounded-[20px] border border-[#f0ebe3] bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] shadow-[0_12px_40px_rgba(31,64,104,0.14)] z-[60]"
+              >
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -top-8 -right-8 h-24 w-24 rounded-full bg-[#fce8ef] blur-2xl opacity-60"
+                />
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -bottom-6 -left-6 h-20 w-20 rounded-full bg-[#fdf6e3] blur-2xl opacity-50"
+                />
 
-                  <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
-                    {whoExpressedInterest.length > 0 && (
-                      <div className="space-y-1">
-                        <div className="px-1 text-xs font-semibold text-[#e87898]">Interest received</div>
-                        {whoExpressedInterest.slice(0, 5).map(p => (
-                          <div
-                            key={p.user_id}
-                            className="p-2.5 rounded-xl hover:bg-[#faf8f4] transition-colors flex items-center gap-3 cursor-pointer"
-                            onClick={() => handleNotificationClick('interest', p.user_id)}
-                          >
-                            <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 shrink-0">
-                              <img src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}`} alt="" className="w-full h-full object-cover" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-medium text-gray-900 truncate">{p.name || 'Member'} expressed interest</p>
-                                <span className="text-[10px] text-gray-400 whitespace-nowrap shrink-0">{formatDistanceToNow(new Date(p.interaction_at), { addSuffix: true })}</span>
-                              </div>
-                              <p className="text-xs text-gray-500">{p.age} yrs · {p.profession?.split(' at ')[0]}</p>
-                            </div>
-                          </div>
-                        ))}
+                <div className="relative border-b border-[#f0ebe3]/80 px-4 py-3.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#fce8ef] shadow-sm">
+                        <Bell className="h-4 w-4 text-[#e87898]" />
                       </div>
-                    )}
-
-                    {whoViewedMe.length > 0 && (
-                      <div className="space-y-1">
-                        <div className="px-1 text-xs font-semibold text-[#3bb9ac]">Profile visitors</div>
-                        {whoViewedMe.slice(0, 5).map(p => (
-                          <div
-                            key={p.user_id}
-                            className="p-2.5 rounded-xl hover:bg-[#faf8f4] transition-colors flex items-center gap-3 cursor-pointer"
-                            onClick={() => handleNotificationClick('view', p.user_id)}
-                          >
-                            <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 shrink-0">
-                              <img src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}`} alt="" className="w-full h-full object-cover" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-medium text-gray-900 truncate">{p.name || 'Member'} viewed you</p>
-                                <span className="text-[10px] text-gray-400 whitespace-nowrap shrink-0">{formatDistanceToNow(new Date(p.interaction_at), { addSuffix: true })}</span>
-                              </div>
-                              <p className="text-xs text-gray-500">{p.age} yrs · {p.address?.split(',')[0]}</p>
-                            </div>
-                          </div>
-                        ))}
+                      <div className="min-w-0">
+                        <h4 className="text-[13px] font-semibold text-[#1F4068]">Notifications</h4>
+                        <p className="text-[11px] text-[#9ca3af]">Activity from the last 30 days</p>
                       </div>
-                    )}
-
-                    {notificationCount === 0 && (
-                      <div className="py-8 text-center">
-                        <Bell className="h-8 w-8 text-gray-200 mx-auto mb-2" />
-                        <p className="text-sm text-gray-400">No new activity</p>
-                      </div>
+                    </div>
+                    {notificationCount > 0 && (
+                      <span className="shrink-0 rounded-full bg-[#e87898] px-2 py-0.5 text-[10px] font-semibold text-white">
+                        {notificationCount} new
+                      </span>
                     )}
                   </div>
+                </div>
 
+                <div className="relative max-h-[380px] overflow-y-auto px-3 py-3 custom-scrollbar">
+                  {isNotificationsLoading ? (
+                    <div className="space-y-2 py-2">
+                      {[0, 1, 2].map((item) => (
+                        <div key={item} className="flex items-center gap-3 rounded-xl border border-[#f0ebe3]/80 bg-white/70 p-2.5 animate-pulse">
+                          <div className="h-10 w-10 shrink-0 rounded-xl bg-[#faf8f4]" />
+                          <div className="flex-1 space-y-2">
+                            <div className="h-3 w-3/4 rounded bg-[#faf8f4]" />
+                            <div className="h-2.5 w-1/2 rounded bg-[#faf8f4]" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      {whoExpressedInterest.length > 0 && (
+                        <div className="mb-3 space-y-2">
+                          <div className="flex items-center gap-1.5 px-1">
+                            <Sparkles className="h-3.5 w-3.5 text-[#e87898]" />
+                            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#e87898]">
+                              Interest received
+                            </span>
+                          </div>
+                          {whoExpressedInterest.slice(0, 5).map((p) => (
+                            <div
+                              key={p.user_id}
+                              className="group flex cursor-pointer items-center gap-3 rounded-xl border border-[#f0ebe3]/80 bg-white/75 p-2.5 transition-all hover:border-[#e87898]/25 hover:bg-white hover:shadow-[0_2px_10px_rgba(232,120,152,0.08)]"
+                              onClick={() => handleNotificationClick("interest", p.user_id)}
+                            >
+                              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#fce8ef] ring-2 ring-white">
+                                <img
+                                  src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=fce8ef&color=e87898`}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="truncate text-[13px] font-medium text-[#374151]">
+                                    <span className="text-[#1F4068]">{p.name || "Member"}</span> expressed interest
+                                  </p>
+                                  <span className="shrink-0 whitespace-nowrap text-[10px] text-[#9ca3af]">
+                                    {formatDistanceToNow(new Date(p.interaction_at), { addSuffix: true })}
+                                  </span>
+                                </div>
+                                <p className="mt-0.5 truncate text-[11px] text-[#6b7280]">
+                                  {p.age} yrs · {p.profession?.split(" at ")[0]}
+                                </p>
+                              </div>
+                              <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[#d1d5db] transition-colors group-hover:text-[#e87898]" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {whoViewedMe.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-1.5 px-1">
+                            <Eye className="h-3.5 w-3.5 text-[#3bb9ac]" />
+                            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#3bb9ac]">
+                              Profile visitors
+                            </span>
+                          </div>
+                          {whoViewedMe.slice(0, 5).map((p) => (
+                            <div
+                              key={p.user_id}
+                              className="group flex cursor-pointer items-center gap-3 rounded-xl border border-[#f0ebe3]/80 bg-white/75 p-2.5 transition-all hover:border-[#3bb9ac]/25 hover:bg-white hover:shadow-[0_2px_10px_rgba(59,185,172,0.08)]"
+                              onClick={() => handleNotificationClick("view", p.user_id)}
+                            >
+                              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#e6f7f5] ring-2 ring-white">
+                                <img
+                                  src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=e6f7f5&color=3bb9ac`}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="truncate text-[13px] font-medium text-[#374151]">
+                                    <span className="text-[#1F4068]">{p.name || "Member"}</span> viewed you
+                                  </p>
+                                  <span className="shrink-0 whitespace-nowrap text-[10px] text-[#9ca3af]">
+                                    {formatDistanceToNow(new Date(p.interaction_at), { addSuffix: true })}
+                                  </span>
+                                </div>
+                                <p className="mt-0.5 truncate text-[11px] text-[#6b7280]">
+                                  {p.age} yrs · {p.address?.split(",")[0]}
+                                </p>
+                              </div>
+                              <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[#d1d5db] transition-colors group-hover:text-[#3bb9ac]" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {notificationCount === 0 && (
+                        <div className="rounded-[16px] border border-dashed border-[#eadfce] bg-[#faf8f4]/80 px-4 py-8 text-center">
+                          <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#fce8ef]">
+                            <Heart className="h-5 w-5 text-[#e87898]" />
+                          </div>
+                          <p className="text-[13px] font-medium text-[#374151]">No new activity yet</p>
+                          <p className="mt-1 text-[11px] text-[#9ca3af]">When someone views or interests you, it will appear here.</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                <div className="relative border-t border-[#f0ebe3]/80 bg-white/50 px-3 py-3">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full rounded-xl text-sm font-medium text-[#3bb9ac] hover:bg-[#3bb9ac]/5"
+                    className="h-9 w-full rounded-[10px] bg-[#fce8ef]/60 text-[13px] font-medium text-[#e87898] hover:bg-[#fce8ef] hover:text-[#d66686]"
                     onClick={() => router.push("/dashboard/browse")}
                   >
                     See all activity
+                    <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                   </Button>
                 </div>
               </PopoverContent>
