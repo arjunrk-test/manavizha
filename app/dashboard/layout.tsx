@@ -7,6 +7,7 @@ import { useEffect, useState } from "react"
 import { getUserDashboard } from "@/lib/auth"
 import { LogOut, ArrowLeft, Edit, Settings, MessageSquare, User, Bell } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { DashboardScrollProgress } from "@/components/dashboard/dashboard-scroll-progress"
 import { formatDistanceToNow } from "date-fns"
 
 export default function DashboardLayout({
@@ -22,6 +23,7 @@ export default function DashboardLayout({
   const [whoViewedMe, setWhoViewedMe] = useState<any[]>([])
   const [whoExpressedInterest, setWhoExpressedInterest] = useState<any[]>([])
   const [isNotificationsLoading, setIsNotificationsLoading] = useState(false)
+  const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
     const checkUser = async () => {
@@ -250,9 +252,9 @@ export default function DashboardLayout({
   const notificationCount = whoViewedMe.length + whoExpressedInterest.length
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#faf8f4]">
+    <div className="h-dvh flex flex-col overflow-hidden bg-[#faf8f4]">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-[#f0f0f0]">
+      <header className="relative z-50 shrink-0 bg-white border-b border-[#f0f0f0]">
         <div className="w-full px-5 lg:px-8 py-3 flex items-center justify-between gap-4">
           <div
             className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity min-w-0"
@@ -428,9 +430,19 @@ export default function DashboardLayout({
             </Button>
           </div>
         </div>
+        {scrollContainer && <DashboardScrollProgress scrollContainer={scrollContainer} />}
+        {!scrollContainer && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute bottom-0 left-0 right-0 z-[60] h-px bg-[#eadfce]"
+          />
+        )}
       </header>
 
-      <main className="flex-1 flex flex-col min-h-0">
+      <main
+        ref={setScrollContainer}
+        className="flex-1 min-h-0 overflow-y-auto"
+      >
         {user && children}
       </main>
 

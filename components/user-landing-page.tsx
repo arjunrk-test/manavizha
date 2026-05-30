@@ -733,8 +733,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
   return (
   <>
-    <div className="flex min-h-[calc(100vh-57px)] min-w-0">
-      <aside className="hidden lg:flex w-[272px] shrink-0 bg-white border-r border-[#f0f0f0] flex-col px-3 py-6">
+    <div className="flex min-w-0">
+      <aside className="hidden lg:flex w-[272px] shrink-0 sticky top-0 self-start bg-white border-r border-[#f0f0f0] flex-col px-3 py-6 lg:min-h-full">
         <DashboardSidebar
           mutualCount={mutualCount}
           iLikedCount={iLikedCount}
@@ -755,7 +755,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
         />
       </aside>
 
-      <div className="flex-1 bg-[#faf8f4] overflow-auto min-w-0">
+      <div className="flex-1 bg-[#faf8f4] min-w-0">
         <div className="p-5 lg:p-6 space-y-5 max-w-[1200px] min-w-0">
           <DashboardHeroBanner
             displayName={displayName}
