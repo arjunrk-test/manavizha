@@ -293,6 +293,121 @@ body {
   will-change: background-position;
 }
 
+.scroll-hero-fab {
+  perspective: 900px;
+}
+
+.scroll-hero-fab-orbit {
+  position: relative;
+  width: 3.25rem;
+  height: 3.25rem;
+  transform-style: preserve-3d;
+  transform-origin: center center;
+}
+
+.scroll-hero-fab-float-layer {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform-origin: center center;
+  animation: scrollHeroFabFloat 5s ease-in-out infinite;
+}
+
+.scroll-hero-fab-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  transform-origin: center center;
+  background: linear-gradient(
+    to right,
+    #ffc8d4,
+    #f4a4b8,
+    #e87898,
+    #d4567a,
+    #f0d48a,
+    #e8c060,
+    #ffb3c6,
+    #ffc8d4
+  );
+  background-size: 200% 100%;
+  animation: gradient 28s linear infinite;
+  transform: translateZ(0);
+  box-shadow: 0 10px 24px rgba(212, 86, 122, 0.28);
+}
+
+.scroll-hero-fab-core {
+  position: absolute;
+  inset: 3px;
+  border-radius: 9999px;
+  transform-origin: center center;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), transparent 55%),
+    linear-gradient(160deg, rgba(244, 164, 184, 0.35), rgba(232, 120, 152, 0.2));
+  transform: translateZ(4px);
+  animation: scrollHeroFabPulse 5s ease-in-out infinite;
+}
+
+.scroll-hero-fab-face {
+  position: absolute;
+  inset: 3px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  transform-origin: center center;
+  background: linear-gradient(145deg, #ffffff 0%, #fff8fa 55%, #ffeef2 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -3px 8px rgba(212, 86, 122, 0.08);
+  transform: translateZ(8px);
+  transition: transform 0.25s ease;
+}
+
+.scroll-hero-fab-shadow {
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  bottom: -6px;
+  height: 12px;
+  border-radius: 9999px;
+  background: rgba(31, 64, 104, 0.22);
+  filter: blur(8px);
+  transform: translateZ(-6px);
+  transform-origin: center center;
+}
+
+.scroll-hero-fab-orbit:hover .scroll-hero-fab-float-layer {
+  animation-play-state: paused;
+}
+
+.scroll-hero-fab-orbit:hover .scroll-hero-fab-face {
+  transform: translateZ(12px);
+}
+
+.scroll-hero-fab-orbit:active .scroll-hero-fab-face {
+  transform: translateZ(5px);
+}
+
+@keyframes scrollHeroFabFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0);
+  }
+}
+
+@keyframes scrollHeroFabPulse {
+  0%,
+  100% {
+    opacity: 0.78;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 @keyframes gradient-border {
   0%,
   100% {
@@ -306,7 +421,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .btn-brand-gradient,
   .btn-brand-gradient-outline,
-  .cta-petal-surface {
+  .cta-petal-surface,
+  .scroll-hero-fab-float-layer,
+  .scroll-hero-fab-core {
     animation: none;
     will-change: auto;
   }

@@ -47,18 +47,31 @@ export function ScrollToHeroButton() {
   return (
     <AnimatePresence>
       {visible && (
-        <motion.button
-          type="button"
-          initial={{ opacity: 0, y: 12, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 12, scale: 0.9 }}
-          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-          onClick={scrollToHero}
-          aria-label="Back to hero section"
-          className="fixed bottom-6 right-6 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-gray-100/90 bg-white text-[#1F4068] shadow-[0_8px_32px_rgba(31,64,104,0.14)] transition-transform hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(31,64,104,0.18)] sm:bottom-8 sm:right-8"
+        <motion.div
+          initial={{ opacity: 0, scale: 0.82, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.88, y: 12 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="scroll-hero-fab fixed bottom-6 right-6 z-40 sm:bottom-8 sm:right-8"
         >
-          <ArrowUp className="h-5 w-5" strokeWidth={2} />
-        </motion.button>
+          <motion.button
+            type="button"
+            onClick={scrollToHero}
+            aria-label="Back to hero section"
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+            className="scroll-hero-fab-orbit block border-0 bg-transparent p-0 cursor-pointer"
+          >
+            <span className="scroll-hero-fab-float-layer">
+              <span className="scroll-hero-fab-shadow" aria-hidden />
+              <span className="scroll-hero-fab-ring" aria-hidden />
+              <span className="scroll-hero-fab-core" aria-hidden />
+              <span className="scroll-hero-fab-face">
+                <ArrowUp className="relative z-10 h-5 w-5 text-[#1F4068]" strokeWidth={2.25} />
+              </span>
+            </span>
+          </motion.button>
+        </motion.div>
       )}
     </AnimatePresence>
   )
