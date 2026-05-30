@@ -275,6 +275,24 @@ body {
   color: #963a55 !important;
 }
 
+.cta-petal-surface {
+  background-image: linear-gradient(
+    to right,
+    #ffc8d4,
+    #f4a4b8,
+    #e87898,
+    #d4567a,
+    #f0d48a,
+    #e8c060,
+    #ffb3c6,
+    #ff9eb8,
+    #ffc8d4
+  );
+  background-size: 200% 100%;
+  animation: gradient 28s linear infinite;
+  will-change: background-position;
+}
+
 @keyframes gradient-border {
   0%,
   100% {
@@ -287,7 +305,8 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .btn-brand-gradient,
-  .btn-brand-gradient-outline {
+  .btn-brand-gradient-outline,
+  .cta-petal-surface {
     animation: none;
     will-change: auto;
   }
