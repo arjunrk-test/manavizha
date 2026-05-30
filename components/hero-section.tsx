@@ -72,12 +72,12 @@ export function HeroSection() {
               <div className="flex flex-col sm:flex-row gap-2.5 justify-center lg:justify-start">
                 <Button
                   size="sm"
-                  className="rounded-xl bg-[#1F4068] hover:bg-[#1a3558] text-white px-5 h-10 text-sm font-semibold shadow-md"
+                  className="rounded-xl btn-brand-gradient px-5 h-10 text-sm font-semibold"
                   onClick={() => openAuth("signup")}
                 >
                   Start Your Journey
-                  <Heart className="h-3.5 w-3.5 fill-white" />
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  <Heart className="h-3.5 w-3.5 fill-black" />
+                  <ArrowRight className="h-3.5 w-3.5 text-black" />
                 </Button>
                 <Button
                   variant="outline"

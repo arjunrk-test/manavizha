@@ -122,19 +122,11 @@ export function Navbar() {
               <>
                 <Button
                   size="sm"
-                  variant="outline"
-                  className="rounded-xl border-gray-200 text-[#1F4068] h-9 px-5 text-sm font-medium gap-2"
+                  className="rounded-xl btn-brand-gradient-outline h-9 min-w-[7.5rem] px-7 text-sm font-medium gap-2"
                   onClick={() => openAuth("login")}
                 >
                   <UserRound className="h-4 w-4" />
                   Login
-                </Button>
-                <Button
-                  size="sm"
-                  className="rounded-xl bg-[#1F4068] hover:bg-[#1a3558] text-white h-9 px-5 text-sm font-medium"
-                  onClick={() => openAuth("signup")}
-                >
-                  Create Free Profile
                 </Button>
               </>
             )}
@@ -170,8 +162,7 @@ export function Navbar() {
               {!user && (
                 <div className="pt-4 flex flex-col gap-2">
                   <Button
-                    variant="outline"
-                    className="rounded-xl w-full gap-2"
+                    className="rounded-xl w-full btn-brand-gradient-outline gap-2"
                     onClick={() => {
                       openAuth("login")
                       setIsOpen(false)
@@ -179,15 +170,6 @@ export function Navbar() {
                   >
                     <UserRound className="h-4 w-4" />
                     Login
-                  </Button>
-                  <Button
-                    className="rounded-xl w-full bg-[#1F4068]"
-                    onClick={() => {
-                      openAuth("signup")
-                      setIsOpen(false)
-                    }}
-                  >
-                    Create Free Profile
                   </Button>
                 </div>
               )}
