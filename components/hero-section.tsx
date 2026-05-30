@@ -33,9 +33,9 @@ export function HeroSection() {
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           className="flex-1 flex flex-col min-h-0"
         >
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-center min-h-0">
+          <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[minmax(0,1fr)_auto] gap-4 lg:gap-x-6 lg:gap-y-0 min-h-0 lg:items-stretch">
             {/* Left column */}
-            <div className="lg:col-span-5 text-center lg:text-left relative z-20 py-2 lg:py-0 lg:pl-8 xl:pl-12 2xl:pl-16 lg:pr-4">
+            <div className="lg:col-span-5 lg:row-start-1 text-center lg:text-left relative z-20 py-2 lg:py-0 lg:pl-8 xl:pl-12 2xl:pl-16 lg:pr-4 lg:flex lg:flex-col lg:justify-center">
               <h1 className="font-display text-[2rem] sm:text-4xl lg:text-[2.35rem] xl:text-[2.65rem] font-semibold leading-[1.08] mb-2.5">
                 <span className="text-[#1F4068]">Find Your Perfect</span>
                 <br />
@@ -75,9 +75,9 @@ export function HeroSection() {
               </div>
             </div>
 
-            {/* Right — image + card */}
-            <div className="lg:col-span-7 relative min-h-[240px] sm:min-h-[280px] lg:min-h-0 h-full">
-              <div className="hero-image-curve absolute inset-0 lg:inset-y-1 lg:right-[-2vw] lg:left-0 overflow-hidden shadow-[0_16px_48px_rgba(31,64,104,0.1)]">
+            {/* Right — photo */}
+            <div className="lg:col-span-7 lg:row-start-1 relative min-h-[240px] sm:min-h-[280px] lg:min-h-0 h-full">
+              <div className="hero-image-curve absolute inset-0 lg:right-[-2vw] lg:left-0 overflow-hidden shadow-[0_16px_48px_rgba(31,64,104,0.1)]">
                 <img
                   src="/images/hero-couple.jpg"
                   alt="Couple celebrating their wedding"
@@ -86,10 +86,10 @@ export function HeroSection() {
                 <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-[#faf8f4]/40 lg:to-[#faf8f4]/55" />
               </div>
             </div>
-          </div>
 
-          <div className="shrink-0 pt-2 lg:pt-3">
-            <TrustBar />
+            <div className="lg:col-span-12 lg:row-start-2 shrink-0 pt-3 lg:-mt-3">
+              <TrustBar />
+            </div>
           </div>
         </motion.div>
       </div>
