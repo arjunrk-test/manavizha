@@ -21,8 +21,9 @@ export function HeroSection() {
 
   return (
     <section
+      id="hero"
       ref={sectionRef}
-      className="home-hero-surface relative overflow-hidden lg:h-[calc(100dvh-4rem)] lg:max-h-[900px] lg:min-h-[580px] flex flex-col"
+      className="home-hero-surface relative overflow-hidden scroll-mt-16 lg:h-[calc(100dvh-4rem)] lg:max-h-[900px] lg:min-h-[580px] flex flex-col"
     >
       <HeroRosePetals scrollRef={sectionRef} />
 

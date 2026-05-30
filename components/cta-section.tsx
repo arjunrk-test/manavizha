@@ -18,7 +18,7 @@ export function CTASection() {
   }
 
   return (
-    <section className="py-14 sm:py-16 lg:py-20 relative overflow-hidden">
+    <section id="cta" className="py-14 sm:py-16 lg:py-20 relative overflow-hidden">
       <div className="absolute inset-0 cta-petal-surface" />
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent_55%)]" />
