@@ -11,9 +11,10 @@ interface PremiumDatePickerProps {
   date?: Date
   onDateChange: (date: Date) => void
   label: string
+  labelClassName?: string
 }
 
-export function PremiumDatePicker({ date, onDateChange, label }: PremiumDatePickerProps) {
+export function PremiumDatePicker({ date, onDateChange, label, labelClassName }: PremiumDatePickerProps) {
   const [viewDate, setViewDate] = useState(date || new Date())
   const [isOpen, setIsOpen] = useState(false)
 
@@ -31,14 +32,19 @@ export function PremiumDatePicker({ date, onDateChange, label }: PremiumDatePick
 
   return (
     <div className="space-y-2">
-      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+      <label
+        className={
+          labelClassName ??
+          "text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-gold flex items-center gap-2"
+        }
+      >
         <CalendarIcon className="h-3 w-3" /> {label}
       </label>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
-          <Button 
-            variant="outline" 
-            className="w-full h-8 rounded-lg border-gray-100 bg-gray-50/50 justify-start px-3 font-medium text-[10px] shadow-sm"
+          <Button
+            variant="outline"
+            className="w-full h-11 rounded-xl border border-gray-200/90 bg-white justify-start px-4 font-medium text-sm text-[#1F4068] shadow-sm"
           >
             {date ? format(date, "PP") : "Date"}
           </Button>
