@@ -1,6 +1,7 @@
 "use client"
 
 import { CheckCircle2, Crown, Gem } from "lucide-react"
+import { KineticText } from "@/components/ui/kinetic-text"
 import { DashboardHeroPatterns } from "./dashboard-hero-patterns"
 import { DashboardHeroStaticPatterns } from "./dashboard-hero-static-patterns"
 
@@ -66,9 +67,11 @@ export function DashboardHeroBanner({
 
         {/* Welcome text */}
         <div className="flex flex-col items-start text-left min-w-0">
-          <h1 className="text-[22px] md:text-[26px] font-semibold text-[#1F4068] leading-tight mb-1.5">
-            Welcome back, {displayName}!
-          </h1>
+          <KineticText
+            as="h1"
+            text={`Welcome back, ${displayName}!`}
+            className="text-[22px] md:text-[26px] font-semibold text-[#1F4068] leading-tight mb-1.5"
+          />
           <p className="text-[13px] md:text-sm text-[#6b7280] mb-2">
             Discover meaningful connections curated just for you.
           </p>
