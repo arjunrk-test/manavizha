@@ -35,7 +35,7 @@ export function CTASection() {
         >
           <p className="text-sm font-medium text-white/80 mb-3">Get started</p>
 
-          <h2 className="text-3xl sm:text-4xl md:text-[2.75rem] font-bold mb-4 text-white leading-[1.15] tracking-tight">
+          <h2 className="font-display text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-white leading-[1.15] tracking-tight mb-4">
             Ready to find your perfect match?
           </h2>
 

@@ -44,7 +44,7 @@ const trustPoints = [
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-14 sm:py-16 lg:py-20 bg-[#f5f5f4] dark:bg-[#0a0a0a]">
+    <section id="features" className="py-14 sm:py-16 lg:py-20 bg-white dark:bg-[#0a0a0a]">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -56,7 +56,7 @@ export function FeaturesSection() {
           <div className="mb-8 sm:mb-10 lg:flex lg:items-end lg:justify-between lg:gap-10">
             <div className="max-w-lg">
               <p className="text-sm font-medium text-[#3bb9ac] mb-2">Why Choose Us</p>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white leading-tight tracking-tight mb-2">
+              <h2 className="font-display text-2xl sm:text-3xl font-semibold text-[#1F4068] dark:text-white leading-tight tracking-tight mb-2">
                 Built for trust and compatibility
               </h2>
               <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 leading-relaxed">

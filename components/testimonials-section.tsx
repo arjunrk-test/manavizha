@@ -32,7 +32,7 @@ const supportingStories = [
 
 export function TestimonialsSection() {
   return (
-    <section id="testimonials" className="py-20 sm:py-28 lg:py-32 bg-white dark:bg-[#0a0a0a]">
+    <section id="testimonials" className="py-14 sm:py-16 lg:py-20 bg-[#faf8f4] dark:bg-[#0a0a0a]">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -44,7 +44,7 @@ export function TestimonialsSection() {
           <p className="text-sm font-medium text-[#3bb9ac] mb-3">
             Success Stories
           </p>
-          <h2 className="text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-gray-900 dark:text-white leading-[1.15] tracking-tight mb-4">
+          <h2 className="font-display text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-[#1F4068] dark:text-white leading-[1.15] tracking-tight mb-4">
             Stories from our community
           </h2>
           <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 leading-relaxed">

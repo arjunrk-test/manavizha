@@ -6,7 +6,7 @@ import { CTASection } from "@/components/cta-section"
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-[#faf8f4] [&_*]:not-italic">
       <Navbar />
       <HeroSection />
       <FeaturesSection />
