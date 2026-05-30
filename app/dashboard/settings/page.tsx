@@ -5,10 +5,11 @@ import { supabase } from "@/lib/supabase"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
-    Bell, Phone, UserX, UserMinus, Shield, EyeOff, Key, Mail, RefreshCw, AlertTriangle, Heart
+    Bell, Phone, UserX, UserMinus, Shield, EyeOff, Key, Mail, RefreshCw, AlertTriangle, Heart, Settings2
 } from "lucide-react"
 import { toast } from "sonner"
 import { MarriedConfirmationDialog } from "@/components/married-confirmation-dialog"
+import { DashboardJourneyPatterns } from "@/components/dashboard/dashboard-journey-patterns"
 import { cn } from "@/lib/utils"
 
 export default function SettingsPage() {
@@ -244,11 +245,64 @@ export default function SettingsPage() {
         { id: "password", icon: Key, label: "Change Password" },
         { id: "ignored", icon: UserMinus, label: "Ignored Profiles" },
         { id: "blocked", icon: UserX, label: "Blocked Profiles" },
-        { id: "deactivate", icon: AlertTriangle, label: "Deactivate Profile" }
+        { id: "deactivate", icon: AlertTriangle, label: "Deactivate Profile", danger: true },
+    ] as const
+
+    const TAB_GROUPS = [
+        { label: "Notifications", ids: ["alerts", "call_prefs"] as const },
+        { label: "Privacy", ids: ["privacy", "profile"] as const },
+        { label: "Account", ids: ["password", "ignored", "blocked", "deactivate"] as const },
     ]
 
+    const tabById = Object.fromEntries(TABS.map(tab => [tab.id, tab]))
+
+    const SettingsNavItem = ({
+        tab,
+        active,
+        onClick,
+    }: {
+        tab: (typeof TABS)[number]
+        active: boolean
+        onClick: () => void
+    }) => {
+        const isDanger = "danger" in tab && tab.danger
+
+        return (
+            <button
+                type="button"
+                onClick={onClick}
+                className={cn(
+                    "group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 ease-in-out text-left",
+                    active && !isDanger && "bg-[#fce8ef] text-[#e87898] shadow-[0_1px_4px_rgba(232,120,152,0.12)]",
+                    active && isDanger && "bg-[#fef2f2] text-[#dc2626] shadow-[0_1px_4px_rgba(220,38,38,0.08)]",
+                    !active && "text-[#4b5563] hover:bg-[#faf8f4] hover:text-[#374151]"
+                )}
+            >
+                <span
+                    className={cn(
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-200 ease-in-out",
+                        active && !isDanger && "bg-[#e87898] text-white shadow-sm",
+                        active && isDanger && "bg-[#dc2626] text-white shadow-sm",
+                        !active && "bg-[#faf8f4] text-[#9ca3af] group-hover:bg-[#fce8ef]/50 group-hover:text-[#e87898]"
+                    )}
+                >
+                    <tab.icon className="h-4 w-4" />
+                </span>
+                <span className="flex-1 truncate">{tab.label}</span>
+                {active && (
+                    <span
+                        className={cn(
+                            "h-1.5 w-1.5 shrink-0 rounded-full",
+                            isDanger ? "bg-[#dc2626]" : "bg-[#e87898]"
+                        )}
+                    />
+                )}
+            </button>
+        )
+    }
+
     const CustomToggle = ({ label, description, checked, onChange }: any) => (
-        <div className="flex items-center justify-between p-4 bg-[#faf8f4] rounded-xl border border-[#f0f0f0]">
+        <div className="flex items-center justify-between p-4 bg-[#faf8f4] rounded-xl border border-[#f0ebe3]">
             <div className="space-y-0.5 pr-4">
                 <p className="text-[13px] font-medium text-[#374151]">{label}</p>
                 {description && <p className="text-xs text-[#6b7280]">{description}</p>}
@@ -343,31 +397,62 @@ export default function SettingsPage() {
                 <div className="flex flex-col lg:flex-row gap-5">
                     {/* Sidebar */}
                     <aside className="w-full lg:w-[272px] shrink-0">
-                        <nav className="bg-white rounded-[20px] border border-[#f0f0f0] overflow-hidden lg:sticky lg:top-4 shadow-[0_2px_12px_rgba(31,64,104,0.04)]">
-                            <p className="px-4 pt-4 pb-2 text-[10px] font-semibold text-[#9ca3af] uppercase tracking-[0.12em]">
-                                Settings
-                            </p>
-                            {TABS.map(tab => (
-                                <button
-                                    key={tab.id}
-                                    type="button"
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={cn(
-                                        "w-full flex items-center gap-3 py-2.5 text-[13px] font-medium transition-colors text-left",
-                                        activeTab === tab.id
-                                            ? "bg-[#fce8ef] text-[#e87898] border-l-[3px] border-[#e87898] pl-[13px] pr-3 rounded-r-xl"
-                                            : "text-[#4b5563] hover:bg-[#faf8f4] px-4 border-l-[3px] border-transparent"
-                                    )}
-                                >
-                                    <tab.icon className={cn("h-[18px] w-[18px] shrink-0", activeTab === tab.id ? "text-[#e87898]" : "text-[#9ca3af]")} />
-                                    <span className="truncate">{tab.label}</span>
-                                </button>
-                            ))}
+                        <nav className="relative overflow-hidden rounded-[20px] border border-[#f0ebe3] bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] shadow-[0_2px_12px_rgba(31,64,104,0.04)] lg:sticky lg:top-4">
+                            <div
+                                aria-hidden
+                                className="pointer-events-none absolute -top-10 -right-8 h-28 w-28 rounded-full bg-[#fce8ef] blur-2xl opacity-60"
+                            />
+                            <div
+                                aria-hidden
+                                className="pointer-events-none absolute -bottom-8 -left-6 h-24 w-24 rounded-full bg-[#fdf6e3] blur-2xl opacity-50"
+                            />
+
+                            <div className="relative border-b border-[#f0ebe3]/80 px-4 py-3.5">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fce8ef] shadow-sm">
+                                        <Settings2 className="h-4 w-4 text-[#e87898]" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[13px] font-semibold text-[#1F4068]">Settings</p>
+                                        <p className="text-[11px] text-[#9ca3af]">Manage preferences</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="relative space-y-1 p-2 pb-3">
+                                {TAB_GROUPS.map((group, groupIndex) => (
+                                    <div key={group.label}>
+                                        {groupIndex > 0 && (
+                                            <div className="mx-3 my-2 h-px bg-[#f0ebe3]" />
+                                        )}
+                                        <p className="px-3 pt-1.5 pb-1 text-[10px] font-semibold text-[#9ca3af] uppercase tracking-[0.12em]">
+                                            {group.label}
+                                        </p>
+                                        <div className="space-y-0.5">
+                                            {group.ids.map(id => {
+                                                const tab = tabById[id]
+                                                if (!tab) return null
+                                                return (
+                                                    <SettingsNavItem
+                                                        key={tab.id}
+                                                        tab={tab}
+                                                        active={activeTab === tab.id}
+                                                        onClick={() => setActiveTab(tab.id)}
+                                                    />
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </nav>
                     </aside>
 
                     {/* Content */}
-                    <div className="flex-1 bg-white rounded-[20px] border border-[#f0f0f0] shadow-[0_2px_12px_rgba(31,64,104,0.04)] min-h-[500px] p-6 lg:p-8">
+                    <div className="relative flex-1 overflow-hidden bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] rounded-[20px] border border-[#f0ebe3] shadow-[0_2px_12px_rgba(31,64,104,0.04)] p-6 pb-4 lg:px-8 lg:pt-8 lg:pb-5 min-w-0">
+                        <DashboardJourneyPatterns />
+
+                        <div className="relative z-10">
                         {activeTab === "alerts" && (
                             <div className="space-y-8 animate-in fade-in">
                                 <div>
@@ -561,7 +646,7 @@ export default function SettingsPage() {
                         )}
 
                         {activeTab === "deactivate" && (
-                            <div className="space-y-6 animate-in fade-in">
+                            <div className="space-y-4 animate-in fade-in">
                                 <div className={cn(
                                     "flex items-center gap-3 p-4 rounded-[16px] border text-[13px] font-medium",
                                     isCurrentlyDeactivated
@@ -578,11 +663,11 @@ export default function SettingsPage() {
                                 </div>
 
                                 {isCurrentlyDeactivated ? (
-                                    <div className="bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] p-6 rounded-[20px] border border-[#f0ebe3]">
+                                    <div className="bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] p-5 rounded-[20px] border border-[#f0ebe3]">
                                         <h2 className="text-base font-semibold mb-2 text-[#1F4068] flex items-center gap-2">
                                             <RefreshCw className="h-5 w-5 text-[#3bb9ac]" /> Reactivate Your Profile
                                         </h2>
-                                        <p className="text-[13px] text-[#6b7280] mb-5 leading-relaxed">
+                                        <p className="text-[13px] text-[#6b7280] mb-4 leading-relaxed">
                                             Your profile is currently deactivated. Reactivating will immediately make your profile visible to all members again.
                                         </p>
                                         <Button
@@ -603,11 +688,11 @@ export default function SettingsPage() {
                                         </Button>
                                     </div>
                                 ) : (
-                                    <div className="bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] p-6 rounded-[20px] border border-[#f0ebe3]">
+                                    <div className="bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] p-5 rounded-[20px] border border-[#f0ebe3]">
                                         <h2 className="text-base font-semibold mb-2 text-[#1F4068] flex items-center gap-2">
                                             <AlertTriangle className="h-5 w-5 text-[#c9a227]" /> Deactivate Profile
                                         </h2>
-                                        <p className="text-[13px] text-[#6b7280] mb-5 leading-relaxed">
+                                        <p className="text-[13px] text-[#6b7280] mb-4 leading-relaxed">
                                             You can temporarily deactivate your profile if you need a break. Upon deactivation, your profile will be hidden globally from our members. You can reactivate at any time by logging back in.
                                         </p>
                                         <div className="space-y-4 max-w-sm">
@@ -623,7 +708,7 @@ export default function SettingsPage() {
                                                 <option value="90">3 Months</option>
                                             </select>
                                             <Button
-                                                className="w-full h-11 bg-[#c9a227] hover:bg-[#b8922a] text-white font-medium rounded-[10px] shadow-none"
+                                                className="w-full h-11 bg-[#ff3b30]/85 hover:bg-[#ff3b30]/95 text-white font-medium rounded-[10px] shadow-none"
                                                 onClick={handleDeactivate}
                                                 disabled={isDeactivating}
                                             >
@@ -638,14 +723,23 @@ export default function SettingsPage() {
                                     </div>
                                 )}
 
-                                <div className="text-center pt-6 border-t border-[#f0f0f0]">
-                                    <p className="text-xs text-[#9ca3af] mb-3">Found your match?</p>
+                                <div className="rounded-[16px] bg-gradient-to-br from-[#ecfdf5] via-[#f0fdf4] to-[#ecfdf5] border border-[#a7f3d0]/60 p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+                                    <div className="flex flex-col sm:flex-row items-center gap-3.5">
+                                        <div className="w-11 h-11 rounded-full bg-white/90 border border-[#a7f3d0]/70 flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(5,150,105,0.12)]">
+                                            <Heart className="h-5 w-5 text-[#059669] fill-[#059669]" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[13px] font-semibold text-[#1F4068]">Found your match?</p>
+                                            <p className="text-xs text-[#6b7280] mt-0.5 max-w-sm leading-relaxed">
+                                                Congratulations! Mark your profile as married to remove it from all match listings.
+                                            </p>
+                                        </div>
+                                    </div>
                                     <Button
-                                        variant="ghost"
-                                        className="text-[#059669] hover:text-[#047857] hover:bg-[#ecfdf5] text-xs font-medium tracking-wide h-9 px-5 rounded-[10px]"
+                                        className="shrink-0 h-10 px-5 bg-[#059669]/90 hover:bg-[#047857] text-white text-[13px] font-medium rounded-[10px] shadow-none"
                                         onClick={() => setShowMarriedConfirm(true)}
                                     >
-                                        <Heart className="h-3.5 w-3.5 mr-2 fill-[#059669]" />
+                                        <Heart className="h-4 w-4 mr-2 fill-white" />
                                         Mark as Married
                                     </Button>
                                 </div>
@@ -655,6 +749,7 @@ export default function SettingsPage() {
                         {isSaving && (
                             <p className="text-xs text-[#9ca3af] text-center mt-6">Saving changes...</p>
                         )}
+                        </div>
                     </div>
                 </div>
             </div>
