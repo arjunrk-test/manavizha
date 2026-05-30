@@ -8,42 +8,36 @@ const features = [
     icon: Shield,
     title: "Verified profiles",
     description: "Identity, education, and background reviewed before a profile goes live.",
-    iconBg: "bg-[#3bb9ac]/12",
     iconColor: "text-[#3bb9ac]",
   },
   {
     icon: Heart,
     title: "Privacy you control",
     description: "Choose who sees your photos and contact details, on your terms.",
-    iconBg: "bg-[#e8a0a0]/20",
     iconColor: "text-[#c97a7a]",
   },
   {
     icon: Search,
     title: "Thoughtful matching",
     description: "Recommendations based on preferences, values, and lifestyle.",
-    iconBg: "bg-[#c9a227]/12",
     iconColor: "text-[#c9a227]",
   },
   {
     icon: Sparkles,
     title: "Horoscope compatibility",
     description: "Thirukanitham and Vakkiyam calculations for astrological alignment.",
-    iconBg: "bg-[#3bb9ac]/12",
     iconColor: "text-[#3bb9ac]",
   },
   {
     icon: Users,
     title: "Family dashboard",
     description: "Parents can browse, shortlist, and discuss profiles with you.",
-    iconBg: "bg-[#c9a227]/12",
     iconColor: "text-[#c9a227]",
   },
   {
     icon: MessageCircle,
     title: "Secure messaging",
     description: "Express interest privately without sharing contacts too early.",
-    iconBg: "bg-[#e8a0a0]/20",
     iconColor: "text-[#c97a7a]",
   },
 ]
@@ -126,10 +120,8 @@ export function FeaturesSection() {
                   }}
                   className="group flex gap-4 items-start rounded-xl border border-gray-100/90 bg-white p-5 sm:p-6 shadow-[0_8px_32px_rgba(31,64,104,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(31,64,104,0.1)] min-h-[7.5rem] sm:min-h-[8rem]"
                 >
-                  <div
-                    className={`shrink-0 w-11 h-11 sm:w-12 sm:h-12 rounded-full ${feature.iconBg} flex items-center justify-center ring-2 ring-white`}
-                  >
-                    <Icon className={`h-5 w-5 ${feature.iconColor}`} strokeWidth={1.75} />
+                  <div className="shrink-0 w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center">
+                    <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${feature.iconColor}`} strokeWidth={1.75} />
                   </div>
 
                   <div className="flex-1 min-w-0">
