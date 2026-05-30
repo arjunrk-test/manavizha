@@ -1,10 +1,9 @@
 "use client"
 
-import { Crown, ChevronRight, User, Bookmark } from "lucide-react"
+import { Crown, ChevronRight, User, Bookmark, Briefcase, MapPin, Sparkles } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { formatActivityTime } from "@/lib/utils/date-utils"
 
 interface DashboardProfileCardProps {
     profile?: any
@@ -15,6 +14,17 @@ interface DashboardProfileCardProps {
     isShortlisted?: boolean
     onShortlist?: (e: React.MouseEvent) => void
     isLoadingShortlist?: boolean
+    variant?: "default" | "recommendation"
+    showNewBadge?: boolean
+}
+
+function getMatchScore(profile: any): number | null {
+    if (profile?.lifestyleScore != null && profile?.poruthamScore != null) {
+        return Math.round((profile.lifestyleScore + profile.poruthamScore) / 2)
+    }
+    if (profile?.lifestyleScore != null) return Math.round(profile.lifestyleScore)
+    if (profile?.poruthamScore != null) return Math.round(profile.poruthamScore)
+    return null
 }
 
 export function DashboardProfileCard({
@@ -25,83 +35,85 @@ export function DashboardProfileCard({
     className,
     isShortlisted = false,
     onShortlist,
-    isLoadingShortlist = false
+    isLoadingShortlist = false,
+    variant = "default",
+    showNewBadge = false,
 }: DashboardProfileCardProps) {
     if (isViewAll) {
         return (
             <motion.div
-                whileHover={{ y: -8, transition: { duration: 0.3 } }}
+                whileHover={{ y: -3, transition: { duration: 0.2 } }}
                 whileTap={{ scale: 0.98 }}
                 className={cn("h-full cursor-pointer group", className)}
                 onClick={onClick}
             >
-                <Card className="overflow-hidden h-full w-full border-none bg-transparent shadow-none flex flex-col pt-2">
-                    {/* Blurred Background Image Container */}
-                    <div className="aspect-[3/4] relative overflow-hidden rounded-[2.5rem] bg-indigo-50 flex items-center justify-center">
+                <div className="h-full bg-white rounded-2xl border border-gray-100 shadow-[0_4px_16px_rgba(31,64,104,0.05)] overflow-hidden flex flex-col">
+                    <div className="flex-1 relative overflow-hidden bg-[#faf8f4] flex items-center justify-center min-h-[200px]">
                         {profile?.photos?.[0] ? (
-                            <div 
-                                className="absolute inset-0 bg-cover bg-center blur-md opacity-30 brightness-75 transition-transform duration-700 group-hover:scale-110"
+                            <div
+                                className="absolute inset-0 bg-cover bg-center blur-md opacity-20"
                                 style={{ backgroundImage: `url(${profile.photos[0]})` }}
                             />
-                        ) : (
-                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-100 to-white opacity-50" />
-                        )}
-                        
-                        {/* View All Content */}
-                        <div className="relative z-10 flex flex-col items-center gap-3">
-                            <div className="w-14 h-14 rounded-full bg-white/90 backdrop-blur-md shadow-lg flex items-center justify-center group-hover:bg-[#3bb9ac] group-hover:text-white transition-all duration-300">
-                                <ChevronRight className="h-8 w-8" />
+                        ) : null}
+                        <div className="relative z-10 flex flex-col items-center gap-2">
+                            <div className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center group-hover:bg-[#e87898] group-hover:text-white transition-colors border border-gray-100">
+                                <ChevronRight className="h-5 w-5" />
                             </div>
-                            <span className="text-[#3bb9ac] font-black text-[13px] uppercase tracking-widest">
-                                View all
-                            </span>
+                            <span className="text-[#1F4068] font-semibold text-sm">View all</span>
                         </div>
                     </div>
-                    {/* Empty spacer for alignment with other cards info section */}
-                    <div className="mt-4 px-1" />
-                </Card>
+                </div>
             </motion.div>
         )
     }
 
     const hasPhoto = profile?.photos && profile.photos.length > 0
     const photoUrl = hasPhoto ? profile.photos[0] : null
+    const matchScore = getMatchScore(profile)
+    const isRecommendation = variant === "recommendation"
 
     return (
         <motion.div
-            whileHover={{ y: -8, transition: { duration: 0.3, ease: "easeOut" } }}
+            whileHover={{ y: -3, transition: { duration: 0.2, ease: "easeOut" } }}
             whileTap={{ scale: 0.98 }}
             className={cn("h-full cursor-pointer group", className)}
             onClick={onClick}
         >
-            <Card className="overflow-hidden h-full w-full border-none bg-transparent shadow-none flex flex-col pt-2">
-                {/* Image Section */}
-                <div className="aspect-[3/4] relative overflow-hidden bg-gray-100 rounded-[2.5rem] shadow-sm mb-4">
+            <div className={cn(
+                "h-full flex flex-col overflow-hidden",
+                isRecommendation
+                    ? "bg-white rounded-2xl border border-gray-100 shadow-[0_4px_16px_rgba(31,64,104,0.06)]"
+                    : "bg-transparent"
+            )}>
+                <div className={cn(
+                    "relative overflow-hidden bg-gray-100",
+                    isRecommendation ? "aspect-[4/5] m-3 mb-0 rounded-xl" : "aspect-[3/4] rounded-2xl shadow-[0_4px_16px_rgba(31,64,104,0.06)] mb-3 border border-gray-100"
+                )}>
                     {photoUrl ? (
                         <img
                             src={photoUrl}
                             alt={profile?.name || "Profile"}
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             onError={(e) => {
-                                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.name || 'User')}&size=400&background=random`
+                                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.name || 'User')}&size=400&background=fce8ef&color=e87898`
                             }}
                         />
                     ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gradient-to-br from-indigo-50 to-white">
-                            <User className="h-12 w-12 opacity-20 text-[#3bb9ac]" />
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#faf8f4] to-gray-100">
+                            <User className="h-10 w-10 opacity-30 text-[#e87898]" />
                         </div>
                     )}
 
                     {onShortlist && (
-                        <div className="absolute top-4 left-4 z-20">
+                        <div className={cn("absolute z-20", isRecommendation ? "top-2.5 right-2.5" : "top-3 left-3")}>
                             <button
                                 onClick={(e) => { e.stopPropagation(); onShortlist(e); }}
                                 disabled={isLoadingShortlist}
                                 className={cn(
-                                    "w-8 h-8 rounded-xl backdrop-blur-md shadow-lg flex items-center justify-center transition-all duration-300 border border-white/40 active:scale-90",
-                                    isShortlisted 
-                                        ? "bg-[#3bb9ac] text-white border-none shadow-[#3bb9ac]/30" 
-                                        : "bg-white/70 text-indigo-400 hover:bg-white hover:text-[#3bb9ac]"
+                                    "w-8 h-8 rounded-lg backdrop-blur-sm shadow-sm flex items-center justify-center transition-all border active:scale-90",
+                                    isShortlisted
+                                        ? "bg-[#e87898] text-white border-[#e87898]"
+                                        : "bg-white/95 text-gray-500 hover:text-[#e87898] border-white/80"
                                 )}
                             >
                                 <Bookmark className={cn("h-4 w-4", isShortlisted && "fill-current")} />
@@ -109,31 +121,63 @@ export function DashboardProfileCard({
                         </div>
                     )}
 
-                    {/* Premium Gold Crown Badge */}
-                    {profile?.isPremium && (
-                        <div className="absolute top-4 right-4 z-20">
-                            <div className="w-8 h-8 rounded-full bg-[#FFA500] shadow-lg flex items-center justify-center border-2 border-white">
-                                <Crown className="h-4 w-4 text-white fill-current" />
+                    {profile?.isPremium && !isRecommendation && (
+                        <div className="absolute top-3 right-3 z-20">
+                            <div className="w-7 h-7 rounded-lg bg-[#c9a227] shadow-sm flex items-center justify-center border border-white/80">
+                                <Crown className="h-3.5 w-3.5 text-white fill-current" />
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* Info Section - BELOW IMAGE */}
-                <div className="px-1 flex flex-col gap-1">
-                    <h3 className="font-bold text-[15px] sm:text-[16px] text-gray-900 leading-tight truncate">
-                        {profile?.name || "Unknown"}
-                    </h3>
-                    <p className="text-[12px] sm:text-[13px] font-bold text-gray-600/80">
-                        {profile?.age ? `${profile.age} Yrs` : ""}{profile?.height ? `, ${profile.height} cm` : ""}
-                    </p>
-                    {contextText && (
-                        <p className="text-[12px] sm:text-[13px] font-semibold text-[#3bb9ac]/60">
-                            {contextText}
-                        </p>
+                <div className={cn("flex flex-col flex-1", isRecommendation ? "p-3 pt-2.5" : "px-0.5")}>
+                    <div className="flex items-center gap-2 mb-1.5 min-w-0">
+                        <h3 className="font-semibold text-[#1F4068] truncate text-[15px]">
+                            {profile?.name || "Unknown"}
+                            {profile?.age ? `, ${profile.age}` : ""}
+                        </h3>
+                        {showNewBadge && (
+                            <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-[#3bb9ac]/10 text-[#3bb9ac]">
+                                New
+                            </span>
+                        )}
+                    </div>
+
+                    {isRecommendation ? (
+                        <>
+                            {profile?.profession && (
+                                <p className="flex items-center gap-1.5 text-xs text-gray-500 mb-1 truncate">
+                                    <Briefcase className="h-3 w-3 shrink-0 text-gray-400" />
+                                    {profile.profession.split(" at ")[0]}
+                                </p>
+                            )}
+                            {(profile?.location || contextText) && (
+                                <p className="flex items-center gap-1.5 text-xs text-gray-500 truncate mb-2">
+                                    <MapPin className="h-3 w-3 shrink-0 text-gray-400" />
+                                    {profile?.location || contextText}
+                                </p>
+                            )}
+                            {matchScore != null && matchScore > 0 && (
+                                <div className="mt-auto pt-2 border-t border-gray-50 flex items-center gap-1.5">
+                                    <Sparkles className="h-3.5 w-3.5 text-[#e87898]" />
+                                    <span className="text-sm font-semibold text-[#e87898]">{matchScore}% Match</span>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            {!isRecommendation && profile?.age && (
+                                <p className="text-sm text-gray-500">
+                                    {profile.age} yrs{profile?.height ? ` · ${profile.height} cm` : ""}
+                                </p>
+                            )}
+                            {contextText && (
+                                <p className="text-xs text-[#3bb9ac] truncate">{contextText}</p>
+                            )}
+                        </>
                     )}
                 </div>
-            </Card>
+            </div>
         </motion.div>
     )
 }

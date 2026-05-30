@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DashboardProfileCard } from "./dashboard-profile-card"
 import { formatToDDMMYYYY } from "@/lib/utils/date-utils"
+import { cn } from "@/lib/utils"
 
 interface ProfileCarouselProps {
     title: string
@@ -19,6 +20,8 @@ interface ProfileCarouselProps {
     shortlistedIds?: string[]
     onShortlist?: (profileId: string) => void
     shortlistLoadingId?: string | null
+    variant?: "default" | "recommendation"
+    embedded?: boolean
 }
 
 export function ProfileCarousel({
@@ -32,7 +35,9 @@ export function ProfileCarousel({
     icon,
     shortlistedIds = [],
     onShortlist,
-    shortlistLoadingId
+    shortlistLoadingId,
+    variant = "default",
+    embedded = false,
 }: ProfileCarouselProps) {
     const scrollRef = useRef<HTMLDivElement>(null)
     const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -89,57 +94,59 @@ export function ProfileCarousel({
         )
     }
 
+    const isRecommendation = variant === "recommendation"
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
+
     return (
-        <section className="py-6 relative group/carousel">
-            <div className="w-full">
-                {/* Header */}
-                <div className="px-4 mb-6 flex items-end justify-between">
+        <section className={cn("relative group/carousel", embedded ? "py-0" : "py-4")}>
+            <div className={cn(
+                "overflow-hidden",
+                embedded
+                    ? "bg-white rounded-2xl border border-gray-100 shadow-[0_8px_32px_rgba(31,64,104,0.04)] p-5"
+                    : "bg-white rounded-2xl border border-gray-100 shadow-[0_8px_32px_rgba(31,64,104,0.04)]"
+            )}>
+                <div className={cn("flex items-end justify-between gap-4", embedded ? "mb-4" : "px-5 pt-5 pb-4 border-b border-gray-50")}>
                     <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
-                                {title}
-                                {profiles.length > 0 && (
-                                    <span className="ml-2 text-gray-400 font-bold">
-                                        ({profiles.length})
-                                    </span>
-                                )}
-                            </h2>
-                        </div>
-                        {subtitle && (
-                            <p className="text-[14px] text-gray-500 font-medium whitespace-pre-line">
-                                {subtitle}
-                            </p>
+                        <h2 className="text-base font-semibold text-[#1F4068]">
+                            {title}
+                            {profiles.length > 0 && (
+                                <span className="ml-1.5 text-gray-400 font-normal">
+                                  ({profiles.length})
+                                </span>
+                            )}
+                        </h2>
+                        {subtitle && !isRecommendation && (
+                            <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>
                         )}
                     </div>
 
                     {onViewAll && profiles.length > 0 && (
                         <button
                             onClick={onViewAll}
-                            className="flex items-center gap-1 text-[#3bb9ac] font-black text-[13px] uppercase tracking-widest hover:text-[#3bb9ac] transition-colors group px-2"
+                            className="flex items-center gap-0.5 text-[#e87898] font-medium text-sm hover:text-[#d66686] transition-colors group shrink-0"
                         >
                             View all
-                            <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                            <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
                         </button>
                     )}
                 </div>
 
-                {/* Carousel Container */}
-                <div className="relative px-4">
+                <div className={cn("relative", embedded ? "" : "px-5 pb-5 pt-4")}>
                     {/* Navigation Buttons */}
                     {canScrollLeft && (
                         <button
-                            className="absolute left-6 top-[40%] -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/90 shadow-xl border border-gray-100 flex items-center justify-center text-gray-700 hover:bg-[#3bb9ac] hover:text-white transition-all duration-300 hidden md:flex"
+                            className="absolute left-3 top-[38%] -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center text-gray-600 hover:bg-[#3bb9ac] hover:text-white hover:border-[#3bb9ac] transition-all hidden md:flex"
                             onClick={() => scroll("left")}
                         >
-                            <ChevronLeft className="h-6 w-6" />
+                            <ChevronLeft className="h-5 w-5" />
                         </button>
                     )}
                     {canScrollRight && (
                         <button
-                            className="absolute right-6 top-[40%] -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/90 shadow-xl border border-gray-100 flex items-center justify-center text-gray-700 hover:bg-[#3bb9ac] hover:text-white transition-all duration-300 hidden md:flex"
+                            className="absolute -right-1 top-[42%] -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center text-gray-600 hover:bg-[#e87898] hover:text-white hover:border-[#e87898] transition-all hidden md:flex"
                             onClick={() => scroll("right")}
                         >
-                            <ChevronRight className="h-6 w-6" />
+                            <ChevronRight className="h-5 w-5" />
                         </button>
                     )}
 
@@ -147,12 +154,12 @@ export function ProfileCarousel({
                     <div
                         ref={scrollRef}
                         onScroll={checkScroll}
-                        className="flex gap-6 overflow-x-auto pb-8 pt-2 scrollbar-hide no-scrollbar snap-x snap-mandatory"
+                        className="flex gap-4 overflow-x-auto pb-2 pt-1 scrollbar-hide no-scrollbar snap-x snap-mandatory"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         {displayedProfiles.length === 0 ? (
-                            <div className="w-full py-16 text-center bg-gray-50 dark:bg-white/5 rounded-[2.5rem] border-2 border-dashed border-gray-200 dark:border-white/10">
-                                <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">{emptyMessage}</p>
+                            <div className="w-full py-12 text-center bg-[#faf8f4] rounded-xl border border-dashed border-gray-200">
+                                <p className="text-sm text-gray-400">{emptyMessage}</p>
                             </div>
                         ) : (
                             <>
@@ -161,12 +168,17 @@ export function ProfileCarousel({
                                     return (
                                         <div
                                             key={profile.user_id || index}
-                                            className="w-[12rem] sm:w-[14.5rem] flex-none snap-start"
+                                            className={cn(
+                                                "flex-none snap-start",
+                                                isRecommendation ? "w-[11.5rem] sm:w-[13rem]" : "w-[12rem] sm:w-[14.5rem]"
+                                            )}
                                         >
                                             <DashboardProfileCard
                                                 profile={profile}
                                                 onClick={() => onProfileClick(profile)}
                                                 contextText={profile.location}
+                                                variant={variant}
+                                                showNewBadge={isRecommendation && profile.created_at && new Date(profile.created_at).getTime() > thirtyDaysAgo}
                                                 isShortlisted={shortlistedIds.includes(profile.user_id)}
                                                 onShortlist={onShortlist ? () => onShortlist(profile.user_id) : undefined}
                                                 isLoadingShortlist={shortlistLoadingId === profile.user_id}
@@ -187,7 +199,7 @@ export function ProfileCarousel({
                                 )}
                             </>
                         )}
-                        <div className="min-w-[20px] shrink-0" />
+                        <div className="min-w-[12px] shrink-0" />
                     </div>
                 </div>
             </div>
