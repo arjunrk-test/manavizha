@@ -247,7 +247,7 @@ body {
 }
 
 .btn-brand-gradient-outline {
-  @apply border-2 border-transparent shadow-sm;
+  @apply inline-flex items-center justify-center border-2 border-transparent shadow-sm;
   color: #b84565 !important;
   background-color: transparent !important;
   background-image: linear-gradient(white, white),
@@ -275,6 +275,24 @@ body {
   color: #963a55 !important;
 }
 
+.nav-login-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.nav-login-btn__label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1rem;
+  line-height: 1;
+  padding-top: 1px;
+}
+
 .cta-petal-surface {
   background-image: linear-gradient(
     to right,
@@ -291,6 +309,11 @@ body {
   background-size: 200% 100%;
   animation: gradient 28s linear infinite;
   will-change: background-position;
+}
+
+[data-radix-dialog-overlay]:has(~ .auth-dialog-content) {
+  background-color: rgba(31, 64, 104, 0.45);
+  backdrop-filter: blur(4px);
 }
 
 .scroll-hero-fab {

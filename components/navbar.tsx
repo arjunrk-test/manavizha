@@ -122,11 +122,11 @@ export function Navbar() {
               <>
                 <Button
                   size="sm"
-                  className="rounded-xl btn-brand-gradient-outline h-9 min-w-[7.5rem] px-7 text-sm font-medium gap-2"
+                  className="nav-login-btn rounded-xl btn-brand-gradient-outline h-9 min-w-[7.5rem] px-5"
                   onClick={() => openAuth("login")}
                 >
-                  <UserRound className="h-4 w-4" />
-                  Login
+                  <UserRound className="h-4 w-4 shrink-0" aria-hidden />
+                  <span className="nav-login-btn__label">Login</span>
                 </Button>
               </>
             )}
@@ -162,14 +162,14 @@ export function Navbar() {
               {!user && (
                 <div className="pt-4 flex flex-col gap-2">
                   <Button
-                    className="rounded-xl w-full btn-brand-gradient-outline gap-2"
+                    className="nav-login-btn rounded-xl w-full btn-brand-gradient-outline"
                     onClick={() => {
                       openAuth("login")
                       setIsOpen(false)
                     }}
                   >
-                    <UserRound className="h-4 w-4" />
-                    Login
+                    <UserRound className="h-4 w-4 shrink-0" aria-hidden />
+                    <span className="nav-login-btn__label">Login</span>
                   </Button>
                 </div>
               )}
