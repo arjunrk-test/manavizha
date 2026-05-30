@@ -8,6 +8,7 @@ import { getUserDashboard } from "@/lib/auth"
 import { LogOut, ArrowLeft, Edit, Settings, MessageSquare, User, Bell } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { DashboardScrollProgress } from "@/components/dashboard/dashboard-scroll-progress"
+import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { formatDistanceToNow } from "date-fns"
 
 export default function DashboardLayout({
@@ -240,14 +241,7 @@ export default function DashboardLayout({
   const viewName = getViewName()
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#faf8f4]">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-[#3bb9ac] mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">Loading your dashboard...</p>
-        </div>
-      </div>
-    )
+    return <DashboardLoadingScreen />
   }
 
   const notificationCount = whoViewedMe.length + whoExpressedInterest.length

@@ -862,3 +862,122 @@ html {
 .dark .language-dropdown-scroll {
   scrollbar-color: #3bb9ac #2d2d2d;
 }
+
+/* Dashboard loading — matrimonial rings & mandala */
+@keyframes dashboard-loading-mandala-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dashboard-loading-ring-left {
+  0%,
+  100% {
+    transform: translateY(-50%) translateX(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-50%) translateX(3px) rotate(-12deg);
+  }
+}
+
+@keyframes dashboard-loading-ring-right {
+  0%,
+  100% {
+    transform: translateY(-50%) translateX(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-50%) translateX(-3px) rotate(12deg);
+  }
+}
+
+@keyframes dashboard-loading-heart {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.18);
+    opacity: 0.82;
+  }
+}
+
+@keyframes dashboard-loading-glow {
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: 0.65;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.9;
+  }
+}
+
+@keyframes dashboard-loading-dot {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.65);
+    opacity: 0.35;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes dashboard-loading-petal {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateY(-14px);
+    opacity: 0.75;
+  }
+}
+
+.dashboard-loading-mandala {
+  animation: dashboard-loading-mandala-spin 14s linear infinite;
+}
+
+.dashboard-loading-ring-left {
+  animation: dashboard-loading-ring-left 2.4s ease-in-out infinite;
+}
+
+.dashboard-loading-ring-right {
+  animation: dashboard-loading-ring-right 2.4s ease-in-out infinite;
+}
+
+.dashboard-loading-heart {
+  animation: dashboard-loading-heart 2s ease-in-out infinite;
+}
+
+.dashboard-loading-glow {
+  animation: dashboard-loading-glow 3s ease-in-out infinite;
+}
+
+.dashboard-loading-dot {
+  animation: dashboard-loading-dot 1.2s ease-in-out infinite;
+}
+
+.dashboard-loading-petal {
+  animation: dashboard-loading-petal 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-loading-mandala,
+  .dashboard-loading-ring-left,
+  .dashboard-loading-ring-right,
+  .dashboard-loading-heart,
+  .dashboard-loading-glow,
+  .dashboard-loading-dot,
+  .dashboard-loading-petal {
+    animation: none;
+  }
+}
