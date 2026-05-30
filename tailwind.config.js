@@ -18,6 +18,7 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ['Josefin Sans', 'sans-serif'],
+        display: ['Josefin Sans', 'sans-serif'],
         josefin: ['Josefin Sans', 'sans-serif'],
       },
       colors: {
