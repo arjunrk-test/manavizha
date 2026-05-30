@@ -249,6 +249,77 @@ body {
   transform: rotate(180deg);
 }
 
+.dashboard-journey-pattern-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.dashboard-journey-static-grid {
+  background-image:
+    linear-gradient(rgba(232, 120, 152, 0.11) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232, 120, 152, 0.11) 1px, transparent 1px);
+  background-size: 21px 21px;
+  mask-image: radial-gradient(ellipse 98% 98% at 50% 45%, black 32%, transparent 100%);
+}
+
+.dashboard-journey-static-dots {
+  background-image: radial-gradient(circle, rgba(201, 162, 39, 0.22) 1.25px, transparent 1.25px);
+  background-size: 21px 21px;
+  mask-image: radial-gradient(ellipse 95% 95% at 50% 50%, black 28%, transparent 100%);
+}
+
+.dashboard-journey-static-diagonal {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 15px,
+    rgba(232, 120, 152, 0.065) 15px,
+    rgba(232, 120, 152, 0.065) 16px
+  );
+  mask-image: radial-gradient(ellipse 95% 95% at 50% 50%, black 28%, transparent 100%);
+}
+
+.dashboard-journey-static-corner {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  opacity: 0.3;
+  color: #e87898;
+}
+
+.dashboard-journey-static-corner--tl {
+  top: 4px;
+  left: 4px;
+}
+
+.dashboard-journey-static-corner--tr {
+  top: 4px;
+  right: 4px;
+  transform: scaleX(-1);
+}
+
+.dashboard-journey-static-corner--bl {
+  bottom: 4px;
+  left: 4px;
+  transform: scaleY(-1);
+}
+
+.dashboard-journey-static-corner--br {
+  bottom: 4px;
+  right: 4px;
+  transform: rotate(180deg);
+}
+
+.dashboard-journey-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(25px);
+  pointer-events: none;
+}
+
 .how-it-works-step-badge {
   display: inline-flex;
   align-items: center;

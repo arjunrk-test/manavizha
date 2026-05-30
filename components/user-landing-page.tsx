@@ -733,7 +733,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
   return (
   <>
-    <div className="flex min-h-[calc(100vh-57px)]">
+    <div className="flex min-h-[calc(100vh-57px)] min-w-0">
       <aside className="hidden lg:flex w-[272px] shrink-0 bg-white border-r border-[#f0f0f0] flex-col px-3 py-6">
         <DashboardSidebar
           mutualCount={mutualCount}
@@ -755,8 +755,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
         />
       </aside>
 
-      <div className="flex-1 bg-[#faf8f4] overflow-auto">
-        <div className="p-5 lg:p-6 space-y-5 max-w-[1200px]">
+      <div className="flex-1 bg-[#faf8f4] overflow-auto min-w-0">
+        <div className="p-5 lg:p-6 space-y-5 max-w-[1200px] min-w-0">
           <DashboardHeroBanner
             displayName={displayName}
             photoUrl={profile?.photos?.[0]}
@@ -778,24 +778,28 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 onInterestsReceived={onNavigateToLikedMe}
               />
 
-              <div className="grid grid-cols-1 xl:grid-cols-[1fr_272px] gap-5 items-start">
-                <DashboardDailyRecommendations
-                  profiles={dailyRecs}
-                  onProfileClick={(p) => router.push(`/dashboard/daily-recommendations?id=${p.user_id}`)}
-                  onViewAll={() => router.push("/dashboard/daily-recommendations")}
-                  isLoading={isSectionsLoading}
-                  shortlistedIds={shortlistedIds}
-                  onShortlist={handleShortlist}
-                  shortlistLoadingId={shortlistLoadingId}
-                />
+              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-5 items-stretch min-w-0">
+                <div className="min-w-0">
+                  <DashboardDailyRecommendations
+                    profiles={dailyRecs}
+                    onProfileClick={(p) => router.push(`/dashboard/daily-recommendations?id=${p.user_id}`)}
+                    onViewAll={() => router.push("/dashboard/daily-recommendations")}
+                    isLoading={isSectionsLoading}
+                    shortlistedIds={shortlistedIds}
+                    onShortlist={handleShortlist}
+                    shortlistLoadingId={shortlistLoadingId}
+                  />
+                </div>
 
-                <DashboardJourneyPanel
-                  completionPercentage={completionPercentage}
-                  photoCount={photoCount}
-                  mobileVerified={mobileVerified}
-                  idVerified={!!profile?.photo_verified}
-                  onAddPhotos={onNavigateToProfileSetup}
-                />
+                <div className="min-w-0">
+                  <DashboardJourneyPanel
+                    completionPercentage={completionPercentage}
+                    photoCount={photoCount}
+                    mobileVerified={mobileVerified}
+                    idVerified={!!profile?.photo_verified}
+                    onAddPhotos={onNavigateToProfileSetup}
+                  />
+                </div>
               </div>
             </>
           ) : (

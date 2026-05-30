@@ -55,11 +55,12 @@ export function DashboardDailyRecommendations({
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-[20px] border border-[#f0f0f0] shadow-[0_2px_12px_rgba(31,64,104,0.04)] p-5">
-        <div className="h-6 w-48 bg-gray-100 animate-pulse rounded mb-5" />
-        <div className="flex gap-3 overflow-hidden">
+      <div className="bg-white rounded-[20px] border border-[#f0f0f0] shadow-[0_2px_12px_rgba(31,64,104,0.04)] p-5 h-full flex flex-col min-w-0 overflow-hidden">
+        <div className="h-6 w-48 bg-gray-100 animate-pulse rounded mb-2" />
+        <div className="h-4 w-56 bg-gray-100 animate-pulse rounded mb-5" />
+        <div className="flex gap-3 overflow-hidden flex-1">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="w-[168px] shrink-0 aspect-[3/4.5] bg-gray-100 animate-pulse rounded-[18px]" />
+            <div key={i} className="w-[168px] shrink-0 h-full min-h-[280px] bg-gray-100 animate-pulse rounded-[18px]" />
           ))}
         </div>
       </div>
@@ -67,20 +68,23 @@ export function DashboardDailyRecommendations({
   }
 
   return (
-    <div className="bg-white rounded-[20px] border border-[#f0f0f0] shadow-[0_2px_12px_rgba(31,64,104,0.04)] p-5">
+    <div className="bg-white rounded-[20px] border border-[#f0f0f0] shadow-[0_2px_12px_rgba(31,64,104,0.04)] p-5 h-full flex flex-col min-w-0 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-semibold text-[#1F4068]">
-          Daily Recommendations
-          {profiles.length > 0 && (
-            <span className="text-[#9ca3af] font-normal ml-1">({profiles.length})</span>
-          )}
-        </h2>
+      <div className="flex items-start justify-between gap-4 mb-4 shrink-0">
+        <div>
+          <h2 className="text-base font-semibold text-[#1F4068]">
+            Daily Recommendations
+            {profiles.length > 0 && (
+              <span className="text-[#9ca3af] font-normal ml-1">({profiles.length})</span>
+            )}
+          </h2>
+          <p className="text-[13px] text-[#9ca3af] mt-0.5">Handpicked profiles for you today</p>
+        </div>
         {onViewAll && profiles.length > 0 && (
           <button
             type="button"
             onClick={onViewAll}
-            className="text-sm font-medium text-[#e87898] hover:text-[#d66686] flex items-center gap-0.5 transition-colors"
+            className="text-sm font-medium text-[#e87898] hover:text-[#d66686] flex items-center gap-0.5 transition-colors shrink-0 pt-0.5"
           >
             View all
             <ChevronRight className="h-4 w-4" />
@@ -89,7 +93,7 @@ export function DashboardDailyRecommendations({
       </div>
 
       {/* Carousel */}
-      <div className="relative">
+      <div className="relative flex-1 min-h-0 min-w-0 overflow-hidden">
         {canScrollLeft && (
           <button
             type="button"
@@ -113,7 +117,7 @@ export function DashboardDailyRecommendations({
         <div
           ref={scrollRef}
           onScroll={checkScroll}
-          className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory"
+          className="flex gap-3 overflow-x-auto overflow-y-hidden w-full min-w-0 pb-1 scrollbar-hide snap-x snap-mandatory"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {displayed.length === 0 ? (
