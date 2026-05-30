@@ -35,10 +35,17 @@ export function DashboardRecommendationCard({
   const location = profile?.location
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="w-[168px] shrink-0 snap-start text-left bg-white rounded-[18px] border border-[#f0f0f0] shadow-[0_2px_12px_rgba(31,64,104,0.05)] overflow-hidden hover:shadow-[0_6px_20px_rgba(31,64,104,0.1)] transition-shadow flex flex-col"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          onClick()
+        }
+      }}
+      className="w-[168px] shrink-0 snap-start text-left bg-white rounded-[18px] border border-[#f0f0f0] shadow-[0_2px_12px_rgba(31,64,104,0.05)] overflow-hidden hover:shadow-[0_6px_20px_rgba(31,64,104,0.1)] transition-shadow flex flex-col cursor-pointer"
     >
       {/* Photo */}
       <div className="p-2.5 pb-0">
@@ -59,23 +66,24 @@ export function DashboardRecommendationCard({
           )}
 
           {onShortlist && (
-            <div
-              className="absolute top-2 right-2 z-10"
-              onClick={(e) => {
-                e.stopPropagation()
-                onShortlist()
-              }}
-            >
-              <div
+            <div className="absolute top-2 right-2 z-10">
+              <button
+                type="button"
+                disabled={isLoadingShortlist}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onShortlist()
+                }}
                 className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center shadow-sm border transition-colors",
+                  "w-8 h-8 rounded-full flex items-center justify-center shadow-sm border transition-colors disabled:opacity-50",
                   isShortlisted
                     ? "bg-[#e87898] border-[#e87898] text-white"
                     : "bg-white/95 border-white/80 text-[#9ca3af] hover:text-[#e87898]"
                 )}
+                aria-label={isShortlisted ? "Remove from shortlist" : "Add to shortlist"}
               >
                 <Bookmark className={cn("h-4 w-4", isShortlisted && "fill-current")} />
-              </div>
+              </button>
             </div>
           )}
         </div>
@@ -114,6 +122,6 @@ export function DashboardRecommendationCard({
           <span className="text-[13px] font-semibold text-[#e87898]">{matchScore}% Match</span>
         </div>
       )}
-    </button>
+    </div>
   )
 }
