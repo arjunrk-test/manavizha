@@ -24,6 +24,7 @@
 .DS_Store
 *.pem
 FEATURES_AND_BUGS.md
+ui-principles.md
 
 # debug
 npm-debug.log*
