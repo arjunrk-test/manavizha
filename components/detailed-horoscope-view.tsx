@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useRef } from 'react';
+import { cn } from '@/lib/utils';
 export interface PlanetData {
   name: string;
   tamilName: string;
@@ -37,6 +38,48 @@ interface DetailedHoroscopeViewProps {
   data: HoroscopeData & { name?: string; dob?: string; tob?: string; pob?: string; calculationMethod?: 'thirukanitham' | 'vakkiyam' };
   onClose?: () => void;
   hideCloseButton?: boolean;
+  variant?: "default" | "embedded";
+}
+
+function ReportSection({
+  title,
+  subtitle,
+  embedded,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  embedded: boolean;
+  children: React.ReactNode;
+}) {
+  if (!embedded) {
+    return (
+      <div className="mb-6 border border-[#D1D5DB]" style={{ backgroundColor: "#fff" }}>
+        <div
+          className="px-3 py-2 text-sm font-medium border-b border-[#D1D5DB] flex justify-between"
+          style={{ backgroundColor: TRADITIONAL_COLORS.tableHeaderBg, color: TRADITIONAL_COLORS.text }}
+        >
+          <span>{title}</span>
+          {subtitle ? <span className="text-gray-500 font-normal">{subtitle}</span> : null}
+        </div>
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <details className="mb-3 border border-[#D1D5DB] rounded-lg overflow-hidden bg-white embedded-horoscope-details group">
+      <summary
+        className="px-3 py-2.5 text-xs font-semibold cursor-pointer list-none flex items-center justify-between gap-2"
+        style={{ backgroundColor: TRADITIONAL_COLORS.tableHeaderBg, color: TRADITIONAL_COLORS.text }}
+      >
+        <span>{title}</span>
+        <span className="text-[10px] font-normal text-[#3bb9ac] group-open:hidden">Show</span>
+        <span className="text-[10px] font-normal text-gray-500 hidden group-open:inline">Hide</span>
+      </summary>
+      {children}
+    </details>
+  );
 }
 
 // 4x4 Grid mapping to Rasi Indexes (Aries = 0, Taurus = 1... Pisces = 11)
@@ -135,10 +178,10 @@ const ChartBox = ({ index, planets, title, isCenter = false, data }: { index: nu
   );
 };
 
-const SouthIndianChart = ({ planets, type, title, data }: { planets: PlanetData[], type: 'Rasi' | 'Navamsam', title: string, data?: any }) => {
+const SouthIndianChart = ({ planets, type, title, data, compact = false }: { planets: PlanetData[], type: 'Rasi' | 'Navamsam', title: string, data?: any, compact?: boolean }) => {
   return (
-    <div className="w-full max-w-[280px]">
-      <div className="text-center py-2 mb-1 font-semibold text-sm" style={{ backgroundColor: TRADITIONAL_COLORS.chartHeaderBg, color: TRADITIONAL_COLORS.chartHeaderText }}>
+    <div className={cn("w-full mx-auto", compact ? "max-w-[190px]" : "max-w-[280px]")}>
+      <div className={cn("text-center font-semibold", compact ? "py-1.5 mb-0.5 text-[11px]" : "py-2 mb-1 text-sm")} style={{ backgroundColor: TRADITIONAL_COLORS.chartHeaderBg, color: TRADITIONAL_COLORS.chartHeaderText }}>
         {title}
       </div>
       <div className="grid grid-cols-4 grid-rows-4 bg-white" style={{ border: `2px solid ${TRADITIONAL_COLORS.chartBorder}` }}>
@@ -160,8 +203,9 @@ const SouthIndianChart = ({ planets, type, title, data }: { planets: PlanetData[
   );
 };
 
-export const DetailedHoroscopeView = ({ data, onClose, hideCloseButton = false }: DetailedHoroscopeViewProps) => {
+export const DetailedHoroscopeView = ({ data, onClose, hideCloseButton = false, variant = "default" }: DetailedHoroscopeViewProps) => {
   const printRef = useRef<HTMLDivElement>(null);
+  const embedded = variant === "embedded";
   
   const handlePrint = () => {
     window.print();
@@ -175,10 +219,17 @@ export const DetailedHoroscopeView = ({ data, onClose, hideCloseButton = false }
   };
 
   return (
-    <div className="bg-gray-100 p-2 md:p-8 min-h-screen flex justify-center font-sans">
-      <div className="bg-white px-4 md:px-8 py-6 w-full max-w-4xl shadow-md border-t-8 border-[#8a6d3b] print:shadow-none print:border-none print:max-w-none print:w-full print:p-0">
+    <div className={cn(
+      "flex justify-center font-sans",
+      embedded ? "bg-transparent p-0 min-h-0" : "bg-gray-100 p-2 md:p-8 min-h-screen"
+    )}>
+      <div className={cn(
+        "bg-white w-full shadow-md border-t-8 border-[#8a6d3b] print:shadow-none print:border-none print:max-w-none print:w-full print:p-0",
+        embedded ? "px-3 py-4 max-w-none border-t-4" : "px-4 md:px-8 py-6 max-w-4xl"
+      )}>
         
-        {/* ACTION BUTTONS (Hidden in Print) */}
+        {/* ACTION BUTTONS (Hidden in Print & embedded preview) */}
+        {!embedded && (
         <div className="flex justify-end gap-3 mb-6 print:hidden">
           <button onClick={handlePrint} className="px-4 py-2 bg-[#8a6d3b] text-white font-semibold rounded text-sm hover:bg-[#6c552e] shadow-sm">
             Print / Save PDF
@@ -189,40 +240,63 @@ export const DetailedHoroscopeView = ({ data, onClose, hideCloseButton = false }
             </button>
           )}
         </div>
+        )}
 
         {/* PRINTABLE AREA */}
         <div ref={printRef} className="text-[#333] custom-print-container" style={{ backgroundColor: TRADITIONAL_COLORS.bg }}>
           
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-700 mb-4">Horoscope of {data.name || 'User'}</h1>
-            <p className="text-[13px] font-bold text-gray-800">
+          <div className={cn("text-center", embedded ? "mb-4" : "mb-6")}>
+            <h1 className={cn("font-bold text-gray-700", embedded ? "text-base mb-2" : "text-2xl mb-4")}>
+              Horoscope of {data.name || 'User'}
+            </h1>
+            <p className={cn("font-bold text-gray-800", embedded ? "text-[11px] leading-snug" : "text-[13px]")}>
               {data.paksham || 'கிருஷ்ண பக்ஷம் (தேய்பிறை)'}, {data.star} நட்சத்திரம் ({data.padam ? `பாதம் ${data.padam}` : 'பாதம் 3'}), {data.rashi} ராசி
             </p>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-8 justify-center items-start mb-6">
-            <SouthIndianChart planets={data.planets} type="Rasi" title="ராசி (பிறந்த அட்டவணை)" data={data} />
-            <SouthIndianChart planets={data.planets} type="Navamsam" title="நவாம்சம்" data={data} />
+          <div className={cn("flex justify-center items-start mb-4", embedded ? "flex-row gap-3" : "flex-col md:flex-row gap-8 mb-6")}>
+            <SouthIndianChart planets={data.planets} type="Rasi" title="ராசி (பிறந்த அட்டவணை)" data={data} compact={embedded} />
+            <SouthIndianChart planets={data.planets} type="Navamsam" title="நவாம்சம்" data={data} compact={embedded} />
           </div>
 
+          {!embedded ? (
           <div className="text-center text-[13px] font-bold text-gray-800 mb-6">
             தசா இருப்பு = புதன் 4 வருடம், 8 மாதம், 13 தேதி.
           </div>
+          ) : (
+          <div className="hidden print:block text-center text-[13px] font-bold text-gray-800 mb-6">
+            தசா இருப்பு = புதன் 4 வருடம், 8 மாதம், 13 தேதி.
+          </div>
+          )}
 
-          <div className="text-[11px] leading-relaxed text-center mb-8 border-t border-b border-gray-300 py-3 text-gray-700 max-w-3xl mx-auto font-medium">
+          <div className={cn(
+            "leading-relaxed text-center border-t border-b border-gray-300 text-gray-700 mx-auto font-medium",
+            embedded ? "text-[9px] py-2 mb-3 max-w-none" : "text-[11px] mb-8 py-3 max-w-3xl"
+          )}>
+            பால்: ஆண் | பிறந்த தேதி: {data.dob || '17 செப்டம்பர் 1998, வியாழன்'} | பிறந்த நேரம்: {data.tob || '09:22:00 PM'} | 
+            {embedded ? (
+              <> பிறந்த இடம்: {data.pob || 'Kovilpatti (tn)'} | {data.calculationMethod === 'vakkiyam' ? 'வாக்கியம்' : 'லஹிரி (திருக்கணிதம்)'}</>
+            ) : (
+              <>
+            நேர மண்டலம்: 05:30 கிரீன்விச்சிற்கு கிழக்கே | நேரம் சரிசெய்ய: Standard Time | பிறந்த இடம்: {data.pob || 'Kovilpatti (tn)'} | 
+            அயனாம்சம்: {data.calculationMethod === 'vakkiyam' ? 'வாக்கியம் (பாம்பு பஞ்சாங்கம்)' : 'லஹிரி (திருக்கணிதம்)'} | பிறந்த நட்சத்திரம்: {data.star} நட்சத்திர பாதம்: 3 | பிறந்த ராசி: {data.rashi} | 
+            லக்கினம்: {data.lagnam} லக்கினாதிபதி: செவ்வாய் | திதி: திரயோதசி
+              </>
+            )}
+          </div>
+          {embedded && (
+          <div className="hidden print:block text-[11px] leading-relaxed text-center border-t border-b border-gray-300 text-gray-700 mx-auto font-medium mb-8 py-3 max-w-3xl">
             பால்: ஆண் | பிறந்த தேதி: {data.dob || '17 செப்டம்பர் 1998, வியாழன்'} | பிறந்த நேரம்: {data.tob || '09:22:00 PM'} | 
             நேர மண்டலம்: 05:30 கிரீன்விச்சிற்கு கிழக்கே | நேரம் சரிசெய்ய: Standard Time | பிறந்த இடம்: {data.pob || 'Kovilpatti (tn)'} | 
             அயனாம்சம்: {data.calculationMethod === 'vakkiyam' ? 'வாக்கியம் (பாம்பு பஞ்சாங்கம்)' : 'லஹிரி (திருக்கணிதம்)'} | பிறந்த நட்சத்திரம்: {data.star} நட்சத்திர பாதம்: 3 | பிறந்த ராசி: {data.rashi} | 
             லக்கினம்: {data.lagnam} லக்கினாதிபதி: செவ்வாய் | திதி: திரயோதசி
           </div>
+          )}
 
-          <div className="flex flex-col gap-8 w-full">
+          <div className={cn("flex flex-col w-full", embedded ? "gap-2" : "gap-8")}>
             
             {/* STACKED FULL-WIDTH TABLES */}
-              <div className="mb-6 border border-[#D1D5DB]" style={{ backgroundColor: '#fff' }}>
-                <div className="px-3 py-2 text-sm font-medium border-b border-[#D1D5DB]" style={{ backgroundColor: TRADITIONAL_COLORS.tableHeaderBg, color: TRADITIONAL_COLORS.text }}>
-                  பாப புள்ளிகள்
-                </div>
+              <ReportSection title="பாப புள்ளிகள்" embedded={embedded}>
                 <div className="overflow-x-auto">
                   <table className="w-full text-center text-[10px] border-collapse bg-white">
                     <thead>
@@ -270,14 +344,13 @@ export const DetailedHoroscopeView = ({ data, onClose, hideCloseButton = false }
                     </tbody>
                   </table>
                 </div>
-              </div>
+              </ReportSection>
 
-              <div className="mb-6 border border-[#D1D5DB]" style={{ backgroundColor: '#fff' }}>
-                <div className="px-3 py-2 text-sm font-medium border-b border-[#D1D5DB] flex justify-between" style={{ backgroundColor: TRADITIONAL_COLORS.tableHeaderBg, color: TRADITIONAL_COLORS.text }}>
-                  <span>நிராயண ஸ்புடங்கள்</span>
-                  <span className="text-gray-500 font-normal">-</span>
-                </div>
-                <div className="p-3 text-[10px] text-gray-600 leading-relaxed border-b border-[#D1D5DB] bg-gray-50">
+              <ReportSection title="நிராயண ஸ்புடங்கள்" subtitle="-" embedded={embedded}>
+                <div className={cn(
+                  "p-3 text-[10px] text-gray-600 leading-relaxed border-b border-[#D1D5DB] bg-gray-50",
+                  embedded && "hidden print:block"
+                )}>
                   இந்திய ஜோதிடம் கிரகங்களின் நிராயண முறையை பின்பற்றுகிறது. இது மேல்நாட்டு முறைப்படி 
                   கணிக்கப்பட்ட சாயன நிலையிலிருந்து அயனாம்சத்தை கழித்து பெறப்பட்டது. அயனாம்சத்தை கணிப்பதில் பல முறைகள் உள்ளன. 
                   இந்த ஜாதகம் பின்பற்றிய அயனாம்சம் : {data.calculationMethod === 'vakkiyam' ? 'வாக்கியம் பஞ்சாங்கம்' : 'சித்ர பக்ஷ '} = 23:50:12
@@ -316,14 +389,10 @@ export const DetailedHoroscopeView = ({ data, onClose, hideCloseButton = false }
                     </tbody>
                     </table>
                 </div>
-              </div>
+              </ReportSection>
 
               {/* DASA TABLE */}
-              <div className="mb-6 border border-[#D1D5DB]" style={{ backgroundColor: '#fff' }}>
-                <div className="px-3 py-2 text-sm font-medium border-b border-[#D1D5DB] flex justify-between" style={{ backgroundColor: TRADITIONAL_COLORS.tableHeaderBg, color: TRADITIONAL_COLORS.text }}>
-                  <span>விம்சோத்தரி தசை</span>
-                  <span className="text-gray-500 font-normal">-</span>
-                </div>
+              <ReportSection title="விம்சோத்தரி தசை" subtitle="-" embedded={embedded}>
                 <div className="overflow-x-auto">
                   <table className="w-full text-center text-[10px] border-collapse bg-white">
                     <thead>
@@ -356,17 +425,26 @@ export const DetailedHoroscopeView = ({ data, onClose, hideCloseButton = false }
                     </tbody>
                   </table>
                 </div>
-              </div>
+              </ReportSection>
 
+              {embedded ? (
+              <div className="hidden print:block text-center text-[10px] text-gray-600 font-medium italic mt-8 p-4 bg-gray-50/50 rounded border border-gray-200">
+                சூ-சூரியன், சந்-சந்திரன், செ-செவ்வாய், பு-புதன், ரா-ராகு, கே-கேது, சு-சுக்கிரன், வி-வியாழன், சனி-சனி
+              </div>
+              ) : (
               <div className="text-center text-[10px] text-gray-600 font-medium italic mt-8 p-4 bg-gray-50/50 rounded border border-gray-200">
                 சூ-சூரியன், சந்-சந்திரன், செ-செவ்வாய், பு-புதன், ரா-ராகு, கே-கேது, சு-சுக்கிரன், வி-வியாழன், சனி-சனி
               </div>
+              )}
 
           </div>
           
         </div>
 
         <style>{`
+          details.embedded-horoscope-details summary::-webkit-details-marker {
+            display: none;
+          }
           @media print {
             body * {
               visibility: hidden;
@@ -382,6 +460,12 @@ export const DetailedHoroscopeView = ({ data, onClose, hideCloseButton = false }
               background-color: ${TRADITIONAL_COLORS.bg} !important;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
+            }
+            details.embedded-horoscope-details > summary {
+              display: none;
+            }
+            details.embedded-horoscope-details > *:not(summary) {
+              display: block !important;
             }
           }
         `}</style>

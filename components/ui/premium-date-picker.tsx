@@ -31,14 +31,15 @@ export function PremiumDatePicker({ date, onDateChange, label, labelClassName }:
   const handleNextMonth = () => setViewDate(addMonths(viewDate, 1))
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <label
         className={
           labelClassName ??
           "text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-gold flex items-center gap-2"
         }
       >
-        <CalendarIcon className="h-3 w-3" /> {label}
+        {!labelClassName && <CalendarIcon className="h-3 w-3 shrink-0" />}
+        {label}
       </label>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>

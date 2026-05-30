@@ -25,7 +25,7 @@ interface LocationSelectorProps {
   initialCity?: string
   initialState?: string
   initialCountry?: string
-  layout?: "stack" | "grid"
+  layout?: "stack" | "grid" | "embedded"
   labelClassName?: string
 }
 
@@ -184,17 +184,12 @@ export function GlobalLocationSelector({
     labelClassName ??
     "text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-gold"
 
-  return (
-    <div
-      className={cn(
-        layout === "grid" ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "flex flex-col gap-4"
-      )}
-    >
-      {/* Country Selector */}
-      <div className="space-y-2">
-        <label className={locationLabelClass}>
-          Country
-        </label>
+  const fieldSpacing = "space-y-1.5"
+
+  const fields = (
+    <>
+      <div className={fieldSpacing}>
+        <label className={locationLabelClass}>Country</label>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -241,10 +236,8 @@ export function GlobalLocationSelector({
         </DropdownMenu>
       </div>
 
-      <div className="space-y-2">
-        <label className={locationLabelClass}>
-          State / province
-        </label>
+      <div className={fieldSpacing}>
+        <label className={locationLabelClass}>State / province</label>
         <DropdownMenu>
           <DropdownMenuTrigger asChild disabled={!selectedCountry || states.length === 0}>
             <Button
@@ -290,11 +283,8 @@ export function GlobalLocationSelector({
         </DropdownMenu>
       </div>
 
-      {/* City Selector */}
-      <div className="space-y-2">
-        <label className={locationLabelClass}>
-          City
-        </label>
+      <div className={fieldSpacing}>
+        <label className={locationLabelClass}>City</label>
         <DropdownMenu>
           <DropdownMenuTrigger asChild disabled={!selectedState || cities.length === 0}>
             <Button
@@ -339,6 +329,20 @@ export function GlobalLocationSelector({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+    </>
+  )
+
+  if (layout === "embedded") {
+    return fields
+  }
+
+  return (
+    <div
+      className={cn(
+        layout === "grid" ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "flex flex-col gap-4"
+      )}
+    >
+      {fields}
     </div>
   )
 }

@@ -29,7 +29,7 @@ import { DetailedHoroscopeView } from "@/components/detailed-horoscope-view"
 import { Navbar } from "@/components/navbar"
 import { HoroscopePreviewPanel } from "@/components/horoscope/horoscope-preview-panel"
 
-const fieldLabelClass = "text-xs font-medium text-[#1F4068]/70 mb-1.5 block"
+const fieldLabelClass = "text-xs font-medium text-[#1F4068]/70 block"
 
 const fieldInputClass =
   "w-full h-11 rounded-xl border border-gray-200/90 bg-white px-4 text-sm text-[#1F4068] placeholder:text-gray-400 focus:border-[#3bb9ac] focus:ring-4 focus:ring-[#3bb9ac]/10 shadow-sm outline-none"
@@ -39,17 +39,21 @@ const horoscopePrimaryBtn =
 
 function HoroscopeIntro({ className }: { className?: string }) {
   return (
-    <div className={className}>
-      <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-gold mb-3">
-        <Star className="h-3 w-3 fill-brand-gold/30 text-brand-gold" strokeWidth={1.5} />
-        Vedic Astrology
-      </p>
-      <h1 className="font-display text-3xl sm:text-4xl lg:text-[2.5rem] font-semibold text-[#1F4068] leading-[1.12] tracking-tight mb-3">
-        Horoscope Generator
-      </h1>
-      <p className="text-sm sm:text-base text-gray-600 leading-relaxed max-w-lg">
-        Generate your detailed Vedic Rasi and Navamsa charts instantly using traditional
-        Thirukanitham or Vakkiyam calculation methods.
+    <div className={cn("mb-2", className)}>
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
+        <p className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-gold">
+          <Star className="h-2.5 w-2.5 fill-brand-gold/30 text-brand-gold" strokeWidth={1.5} />
+          Vedic Astrology
+        </p>
+        <span className="hidden sm:inline text-gray-300/80 text-xs" aria-hidden>
+          ·
+        </span>
+        <h1 className="font-display text-xl sm:text-2xl font-semibold text-[#1F4068] leading-none tracking-tight">
+          Horoscope Generator
+        </h1>
+      </div>
+      <p className="text-xs text-gray-500 leading-snug mt-1 max-w-2xl">
+        Generate Vedic Rasi & Navamsa charts with Thirukanitham or Vakkiyam methods.
       </p>
     </div>
   )
@@ -203,7 +207,7 @@ export function PublicHoroscopePage() {
     <div className="min-h-screen bg-[#faf8f4] flex flex-col [&_*]:not-italic">
       <Navbar />
 
-      <main className="flex-1 pt-20 pb-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <main className="flex-1 pt-[4.5rem] pb-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         {/* Background sparkles */}
         <div className="pointer-events-none absolute inset-0" aria-hidden>
           <div
@@ -229,19 +233,19 @@ export function PublicHoroscopePage() {
           ))}
         </div>
 
-        <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 xl:gap-12 lg:items-stretch">
-            {/* Left — hero + form */}
-            <div className="flex flex-col gap-5 lg:sticky lg:top-24 lg:self-start">
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                <HoroscopeIntro />
-              </motion.div>
+        <div className="max-w-7xl mx-auto relative z-10">
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <HoroscopeIntro />
+          </motion.div>
 
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 xl:gap-10 lg:items-stretch">
+            {/* Left — form */}
+            <div className="lg:sticky lg:top-[4.5rem] lg:self-start">
               <motion.div
-                initial={{ opacity: 0, y: 16 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 }}
-                className="bg-white rounded-2xl border border-gray-100/90 shadow-[0_8px_32px_rgba(31,64,104,0.06)] overflow-hidden flex-1"
+                transition={{ delay: 0.04 }}
+                className="bg-white rounded-2xl border border-gray-100/90 shadow-[0_8px_32px_rgba(31,64,104,0.06)] overflow-hidden h-full"
               >
                 <div className="p-5 sm:p-6 space-y-5">
                   <div className="flex gap-1 rounded-xl bg-[#faf8f4] p-1">
@@ -279,7 +283,7 @@ export function PublicHoroscopePage() {
                         className="space-y-4"
                       >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
+                          <div className="space-y-1.5">
                             <label className={fieldLabelClass}>Full Name</label>
                             <input
                               type="text"
@@ -305,17 +309,15 @@ export function PublicHoroscopePage() {
                               labelClassName={fieldLabelClass}
                             />
                           </div>
-                          <div className="sm:col-span-2">
-                            <GlobalLocationSelector
-                              layout="grid"
-                              labelClassName={fieldLabelClass}
-                              onLocationChange={setPob}
-                              initialCity={pob.city}
-                              initialState={pob.state}
-                              initialCountry={pob.country}
-                            />
-                          </div>
-                          <div className="sm:col-span-2">
+                          <GlobalLocationSelector
+                            layout="embedded"
+                            labelClassName={fieldLabelClass}
+                            onLocationChange={setPob}
+                            initialCity={pob.city}
+                            initialState={pob.state}
+                            initialCountry={pob.country}
+                          />
+                          <div className="sm:col-span-2 space-y-1.5">
                             <label className={cn(fieldLabelClass, "flex items-center gap-1.5")}>
                               Calculation Method
                               <Info className="h-3.5 w-3.5 text-gray-400" strokeWidth={1.75} />
@@ -406,10 +408,7 @@ export function PublicHoroscopePage() {
             </div>
 
             {/* Right — preview or results */}
-            <div className="flex flex-col gap-5 min-h-0">
-              <div className="hidden lg:block invisible pointer-events-none shrink-0" aria-hidden>
-                <HoroscopeIntro />
-              </div>
+            <div className="min-h-0">
               {!activeResult ? (
                 <HoroscopePreviewPanel className="flex-1 min-h-0" />
               ) : (
@@ -452,6 +451,7 @@ export function PublicHoroscopePage() {
                   </div>
 
                   <div className="bg-white rounded-2xl shadow-[0_8px_32px_rgba(31,64,104,0.06)] overflow-hidden border border-gray-100/90 print:border-none print:shadow-none">
+                    <div className="max-h-[min(72vh,680px)] overflow-y-auto overscroll-contain print:max-h-none print:overflow-visible">
                     <DetailedHoroscopeView
                       data={{
                         ...activeResult,
@@ -462,7 +462,9 @@ export function PublicHoroscopePage() {
                         calculationMethod: calculationMethod,
                       }}
                       hideCloseButton={true}
+                      variant="embedded"
                     />
+                    </div>
                   </div>
                 </motion.div>
               )}
