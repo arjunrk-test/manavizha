@@ -132,6 +132,72 @@ body {
   filter: blur(0.5px);
 }
 
+.hero-petals-layer {
+  perspective: 900px;
+  transform-style: preserve-3d;
+  z-index: 1;
+}
+
+.hero-petal-3d {
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+}
+
+.hero-petal-float {
+  animation: heroPetalFloat var(--float-duration, 5s) ease-in-out infinite;
+  animation-delay: var(--float-delay, 0s);
+  transform-style: preserve-3d;
+}
+
+@keyframes heroPetalFloat {
+  0% {
+    transform: translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+  }
+  20% {
+    transform: translate3d(
+        calc(18px * var(--float-amp, 1)),
+        calc(-28px * var(--float-amp, 1)),
+        calc(30px * var(--float-amp, 1))
+      )
+      rotateX(calc(18deg * var(--float-amp, 1)))
+      rotateY(calc(-22deg * var(--float-amp, 1)))
+      rotateZ(calc(14deg * var(--float-amp, 1)));
+  }
+  45% {
+    transform: translate3d(
+        calc(-24px * var(--float-amp, 1)),
+        calc(-12px * var(--float-amp, 1)),
+        calc(18px * var(--float-amp, 1))
+      )
+      rotateX(calc(-14deg * var(--float-amp, 1)))
+      rotateY(calc(26deg * var(--float-amp, 1)))
+      rotateZ(calc(-10deg * var(--float-amp, 1)));
+  }
+  70% {
+    transform: translate3d(
+        calc(14px * var(--float-amp, 1)),
+        calc(-38px * var(--float-amp, 1)),
+        calc(42px * var(--float-amp, 1))
+      )
+      rotateX(calc(12deg * var(--float-amp, 1)))
+      rotateY(calc(-18deg * var(--float-amp, 1)))
+      rotateZ(calc(20deg * var(--float-amp, 1)));
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-petal-float {
+    animation: none;
+  }
+
+  .hero-petal-3d {
+    will-change: auto;
+  }
+}
+
 .text-brand-gold {
   color: #c9a227;
 }

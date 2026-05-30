@@ -3,10 +3,11 @@
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Heart, Users, ArrowRight, ShieldCheck, Lock, UserRound } from "lucide-react"
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { AuthDialog } from "@/components/auth-dialog"
 import { HowItWorksCard } from "@/components/home/how-it-works-card"
 import { TrustBar } from "@/components/home/trust-bar"
+import { HeroRosePetals } from "@/components/home/hero-rose-petals"
 
 const trustIndicators = [
   { icon: ShieldCheck, text: "Trusted & Verified Profiles" },
@@ -15,6 +16,7 @@ const trustIndicators = [
 ]
 
 export function HeroSection() {
+  const sectionRef = useRef<HTMLElement>(null)
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup")
 
@@ -24,7 +26,12 @@ export function HeroSection() {
   }
 
   return (
-    <section className="home-hero-surface relative overflow-hidden lg:h-[calc(100dvh-4rem)] lg:max-h-[900px] lg:min-h-[580px] flex flex-col">
+    <section
+      ref={sectionRef}
+      className="home-hero-surface relative overflow-hidden lg:h-[calc(100dvh-4rem)] lg:max-h-[900px] lg:min-h-[580px] flex flex-col"
+    >
+      <HeroRosePetals scrollRef={sectionRef} />
+
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col min-h-0 pt-3 pb-3 lg:pt-4 lg:pb-4 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
