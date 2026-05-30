@@ -14,6 +14,7 @@ import { getUserDashboard } from "@/lib/auth"
 interface AuthDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  defaultMode?: "login" | "signup"
 }
 
 const coupleStories = [
@@ -64,7 +65,7 @@ const COUNTRY_CODES = [
   { code: "+27", flag: "🇿🇦", country: "South Africa" },
 ]
 
-export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
+export function AuthDialog({ open, onOpenChange, defaultMode = "login" }: AuthDialogProps) {
   const router = useRouter()
   const [authMode, setAuthMode] = useState<"login" | "signup">("login")
   const [email, setEmail] = useState("")
@@ -79,7 +80,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-  // Clear all fields when dialog closes
+  // Clear all fields when dialog closes; apply mode when opening
   useEffect(() => {
     if (!open) {
       setEmail("")
@@ -93,8 +94,10 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
       setAuthMode("login")
       setError(null)
       setSuccessMessage(null)
+    } else {
+      setAuthMode(defaultMode)
     }
-  }, [open])
+  }, [open, defaultMode])
 
   const passwordStrength = (() => {
     if (!password) return { label: "", value: 0, color: "bg-gray-200", isValid: false }
