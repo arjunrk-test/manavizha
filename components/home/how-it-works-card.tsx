@@ -25,18 +25,16 @@ export function HowItWorksCard() {
         Your path to the right match
       </h3>
 
-      <div className="relative pl-0.5">
+      <div className="relative">
         <div
-          className="absolute left-[9px] top-1.5 bottom-6 border-l border-dashed border-[#c9a227]/40"
+          className="absolute left-[10px] top-2 bottom-6 border-l border-dashed border-[#c9a227]/40"
           aria-hidden
         />
 
         <ol className="space-y-2.5">
           {steps.map((step, index) => (
             <li key={step.title} className="relative flex gap-2.5 items-start">
-              <span className="relative z-10 shrink-0 w-[18px] h-[18px] rounded-full bg-[#c9a227]/15 text-[#1F4068] text-[10px] font-bold flex items-center justify-center mt-0.5 ring-2 ring-white">
-                {index + 1}
-              </span>
+              <span className="how-it-works-step-badge relative z-10">{index + 1}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-gray-900 leading-tight">{step.title}</p>
                 <p className="text-[10px] text-gray-500 leading-snug mt-0.5">{step.description}</p>

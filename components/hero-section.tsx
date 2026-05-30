@@ -2,18 +2,12 @@
 
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Heart, Users, ArrowRight, ShieldCheck, Lock, UserRound } from "lucide-react"
+import { Heart, Users, ArrowRight } from "lucide-react"
 import { useState, useRef } from "react"
 import { AuthDialog } from "@/components/auth-dialog"
 import { HowItWorksCard } from "@/components/home/how-it-works-card"
 import { TrustBar } from "@/components/home/trust-bar"
 import { HeroRosePetals } from "@/components/home/hero-rose-petals"
-
-const trustIndicators = [
-  { icon: ShieldCheck, text: "Trusted & Verified Profiles" },
-  { icon: Lock, text: "Safe & Private Platform" },
-  { icon: UserRound, text: "Serious Matrimonial Service" },
-]
 
 export function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null)
@@ -42,11 +36,6 @@ export function HeroSection() {
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-center min-h-0">
             {/* Left column */}
             <div className="lg:col-span-5 text-center lg:text-left relative z-20 py-2 lg:py-0 lg:pl-8 xl:pl-12 2xl:pl-16 lg:pr-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-[#c9a227]/25 text-xs sm:text-sm text-gray-700 mb-3 shadow-sm">
-                <ShieldCheck className="h-3.5 w-3.5 text-brand-gold" strokeWidth={1.75} />
-                Trusted by 10,000+ families
-              </div>
-
               <h1 className="font-display text-[2rem] sm:text-4xl lg:text-[2.35rem] xl:text-[2.65rem] font-semibold leading-[1.08] mb-2.5">
                 <span className="text-[#1F4068]">Find Your Perfect</span>
                 <br />
@@ -60,14 +49,9 @@ export function HeroSection() {
                 future.
               </p>
 
-              <ul className="hidden sm:flex flex-wrap justify-center lg:justify-start gap-x-4 gap-y-1.5 text-xs text-gray-600 mb-4">
-                {trustIndicators.map(({ icon: Icon, text }) => (
-                  <li key={text} className="flex items-center gap-1.5">
-                    <Icon className="h-3.5 w-3.5 text-brand-gold shrink-0" strokeWidth={1.75} />
-                    {text}
-                  </li>
-                ))}
-              </ul>
+              <div className="mb-4 max-w-md mx-auto lg:mx-0">
+                <HowItWorksCard />
+              </div>
 
               <div className="flex flex-col sm:flex-row gap-2.5 justify-center lg:justify-start">
                 <Button
@@ -100,10 +84,6 @@ export function HeroSection() {
                   className="absolute inset-0 h-full w-full object-cover object-[center_20%]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-[#faf8f4]/40 lg:to-[#faf8f4]/55" />
-              </div>
-
-              <div className="absolute right-2 sm:right-4 lg:right-5 top-1/2 -translate-y-1/2 z-30 w-[min(100%,17.5rem)] sm:w-[18rem]">
-                <HowItWorksCard />
               </div>
             </div>
           </div>
