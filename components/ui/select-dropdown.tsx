@@ -44,7 +44,7 @@ export function SelectDropdown({
             </option>
           ))}
         </select>
-        <div className={`absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-500 ${disabled ? 'text-gray-300' : 'text-[#3bba9c]/40 group-focus-within:rotate-180'}`}>
+        <div className={`absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-500 ${disabled ? 'text-gray-300' : 'text-[#3bb9ac]/40 group-focus-within:rotate-180'}`}>
           <ChevronDown className="h-4 w-4" />
         </div>
       </div>

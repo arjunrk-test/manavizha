@@ -61,7 +61,7 @@ export default function ParentDashboardPage() {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bba9c] mx-auto mb-4" />
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bb9ac] mx-auto mb-4" />
                     <p className="text-gray-600">Loading Parent Dashboard...</p>
                 </div>
             </div>
@@ -71,15 +71,15 @@ export default function ParentDashboardPage() {
     return (
         <div className="min-h-screen relative overflow-hidden bg-gray-50 dark:bg-[#121212]">
             {/* Animated gradient background from homepage */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/10 via-[#3bba9c]/10 via-[#FF1493]/10 to-[#FFA500]/10 bg-[length:200%_auto] animate-gradient pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/10 via-[#3bb9ac]/10 via-[#3bb9ac]/10 to-[#FFA500]/10 bg-[length:200%_auto] animate-gradient pointer-events-none" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)] pointer-events-none" />
             
             {/* Floating orbs */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-                <div className="absolute top-20 left-[10%] w-72 h-72 bg-gradient-to-br from-[#1F4068]/20 to-[#3bba9c]/20 rounded-full mix-blend-multiply filter blur-2xl" 
+                <div className="absolute top-20 left-[10%] w-72 h-72 bg-gradient-to-br from-[#1F4068]/20 to-[#3bb9ac]/20 rounded-full mix-blend-multiply filter blur-2xl" 
                     style={{ animation: 'float 20s ease-in-out infinite' }}
                 />
-                <div className="absolute top-40 right-[15%] w-72 h-72 bg-gradient-to-br from-[#FF1493]/20 to-[#FFA500]/20 rounded-full mix-blend-multiply filter blur-2xl"
+                <div className="absolute top-40 right-[15%] w-72 h-72 bg-gradient-to-br from-[#3bb9ac]/20 to-[#FFA500]/20 rounded-full mix-blend-multiply filter blur-2xl"
                     style={{ animation: 'float 25s ease-in-out infinite 2s' }}
                 />
             </div>
@@ -95,11 +95,11 @@ export default function ParentDashboardPage() {
                             <h1 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
                                 Manavizha
                             </h1>
-                            <span className="bg-[#3bba9c] text-white text-[8px] px-1.5 py-0.5 rounded-full uppercase tracking-tighter">
+                            <span className="bg-[#3bb9ac] text-white text-[8px] px-1.5 py-0.5 rounded-full uppercase tracking-tighter">
                                 {parentRecord?.role}
                             </span>
                         </div>
-                        <p className="text-[10px] font-medium text-[#3bba9c] dark:text-[#A855F7] mt-0.5">
+                        <p className="text-[10px] font-medium text-[#3bb9ac] dark:text-[#A855F7] mt-0.5">
                             find your perfect partner
                         </p>
                         <span className="text-[9px] uppercase tracking-wider text-gray-500 mt-0.5">• Parent Dashboard</span>

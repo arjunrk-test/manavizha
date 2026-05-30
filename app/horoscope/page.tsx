@@ -209,7 +209,7 @@ export default function PublicHoroscopePage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] shadow-xl border border-indigo-50 relative overflow-hidden">
              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50/50 rounded-full blur-3xl -mr-32 -mt-32" />
              <div className="relative z-10 flex items-center gap-6">
-                <div className="w-16 h-16 rounded-2xl bg-[#3bba9c] flex items-center justify-center shadow-2xl rotate-3">
+                <div className="w-16 h-16 rounded-2xl bg-[#3bb9ac] flex items-center justify-center shadow-2xl rotate-3">
                    <Sparkles className="h-8 w-8 text-white" />
                 </div>
                 <div>
@@ -232,7 +232,7 @@ export default function PublicHoroscopePage() {
                     onClick={() => setEntryMode('auto')}
                     className={cn(
                       "flex-1 flex items-center justify-center gap-2 py-3 rounded-[1.25rem] transition-all font-black text-[10px] uppercase tracking-widest",
-                      entryMode === 'auto' ? "bg-white text-[#3bba9c] shadow-md" : "text-gray-400 hover:text-indigo-600"
+                      entryMode === 'auto' ? "bg-white text-[#3bb9ac] shadow-md" : "text-gray-400 hover:text-indigo-600"
                     )}
                   >
                     <Calendar className="h-4 w-4" /> Birth Data
@@ -241,7 +241,7 @@ export default function PublicHoroscopePage() {
                     onClick={() => setEntryMode('manual')}
                     className={cn(
                       "flex-1 flex items-center justify-center gap-2 py-3 rounded-[1.25rem] transition-all font-black text-[10px] uppercase tracking-widest",
-                      entryMode === 'manual' ? "bg-white text-[#3bba9c] shadow-md" : "text-gray-400 hover:text-indigo-600"
+                      entryMode === 'manual' ? "bg-white text-[#3bb9ac] shadow-md" : "text-gray-400 hover:text-indigo-600"
                     )}
                   >
                     <Keyboard className="h-4 w-4" /> Manual Entry
@@ -313,7 +313,7 @@ export default function PublicHoroscopePage() {
                         <Button 
                           variant="outline"
                           onClick={() => fileInputRef.current?.click()}
-                          className="w-full h-14 rounded-2xl border-indigo-100 border-dashed hover:bg-indigo-50 text-[#3bba9c] flex flex-col items-center justify-center gap-1 group"
+                          className="w-full h-14 rounded-2xl border-indigo-100 border-dashed hover:bg-indigo-50 text-[#3bb9ac] flex flex-col items-center justify-center gap-1 group"
                         >
                           <ImageIcon className="h-5 w-5" />
                           <span className="text-[9px] font-black uppercase tracking-widest">Upload Chart Photo (Sync)</span>
@@ -326,7 +326,7 @@ export default function PublicHoroscopePage() {
                 <Button 
                   onClick={handleGenerate} 
                   disabled={isGenerating || isOcrLoading}
-                  className="w-full h-14 bg-[#3bba9c] hover:bg-[#1F4068] text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4"
+                  className="w-full h-14 bg-[#3bb9ac] hover:bg-[#1F4068] text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4"
                 >
                   {isGenerating || isOcrLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Zap className="h-5 w-5" />}
                   {isOcrLoading ? "Scanning..." : (entryMode === 'auto' ? "Generate Charts" : "Preview Grid")}
@@ -351,7 +351,7 @@ export default function PublicHoroscopePage() {
                   <div className="bg-white p-4 rounded-[2.5rem] border border-indigo-50 shadow-xl flex items-center justify-between">
                     <div className="flex gap-2">
                        <button onClick={() => setCalculationMethod('thirukanitham')} className={cn("px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all", calculationMethod === 'thirukanitham' ? "bg-indigo-600 text-white shadow-lg" : "text-indigo-400 hover:bg-indigo-50")}>Thirukanitham</button>
-                       <button onClick={() => setCalculationMethod('vakkiyam')} className={cn("px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all", calculationMethod === 'vakkiyam' ? "bg-rose-600 text-white shadow-lg" : "text-rose-400 hover:bg-rose-50")}>Vakkiyam</button>
+                       <button onClick={() => setCalculationMethod('vakkiyam')} className={cn("px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all", calculationMethod === 'vakkiyam' ? "bg-primary text-white shadow-lg" : "text-primary hover:bg-primary")}>Vakkiyam</button>
                     </div>
                     <Button onClick={handleDownloadPdf} className="h-12 px-8 rounded-xl bg-green-600 hover:bg-green-700 text-white font-black text-[10px] uppercase tracking-widest gap-2 shadow-lg shadow-green-500/20">
                       <Download className="h-4 w-4" /> Download PDF

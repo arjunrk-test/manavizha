@@ -43,7 +43,7 @@ export default function DailyRecommendationsPage() {
     if (isLoading) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center p-6 space-y-4">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-100 border-t-[#3bba9c]" />
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-100 border-t-[#3bb9ac]" />
                 <p className="text-gray-400 font-medium animate-pulse">Personalizing your daily matches...</p>
             </div>
         )
@@ -52,7 +52,7 @@ export default function DailyRecommendationsPage() {
     if (!recommendations || recommendations.length === 0) {
         return (
             <div className="min-h-screen p-8 max-w-2xl mx-auto text-center space-y-6 flex flex-col items-center justify-center">
-                <div className="h-20 w-20 bg-indigo-50 flex items-center justify-center rounded-3xl text-[#3bba9c]">
+                <div className="h-20 w-20 bg-indigo-50 flex items-center justify-center rounded-3xl text-[#3bb9ac]">
                     <Sparkles className="h-10 w-10" />
                 </div>
                 <h1 className="text-2xl font-black text-gray-900 tracking-tight">No more suggestions today!</h1>
@@ -93,7 +93,7 @@ export default function DailyRecommendationsPage() {
                             className={cn(
                                 "w-full flex items-center gap-3 p-3 rounded-2xl transition-all relative overflow-hidden group",
                                 selectedId === rec.user_id 
-                                    ? "bg-[#3bba9c] text-white shadow-lg shadow-[#3bba9c]/20" 
+                                    ? "bg-[#3bb9ac] text-white shadow-lg shadow-[#3bb9ac]/20" 
                                     : "hover:bg-gray-50 text-gray-900"
                             )}
                         >

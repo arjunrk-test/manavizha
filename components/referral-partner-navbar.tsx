@@ -51,7 +51,7 @@ export function ReferralPartnerNavbar() {
                 className="h-10 w-auto object-contain"
                 priority
               />
-              <span className="text-xl font-bold bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#FF1493] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+              <span className="text-xl font-bold bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
                 Manavizha Partners
               </span>
             </motion.div>
@@ -68,7 +68,7 @@ export function ReferralPartnerNavbar() {
                 className="text-gray-700 dark:text-gray-300 hover:text-[#1F4068] transition-colors font-medium relative group"
               >
                 {item}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#1F4068] to-[#3bba9c] group-hover:w-full transition-all duration-300" />
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#1F4068] to-[#3bb9ac] group-hover:w-full transition-all duration-300" />
               </motion.a>
             ))}
             <motion.div

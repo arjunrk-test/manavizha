@@ -83,7 +83,7 @@ export function AdminAuthDialog({ open, onOpenChange }: AdminAuthDialogProps) {
         <div className="grid lg:grid-cols-[1.1fr,1fr] overflow-hidden rounded-2xl bg-[#080b16] text-white">
           <div className="relative flex flex-col gap-6 p-8 sm:p-10 overflow-hidden">
             {/* Animated gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] via-[#3bb9ac] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
             
             {/* Overlay pattern */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />

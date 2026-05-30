@@ -146,11 +146,11 @@ export function VerificationDialog({ isOpen, onClose, userId, existingPhotos = [
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="bg-[#3bba9c] py-4 px-8 text-white overflow-hidden border-b border-white/10"
+              className="bg-[#3bb9ac] py-4 px-8 text-white overflow-hidden border-b border-white/10"
             >
                 <div className="flex items-center gap-4">
                     <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/20 shrink-0 shadow-lg">
-                        <ShieldCheck className="h-5 w-5 text-pink-300" />
+                        <ShieldCheck className="h-5 w-5 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
                         <DialogTitle className="text-lg font-bold leading-tight truncate">Verify your Identity</DialogTitle>
@@ -208,7 +208,7 @@ export function VerificationDialog({ isOpen, onClose, userId, existingPhotos = [
                     </div>
                 </div>
                 <Button 
-                    className="w-full h-14 rounded-2xl bg-[#3bba9c] hover:bg-[#2fa085] text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-95"
+                    className="w-full h-14 rounded-2xl bg-[#3bb9ac] hover:bg-[#2fa085] text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-95"
                     disabled={!selectedPhoto}
                     onClick={() => setStep(2)}
                 >
@@ -229,8 +229,8 @@ export function VerificationDialog({ isOpen, onClose, userId, existingPhotos = [
                   {/* Left Column: Branding and Info */}
                   <div className="md:col-span-2 space-y-6 p-4">
                     <div className="space-y-4">
-                      <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center border border-purple-200 dark:border-purple-800">
-                        <ShieldCheck className="h-6 w-6 text-[#3bba9c] dark:text-emerald-400" />
+                      <div className="w-12 h-12 bg-primary dark:bg-primary rounded-2xl flex items-center justify-center border border-primary dark:border-primary">
+                        <ShieldCheck className="h-6 w-6 text-[#3bb9ac] dark:text-emerald-400" />
                       </div>
                       <div>
                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Verify Identity</h2>
@@ -257,7 +257,7 @@ export function VerificationDialog({ isOpen, onClose, userId, existingPhotos = [
 
                     <div className="pt-4">
                         <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Current Step</div>
-                        <div className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-xs font-medium text-[#3bba9c] dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50">
+                        <div className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-xs font-medium text-[#3bb9ac] dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50">
                             Step 2: Take a Selfie
                         </div>
                     </div>
@@ -272,7 +272,7 @@ export function VerificationDialog({ isOpen, onClose, userId, existingPhotos = [
                             <Camera className="h-10 w-10 text-gray-400" />
                           </div>
                           <p className="text-sm mb-8 text-center text-gray-400 px-4">Camera access is required for live verification</p>
-                          <Button onClick={() => setIsCameraActive(true)} className="bg-white hover:bg-gray-100 text-[#3bba9c] font-bold h-12 px-10 rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95">
+                          <Button onClick={() => setIsCameraActive(true)} className="bg-white hover:bg-gray-100 text-[#3bb9ac] font-bold h-12 px-10 rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95">
                             Enable Camera
                           </Button>
                         </div>

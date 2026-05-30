@@ -24,7 +24,7 @@ export function HeroSection() {
       className="relative min-h-screen flex items-center justify-center overflow-hidden pt-14"
     >
       {/* Animated gradient background - lighter version */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#3bba9c]/50 via-[#FF1493]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#3bb9ac]/50 via-[#3bb9ac]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
       
       {/* White overlay to lighten */}
       <div className="absolute inset-0 bg-white/50 dark:bg-[#181818]/50" />
@@ -34,13 +34,13 @@ export function HeroSection() {
 
       {/* Floating orbs - optimized for performance */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-[10%] w-72 h-72 bg-gradient-to-br from-[#1F4068]/30 to-[#3bba9c]/30 rounded-full mix-blend-multiply filter blur-2xl will-change-transform" 
+        <div className="absolute top-20 left-[10%] w-72 h-72 bg-gradient-to-br from-[#1F4068]/30 to-[#3bb9ac]/30 rounded-full mix-blend-multiply filter blur-2xl will-change-transform" 
           style={{
             animation: 'float 20s ease-in-out infinite',
             transform: 'translate3d(0, 0, 0)',
           }}
         />
-        <div className="absolute top-40 right-[15%] w-72 h-72 bg-gradient-to-br from-[#FF1493]/30 to-[#FFA500]/30 rounded-full mix-blend-multiply filter blur-2xl will-change-transform"
+        <div className="absolute top-40 right-[15%] w-72 h-72 bg-gradient-to-br from-[#3bb9ac]/30 to-[#FFA500]/30 rounded-full mix-blend-multiply filter blur-2xl will-change-transform"
           style={{
             animation: 'float 25s ease-in-out infinite 2s',
             transform: 'translate3d(0, 0, 0)',
@@ -53,7 +53,7 @@ export function HeroSection() {
       
       {/* Geometric shapes for modern look */}
       <div className="absolute top-20 right-10 w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 border border-[#1F4068]/20 rounded-full blur-xl hidden md:block" />
-      <div className="absolute bottom-20 left-10 w-24 h-24 sm:w-32 sm:h-32 border border-[#FF1493]/20 rounded-full blur-xl hidden md:block" />
+      <div className="absolute bottom-20 left-10 w-24 h-24 sm:w-32 sm:h-32 border border-[#3bb9ac]/20 rounded-full blur-xl hidden md:block" />
       <div className="absolute top-1/2 left-1/4 w-16 h-16 border border-[#FFA500]/20 rotate-45 blur-lg hidden lg:block" />
 
       <div 
@@ -70,8 +70,8 @@ export function HeroSection() {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 text-sm font-medium text-gray-700 dark:text-gray-300 mb-6 sm:mb-8 shadow-sm"
           >
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF1493] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FF1493]"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3bb9ac] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#3bb9ac]"></span>
             </span>
             Trusted by 10,000+ families
           </motion.div>
@@ -82,10 +82,10 @@ export function HeroSection() {
             transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 sm:mb-8 md:mb-10 leading-[1.05] tracking-tight"
           >
-            <span className="block bg-gradient-to-r from-[#1F4068] via-[#3bba9c] via-[#FF1493] to-[#1F4068] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+            <span className="block bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] via-[#3bb9ac] to-[#1F4068] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
               Find Your Perfect
             </span>
-            <span className="block mt-2 sm:mt-3 md:mt-4 bg-gradient-to-r from-[#3bba9c] via-[#FF1493] via-[#FFA500] to-[#3bba9c] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient" style={{ animationDelay: '1s' }}>
+            <span className="block mt-2 sm:mt-3 md:mt-4 bg-gradient-to-r from-[#3bb9ac] via-[#3bb9ac] via-[#FFA500] to-[#3bb9ac] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient" style={{ animationDelay: '1s' }}>
               Life Partner
             </span>
           </motion.h1>
@@ -110,7 +110,7 @@ export function HeroSection() {
           >
             <Button 
               size="lg"
-              className="w-full sm:w-auto rounded-full bg-gradient-to-r from-[#1F4068] to-[#3bba9c] hover:from-[#1F4068]/90 hover:to-[#3bba9c]/90 shadow-lg hover:shadow-xl transition-all duration-200 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7"
+              className="w-full sm:w-auto rounded-full bg-gradient-to-r from-[#1F4068] to-[#3bb9ac] hover:from-[#1F4068]/90 hover:to-[#3bb9ac]/90 shadow-lg hover:shadow-xl transition-all duration-200 text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7"
             >
               <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
               Start Your Journey
@@ -159,7 +159,7 @@ export function HeroSection() {
             <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl border border-gray-200/60 dark:border-gray-800/60 shadow-2xl p-6 sm:p-8 lg:p-10">
               {/* Header */}
               <div className="flex items-center gap-3 mb-6 sm:mb-8">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FF1493] to-[#FFA500] flex items-center justify-center shadow-lg">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#3bb9ac] to-[#FFA500] flex items-center justify-center shadow-lg">
                   <Search className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
@@ -238,7 +238,7 @@ export function HeroSection() {
                 {/* Search Button */}
                 <Button
                   type="submit"
-                  className="w-full h-14 rounded-xl bg-gradient-to-r from-[#1F4068] via-[#3bba9c] to-[#1F4068] bg-[length:200%_auto] animate-gradient text-white font-bold uppercase tracking-[0.2em] text-sm shadow-xl hover:shadow-emerald-500/20 transition-all active:scale-[0.98]"
+                  className="w-full h-14 rounded-xl bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#1F4068] bg-[length:200%_auto] animate-gradient text-white font-bold uppercase tracking-[0.2em] text-sm shadow-xl hover:shadow-emerald-500/20 transition-all active:scale-[0.98]"
                 >
                   <Search className="h-4 w-4 mr-2" />
                   Search {searchType}s
@@ -250,7 +250,7 @@ export function HeroSection() {
                     Need a profile?{" "}
                     <a
                       href="#"
-                      className="text-[#3bba9c] hover:text-[#1F4068] transition-colors border-b border-[#3bba9c]/30"
+                      className="text-[#3bb9ac] hover:text-[#1F4068] transition-colors border-b border-[#3bb9ac]/30"
                     >
                       Create a Free Profile
                     </a>
@@ -268,9 +268,9 @@ export function HeroSection() {
             >
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
-                  { value: "10K+", label: "Active Members", color: "from-[#1F4068] to-[#3bba9c]", icon: "👥" },
-                  { value: "5K+", label: "Successful Matches", color: "from-[#FF1493] to-[#FFA500]", icon: "💑" },
-                  { value: "98%", label: "Satisfaction Rate", color: "from-[#3bba9c] to-[#1F4068]", icon: "⭐" },
+                  { value: "10K+", label: "Active Members", color: "from-[#1F4068] to-[#3bb9ac]", icon: "👥" },
+                  { value: "5K+", label: "Successful Matches", color: "from-[#3bb9ac] to-[#FFA500]", icon: "💑" },
+                  { value: "98%", label: "Satisfaction Rate", color: "from-[#3bb9ac] to-[#1F4068]", icon: "⭐" },
                 ].map((stat, index) => (
                   <motion.div
                     key={stat.label}
@@ -280,7 +280,7 @@ export function HeroSection() {
                     whileHover={{ y: -5 }}
                     className="relative group cursor-pointer"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#1F4068]/20 to-[#3bba9c]/20 dark:from-[#1F4068]/30 dark:to-[#3bba9c]/30 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-300" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#1F4068]/20 to-[#3bb9ac]/20 dark:from-[#1F4068]/30 dark:to-[#3bb9ac]/30 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-300" />
                     <div className="relative bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-3xl p-4 sm:p-6 border border-gray-200/60 dark:border-gray-800/60 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.03] overflow-hidden">
                       {/* Decorative gradient bar */}
                       <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.color}`} />

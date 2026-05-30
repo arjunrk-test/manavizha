@@ -22,7 +22,7 @@ export function SubscriptionDialog({ isOpen, onClose, featureName = "Premium Fea
     { icon: Crown, text: "Unlimited Direct Messaging", color: "text-amber-500" },
     { icon: Sparkles, text: "Advanced Horoscope Matching", color: "text-indigo-500" },
     { icon: ShieldCheck, text: "Tactical Priority Discovery", color: "text-emerald-500" },
-    { icon: Gem, text: "Elite Profile Badge & Visibility", color: "text-rose-500" }
+    { icon: Gem, text: "Elite Profile Badge & Visibility", color: "text-primary" }
   ]
 
   return (
@@ -30,15 +30,15 @@ export function SubscriptionDialog({ isOpen, onClose, featureName = "Premium Fea
       <DialogContent className="max-w-md p-0 overflow-hidden border-none sds-glass rounded-[2.5rem] shadow-2xl backdrop-blur-3xl">
         <div className="relative p-8 overflow-hidden">
           {/* Background Accent */}
-          <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#3bba9c]/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#FF1493]/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#3bb9ac]/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#3bb9ac]/10 rounded-full blur-3xl animate-pulse" />
 
           <DialogHeader className="relative z-10 text-center space-y-4">
-            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-amber-400 to-rose-500 rounded-3xl flex items-center justify-center shadow-xl shadow-rose-500/20 mb-2 rotate-3 hover:rotate-0 transition-transform duration-500">
+            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-amber-400 to-primary rounded-3xl flex items-center justify-center shadow-xl shadow-primary mb-2 rotate-3 hover:rotate-0 transition-transform duration-500">
               <Crown className="h-10 w-10 text-white" />
             </div>
             <DialogTitle className="text-3xl font-black text-zinc-900 tracking-tight leading-tight">
-              Upgrade to <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-rose-500">Tactical Premium</span>
+              Upgrade to <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-primary">Tactical Premium</span>
             </DialogTitle>
             <DialogDescription className="text-zinc-600 font-bold text-sm px-4">
               Unlock {featureName} and experience the elite tier of match discovery on Manavizha.
@@ -65,7 +65,7 @@ export function SubscriptionDialog({ isOpen, onClose, featureName = "Premium Fea
 
           <div className="mt-10 space-y-3 relative z-10">
             <Button 
-              className="w-full h-14 rounded-2xl bg-[#3bba9c] hover:bg-[#2fa085] text-white font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-emerald-900/30 transition-all hover:scale-[1.02] active:scale-95"
+              className="w-full h-14 rounded-2xl bg-[#3bb9ac] hover:bg-[#2fa085] text-white font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-emerald-900/30 transition-all hover:scale-[1.02] active:scale-95"
               onClick={() => {
                 // To be implemented: Redirect to pricing or checkout
                 onClose();
@@ -75,7 +75,7 @@ export function SubscriptionDialog({ isOpen, onClose, featureName = "Premium Fea
             </Button>
             <Button 
               variant="ghost" 
-              className="w-full h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest text-[#3bba9c]/60 hover:text-[#3bba9c] hover:bg-indigo-50"
+              className="w-full h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest text-[#3bb9ac]/60 hover:text-[#3bb9ac] hover:bg-indigo-50"
               onClick={onClose}
             >
               Remind Me Later

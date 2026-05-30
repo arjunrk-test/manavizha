@@ -223,7 +223,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
         <div className="grid lg:grid-cols-[1.1fr,1fr] overflow-hidden rounded-2xl bg-[#080b16] text-white">
           <div className="relative flex flex-col gap-6 p-8 sm:p-10 overflow-hidden">
             {/* Animated gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#1F4068] via-[#3bba9c] to-[#2fa085] bg-[length:200%_auto] animate-gradient" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1F4068] via-[#3bb9ac] to-[#2fa085] bg-[length:200%_auto] animate-gradient" />
 
             {/* Overlay pattern */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
@@ -325,8 +325,8 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                 size="sm"
                 variant="ghost"
                 className={`flex-1 rounded-full transition-all font-bold uppercase tracking-widest text-[10px] ${authMode === "login"
-                  ? "bg-[#3bba9c] text-white shadow-lg"
-                  : "text-gray-500 hover:text-[#3bba9c]"
+                  ? "bg-[#3bb9ac] text-white shadow-lg"
+                  : "text-gray-500 hover:text-[#3bb9ac]"
                   }`}
                 onClick={() => {
                   setAuthMode("login")
@@ -343,8 +343,8 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                 size="sm"
                 variant="ghost"
                 className={`flex-1 rounded-full transition-all font-bold uppercase tracking-widest text-[10px] ${authMode === "signup"
-                  ? "bg-[#3bba9c] text-white shadow-lg"
-                  : "text-gray-500 hover:text-[#3bba9c]"
+                  ? "bg-[#3bb9ac] text-white shadow-lg"
+                  : "text-gray-500 hover:text-[#3bb9ac]"
                   }`}
                 onClick={() => {
                   setAuthMode("signup")
@@ -419,7 +419,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                       <select
                         value={countryCode}
                         onChange={(e) => setCountryCode(e.target.value)}
-                        className="shrink-0 w-28 h-11 rounded-xl border-2 border-indigo-100/50 bg-white/80 px-2 py-2 text-[12px] font-bold text-gray-900 focus:outline-none focus:border-[#3bba9c] dark:bg-gray-900 dark:border-gray-800 dark:text-gray-100"
+                        className="shrink-0 w-28 h-11 rounded-xl border-2 border-indigo-100/50 bg-white/80 px-2 py-2 text-[12px] font-bold text-gray-900 focus:outline-none focus:border-[#3bb9ac] dark:bg-gray-900 dark:border-gray-800 dark:text-gray-100"
                       >
                         {COUNTRY_CODES.map(c => (
                           <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
@@ -571,7 +571,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               )}
               <Button
                 type="submit"
-                className="w-full h-12 rounded-full bg-gradient-to-r from-[#1F4068] to-[#3bba9c] text-white hover:opacity-90 border-0 shadow-lg hover:shadow-emerald-500/20 transition-all font-bold uppercase tracking-[0.2em] text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full h-12 rounded-full bg-gradient-to-r from-[#1F4068] to-[#3bb9ac] text-white hover:opacity-90 border-0 shadow-lg hover:shadow-emerald-500/20 transition-all font-bold uppercase tracking-[0.2em] text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={
                   isLoading ||
                   (authMode === "signup" && (!passwordsMatch || !passwordStrength.isValid))

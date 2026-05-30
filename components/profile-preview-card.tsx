@@ -36,7 +36,7 @@ export function ProfilePreviewCard({
             className="h-full"
         >
             <Card
-                className="overflow-hidden h-full w-full hover:shadow-[0_30px_60px_-15px_rgba(59,186,156,0.3)] transition-all duration-500 cursor-pointer group border-white/60 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl relative flex flex-col rounded-[2rem] shadow-2xl"
+                className="overflow-hidden h-full w-full hover:shadow-[0_30px_60px_-15px_rgba(59,185,172,0.3)] transition-all duration-500 cursor-pointer group border-white/60 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl relative flex flex-col rounded-[2rem] shadow-2xl"
                 onClick={onClick}
             >
                 {/* Image Section */}
@@ -53,20 +53,20 @@ export function ProfilePreviewCard({
                         />
                     ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gradient-to-br from-indigo-50 to-white">
-                            <User className="h-10 w-10 mb-2 opacity-20 text-[#3bba9c]" />
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 text-[#3bba9c]">No Photo</span>
+                            <User className="h-10 w-10 mb-2 opacity-20 text-[#3bb9ac]" />
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 text-[#3bb9ac]">No Photo</span>
                         </div>
                     )}
 
                     {/* Overlay Badges */}
                     <div className="absolute top-3 left-3 z-20 flex flex-col gap-2">
                         {profile.isNew && (
-                            <span className="bg-[#3bba9c] text-white text-[8px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-xl shadow-emerald-500/20 backdrop-blur-md border border-white/20">
+                            <span className="bg-[#3bb9ac] text-white text-[8px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-xl shadow-emerald-500/20 backdrop-blur-md border border-white/20">
                                 NEW
                             </span>
                         )}
                         {profile.isMutual && (
-                            <span className="bg-rose-500 text-white text-[8px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-xl shadow-rose-500/20 backdrop-blur-md border border-white/20 flex items-center gap-1.5 animate-pulse">
+                            <span className="bg-primary text-white text-[8px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-xl shadow-primary backdrop-blur-md border border-white/20 flex items-center gap-1.5 animate-pulse">
                                 <Heart className="h-2.5 w-2.5 fill-current" /> MATCH
                             </span>
                         )}
@@ -74,12 +74,12 @@ export function ProfilePreviewCard({
                         {profile.isPremium && (
                             <div className="flex flex-col gap-1.5">
                                 {profile.premiumPlan === 'till_you_marry' && (
-                                    <span className="bg-gradient-to-r from-[#3bba9c] to-[#2fa085] text-white text-[7px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full shadow-xl shadow-indigo-500/30 flex items-center gap-1 border border-white/20">
+                                    <span className="bg-gradient-to-r from-[#3bb9ac] to-[#2fa085] text-white text-[7px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full shadow-xl shadow-indigo-500/30 flex items-center gap-1 border border-white/20">
                                         <Crown className="h-2.5 w-2.5" /> LIFETIME
                                     </span>
                                 )}
                                 {profile.premiumPlan === 'elite' && (
-                                    <span className="bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-[#3bba9c] text-[7px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full shadow-xl shadow-amber-500/30 flex items-center gap-1 border border-white/20">
+                                    <span className="bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-[#3bb9ac] text-[7px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full shadow-xl shadow-amber-500/30 flex items-center gap-1 border border-white/20">
                                         <Gem className="h-2.5 w-2.5" /> ELITE
                                     </span>
                                 )}
@@ -139,12 +139,12 @@ export function ProfilePreviewCard({
                 {/* Content Section */}
                 <CardContent className="p-3 flex-1 flex flex-col justify-start gap-2 bg-white dark:bg-gray-800 group-hover:bg-indigo-50/10 transition-colors duration-500">
                     <div className="flex items-start gap-2 text-[9px] text-gray-600 dark:text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-                        <Briefcase className="h-3.5 w-3.5 text-[#3bba9c]/60 shrink-0" />
+                        <Briefcase className="h-3.5 w-3.5 text-[#3bb9ac]/60 shrink-0" />
                         <span className="line-clamp-1">{profile.profession || "Not specified"}</span>
                     </div>
                     {profile.education && (
                         <div className="flex items-start gap-2 text-[9px] text-gray-600 dark:text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-                            <GraduationCap className="h-3.5 w-3.5 text-[#3bba9c]/60 shrink-0" />
+                            <GraduationCap className="h-3.5 w-3.5 text-[#3bb9ac]/60 shrink-0" />
                             <span className="line-clamp-1">{profile.education}</span>
                         </div>
                     )}

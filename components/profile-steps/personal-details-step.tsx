@@ -62,11 +62,11 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
         {/* Basic Details Section */}
         <div className="space-y-8 md:col-span-2">
           <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
-              <span className="text-[#3bba9c] font-black text-xs">01</span>
+            <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
+              <span className="text-[#3bb9ac] font-black text-xs">01</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Basic Details</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Basic Details</h4>
               <h3 className="text-xl font-light text-gray-900 tracking-tight">Personal Information</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
@@ -133,7 +133,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
                 </SelectTrigger>
                 <SelectContent className="sds-glass rounded-2xl border-indigo-50/50 shadow-2xl p-2 z-[100] backdrop-blur-2xl">
                   {["Self", "Parents", "Sibling", "Relative", "Friend"].map(val => (
-                    <SelectItem key={val} value={val} className="rounded-xl p-3 focus:bg-[#3bba9c] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">{val}</SelectItem>
+                    <SelectItem key={val} value={val} className="rounded-xl p-3 focus:bg-[#3bb9ac] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">{val}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -171,11 +171,11 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
         {/* Physical Section */}
         <div className="space-y-8 md:col-span-2">
           <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
-              <span className="text-[#3bba9c] font-black text-xs">02</span>
+            <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
+              <span className="text-[#3bb9ac] font-black text-xs">02</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Physical</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Physical</h4>
               <h3 className="text-xl font-light text-gray-900 tracking-tight">Appearance & Build</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
@@ -243,8 +243,8 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
                   <SelectValue placeholder="Are you physically challenged?" />
                 </SelectTrigger>
                 <SelectContent className="sds-glass rounded-2xl border-indigo-50/50 shadow-2xl p-2 z-[100] backdrop-blur-2xl">
-                  <SelectItem value="Normal" className="rounded-xl p-3 focus:bg-[#3bba9c] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">No</SelectItem>
-                  <SelectItem value="Physically Challenged" className="rounded-xl p-3 focus:bg-[#3bba9c] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">Yes</SelectItem>
+                  <SelectItem value="Normal" className="rounded-xl p-3 focus:bg-[#3bb9ac] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">No</SelectItem>
+                  <SelectItem value="Physically Challenged" className="rounded-xl p-3 focus:bg-[#3bb9ac] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">Yes</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -254,11 +254,11 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
         {/* Lifestyle Section */}
         <div className="space-y-8 md:col-span-2">
           <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
-              <span className="text-[#3bba9c] font-black text-xs">03</span>
+            <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
+              <span className="text-[#3bb9ac] font-black text-xs">03</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Culture</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Culture</h4>
               <h3 className="text-xl font-light text-gray-900 tracking-tight">Languages & Food</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
@@ -299,11 +299,11 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
         {/* About Me Section */}
         <div className="space-y-8 md:col-span-2">
           <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
-              <span className="text-[#3bba9c] font-black text-xs">04</span>
+            <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
+              <span className="text-[#3bb9ac] font-black text-xs">04</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Description</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Description</h4>
               <h3 className="text-xl font-light text-gray-900 tracking-tight">About Yourself</h3>
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
@@ -312,7 +312,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
           <div className="space-y-4">
             <div className="flex items-center justify-between px-2">
               <Label htmlFor="about" className="sds-label">About me *</Label>
-              <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${formData.about.length < 100 ? "text-[#3bba9c]/40 border-[#3bba9c]/10" : formData.about.length > 550 ? "text-rose-500 border-rose-100 bg-rose-50/50" : "text-emerald-500 border-emerald-100 bg-emerald-50/50"}`}>
+              <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${formData.about.length < 100 ? "text-[#3bb9ac]/40 border-[#3bb9ac]/10" : formData.about.length > 550 ? "text-primary border-primary bg-primary" : "text-emerald-500 border-emerald-100 bg-emerald-50/50"}`}>
                 {formData.about.length} / 600 {formData.about.length < 100 && "(MIN 100 CHARS)"}
               </span>
             </div>
@@ -328,7 +328,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
               maxLength={600}
               required
               className={`sds-input w-full resize-none py-6 px-6 leading-relaxed transition-all duration-500 min-h-[160px] ${
-                formData.about.length < 100 && formData.about.length > 0 ? "border-[#3bba9c]/20" : ""
+                formData.about.length < 100 && formData.about.length > 0 ? "border-[#3bb9ac]/20" : ""
               }`}
             />
           </div>

@@ -49,10 +49,10 @@ export function DashboardProfileCard({
                         
                         {/* View All Content */}
                         <div className="relative z-10 flex flex-col items-center gap-3">
-                            <div className="w-14 h-14 rounded-full bg-white/90 backdrop-blur-md shadow-lg flex items-center justify-center group-hover:bg-[#3bba9c] group-hover:text-white transition-all duration-300">
+                            <div className="w-14 h-14 rounded-full bg-white/90 backdrop-blur-md shadow-lg flex items-center justify-center group-hover:bg-[#3bb9ac] group-hover:text-white transition-all duration-300">
                                 <ChevronRight className="h-8 w-8" />
                             </div>
-                            <span className="text-[#3bba9c] font-black text-[13px] uppercase tracking-widest">
+                            <span className="text-[#3bb9ac] font-black text-[13px] uppercase tracking-widest">
                                 View all
                             </span>
                         </div>
@@ -88,7 +88,7 @@ export function DashboardProfileCard({
                         />
                     ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gradient-to-br from-indigo-50 to-white">
-                            <User className="h-12 w-12 opacity-20 text-[#3bba9c]" />
+                            <User className="h-12 w-12 opacity-20 text-[#3bb9ac]" />
                         </div>
                     )}
 
@@ -100,8 +100,8 @@ export function DashboardProfileCard({
                                 className={cn(
                                     "w-8 h-8 rounded-xl backdrop-blur-md shadow-lg flex items-center justify-center transition-all duration-300 border border-white/40 active:scale-90",
                                     isShortlisted 
-                                        ? "bg-[#FF1493] text-white border-none shadow-[#FF1493]/30" 
-                                        : "bg-white/70 text-indigo-400 hover:bg-white hover:text-[#3bba9c]"
+                                        ? "bg-[#3bb9ac] text-white border-none shadow-[#3bb9ac]/30" 
+                                        : "bg-white/70 text-indigo-400 hover:bg-white hover:text-[#3bb9ac]"
                                 )}
                             >
                                 <Bookmark className={cn("h-4 w-4", isShortlisted && "fill-current")} />
@@ -128,7 +128,7 @@ export function DashboardProfileCard({
                         {profile?.age ? `${profile.age} Yrs` : ""}{profile?.height ? `, ${profile.height} cm` : ""}
                     </p>
                     {contextText && (
-                        <p className="text-[12px] sm:text-[13px] font-semibold text-[#3bba9c]/60">
+                        <p className="text-[12px] sm:text-[13px] font-semibold text-[#3bb9ac]/60">
                             {contextText}
                         </p>
                     )}

@@ -711,12 +711,12 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
     const isExpired = profile.premiumExpiresAt && new Date(profile.premiumExpiresAt) < new Date()
     if (isExpired) return null
     
-    if (profile.premiumPlan === 'till_you_marry') return <span className="bg-gradient-to-r from-[#FF1493] to-[#FF69B4] text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-pink-500/20 tracking-widest"><Crown className="h-3.5 w-3.5 md:h-4 md:w-4"/> Lifetime Member</span>
-    if (profile.premiumPlan === 'elite') return <span className="bg-gradient-to-r from-[#3bba9c] to-[#2fa085] text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-emerald-500/20 tracking-widest"><Gem className="h-3.5 w-3.5 md:h-4 md:w-4"/> Elite Member</span>
+    if (profile.premiumPlan === 'till_you_marry') return <span className="bg-gradient-to-r from-[#3bb9ac] to-[#FF69B4] text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-primary tracking-widest"><Crown className="h-3.5 w-3.5 md:h-4 md:w-4"/> Lifetime Member</span>
+    if (profile.premiumPlan === 'elite') return <span className="bg-gradient-to-r from-[#3bb9ac] to-[#2fa085] text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-emerald-500/20 tracking-widest"><Gem className="h-3.5 w-3.5 md:h-4 md:w-4"/> Elite Member</span>
     if (profile.premiumPlan === 'prime_gold') return <span className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-amber-500/20 tracking-widest"><Star className="h-3.5 w-3.5 md:h-4 md:w-4"/> Gold Member</span>
     if (profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') return <span className="bg-gradient-to-r from-blue-600 to-cyan-700 text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-blue-500/20 tracking-widest"><Shield className="h-3.5 w-3.5 md:h-4 md:w-4"/> Prime Member</span>
     
-    return <span className="bg-gradient-to-r from-[#3bba9c] to-[#2fa085] text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-emerald-500/20 tracking-widest"><Crown className="h-3.5 w-3.5 md:h-4 md:w-4"/> Premium</span>
+    return <span className="bg-gradient-to-r from-[#3bb9ac] to-[#2fa085] text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-emerald-500/20 tracking-widest"><Crown className="h-3.5 w-3.5 md:h-4 md:w-4"/> Premium</span>
   }
 
   return (
@@ -732,13 +732,13 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             transition={{ duration: 0.5, delay: 0.05 }}
             className="sds-glass rounded-[1.5rem] p-1.5 flex items-center gap-2 border-indigo-100/50 hover:bg-white/90 transition-all shadow-lg shadow-emerald-900/5 mb-2"
           >
-            <div className="w-10 h-10 bg-[#3bba9c] rounded-xl flex items-center justify-center shadow-md shadow-emerald-900/10 shrink-0">
+            <div className="w-10 h-10 bg-[#3bb9ac] rounded-xl flex items-center justify-center shadow-md shadow-emerald-900/10 shrink-0">
               <Search className="h-4 w-4 text-white" />
             </div>
             <input 
               type="text" 
               placeholder="Search by ID..." 
-              className="bg-transparent border-none outline-none text-[9px] font-black uppercase tracking-widest text-[#3bba9c] placeholder:text-gray-300 w-full"
+              className="bg-transparent border-none outline-none text-[9px] font-black uppercase tracking-widest text-[#3bb9ac] placeholder:text-gray-300 w-full"
             />
           </motion.div>
 
@@ -762,44 +762,44 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               ) : null}
               <Button
                 variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bba9c]/5 hover:text-[#3bba9c] group transition-all"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
                 onClick={onNavigateToMutualMatches}
                 disabled={!isCoreProfileComplete}
               >
-                <HeartHandshake className="h-4 w-4 mr-3 text-[#3bba9c]" />
+                <HeartHandshake className="h-4 w-4 mr-3 text-[#3bb9ac]" />
                 <div className="flex-1 flex items-center justify-between">
                   <div className="font-bold text-[11px] text-gray-700">Mutual Matches</div>
-                  <span className="bg-[#3bba9c] text-white text-[8px] px-1.5 py-0.5 rounded-md font-black">{mutualCount}</span>
+                  <span className="bg-[#3bb9ac] text-white text-[8px] px-1.5 py-0.5 rounded-md font-black">{mutualCount}</span>
                 </div>
               </Button>
               <Button
                 variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bba9c]/5 hover:text-[#3bba9c] group transition-all"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
                 onClick={onNavigateToILiked}
                 disabled={!isCoreProfileComplete}
               >
-                <Heart className="h-4 w-4 mr-3 text-rose-400" />
+                <Heart className="h-4 w-4 mr-3 text-primary" />
                 <div className="flex-1 flex items-center justify-between">
                   <div className="font-bold text-[11px] text-gray-700">Interests Sent</div>
-                  <span className="bg-[#3bba9c] text-white text-[8px] px-1.5 py-0.5 rounded-md font-black">{iLikedCount}</span>
+                  <span className="bg-[#3bb9ac] text-white text-[8px] px-1.5 py-0.5 rounded-md font-black">{iLikedCount}</span>
                 </div>
               </Button>
               <Button
                 variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bba9c]/5 hover:text-[#3bba9c] group transition-all"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
                 onClick={onNavigateToLikedMe}
                 disabled={!isCoreProfileComplete}
               >
                 <Sparkles className="h-4 w-4 mr-3 text-indigo-400" />
                 <div className="flex-1 flex items-center justify-between">
                   <div className="font-bold text-[11px] text-gray-700">Interests Received</div>
-                  <span className="bg-[#3bba9c] text-white text-[8px] px-1.5 py-0.5 rounded-md font-black">{likedMeCount}</span>
+                  <span className="bg-[#3bb9ac] text-white text-[8px] px-1.5 py-0.5 rounded-md font-black">{likedMeCount}</span>
                 </div>
               </Button>
 
               <Button
                 variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bba9c]/5 hover:text-[#3bba9c] group transition-all"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
                 onClick={onNavigateToPartnerPreferences}
                 disabled={!isCoreProfileComplete}
               >
@@ -809,7 +809,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
               <Button
                 variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bba9c]/5 hover:text-[#3bba9c] group transition-all"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
                 onClick={() => onNavigateToBrowse()}
                 disabled={!isCoreProfileComplete}
               >
@@ -819,7 +819,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
               <Button
                 variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bba9c]/5 hover:text-[#3bba9c] group transition-all"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
                 onClick={onNavigateToHoroscope}
               >
                 <Star className="h-4 w-4 mr-3 text-amber-500" />
@@ -834,17 +834,17 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
               <Button
                 variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bba9c]/5 hover:text-[#3bba9c] group transition-all"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
                 onClick={onNavigateToSelections}
                 disabled={!isCoreProfileComplete}
               >
-                <Heart className="h-4 w-4 mr-3 text-rose-400" />
+                <Heart className="h-4 w-4 mr-3 text-primary" />
                 <div className="font-bold text-[11px] text-gray-700">Selections</div>
               </Button>
               
               <Button
                 variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bba9c]/5 hover:text-[#3bba9c] group transition-all"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
                 onClick={onNavigateToParents}
                 disabled={!isCoreProfileComplete}
               >
@@ -860,10 +860,10 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
               <Button
                 variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bba9c]/5 hover:text-[#3bba9c] group transition-all"
+                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
                 onClick={() => setShowMarriedConfirmDialog(true)}
               >
-                <HeartHandshake className="h-4 w-4 mr-3 text-rose-400" />
+                <HeartHandshake className="h-4 w-4 mr-3 text-primary" />
                 <div className="font-bold text-[11px] text-gray-700">Mark as Married</div>
               </Button>
             </div>
@@ -968,7 +968,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6">Profile Progress</p>
                 <div className="flex items-baseline gap-2 mb-6">
                   <span className="text-7xl font-black text-gray-900 tracking-tighter">{completionPercentage}</span>
-                  <span className="text-xl font-black text-[#3bba9c]">%</span>
+                  <span className="text-xl font-black text-[#3bb9ac]">%</span>
                 </div>
                 <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden border border-gray-200/50">
                   <motion.div
@@ -980,7 +980,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               </div>
               <Button 
                 onClick={onNavigateToProfileSetup}
-                className="h-14 px-10 rounded-2xl bg-[#3bba9c] text-white font-black text-[10px] uppercase tracking-widest hover:bg-[#2fa085] transition-all shadow-xl shadow-emerald-500/20"
+                className="h-14 px-10 rounded-2xl bg-[#3bb9ac] text-white font-black text-[10px] uppercase tracking-widest hover:bg-[#2fa085] transition-all shadow-xl shadow-emerald-500/20"
               >
                 Complete Profile
               </Button>
@@ -1004,7 +1004,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               </p>
               <Button 
                 onClick={onNavigateToProfileSetup} 
-                className="h-12 px-8 rounded-xl bg-[#3bba9c] text-white font-black text-[10px] uppercase tracking-widest hover:bg-[#2fa085] transition-all shadow-xl shadow-emerald-500/20"
+                className="h-12 px-8 rounded-xl bg-[#3bb9ac] text-white font-black text-[10px] uppercase tracking-widest hover:bg-[#2fa085] transition-all shadow-xl shadow-emerald-500/20"
               >
                 Complete Profile
               </Button>
@@ -1117,7 +1117,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                   <Button 
                     variant="outline"
                     onClick={() => setShowMarriedConfirmDialog(true)}
-                    className="h-14 px-10 rounded-2xl border-[#3bba9c]/20 text-gray-600 font-black text-[10px] uppercase tracking-widest hover:bg-[#3bba9c] hover:text-white transition-all bg-white/80 shadow-sm"
+                    className="h-14 px-10 rounded-2xl border-[#3bb9ac]/20 text-gray-600 font-black text-[10px] uppercase tracking-widest hover:bg-[#3bb9ac] hover:text-white transition-all bg-white/80 shadow-sm"
                   >
                     Change Status
                   </Button>
@@ -1127,7 +1127,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
               <div className="sds-glass rounded-[3rem] p-12 flex flex-col md:flex-row items-center justify-between gap-10">
                 <div className="flex-1">
                   <h3 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-3 mb-2">
-                    <HeartHandshake className="h-6 w-6 text-[#FF1493]" />
+                    <HeartHandshake className="h-6 w-6 text-[#3bb9ac]" />
                     Found your partner?
                   </h3>
                   <p className="text-gray-500 font-medium leading-relaxed max-w-xl">
@@ -1136,7 +1136,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 </div>
                 <Button 
                   onClick={() => setShowMarriedConfirmDialog(true)}
-                  className="h-14 px-10 rounded-2xl bg-white border border-[#FF1493]/20 text-[#FF1493] font-black text-[10px] uppercase tracking-widest hover:bg-[#FF1493] hover:text-white transition-all shadow-xl shadow-pink-500/10"
+                  className="h-14 px-10 rounded-2xl bg-white border border-[#3bb9ac]/20 text-[#3bb9ac] font-black text-[10px] uppercase tracking-widest hover:bg-[#3bb9ac] hover:text-white transition-all shadow-xl shadow-primary"
                 >
                   Mark as Married
                 </Button>

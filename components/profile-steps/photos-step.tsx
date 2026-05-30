@@ -203,17 +203,17 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
       <div className="space-y-8">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
-              <span className="text-[#3bba9c] font-black text-xs">U1</span>
+            <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
+              <span className="text-[#3bb9ac] font-black text-xs">U1</span>
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Photos</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Photos</h4>
               <h3 className="text-xl font-light text-gray-900 tracking-tight">Personal Photos *</h3>
             </div>
           </div>
           <div className={`px-4 py-2 rounded-full border text-[10px] font-black uppercase tracking-widest transition-all duration-500 ${
             userPhotos.length < minPhotos 
-            ? "bg-rose-50 border-rose-100 text-rose-500" 
+            ? "bg-primary border-primary text-primary" 
             : userPhotos.length >= maxPhotos 
             ? "bg-amber-50 border-amber-100 text-amber-600" 
             : "bg-emerald-50 border-emerald-100 text-emerald-600"
@@ -223,14 +223,14 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
         </div>
 
         {errors.userPhotos && (
-          <div className="flex items-center gap-3 text-rose-600 text-xs font-bold uppercase tracking-widest bg-rose-50/50 border border-rose-100 p-4 rounded-2xl animate-in shake duration-500">
+          <div className="flex items-center gap-3 text-primary text-xs font-bold uppercase tracking-widest bg-primary border border-primary p-4 rounded-2xl animate-in shake duration-500">
             <AlertCircle className="h-4 w-4" />
             <span>{errors.userPhotos}</span>
           </div>
         )}
         
         {userPhotos.length < minPhotos && (
-          <div className="flex items-center gap-3 text-[#3bba9c] text-xs font-bold uppercase tracking-widest bg-[#3bba9c]/5 border border-[#3bba9c]/10 p-4 rounded-2xl">
+          <div className="flex items-center gap-3 text-[#3bb9ac] text-xs font-bold uppercase tracking-widest bg-[#3bb9ac]/5 border border-[#3bb9ac]/10 p-4 rounded-2xl">
             <AlertCircle className="h-4 w-4" />
             <span>Please upload at least {minPhotos} personal photos</span>
           </div>
@@ -250,7 +250,7 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
                 variant="destructive"
                 size="icon"
                 onClick={() => removeUserPhoto(index)}
-                className="absolute top-4 right-4 h-10 w-10 rounded-full shadow-2xl border-2 border-white bg-rose-500 hover:bg-rose-600 scale-0 group-hover:scale-100 transition-all duration-500"
+                className="absolute top-4 right-4 h-10 w-10 rounded-full shadow-2xl border-2 border-white bg-primary hover:bg-primary scale-0 group-hover:scale-100 transition-all duration-500"
               >
                 <X className="h-5 w-5" />
               </Button>
@@ -269,13 +269,13 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
               />
               <label
                 htmlFor="user-photo-upload"
-                className="w-full h-full flex flex-col items-center justify-center gap-4 cursor-pointer sds-glass border-2 border-dashed border-indigo-100 rounded-[2rem] transition-all duration-500 hover:border-[#3bba9c]/30 hover:bg-[#3bba9c]/[0.02]"
+                className="w-full h-full flex flex-col items-center justify-center gap-4 cursor-pointer sds-glass border-2 border-dashed border-indigo-100 rounded-[2rem] transition-all duration-500 hover:border-[#3bb9ac]/30 hover:bg-[#3bb9ac]/[0.02]"
               >
-                <div className="w-16 h-16 rounded-2xl bg-[#3bba9c]/5 flex items-center justify-center text-[#3bba9c]/40 group-hover:scale-110 group-hover:bg-[#3bba9c]/10 transition-all duration-500">
+                <div className="w-16 h-16 rounded-2xl bg-[#3bb9ac]/5 flex items-center justify-center text-[#3bb9ac]/40 group-hover:scale-110 group-hover:bg-[#3bb9ac]/10 transition-all duration-500">
                   <Upload className="h-8 w-8" />
                 </div>
                 <div className="text-center px-4">
-                  <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-[#3bba9c] mb-1">Add Photo</span>
+                  <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-[#3bb9ac] mb-1">Add Photo</span>
                   <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">PNG, JPG &lt; 5MB</p>
                 </div>
               </label>
@@ -287,18 +287,18 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
       {/* Family Photo Section */}
       <div className="space-y-8">
         <div className="flex items-center gap-4 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
-            <span className="text-[#3bba9c] font-black text-xs">F2</span>
+          <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
+            <span className="text-[#3bb9ac] font-black text-xs">F2</span>
           </div>
           <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Family</h4>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Family</h4>
             <h3 className="text-xl font-light text-gray-900 tracking-tight">Family Photo *</h3>
           </div>
           <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
         </div>
 
         {errors.familyPhoto && (
-          <div className="flex items-center gap-3 text-rose-600 text-xs font-bold uppercase tracking-widest bg-rose-50/50 border border-rose-100 p-4 rounded-2xl">
+          <div className="flex items-center gap-3 text-primary text-xs font-bold uppercase tracking-widest bg-primary border border-primary p-4 rounded-2xl">
             <AlertCircle className="h-4 w-4" />
             <span>{errors.familyPhoto}</span>
           </div>
@@ -317,7 +317,7 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
                 variant="destructive"
                 size="icon"
                 onClick={removeFamilyPhoto}
-                className="absolute top-6 right-6 h-12 w-12 rounded-full shadow-2xl border-4 border-white bg-rose-500 hover:bg-rose-600 opacity-0 group-hover:opacity-100 transition-all duration-500"
+                className="absolute top-6 right-6 h-12 w-12 rounded-full shadow-2xl border-4 border-white bg-primary hover:bg-primary opacity-0 group-hover:opacity-100 transition-all duration-500"
               >
                 <X className="h-6 w-6" />
               </Button>
@@ -333,13 +333,13 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
               />
               <label
                 htmlFor="family-photo-upload"
-                className="flex flex-col items-center justify-center gap-6 cursor-pointer sds-glass border-2 border-dashed border-indigo-100 rounded-[3rem] p-16 transition-all duration-700 hover:border-[#3bba9c]/30 group"
+                className="flex flex-col items-center justify-center gap-6 cursor-pointer sds-glass border-2 border-dashed border-indigo-100 rounded-[3rem] p-16 transition-all duration-700 hover:border-[#3bb9ac]/30 group"
               >
-                <div className="w-20 h-20 rounded-3xl bg-[#3bba9c]/5 flex items-center justify-center text-[#3bba9c]/30 group-hover:scale-110 group-hover:bg-[#3bba9c]/10 group-hover:rotate-6 transition-all duration-700">
+                <div className="w-20 h-20 rounded-3xl bg-[#3bb9ac]/5 flex items-center justify-center text-[#3bb9ac]/30 group-hover:scale-110 group-hover:bg-[#3bb9ac]/10 group-hover:rotate-6 transition-all duration-700">
                   <Upload className="h-10 w-10" />
                 </div>
                 <div className="text-center">
-                  <span className="block text-[12px] font-black uppercase tracking-[0.4em] text-[#3bba9c] mb-2">Upload Family Photo</span>
+                  <span className="block text-[12px] font-black uppercase tracking-[0.4em] text-[#3bb9ac] mb-2">Upload Family Photo</span>
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest px-4 py-2 rounded-full bg-white/40 border border-indigo-50/50 w-fit mx-auto">
                     Required for Profile
                   </p>
@@ -353,11 +353,11 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
       {/* ID Proof Section */}
       <div className="space-y-10">
         <div className="flex items-center gap-4 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-[#3bba9c]/5 flex items-center justify-center border border-[#3bba9c]/10">
-            <span className="text-[#3bba9c] font-black text-xs">V3</span>
+          <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
+            <span className="text-[#3bb9ac] font-black text-xs">V3</span>
           </div>
           <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/30 mb-0.5">Verification</h4>
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Verification</h4>
             <h3 className="text-xl font-light text-gray-900 tracking-tight">ID Proof (Aadhar) *</h3>
           </div>
           <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
@@ -375,7 +375,7 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
                   variant="destructive"
                   size="icon"
                   onClick={removeAadharFront}
-                  className="absolute top-4 right-4 h-10 w-10 rounded-full shadow-2xl border-2 border-white bg-rose-500 hover:bg-rose-600"
+                  className="absolute top-4 right-4 h-10 w-10 rounded-full shadow-2xl border-2 border-white bg-primary hover:bg-primary"
                 >
                   <X className="h-5 w-5" />
                 </Button>
@@ -385,10 +385,10 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
                 <input type="file" accept="image/*" onChange={handleAadharFrontUpload} className="hidden" id="aadhar-front-upload" />
                 <label
                   htmlFor="aadhar-front-upload"
-                  className="flex flex-col items-center justify-center h-48 cursor-pointer sds-glass border-2 border-dashed border-indigo-100 rounded-[2rem] transition-all duration-500 hover:border-[#3bba9c]/40"
+                  className="flex flex-col items-center justify-center h-48 cursor-pointer sds-glass border-2 border-dashed border-indigo-100 rounded-[2rem] transition-all duration-500 hover:border-[#3bb9ac]/40"
                 >
-                  <Upload className="h-8 w-8 text-[#3bba9c]/30 mb-4 group-hover:scale-110 transition-transform" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#3bba9c]/60">Upload Front</span>
+                  <Upload className="h-8 w-8 text-[#3bb9ac]/30 mb-4 group-hover:scale-110 transition-transform" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#3bb9ac]/60">Upload Front</span>
                 </label>
               </div>
             )}
@@ -405,7 +405,7 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
                   variant="destructive"
                   size="icon"
                   onClick={removeAadharBack}
-                  className="absolute top-4 right-4 h-10 w-10 rounded-full shadow-2xl border-2 border-white bg-rose-500 hover:bg-rose-600"
+                  className="absolute top-4 right-4 h-10 w-10 rounded-full shadow-2xl border-2 border-white bg-primary hover:bg-primary"
                 >
                   <X className="h-5 w-5" />
                 </Button>
@@ -415,10 +415,10 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
                 <input type="file" accept="image/*" onChange={handleAadharBackUpload} className="hidden" id="aadhar-back-upload" />
                 <label
                   htmlFor="aadhar-back-upload"
-                  className="flex flex-col items-center justify-center h-48 cursor-pointer sds-glass border-2 border-dashed border-indigo-100 rounded-[2rem] transition-all duration-500 hover:border-[#3bba9c]/40"
+                  className="flex flex-col items-center justify-center h-48 cursor-pointer sds-glass border-2 border-dashed border-indigo-100 rounded-[2rem] transition-all duration-500 hover:border-[#3bb9ac]/40"
                 >
-                  <Upload className="h-8 w-8 text-[#3bba9c]/30 mb-4 group-hover:scale-110 transition-transform" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#3bba9c]/60">Upload Back</span>
+                  <Upload className="h-8 w-8 text-[#3bb9ac]/30 mb-4 group-hover:scale-110 transition-transform" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#3bb9ac]/60">Upload Back</span>
                 </label>
               </div>
             )}
@@ -429,26 +429,26 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
       {/* Profile Verification Section */}
       {userId && (
         <div className="pt-8">
-          <div className="sds-glass rounded-[3rem] p-10 border-2 border-indigo-100/50 bg-gradient-to-br from-[#3bba9c]/[0.02] to-transparent relative overflow-hidden group">
+          <div className="sds-glass rounded-[3rem] p-10 border-2 border-indigo-100/50 bg-gradient-to-br from-[#3bb9ac]/[0.02] to-transparent relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:opacity-10 transition-all duration-1000 group-hover:scale-150">
-              <ShieldCheck className="h-48 w-48 text-[#3bba9c]" />
+              <ShieldCheck className="h-48 w-48 text-[#3bb9ac]" />
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-10 relative z-10">
-              <div className="h-24 w-24 rounded-[2rem] bg-[#3bba9c]/5 flex items-center justify-center flex-shrink-0 shadow-inner border border-[#3bba9c]/10 group-hover:rotate-12 transition-transform duration-700">
-                <ShieldCheck className="h-12 w-12 text-[#3bba9c] fill-[#3bba9c]/10" />
+              <div className="h-24 w-24 rounded-[2rem] bg-[#3bb9ac]/5 flex items-center justify-center flex-shrink-0 shadow-inner border border-[#3bb9ac]/10 group-hover:rotate-12 transition-transform duration-700">
+                <ShieldCheck className="h-12 w-12 text-[#3bb9ac] fill-[#3bb9ac]/10" />
               </div>
               <div className="flex-1 text-center md:text-left">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bba9c]/40 mb-2">Verify Profile</h4>
+                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/40 mb-2">Verify Profile</h4>
                 <h3 className="text-2xl font-light text-gray-900 tracking-tight mb-3">Increase your visibility</h3>
                 <p className="text-gray-500 text-sm leading-relaxed max-w-xl">
-                  Profiles with verified profiles achieve <span className="text-[#3bba9c] font-black">much faster matches</span>. Complete identity verification to verify your account.
+                  Profiles with verified profiles achieve <span className="text-[#3bb9ac] font-black">much faster matches</span>. Complete identity verification to verify your account.
                 </p>
               </div>
               <Button
                 type="button"
                 onClick={() => setShowVerificationDialog(true)}
-                className="h-16 px-12 rounded-[1.25rem] bg-[#3bba9c] hover:bg-indigo-900 text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(59,186,156,0.4)] transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+                className="h-16 px-12 rounded-[1.25rem] bg-[#3bb9ac] hover:bg-indigo-900 text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(59,185,172,0.4)] transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
               >
                 Start Verification
               </Button>
