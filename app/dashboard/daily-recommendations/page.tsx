@@ -1,18 +1,21 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, use, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { fetchDailyRecommendations } from "@/lib/utils/match-utils"
 import { ProfileDetailView } from "@/components/profile-detail-view"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, MapPin, Briefcase, GraduationCap, ChevronRight, Star, Heart, ShieldCheck, Gem, Crown, Sparkles } from "lucide-react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 
-export default function DailyRecommendationsPage() {
-    const searchParams = useSearchParams()
-    const urlId = searchParams.get("id")
+export default function DailyRecommendationsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ id?: string }>
+}) {
+    const { id: urlId } = use(searchParams)
     
     const [userId, setUserId] = useState<string | null>(null)
     const [recommendations, setRecommendations] = useState<any[]>([])

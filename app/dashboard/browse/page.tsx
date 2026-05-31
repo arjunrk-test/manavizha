@@ -2,13 +2,16 @@
 
 import { BrowseProfiles } from "@/components/browse-profiles"
 import { supabase } from "@/lib/supabase"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { use, useEffect, useState } from "react"
 
-export default function BrowsePage() {
+export default function BrowsePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>
+}) {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const initialCategory = searchParams.get("category") || undefined
+  const { category: initialCategory } = use(searchParams)
   const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -19,7 +22,13 @@ export default function BrowsePage() {
     fetchUser()
   }, [])
 
-  if (!userId) return null
+  if (!userId) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#f0f0f0] border-t-[#e87898]" />
+      </div>
+    )
+  }
 
   return (
     <BrowseProfiles 

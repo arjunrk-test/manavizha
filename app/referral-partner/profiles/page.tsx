@@ -1,10 +1,9 @@
 "use client"
 
 import { supabase } from "@/lib/supabase"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState, useMemo } from "react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState, useMemo, use, Suspense } from "react"
 import { ArrowLeft, Users, User, Search, X, HeartHandshake, AlertTriangle } from "lucide-react"
-import { Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -62,10 +61,8 @@ function FilterSelect({ value, onChange, options, placeholder }: { value: string
     )
 }
 
-function ReferralPartnerProfilesListContent() {
+function ReferralPartnerProfilesListContent({ genderFilter }: { genderFilter: string | null }) {
     const router = useRouter()
-    const searchParams = useSearchParams()
-    const genderFilter = searchParams.get("gender")
 
     const [isLoading, setIsLoading] = useState(true)
     const [allProfiles, setAllProfiles] = useState<any[]>([])
@@ -474,14 +471,20 @@ function ReferralPartnerProfilesListContent() {
     )
 }
 
-export default function ReferralPartnerProfilesListPage() {
+export default function ReferralPartnerProfilesListPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ gender?: string }>
+}) {
+    const { gender: genderFilter = null } = use(searchParams)
+
     return (
         <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bb9ac]" />
             </div>
         }>
-            <ReferralPartnerProfilesListContent />
+            <ReferralPartnerProfilesListContent genderFilter={genderFilter} />
         </Suspense>
     )
 }

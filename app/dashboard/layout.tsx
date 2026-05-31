@@ -5,10 +5,10 @@ import { supabase } from "@/lib/supabase"
 import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { getUserDashboard } from "@/lib/auth"
-import { LogOut, ArrowLeft, Edit, Settings, MessageSquare, User, Bell, HeartHandshake, Eye, Sparkles } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { LogOut, ArrowLeft, Edit, Settings, MessageSquare, User, Bell, Heart, Eye, Sparkles, ArrowRight } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Badge } from "@/components/ui/badge"
+import { DashboardScrollProgress } from "@/components/dashboard/dashboard-scroll-progress"
+import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { formatDistanceToNow } from "date-fns"
 
 export default function DashboardLayout({
@@ -24,6 +24,7 @@ export default function DashboardLayout({
   const [whoViewedMe, setWhoViewedMe] = useState<any[]>([])
   const [whoExpressedInterest, setWhoExpressedInterest] = useState<any[]>([])
   const [isNotificationsLoading, setIsNotificationsLoading] = useState(false)
+  const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
     const checkUser = async () => {
@@ -232,6 +233,7 @@ export default function DashboardLayout({
     if (pathname.includes("/likes")) return "My Likes"
     if (pathname.includes("/horoscope")) return "Horoscope Generator"
     if (pathname.includes("/messages")) return "Messages"
+    if (pathname.includes("/settings")) return "Profile Settings"
     return ""
   }
 
@@ -239,110 +241,74 @@ export default function DashboardLayout({
   const viewName = getViewName()
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#3bb9ac] mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400 font-medium">Loading your dashboard...</p>
-        </div>
-      </div>
-    )
+    return <DashboardLoadingScreen />
   }
 
+  const notificationCount = whoViewedMe.length + whoExpressedInterest.length
+
   return (
-    <div className="min-h-screen flex flex-col relative">
-      {/* Animated gradient background */}
-      <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] via-[#3bb9ac] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
-      <div className="fixed inset-0 bg-white/40 dark:bg-[#181818]/40" />
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
-      <div className="fixed inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px] opacity-30" />
-
-      {/* Animated Patterns */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {[
-          "/patterns/pattern1.png",
-          "/patterns/pattern2.png",
-          "/patterns/pattern3.png",
-          "/patterns/pattern4.png",
-          "/patterns/pattern5.png",
-          "/patterns/pattern6.png",
-          "/patterns/pattern7.png",
-        ].map((imagePath, i) => {
-          const baseX = 5 + (i * 13) % 82
-          const baseY = 8 + (i * 15) % 75
-          const size = 280 + (i % 3) * 80
-          return (
-            <motion.div
-              key={`bg-image-${i}`}
-              className="absolute"
-              style={{ left: `${baseX}%`, top: `${baseY}%`, width: `${size}px`, height: `${size}px` }}
-              initial={{ opacity: 0.15 }}
-              animate={{ opacity: [0.1, 0.25, 0.15, 0.25, 0.1], rotate: [0, 360], x: [-40, 40, -40] }}
-              transition={{
-                opacity: { duration: 8 + (i % 4), repeat: Infinity, ease: "easeInOut" },
-                rotate: { duration: 60 + i * 8, repeat: Infinity, ease: "linear" },
-                x: { duration: 12 + (i % 6), repeat: Infinity, ease: "easeInOut", delay: i * 0.7 }
-              }}
-            >
-              <img src={imagePath} alt="" className="w-full h-full object-contain brightness-0 invert opacity-20" />
-            </motion.div>
-          )
-        })}
-      </div>
-
+    <div className="h-dvh flex flex-col overflow-hidden bg-[#faf8f4]">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
-        <div className="w-full px-6 md:px-8 py-1.5 flex items-center justify-between">
-          <div className="flex flex-col cursor-pointer hover:opacity-80 transition-opacity" onClick={() => router.push("/dashboard")}>
-            <h1 className="text-xl md:text-2xl font-black tracking-tighter bg-gradient-to-r from-[#3bb9ac] via-[#3bb9ac] to-[#3bb9ac] bg-clip-text text-transparent">
+      <header className="relative z-50 shrink-0 bg-white border-b border-[#f0f0f0]">
+        <div className="w-full px-5 lg:px-8 py-3 flex items-center justify-between gap-4">
+          <div
+            className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity min-w-0"
+            onClick={() => router.push("/dashboard")}
+          >
+            <img src="/logo.png" alt="" className="h-9 w-9 object-contain" />
+            <h1 className="text-[22px] font-semibold text-[#e87898] tracking-tight shrink-0">
               Manavizha
             </h1>
-            {!isLanding && (
-              <span className="text-[9px] font-bold uppercase tracking-widest text-[#3bb9ac]/60 flex items-center gap-1">
-                <span className="w-1 h-1 rounded-full bg-[#3bb9ac]"></span>
-                {viewName}
-              </span>
+            {!isLanding && viewName && (
+              <>
+                <span className="hidden sm:block w-px h-5 bg-gray-200 shrink-0" />
+                <span className="hidden sm:block text-sm text-gray-500 truncate">{viewName}</span>
+              </>
             )}
           </div>
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {!isLanding && (
-              <Button onClick={() => router.push("/dashboard")} variant="outline" size="sm" className="h-8 gap-2">
-                <ArrowLeft className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Back</span>
+              <Button
+                onClick={() => router.push("/dashboard")}
+                variant="ghost"
+                size="sm"
+                className="h-9 gap-1.5 text-gray-600 hover:text-[#1F4068] hover:bg-gray-50"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="hidden sm:inline text-sm">Back</span>
               </Button>
             )}
-            <Button 
-                onClick={() => user?.id && router.push(`/dashboard/profile/${user.id}`)} 
-                disabled={!user?.id}
-                variant="outline" 
-                size="sm" 
-                className="h-8 gap-2 border-indigo-500/20 hover:bg-indigo-50 text-[#3bb9ac] font-bold text-[10px] uppercase tracking-widest px-4 shadow-sm disabled:opacity-50"
+            <Button
+              onClick={() => user?.id && router.push(`/dashboard/profile/${user.id}`)}
+              disabled={!user?.id}
+              variant="outline"
+              size="sm"
+              className="h-9 gap-2 border-[#e5e7eb] text-[#374151] hover:bg-[#faf8f4] text-[13px] font-medium disabled:opacity-50 rounded-[10px] bg-white"
             >
-              <User className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{user?.id ? "Preview Profile" : "Loading..."}</span>
-              <span className="sm:hidden">{user?.id ? "Preview" : "..."}</span>
+              <User className="h-4 w-4" />
+              Preview Profile
             </Button>
-            <Button 
-                onClick={() => router.push("/dashboard/setup")} 
-                disabled={!user?.id}
-                variant="outline" 
-                size="sm" 
-                className="h-8 gap-2 border-indigo-500/20 hover:bg-indigo-50 text-[#3bb9ac] font-bold text-[10px] uppercase tracking-widest px-4 shadow-sm disabled:opacity-50"
+            <Button
+              onClick={() => router.push("/dashboard/setup")}
+              disabled={!user?.id}
+              variant="outline"
+              size="sm"
+              className="h-9 gap-2 border-[#e5e7eb] text-[#374151] hover:bg-[#faf8f4] text-[13px] font-medium disabled:opacity-50 rounded-[10px] bg-white"
             >
-              <Edit className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Update Profile</span>
-              <span className="sm:hidden text-[10px]">Update</span>
+              <Edit className="h-4 w-4" />
+              Edit Profile
             </Button>
-            <Button 
-                onClick={() => router.push("/dashboard/messages")} 
-                variant="outline" 
-                size="icon" 
-                className="h-8 w-8 border-indigo-500/20 hover:bg-indigo-50 text-[#3bb9ac] group relative rounded-full"
-                title="Messages"
+            <Button
+              onClick={() => router.push("/dashboard/messages")}
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 text-gray-600 hover:text-[#1F4068] hover:bg-gray-50 relative rounded-xl"
+              title="Messages"
             >
               <MessageSquare className="h-4 w-4" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#3bb9ac] text-[8px] font-bold text-white shadow-lg">
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 px-0.5 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
@@ -350,124 +316,224 @@ export default function DashboardLayout({
 
             <Popover>
               <PopoverTrigger asChild>
-                <Button 
-                    variant="outline" 
-                    size="icon" 
-                    className="h-8 w-8 border-indigo-500/20 hover:bg-indigo-50 text-[#3bb9ac] group relative rounded-full"
-                    title="Notifications"
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-gray-600 hover:text-[#1F4068] hover:bg-gray-50 relative rounded-xl"
+                  title="Notifications"
                 >
                   <Bell className="h-4 w-4" />
-                  {(whoViewedMe.length + whoExpressedInterest.length) > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-white shadow-lg">
-                      {whoViewedMe.length + whoExpressedInterest.length}
+                  {notificationCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 px-0.5 items-center justify-center rounded-full bg-[#e87898] text-[10px] font-semibold text-white">
+                      {notificationCount}
                     </span>
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent align="end" className="w-[320px] rounded-[2rem] p-4 bg-white/95 backdrop-blur-3xl shadow-2xl border-indigo-100/50 z-[60]">
-                  <div className="space-y-4">
-                    <div className="px-2 py-1">
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#3bb9ac]">Notifications</h4>
-                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">Activity from last 30 days</p>
-                    </div>
+              <PopoverContent
+                align="end"
+                sideOffset={8}
+                className="w-[340px] p-0 overflow-hidden rounded-[20px] border border-[#f0ebe3] bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] shadow-[0_12px_40px_rgba(31,64,104,0.14)] z-[60]"
+              >
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -top-8 -right-8 h-24 w-24 rounded-full bg-[#fce8ef] blur-2xl opacity-60"
+                />
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -bottom-6 -left-6 h-20 w-20 rounded-full bg-[#fdf6e3] blur-2xl opacity-50"
+                />
 
-                    <div className="space-y-6 max-h-[400px] overflow-y-auto px-1 pr-2 custom-scrollbar">
-                      {/* Section 1: Interests */}
+                <div className="relative border-b border-[#f0ebe3]/80 px-4 py-3.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#fce8ef] shadow-sm">
+                        <Bell className="h-4 w-4 text-[#e87898]" />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-[13px] font-semibold text-[#1F4068]">Notifications</h4>
+                        <p className="text-[11px] text-[#9ca3af]">Activity from the last 30 days</p>
+                      </div>
+                    </div>
+                    {notificationCount > 0 && (
+                      <span className="shrink-0 rounded-full bg-[#e87898] px-2 py-0.5 text-[10px] font-semibold text-white">
+                        {notificationCount} new
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="relative max-h-[380px] overflow-y-auto px-3 py-3 custom-scrollbar">
+                  {isNotificationsLoading ? (
+                    <div className="space-y-2 py-2">
+                      {[0, 1, 2].map((item) => (
+                        <div key={item} className="flex items-center gap-3 rounded-xl border border-[#f0ebe3]/80 bg-white/70 p-2.5 animate-pulse">
+                          <div className="h-10 w-10 shrink-0 rounded-xl bg-[#faf8f4]" />
+                          <div className="flex-1 space-y-2">
+                            <div className="h-3 w-3/4 rounded bg-[#faf8f4]" />
+                            <div className="h-2.5 w-1/2 rounded bg-[#faf8f4]" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <>
                       {whoExpressedInterest.length > 0 && (
-                        <div className="space-y-2">
-                           <div className="px-2 text-[9px] font-black text-primary uppercase tracking-widest">Interest Received</div>
-                           {whoExpressedInterest.slice(0, 5).map(p => (
-                             <div key={p.user_id} className="group p-3 rounded-2xl hover:bg-indigo-50/50 transition-all flex items-center gap-3 cursor-pointer" onClick={() => handleNotificationClick('interest', p.user_id)}>
-                                <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100">
-                                  <img src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}`} className="w-full h-full object-cover" />
+                        <div className="mb-3 space-y-2">
+                          <div className="flex items-center gap-1.5 px-1">
+                            <Sparkles className="h-3.5 w-3.5 text-[#e87898]" />
+                            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#e87898]">
+                              Interest received
+                            </span>
+                          </div>
+                          {whoExpressedInterest.slice(0, 5).map((p) => (
+                            <div
+                              key={p.user_id}
+                              className="group flex cursor-pointer items-center gap-3 rounded-xl border border-[#f0ebe3]/80 bg-white/75 p-2.5 transition-all hover:border-[#e87898]/25 hover:bg-white hover:shadow-[0_2px_10px_rgba(232,120,152,0.08)]"
+                              onClick={() => handleNotificationClick("interest", p.user_id)}
+                            >
+                              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#fce8ef] ring-2 ring-white">
+                                <img
+                                  src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=fce8ef&color=e87898`}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="truncate text-[13px] font-medium text-[#374151]">
+                                    <span className="text-[#1F4068]">{p.name || "Member"}</span> expressed interest
+                                  </p>
+                                  <span className="shrink-0 whitespace-nowrap text-[10px] text-[#9ca3af]">
+                                    {formatDistanceToNow(new Date(p.interaction_at), { addSuffix: true })}
+                                  </span>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="text-[11px] font-bold text-gray-900 truncate">{p.name || 'Member'} expressed interest</div>
-                                    <div className="text-[8px] text-indigo-400 font-bold whitespace-nowrap">{formatDistanceToNow(new Date(p.interaction_at), { addSuffix: true })}</div>
-                                  </div>
-                                  <div className="text-[9px] text-gray-400 font-medium">{p.age} yrs • {p.profession?.split(' at ')[0]}</div>
-                                </div>
-                             </div>
-                           ))}
+                                <p className="mt-0.5 truncate text-[11px] text-[#6b7280]">
+                                  {p.age} yrs · {p.profession?.split(" at ")[0]}
+                                </p>
+                              </div>
+                              <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[#d1d5db] transition-colors group-hover:text-[#e87898]" />
+                            </div>
+                          ))}
                         </div>
                       )}
 
-                      {/* Section 2: Visitors */}
                       {whoViewedMe.length > 0 && (
                         <div className="space-y-2">
-                           <div className="px-2 text-[9px] font-black text-indigo-500 uppercase tracking-widest">Profile Visitors</div>
-                           {whoViewedMe.slice(0, 5).map(p => (
-                             <div key={p.user_id} className="group p-3 rounded-2xl hover:bg-indigo-50/50 transition-all flex items-center gap-3 cursor-pointer" onClick={() => handleNotificationClick('view', p.user_id)}>
-                                <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100">
-                                  <img src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}`} className="w-full h-full object-cover" />
+                          <div className="flex items-center gap-1.5 px-1">
+                            <Eye className="h-3.5 w-3.5 text-[#3bb9ac]" />
+                            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#3bb9ac]">
+                              Profile visitors
+                            </span>
+                          </div>
+                          {whoViewedMe.slice(0, 5).map((p) => (
+                            <div
+                              key={p.user_id}
+                              className="group flex cursor-pointer items-center gap-3 rounded-xl border border-[#f0ebe3]/80 bg-white/75 p-2.5 transition-all hover:border-[#3bb9ac]/25 hover:bg-white hover:shadow-[0_2px_10px_rgba(59,185,172,0.08)]"
+                              onClick={() => handleNotificationClick("view", p.user_id)}
+                            >
+                              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#e6f7f5] ring-2 ring-white">
+                                <img
+                                  src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=e6f7f5&color=3bb9ac`}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="truncate text-[13px] font-medium text-[#374151]">
+                                    <span className="text-[#1F4068]">{p.name || "Member"}</span> viewed you
+                                  </p>
+                                  <span className="shrink-0 whitespace-nowrap text-[10px] text-[#9ca3af]">
+                                    {formatDistanceToNow(new Date(p.interaction_at), { addSuffix: true })}
+                                  </span>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="text-[11px] font-bold text-gray-900 truncate">{p.name || 'Member'} viewed you</div>
-                                    <div className="text-[8px] text-indigo-400 font-bold whitespace-nowrap">{formatDistanceToNow(new Date(p.interaction_at), { addSuffix: true })}</div>
-                                  </div>
-                                  <div className="text-[9px] text-gray-400 font-medium">{p.age} yrs • {p.address?.split(',')[0]}</div>
-                                </div>
-                             </div>
-                           ))}
+                                <p className="mt-0.5 truncate text-[11px] text-[#6b7280]">
+                                  {p.age} yrs · {p.address?.split(",")[0]}
+                                </p>
+                              </div>
+                              <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[#d1d5db] transition-colors group-hover:text-[#3bb9ac]" />
+                            </div>
+                          ))}
                         </div>
                       )}
 
-                      {whoViewedMe.length === 0 && whoExpressedInterest.length === 0 && (
-                        <div className="py-8 text-center">
-                          <Bell className="h-8 w-8 text-indigo-100 mx-auto mb-2" />
-                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No new activity</p>
+                      {notificationCount === 0 && (
+                        <div className="rounded-[16px] border border-dashed border-[#eadfce] bg-[#faf8f4]/80 px-4 py-8 text-center">
+                          <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#fce8ef]">
+                            <Heart className="h-5 w-5 text-[#e87898]" />
+                          </div>
+                          <p className="text-[13px] font-medium text-[#374151]">No new activity yet</p>
+                          <p className="mt-1 text-[11px] text-[#9ca3af]">When someone views or interests you, it will appear here.</p>
                         </div>
                       )}
-                    </div>
+                    </>
+                  )}
+                </div>
 
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="w-full rounded-xl text-[10px] font-black uppercase tracking-widest text-[#3bb9ac] hover:bg-indigo-50"
-                      onClick={() => router.push("/dashboard/browse")}
-                    >
-                      See All Activity
-                    </Button>
-                  </div>
+                <div className="relative border-t border-[#f0ebe3]/80 bg-white/50 px-3 py-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 w-full rounded-[10px] bg-[#fce8ef]/60 text-[13px] font-medium text-[#e87898] hover:bg-[#fce8ef] hover:text-[#d66686]"
+                    onClick={() => router.push("/dashboard/browse")}
+                  >
+                    See all activity
+                    <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </PopoverContent>
             </Popover>
-            <Button 
-                onClick={() => router.push("/dashboard/settings")} 
-                size="icon" 
-                variant="ghost"
-                className="h-8 w-8 hover:bg-indigo-50 rounded-full"
-                title="Profile Settings"
+
+            <Button
+              onClick={() => router.push("/dashboard/settings")}
+              size="icon"
+              variant="ghost"
+              className="h-9 w-9 text-gray-600 hover:text-[#1F4068] hover:bg-gray-50 rounded-xl"
+              title="Settings"
             >
-              <Settings className="h-4 w-4 text-[#3bb9ac]/60" />
+              <Settings className="h-4 w-4" />
             </Button>
-            <Button onClick={handleLogout} size="sm" className="h-8 bg-[#3bb9ac] hover:bg-[#1F4068] text-white border-0 shadow-sm transition-all active:scale-95 font-bold text-[10px] uppercase tracking-widest px-4 rounded-full">
-              <LogOut className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Logout</span>
-              <span className="sm:hidden text-[10px]">Logout</span>
+            <Button
+              onClick={handleLogout}
+              size="sm"
+              className="h-9 bg-[#e87898] hover:bg-[#d66686] text-white text-[13px] font-medium px-5 rounded-[10px] shadow-none"
+            >
+              <LogOut className="h-4 w-4 mr-1.5" />
+              Logout
             </Button>
           </div>
         </div>
-      </div>
+        {scrollContainer && <DashboardScrollProgress scrollContainer={scrollContainer} />}
+        {!scrollContainer && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute bottom-0 left-0 right-0 z-[60] h-px bg-[#eadfce]"
+          />
+        )}
+      </header>
 
-      <main className="relative z-10 flex-1 flex flex-col">
+      <main
+        ref={setScrollContainer}
+        className="flex-1 min-h-0 overflow-y-auto"
+      >
         {user && children}
       </main>
 
-      {/* Footer */}
-      <footer className="mt-auto sticky bottom-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-t border-gray-200/60 dark:border-gray-700/60 py-1">
-        <div className="w-full px-6 md:px-8 py-2">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-600 dark:text-gray-400">
-            <span>© 2024 Manavizha. All rights reserved.</span>
-            <div className="flex items-center gap-6">
-              <a href="/privacy-policy" className="hover:text-[#3bb9ac] transition-colors">Privacy Policy</a>
-              <a href="/terms-of-service" className="hover:text-[#3bb9ac] transition-colors">Terms of Service</a>
-              <a href="/contact" className="hover:text-[#3bb9ac] transition-colors">Contact Us</a>
+      {!isLanding && (
+      <footer className="mt-auto border-t border-gray-100 bg-white">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-500">
+            <span>© 2026 Manavizha. All rights reserved.</span>
+            <div className="flex items-center gap-5">
+              <a href="/privacy-policy" className="hover:text-[#3bb9ac] transition-colors">Privacy</a>
+              <a href="/terms-of-service" className="hover:text-[#3bb9ac] transition-colors">Terms</a>
+              <a href="/contact" className="hover:text-[#3bb9ac] transition-colors">Contact</a>
             </div>
           </div>
         </div>
       </footer>
+      )}
     </div>
   )
 }

@@ -1,8 +1,8 @@
 "use client"
 
 import { supabase } from "@/lib/supabase"
-import { useRouter, useParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { useEffect, use, useState } from "react"
 import { ArrowLeft, User, Pencil, Check, X, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -85,10 +85,13 @@ function D({ label, id, value, options, editing, fieldKey, onChange }: {
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
-export default function ReferralPartnerProfileDetailPage() {
+export default function ReferralPartnerProfileDetailPage({
+    params,
+}: {
+    params: Promise<{ userId: string }>
+}) {
     const router = useRouter()
-    const params = useParams()
-    const profileUserId = params.userId as string
+    const { userId: profileUserId } = use(params)
 
     const [isLoading, setIsLoading] = useState(true)
     const [canEdit, setCanEdit] = useState(false)

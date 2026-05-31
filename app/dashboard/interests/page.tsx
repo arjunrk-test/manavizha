@@ -2,15 +2,15 @@
 
 import { LikesView } from "@/components/likes-view"
 import { supabase } from "@/lib/supabase"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { Suspense, use, useEffect, useState } from "react"
 
-import { Suspense } from "react"
-
-function LikesPageContent() {
+function LikesPageContent({
+  initialTab,
+}: {
+  initialTab: "mutual" | "liked" | "likedme"
+}) {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const initialTab = searchParams.get("tab") as "mutual" | "liked" | "likedme" | null
   const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -27,15 +27,22 @@ function LikesPageContent() {
     <LikesView 
       userId={userId} 
       onBack={() => router.push("/dashboard")}
-      initialTab={initialTab || "mutual"}
+      initialTab={initialTab}
     />
   )
 }
 
-export default function LikesPage() {
+export default function LikesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>
+}) {
+  const { tab } = use(searchParams)
+  const initialTab = (tab as "mutual" | "liked" | "likedme" | undefined) ?? "mutual"
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <LikesPageContent />
+      <LikesPageContent initialTab={initialTab} />
     </Suspense>
   )
 }

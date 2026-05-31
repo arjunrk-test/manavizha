@@ -1,172 +1,126 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Card, CardContent } from "@/components/ui/card"
-import { Star, Quote, Sparkles } from "lucide-react"
 
-const testimonials = [
+const featuredStory = {
+  name: "Arjun & Priya",
+  meta: "Chennai · Married 2024",
+  label: "Verified Manavizha match",
+  text: "We were skeptical about online matchmaking. The verification process and horoscope matching gave both our families the confidence to take the next step.",
+  image:
+    "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80",
+}
+
+const supportingStories = [
   {
-    name: "Priya & Raj",
-    location: "Mumbai, India",
-    text: "Manavizha helped us find each other. The platform is easy to use and the support team is amazing. We couldn't be happier!",
-    rating: 5,
-    image: "👫",
+    name: "Rahul & Meera",
+    meta: "Coimbatore · Married 2023",
+    label: "Verified Manavizha match",
+    text: "My parents could review verified profiles and horoscope compatibility before we met. That made all the difference for our families.",
+    image:
+      "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
   },
   {
-    name: "Anjali & Vikram",
-    location: "Delhi, India",
-    text: "The verification process gave us confidence, and the matching algorithm really understood our preferences. Highly recommended!",
-    rating: 5,
-    image: "💑",
-  },
-  {
-    name: "Meera & Arjun",
-    location: "Bangalore, India",
-    text: "Privacy was our main concern, and Manavizha exceeded our expectations. We found our perfect match in just 3 months!",
-    rating: 5,
-    image: "💕",
+    name: "Vikram & Aditi",
+    meta: "Hyderabad · Married 2022",
+    label: "Verified Manavizha match",
+    text: "We cared deeply about privacy. Manavizha let us connect on our terms — no pressure, no oversharing — and we found each other in under four months.",
+    image:
+      "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
   },
 ]
 
 export function TestimonialsSection() {
   return (
-    <section id="testimonials" className="py-16 sm:py-24 lg:py-32 relative overflow-hidden">
-      {/* Animated gradient background - lighter version */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#3bb9ac]/50 via-[#3bb9ac]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
-      
-      {/* White overlay to lighten */}
-      <div className="absolute inset-0 bg-white/50 dark:bg-[#181818]/50" />
-      
-      {/* Overlay pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
-      
-      {/* Modern decorative elements */}
-      <div className="absolute top-20 left-5 w-24 h-24 sm:w-32 sm:h-32 border border-[#FFA500]/10 rounded-full blur-xl hidden md:block" />
-      <div className="absolute bottom-20 right-5 w-20 h-20 sm:w-28 sm:h-28 border border-[#3bb9ac]/10 rotate-45 blur-lg hidden lg:block" />
-
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <section id="testimonials" className="py-14 sm:py-16 lg:py-20 bg-[#faf8f4] dark:bg-[#0a0a0a]">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12 sm:mb-16 lg:mb-20"
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-3xl mx-auto mb-16 sm:mb-20 lg:mb-24"
         >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm text-[#1F4068] dark:text-[#3bb9ac] font-medium mb-4 sm:mb-6 shadow-lg text-sm sm:text-base"
-          >
-            <Sparkles className="h-4 w-4" />
-            <span>Success Stories</span>
-          </motion.div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient px-4">
-            Love Stories
+          <p className="text-sm font-medium text-[#3bb9ac] mb-3">
+            Success Stories
+          </p>
+          <h2 className="font-display text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-[#1F4068] dark:text-white leading-[1.15] tracking-tight mb-4">
+            Stories from our community
           </h2>
-          <p className="text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto px-4">
-            Hear from couples who found their perfect match through Manavizha
+          <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 leading-relaxed">
+            Real matches. Real families.
           </p>
         </motion.div>
 
-        {/* Auto-scrolling carousel container */}
-        <div className="relative overflow-hidden">
-          <div className="flex gap-6 animate-scroll">
-            {/* First set of testimonials */}
-            {testimonials.map((testimonial, index) => (
-              <div
-                key={`first-${testimonial.name}`}
-                className="flex-shrink-0 w-[90vw] sm:w-[400px] md:w-[420px] lg:w-[380px] xl:w-[400px] group relative"
-              >
-                <Card className="h-full border-0 shadow-xl hover:shadow-2xl transition-all duration-300 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm overflow-hidden relative hover:scale-[1.03] group">
-                  {/* Decorative gradient */}
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] opacity-80 group-hover:opacity-100 transition-opacity duration-300" />
-                  
-                  {/* Decorative corner */}
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-[#3bb9ac]/5 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  
-                  <CardContent className="p-6 sm:p-8 lg:p-10">
-                    <div className="text-4xl sm:text-5xl lg:text-6xl mb-4 sm:mb-5 transform group-hover:scale-110 transition-transform duration-300 inline-block">
-                      {testimonial.image}
-                    </div>
-                    <Quote className="h-6 w-6 sm:h-8 sm:w-8 text-[#1F4068]/40 dark:text-[#3bb9ac]/40 mb-4 sm:mb-5 group-hover:text-[#1F4068]/60 dark:group-hover:text-[#3bb9ac]/60 transition-colors duration-300" />
-                    <p className="text-gray-700 dark:text-gray-300 mb-5 sm:mb-6 lg:mb-8 italic text-base sm:text-lg lg:text-xl leading-relaxed font-light">
-                      "{testimonial.text}"
-                    </p>
-                    <div className="flex items-center gap-1 mb-4 sm:mb-5">
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, scale: 0 }}
-                          whileInView={{ opacity: 1, scale: 1 }}
-                          viewport={{ once: true }}
-                          transition={{ delay: i * 0.1 }}
-                        >
-                          <Star className="h-4 w-4 sm:h-5 sm:w-5 fill-yellow-400 text-yellow-400" />
-                        </motion.div>
-                      ))}
-                    </div>
-                    <div className="pt-4 sm:pt-5 border-t border-gray-200/60 dark:border-gray-700/60">
-                      <div className="font-bold text-gray-900 dark:text-gray-100 text-base sm:text-lg lg:text-xl mb-1.5">
-                        {testimonial.name}
-                      </div>
-                      <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                        {testimonial.location}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-4xl mx-auto"
+        >
+          {/* Featured story */}
+          <article className="mb-16 sm:mb-20 lg:mb-24">
+            <div className="flex flex-col sm:flex-row gap-8 sm:gap-10 lg:gap-14 items-start">
+              <div className="w-full sm:w-48 lg:w-56 shrink-0">
+                <img
+                  src={featuredStory.image}
+                  alt={featuredStory.name}
+                  className="w-full aspect-[4/5] object-cover rounded-xl"
+                />
               </div>
-            ))}
-            
-            {/* Duplicate set for seamless loop */}
-            {testimonials.map((testimonial, index) => (
-              <div
-                key={`second-${testimonial.name}`}
-                className="flex-shrink-0 w-[90vw] sm:w-[400px] md:w-[420px] lg:w-[380px] xl:w-[400px] group relative"
-              >
-                <Card className="h-full border-0 shadow-xl hover:shadow-2xl transition-all duration-300 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm overflow-hidden relative hover:scale-[1.03] group">
-                  {/* Decorative gradient */}
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] opacity-80 group-hover:opacity-100 transition-opacity duration-300" />
-                  
-                  {/* Decorative corner */}
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-[#3bb9ac]/5 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  
-                  <CardContent className="p-6 sm:p-8 lg:p-10">
-                    <div className="text-4xl sm:text-5xl lg:text-6xl mb-4 sm:mb-5 transform group-hover:scale-110 transition-transform duration-300 inline-block">
-                      {testimonial.image}
-                    </div>
-                    <Quote className="h-6 w-6 sm:h-8 sm:w-8 text-[#1F4068]/40 dark:text-[#3bb9ac]/40 mb-4 sm:mb-5 group-hover:text-[#1F4068]/60 dark:group-hover:text-[#3bb9ac]/60 transition-colors duration-300" />
-                    <p className="text-gray-700 dark:text-gray-300 mb-5 sm:mb-6 lg:mb-8 italic text-base sm:text-lg lg:text-xl leading-relaxed font-light">
-                      "{testimonial.text}"
-                    </p>
-                    <div className="flex items-center gap-1 mb-4 sm:mb-5">
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, scale: 0 }}
-                          whileInView={{ opacity: 1, scale: 1 }}
-                          viewport={{ once: true }}
-                          transition={{ delay: i * 0.1 }}
-                        >
-                          <Star className="h-4 w-4 sm:h-5 sm:w-5 fill-yellow-400 text-yellow-400" />
-                        </motion.div>
-                      ))}
-                    </div>
-                    <div className="pt-4 sm:pt-5 border-t border-gray-200/60 dark:border-gray-700/60">
-                      <div className="font-bold text-gray-900 dark:text-gray-100 text-base sm:text-lg lg:text-xl mb-1.5">
-                        {testimonial.name}
-                      </div>
-                      <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                        {testimonial.location}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+
+              <div className="flex-1 min-w-0 pt-1">
+                <blockquote className="text-xl sm:text-2xl lg:text-[1.65rem] text-gray-800 dark:text-gray-200 leading-relaxed font-light mb-8 sm:mb-10">
+                  &ldquo;{featuredStory.text}&rdquo;
+                </blockquote>
+
+                <footer>
+                  <p className="font-semibold text-gray-900 dark:text-white text-base">
+                    {featuredStory.name}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {featuredStory.meta}
+                  </p>
+                  <p className="text-xs text-[#3bb9ac] mt-2">
+                    {featuredStory.label}
+                  </p>
+                </footer>
               </div>
+            </div>
+          </article>
+
+          {/* Supporting stories */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 sm:gap-14 lg:gap-16 pt-12 sm:pt-14 border-t border-gray-100 dark:border-gray-800">
+            {supportingStories.map((story) => (
+              <article key={story.name} className="flex gap-5 items-start">
+                <img
+                  src={story.image}
+                  alt={story.name}
+                  className="w-16 h-16 sm:w-[4.5rem] sm:h-[4.5rem] shrink-0 object-cover rounded-full"
+                />
+
+                <div className="flex-1 min-w-0">
+                  <blockquote className="text-base sm:text-[1.05rem] text-gray-700 dark:text-gray-300 leading-relaxed mb-5">
+                    &ldquo;{story.text}&rdquo;
+                  </blockquote>
+
+                  <footer>
+                    <p className="font-semibold text-gray-900 dark:text-white text-sm">
+                      {story.name}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {story.meta}
+                    </p>
+                    <p className="text-xs text-[#3bb9ac] mt-1.5">
+                      {story.label}
+                    </p>
+                  </footer>
+                </div>
+              </article>
             ))}
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   )

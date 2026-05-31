@@ -50,10 +50,16 @@ import { calculateTrustScore } from "@/lib/utils/profile-utils"
 import { checkTamilPorutham } from "@/lib/astrology"
 import { calculateLifestyleScore } from "@/lib/matching"
 import { CompatibilitySheet } from "./compatibility-sheet"
+import { DashboardSidebar } from "./dashboard/dashboard-sidebar"
+import { DashboardHeroBanner, EliteMemberBadge } from "./dashboard/dashboard-hero-banner"
+import { DashboardStatsRow } from "./dashboard/dashboard-stats-row"
+import { DashboardDailyRecommendations } from "./dashboard/dashboard-daily-recommendations"
+import { DashboardJourneyPanel } from "./dashboard/dashboard-journey-panel"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { getDailySeed, seededShuffle } from "@/lib/utils/match-utils"
+import { cn } from "@/lib/utils"
 
 interface UserLandingPageProps {
   userEmail: string
@@ -711,442 +717,133 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
     const isExpired = profile.premiumExpiresAt && new Date(profile.premiumExpiresAt) < new Date()
     if (isExpired) return null
     
-    if (profile.premiumPlan === 'till_you_marry') return <span className="bg-gradient-to-r from-[#3bb9ac] to-[#FF69B4] text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-primary tracking-widest"><Crown className="h-3.5 w-3.5 md:h-4 md:w-4"/> Lifetime Member</span>
-    if (profile.premiumPlan === 'elite') return <span className="bg-gradient-to-r from-[#3bb9ac] to-[#2fa085] text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-emerald-500/20 tracking-widest"><Gem className="h-3.5 w-3.5 md:h-4 md:w-4"/> Elite Member</span>
-    if (profile.premiumPlan === 'prime_gold') return <span className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-amber-500/20 tracking-widest"><Star className="h-3.5 w-3.5 md:h-4 md:w-4"/> Gold Member</span>
-    if (profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') return <span className="bg-gradient-to-r from-blue-600 to-cyan-700 text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-blue-500/20 tracking-widest"><Shield className="h-3.5 w-3.5 md:h-4 md:w-4"/> Prime Member</span>
+    if (profile.premiumPlan === 'till_you_marry') return <span className="inline-flex items-center gap-1 bg-[#fce8ef] text-[#e87898] px-2.5 py-1 rounded-full text-xs font-medium border border-[#e87898]/15"><Crown className="h-3 w-3"/> Lifetime Member</span>
+    if (profile.premiumPlan === 'elite') return <EliteMemberBadge />
+    if (profile.premiumPlan === 'prime_gold') return <span className="inline-flex items-center gap-1 bg-[#c9a227]/10 text-[#c9a227] px-2.5 py-1 rounded-full text-xs font-medium"><Star className="h-3 w-3"/> Gold Member</span>
+    if (profile.premiumPlan === 'prime' || profile.premiumPlan === '3_months') return <span className="inline-flex items-center gap-1 bg-[#1F4068]/10 text-[#1F4068] px-2.5 py-1 rounded-full text-xs font-medium"><Shield className="h-3 w-3"/> Prime Member</span>
     
-    return <span className="bg-gradient-to-r from-[#3bb9ac] to-[#2fa085] text-white text-[10px] md:text-xs uppercase font-black px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl shadow-emerald-500/20 tracking-widest"><Crown className="h-3.5 w-3.5 md:h-4 md:w-4"/> Premium</span>
+    return <span className="inline-flex items-center gap-1 bg-[#fce8ef] text-[#e87898] px-2.5 py-1 rounded-full text-xs font-medium border border-[#e87898]/15"><Crown className="h-3 w-3"/> Premium</span>
   }
+
+  const displayName = profile?.name?.split(" ")[0] || userName?.split(" ")[0] || "there"
+  const trustScore = calculateTrustScore(!!profile?.photo_verified, completionPercentage, profile?.photos?.length || 0, !!profile?.familyPhoto)
+  const trustLabel = trustScore >= 9 ? "Excellent" : trustScore >= 7 ? "Good" : "Fair"
+  const photoCount = profile?.photos?.length || 0
+  const mobileVerified = !!profile?.contactNumber
 
   return (
   <>
-    <div className="w-full px-6 md:px-10 py-4">
-      <div className="flex flex-col lg:flex-row gap-8 items-start">
-        {/* Left Sidebar - Sticky */}
-        <aside className="w-full lg:w-[17rem] lg:sticky lg:top-16 space-y-4 flex-shrink-0">
-          {/* Quick Search */}
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.05 }}
-            className="sds-glass rounded-[1.5rem] p-1.5 flex items-center gap-2 border-indigo-100/50 hover:bg-white/90 transition-all shadow-lg shadow-emerald-900/5 mb-2"
-          >
-            <div className="w-10 h-10 bg-[#3bb9ac] rounded-xl flex items-center justify-center shadow-md shadow-emerald-900/10 shrink-0">
-              <Search className="h-4 w-4 text-white" />
-            </div>
-            <input 
-              type="text" 
-              placeholder="Search by ID..." 
-              className="bg-transparent border-none outline-none text-[9px] font-black uppercase tracking-widest text-[#3bb9ac] placeholder:text-gray-300 w-full"
-            />
-          </motion.div>
+    <div className="flex min-w-0">
+      <aside className="hidden lg:flex w-[272px] shrink-0 sticky top-0 self-start bg-white border-r border-[#f0f0f0] flex-col px-3 py-6 lg:min-h-full">
+        <DashboardSidebar
+          mutualCount={mutualCount}
+          iLikedCount={iLikedCount}
+          likedMeCount={likedMeCount}
+          isCoreProfileComplete={isCoreProfileComplete}
+          completionPercentage={completionPercentage}
+          onDashboard={() => router.push("/dashboard")}
+          onMutualMatches={onNavigateToMutualMatches}
+          onInterestsSent={onNavigateToILiked}
+          onInterestsReceived={onNavigateToLikedMe}
+          onPreferences={onNavigateToPartnerPreferences}
+          onBrowse={() => onNavigateToBrowse()}
+          onHoroscope={onNavigateToHoroscope}
+          onSelections={onNavigateToSelections}
+          onParents={onNavigateToParents}
+          onShortlisted={() => onNavigateToBrowse("shortlisted-by-you")}
+          onImproveProfile={onNavigateToProfileSetup}
+        />
+      </aside>
 
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="sds-glass rounded-[2rem] overflow-hidden p-3"
-          >
-            <div className="py-2.5 px-4 mb-1">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-900/40">
-                  Quick Actions
-                </h4>
-            </div>
-            
-            <div className="p-2 space-y-0.5">
-              {!isCoreProfileComplete ? (
-                <div className="text-[10px] text-amber-600 mb-2 bg-amber-50/50 p-3 rounded-2xl border border-amber-100 font-bold leading-relaxed text-center">
-                  Verify first 5 steps of your profile to access these features.
-                </div>
-              ) : null}
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
-                onClick={onNavigateToMutualMatches}
-                disabled={!isCoreProfileComplete}
-              >
-                <HeartHandshake className="h-4 w-4 mr-3 text-[#3bb9ac]" />
-                <div className="flex-1 flex items-center justify-between">
-                  <div className="font-bold text-[11px] text-gray-700">Mutual Matches</div>
-                  <span className="bg-[#3bb9ac] text-white text-[8px] px-1.5 py-0.5 rounded-md font-black">{mutualCount}</span>
-                </div>
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
-                onClick={onNavigateToILiked}
-                disabled={!isCoreProfileComplete}
-              >
-                <Heart className="h-4 w-4 mr-3 text-primary" />
-                <div className="flex-1 flex items-center justify-between">
-                  <div className="font-bold text-[11px] text-gray-700">Interests Sent</div>
-                  <span className="bg-[#3bb9ac] text-white text-[8px] px-1.5 py-0.5 rounded-md font-black">{iLikedCount}</span>
-                </div>
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
-                onClick={onNavigateToLikedMe}
-                disabled={!isCoreProfileComplete}
-              >
-                <Sparkles className="h-4 w-4 mr-3 text-indigo-400" />
-                <div className="flex-1 flex items-center justify-between">
-                  <div className="font-bold text-[11px] text-gray-700">Interests Received</div>
-                  <span className="bg-[#3bb9ac] text-white text-[8px] px-1.5 py-0.5 rounded-md font-black">{likedMeCount}</span>
-                </div>
-              </Button>
+      <div className="flex-1 bg-[#faf8f4] min-w-0">
+        <div className="p-5 lg:p-6 space-y-5 max-w-[1200px] min-w-0">
+          <DashboardHeroBanner
+            displayName={displayName}
+            photoUrl={profile?.photos?.[0]}
+            isPremium={profile?.isPremium}
+            photoVerified={profile?.photo_verified}
+            trustScore={trustScore}
+            trustLabel={trustLabel}
+            premiumBadge={getPremiumBadge()}
+          />
 
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
-                onClick={onNavigateToPartnerPreferences}
-                disabled={!isCoreProfileComplete}
-              >
-                <Search className="h-4 w-4 mr-3 text-indigo-400" />
-                <div className="font-bold text-[11px] text-gray-700">Preferences</div>
-              </Button>
+          {isCoreProfileComplete ? (
+            <>
+              <DashboardStatsRow
+                mutualCount={mutualCount}
+                iLikedCount={iLikedCount}
+                likedMeCount={likedMeCount}
+                onMutualMatches={onNavigateToMutualMatches}
+                onInterestsSent={onNavigateToILiked}
+                onInterestsReceived={onNavigateToLikedMe}
+              />
 
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
-                onClick={() => onNavigateToBrowse()}
-                disabled={!isCoreProfileComplete}
-              >
-                <Users2 className="h-4 w-4 mr-3 text-indigo-400" />
-                <div className="font-bold text-[11px] text-gray-700">Browse</div>
-              </Button>
-
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
-                onClick={onNavigateToHoroscope}
-              >
-                <Star className="h-4 w-4 mr-3 text-amber-500" />
-                <div className="font-bold text-[11px] text-gray-700">Generate Horoscope</div>
-              </Button>
-              
-              <div className="py-2.5 px-4 mt-2">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-900/40">
-                  Parental Access
-                </h4>
-              </div>
-
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
-                onClick={onNavigateToSelections}
-                disabled={!isCoreProfileComplete}
-              >
-                <Heart className="h-4 w-4 mr-3 text-primary" />
-                <div className="font-bold text-[11px] text-gray-700">Selections</div>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
-                onClick={onNavigateToParents}
-                disabled={!isCoreProfileComplete}
-              >
-                <UserCircle2 className="h-4 w-4 mr-3 text-indigo-400" />
-                <div className="font-bold text-[11px] text-gray-700">Parents</div>
-              </Button>
-
-              <div className="py-2.5 px-4 mt-2">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-900/40">
-                  Profile Status
-                </h4>
-              </div>
-
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-10 px-4 rounded-xl hover:bg-[#3bb9ac]/5 hover:text-[#3bb9ac] group transition-all"
-                onClick={() => setShowMarriedConfirmDialog(true)}
-              >
-                <HeartHandshake className="h-4 w-4 mr-3 text-primary" />
-                <div className="font-bold text-[11px] text-gray-700">Mark as Married</div>
-              </Button>
-            </div>
-          </motion.div>
-        </aside>
-
-        {/* Right Main Content */}
-        <main className="flex-1 w-full min-w-0 space-y-6 pb-24 mt-0.5">
-
-
-            {/* Welcome Banner */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-4 md:p-5 rounded-[2rem] sds-glass relative overflow-hidden shadow-xl border-indigo-100/30 flex items-center justify-between gap-6"
-            >
-              <div className="flex items-center gap-6">
-                <div className="relative">
-                  <div className="w-16 h-16 rounded-2xl overflow-hidden bg-indigo-50 border-2 border-white shadow-md">
-                    <img src={profile?.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || '')}`} className="w-full h-full object-cover" />
-                  </div>
-                  {profile?.isPremium && (
-                    <div className="absolute -top-2 -right-2 bg-indigo-600 p-1.5 rounded-lg shadow-lg">
-                      <Crown className="w-3 h-3 text-white" />
-                    </div>
-                  )}
+              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-5 items-stretch min-w-0">
+                <div className="min-w-0">
+                  <DashboardDailyRecommendations
+                    profiles={dailyRecs}
+                    onProfileClick={(p) => router.push(`/dashboard/daily-recommendations?id=${p.user_id}`)}
+                    onViewAll={() => router.push("/dashboard/daily-recommendations")}
+                    isLoading={isSectionsLoading}
+                    shortlistedIds={shortlistedIds}
+                    onShortlist={handleShortlist}
+                    shortlistLoadingId={shortlistLoadingId}
+                  />
                 </div>
 
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h1 className="text-xl md:text-2xl font-black text-indigo-900 leading-tight">
-                      Welcome back, {userName?.split(' ')[0]}! 👋
-                    </h1>
-                    {profile?.photo_verified && (
-                      <div className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border border-emerald-100">
-                        Verified
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-gray-500 text-[11px] font-bold uppercase tracking-widest">
-                    We're excited to help you find your perfect match
-                  </p>
-                </div>
-              </div>
-
-              <div className="hidden md:flex items-center gap-4">
-                <div className="text-right">
-                  <p className="text-[9px] font-black text-indigo-900/40 uppercase tracking-widest">Trust Score</p>
-                  <p className="text-xl font-black text-indigo-900 tracking-tighter">
-                    {calculateTrustScore(!!profile?.photo_verified, completionPercentage, profile?.photos?.length || 0, !!profile?.familyPhoto)}
-                  </p>
-                </div>
-                <div className="h-10 w-px bg-indigo-100" />
-                <Button 
-                   onClick={onNavigateToProfileSetup}
-                   variant="ghost" 
-                   size="sm" 
-                   className="h-10 px-4 rounded-xl text-indigo-600 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50"
-                >
-                  Edit Profile
-                </Button>
-              </div>
-            </motion.div>
-
- 
-            {/* Verification Prompt */}
-            {isProfileComplete && !profile?.photo_verified && (
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                onClick={() => setShowVerificationDialog(true)}
-                className="group cursor-pointer"
-              >
-                <div className="sds-glass p-6 rounded-[2.5rem] flex items-center justify-between group-hover:bg-indigo-50/50 transition-colors border-indigo-100/50">
-                  <div className="flex items-center gap-6">
-                    <div className="w-14 h-14 bg-indigo-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                      <ShieldCheck className="h-8 w-8 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-black text-xs uppercase tracking-[0.2em] text-indigo-900">ID Verification Required</h3>
-                      <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mt-1">Verify identity to build trust</p>
-                    </div>
-                  </div>
-                  <Button className="h-12 px-6 rounded-xl bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest">
-                    Verify Now
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-
-
-          {/* Progress Card */}
-          {!isProfileComplete && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="sds-glass rounded-[2.5rem] p-10 flex flex-col md:flex-row md:items-center justify-between gap-10"
-            >
-              <div className="flex-1">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6">Profile Progress</p>
-                <div className="flex items-baseline gap-2 mb-6">
-                  <span className="text-7xl font-black text-gray-900 tracking-tighter">{completionPercentage}</span>
-                  <span className="text-xl font-black text-[#3bb9ac]">%</span>
-                </div>
-                <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden border border-gray-200/50">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${completionPercentage}%` }}
-                    className="h-full bg-[hsl(var(--marriage))] shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+                <div className="min-w-0">
+                  <DashboardJourneyPanel
+                    completionPercentage={completionPercentage}
+                    photoCount={photoCount}
+                    mobileVerified={mobileVerified}
+                    idVerified={!!profile?.photo_verified}
+                    onAddPhotos={onNavigateToProfileSetup}
                   />
                 </div>
               </div>
-              <Button 
-                onClick={onNavigateToProfileSetup}
-                className="h-14 px-10 rounded-2xl bg-[#3bb9ac] text-white font-black text-[10px] uppercase tracking-widest hover:bg-[#2fa085] transition-all shadow-xl shadow-emerald-500/20"
-              >
-                Complete Profile
-              </Button>
-            </motion.div>
-          )}
-
-
-          {/* --- Match Sections --- */}
-          {!isCoreProfileComplete ? (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="sds-glass rounded-[2rem] p-10 mt-8 text-center border-dashed border-2 border-amber-200 bg-amber-50/30"
-            >
-              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertTriangle className="h-8 w-8 text-amber-500" />
-              </div>
-              <h3 className="text-xl font-black text-indigo-900 mb-2">Complete Your Profile First</h3>
-              <p className="text-sm text-gray-500 font-medium mb-6 max-w-md mx-auto">
-                Please verify your Personal, Contact, Educational, Professional, and Family details to view matches and interact with other profiles.
-              </p>
-              <Button 
-                onClick={onNavigateToProfileSetup} 
-                className="h-12 px-8 rounded-xl bg-[#3bb9ac] text-white font-black text-[10px] uppercase tracking-widest hover:bg-[#2fa085] transition-all shadow-xl shadow-emerald-500/20"
-              >
-                Complete Profile
-              </Button>
-            </motion.div>
+            </>
           ) : (
-            <div className="space-y-2">
-              <ProfileCarousel
-                  title="Daily Recommendations"
-                  subtitle="Recommended matches for today"
-                  profiles={dailyRecs}
-                  onProfileClick={(p) => router.push(`/dashboard/daily-recommendations?id=${p.user_id}`)}
-                  onViewAll={() => router.push("/dashboard/daily-recommendations")}
-                  isLoading={isSectionsLoading}
-                  shortlistedIds={shortlistedIds}
-                  onShortlist={handleShortlist}
-                  shortlistLoadingId={shortlistLoadingId}
-              />
-
-              <ProfileCarousel
-                  title="All Matches"
-                  subtitle="Members who match your partner preferences"
-                  profiles={allMatches}
-                  onProfileClick={(p) => {
-                      // Set sequence for contextual navigation
-                      if (typeof window !== 'undefined') {
-                          sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(allMatches.map(m => m.user_id)));
-                      }
-                      router.push(`/dashboard/profile/${p.user_id}`);
-                  }}
-                  onViewAll={() => onNavigateToBrowse()}
-                  isLoading={isSectionsLoading}
-                  shortlistedIds={shortlistedIds}
-                  onShortlist={handleShortlist}
-                  shortlistLoadingId={shortlistLoadingId}
-              />
-
-              <ProfileCarousel
-                  title="New Matches"
-                  subtitle="Members who joined in the last 30 days"
-                  profiles={newMatches}
-                  onProfileClick={(p) => {
-                      // Set sequence for contextual navigation
-                      if (typeof window !== 'undefined') {
-                          sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(newMatches.map(m => m.user_id)));
-                      }
-                      router.push(`/dashboard/profile/${p.user_id}`);
-                  }}
-                  onViewAll={() => onNavigateToBrowse('newly-joined')}
-                  isLoading={isSectionsLoading}
-                  shortlistedIds={shortlistedIds}
-                  onShortlist={handleShortlist}
-                  shortlistLoadingId={shortlistLoadingId}
-              />
-
-              <ProfileCarousel
-                  title="Who Viewed me"
-                  subtitle="Members who have viewed your profile"
-                  profiles={whoViewedMe}
-                  onProfileClick={(p) => {
-                      // Set sequence for contextual navigation
-                      if (typeof window !== 'undefined') {
-                          sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(whoViewedMe.map(m => m.user_id)));
-                      }
-                      router.push(`/dashboard/profile/${p.user_id}`);
-                  }}
-                  onViewAll={() => onNavigateToBrowse('viewed-you')}
-                  isLoading={isSectionsLoading}
-                  shortlistedIds={shortlistedIds}
-                  onShortlist={handleShortlist}
-                  shortlistLoadingId={shortlistLoadingId}
-              />
-
-              <ProfileCarousel
-                  title="Profiles I Viewed"
-                  subtitle="Members whose profile you have visited"
-                  profiles={profilesIViewed}
-                  onProfileClick={(p) => {
-                      // Set sequence for contextual navigation
-                      if (typeof window !== 'undefined') {
-                          sessionStorage.setItem('manavizha_browse_sequence', JSON.stringify(profilesIViewed.map(m => m.user_id)));
-                      }
-                      router.push(`/dashboard/profile/${p.user_id}`);
-                  }}
-                  onViewAll={() => onNavigateToBrowse('viewed-by-you')}
-                  isLoading={isSectionsLoading}
-                  shortlistedIds={shortlistedIds}
-                  onShortlist={handleShortlist}
-                  shortlistLoadingId={shortlistLoadingId}
-              />
+            <div className="bg-white rounded-[20px] border border-dashed border-[#fcd34d] p-10 text-center">
+              <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="h-7 w-7 text-amber-500" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#1F4068] mb-2">Complete your profile first</h3>
+              <p className="text-sm text-[#6b7280] mb-6 max-w-md mx-auto leading-relaxed">
+                Fill in your personal, contact, education, profession, and family details to view matches.
+              </p>
+              <Button
+                onClick={onNavigateToProfileSetup}
+                className="h-10 px-6 rounded-[10px] bg-[#e87898] hover:bg-[#d66686] text-white text-[13px] font-medium"
+              >
+                Go to profile setup
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
             </div>
           )}
-          {/* Marriage/Success Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="mt-8"
-          >
-            {isMarried ? (
-              <div className="sds-glass rounded-[3rem] p-16 text-center relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-80 h-80 bg-[hsl(var(--marriage))]/5 rounded-full blur-[80px] -mr-40 -mt-40" />
-                <div className="relative z-10">
-                  <div className="w-24 h-24 bg-[hsl(var(--marriage-light))] rounded-full flex items-center justify-center mx-auto mb-8 shadow-xl shadow-amber-500/10">
-                    <Star className="h-10 w-10 text-[hsl(var(--marriage))]" />
-                  </div>
-                  <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-4">Congratulations!</h2>
-                  <p className="text-gray-500 text-lg font-medium max-w-2xl mx-auto mb-10 leading-relaxed">
-                    Your profile is now hidden after your marriage. We wish you a happy life together!
-                  </p>
-                  <Button 
-                    variant="outline"
-                    onClick={() => setShowMarriedConfirmDialog(true)}
-                    className="h-14 px-10 rounded-2xl border-[#3bb9ac]/20 text-gray-600 font-black text-[10px] uppercase tracking-widest hover:bg-[#3bb9ac] hover:text-white transition-all bg-white/80 shadow-sm"
-                  >
-                    Change Status
-                  </Button>
+
+          {isProfileComplete && !profile?.photo_verified && (
+            <div
+              onClick={() => setShowVerificationDialog(true)}
+              className="cursor-pointer bg-white rounded-[20px] border border-[#fce8ef] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-[#e87898]/40 transition-colors"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-11 h-11 bg-[#fce8ef] rounded-xl flex items-center justify-center shrink-0">
+                  <ShieldCheck className="h-5 w-5 text-[#e87898]" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-[#1F4068] text-[15px]">Verify your identity</h3>
+                  <p className="text-[13px] text-[#6b7280] mt-0.5">Build trust with other members.</p>
                 </div>
               </div>
-            ) : (
-              <div className="sds-glass rounded-[3rem] p-12 flex flex-col md:flex-row items-center justify-between gap-10">
-                <div className="flex-1">
-                  <h3 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-3 mb-2">
-                    <HeartHandshake className="h-6 w-6 text-[#3bb9ac]" />
-                    Found your partner?
-                  </h3>
-                  <p className="text-gray-500 font-medium leading-relaxed max-w-xl">
-                    Once you find your partner, marking your profile as married hides it from other users. You will be moved to our success stories.
-                  </p>
-                </div>
-                <Button 
-                  onClick={() => setShowMarriedConfirmDialog(true)}
-                  className="h-14 px-10 rounded-2xl bg-white border border-[#3bb9ac]/20 text-[#3bb9ac] font-black text-[10px] uppercase tracking-widest hover:bg-[#3bb9ac] hover:text-white transition-all shadow-xl shadow-primary"
-                >
-                  Mark as Married
-                </Button>
-              </div>
-            )}
-          </motion.div>
-        </main>
+              <Button className="h-9 px-5 rounded-[10px] bg-[#e87898] hover:bg-[#d66686] text-white text-[13px] font-medium shrink-0">
+                Verify now
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  
+
   {/* Portals / Dialogs Moved to root level for proper viewport centering */}
   <VerificationDialog 
     isOpen={showVerificationDialog} 

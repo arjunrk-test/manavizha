@@ -25,9 +25,18 @@ interface LocationSelectorProps {
   initialCity?: string
   initialState?: string
   initialCountry?: string
+  layout?: "stack" | "grid" | "embedded"
+  labelClassName?: string
 }
 
-export function GlobalLocationSelector({ onLocationChange, initialCity, initialState, initialCountry }: LocationSelectorProps) {
+export function GlobalLocationSelector({
+  onLocationChange,
+  initialCity,
+  initialState,
+  initialCountry,
+  layout = "stack",
+  labelClassName,
+}: LocationSelectorProps) {
   const [countries, setCountries] = useState<any[]>([])
   const [states, setStates] = useState<any[]>([])
   const [cities, setCities] = useState<any[]>([])
@@ -171,14 +180,22 @@ export function GlobalLocationSelector({ onLocationChange, initialCity, initialS
   const filteredStates = sortMatches(states, search.state, s => s.name);
   const filteredCities = sortMatches(cities, search.city, c => c);
 
-  return (
-    <div className="flex flex-col gap-6">
-      {/* Country Selector */}
-      <div className="space-y-2">
-        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Country</label>
+  const locationLabelClass =
+    labelClassName ??
+    "text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-gold"
+
+  const fieldSpacing = "space-y-1.5"
+
+  const fields = (
+    <>
+      <div className={fieldSpacing}>
+        <label className={locationLabelClass}>Country</label>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="w-full justify-between bg-gray-50/50 border-gray-100 rounded-2xl h-12">
+            <Button
+              variant="outline"
+              className="w-full justify-between bg-white border border-gray-200/90 rounded-xl h-11 text-sm text-[#1F4068] shadow-sm"
+            >
               {loading.countries ? <Loader2 className="h-4 w-4 animate-spin" /> : (selectedCountry || "Select Country")}
               <ChevronDown className="h-4 w-4 opacity-50" />
             </Button>
@@ -219,11 +236,14 @@ export function GlobalLocationSelector({ onLocationChange, initialCity, initialS
         </DropdownMenu>
       </div>
 
-      <div className="space-y-2">
-        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">State / Province</label>
+      <div className={fieldSpacing}>
+        <label className={locationLabelClass}>State / province</label>
         <DropdownMenu>
           <DropdownMenuTrigger asChild disabled={!selectedCountry || states.length === 0}>
-            <Button variant="outline" className="w-full justify-between bg-gray-50/50 border-gray-100 rounded-2xl h-12 disabled:opacity-30">
+            <Button
+              variant="outline"
+              className="w-full justify-between bg-white border border-gray-200/90 rounded-xl h-11 text-sm text-[#1F4068] shadow-sm disabled:opacity-40"
+            >
               {loading.states ? <Loader2 className="h-4 w-4 animate-spin" /> : (selectedState || "Select State")}
               <ChevronDown className="h-4 w-4 opacity-50" />
             </Button>
@@ -263,12 +283,14 @@ export function GlobalLocationSelector({ onLocationChange, initialCity, initialS
         </DropdownMenu>
       </div>
 
-      {/* City Selector */}
-      <div className="space-y-2">
-        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">City</label>
+      <div className={fieldSpacing}>
+        <label className={locationLabelClass}>City</label>
         <DropdownMenu>
           <DropdownMenuTrigger asChild disabled={!selectedState || cities.length === 0}>
-            <Button variant="outline" className="w-full justify-between bg-gray-50/50 border-gray-100 rounded-2xl h-12 disabled:opacity-30">
+            <Button
+              variant="outline"
+              className="w-full justify-between bg-white border border-gray-200/90 rounded-xl h-11 text-sm text-[#1F4068] shadow-sm disabled:opacity-40"
+            >
               {loading.cities || loading.coords ? <Loader2 className="h-4 w-4 animate-spin" /> : (selectedCity || "Select City")}
               <ChevronDown className="h-4 w-4 opacity-50" />
             </Button>
@@ -307,6 +329,20 @@ export function GlobalLocationSelector({ onLocationChange, initialCity, initialS
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+    </>
+  )
+
+  if (layout === "embedded") {
+    return fields
+  }
+
+  return (
+    <div
+      className={cn(
+        layout === "grid" ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "flex flex-col gap-4"
+      )}
+    >
+      {fields}
     </div>
   )
 }

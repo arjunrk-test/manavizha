@@ -1,224 +1,142 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Shield, Search, Heart, Verified, MessageCircle, Star, ArrowRight } from "lucide-react"
+import { Shield, Search, Heart, Users, MessageCircle, Sparkles, Check } from "lucide-react"
 
 const features = [
   {
     icon: Shield,
-    title: "Verified Profiles",
-    description: "All profiles are thoroughly verified to ensure authenticity and trust. We verify identity, education, and background.",
-    color: "from-blue-500 to-cyan-500",
-    bgColor: "from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30",
-    iconBg: "bg-blue-500",
-  },
-  {
-    icon: Search,
-    title: "Smart Matching",
-    description: "Advanced AI-powered algorithm helps you find compatible matches based on your preferences, values, and lifestyle.",
-    color: "from-[#3bb9ac] to-[#1F4068]",
-    bgColor: "from-[#3bb9ac]/10 to-[#1F4068]/10 dark:from-[#3bb9ac]/30 dark:to-[#1F4068]/30",
-    iconBg: "bg-[#3bb9ac]",
+    title: "Verified profiles",
+    description: "Identity, education, and background reviewed before a profile goes live.",
+    iconColor: "text-[#3bb9ac]",
   },
   {
     icon: Heart,
-    title: "Privacy First",
-    description: "Your data is secure with us. We prioritize your privacy and confidentiality with end-to-end encryption.",
-    color: "from-[#3bb9ac] to-[#3bb9ac]",
-    bgColor: "from-[#3bb9ac]/10 to-[#3bb9ac]/10 dark:from-[#3bb9ac]/30 dark:to-[#3bb9ac]/30",
-    iconBg: "bg-[#3bb9ac]",
+    title: "Privacy you control",
+    description: "Choose who sees your photos and contact details, on your terms.",
+    iconColor: "text-[#c97a7a]",
   },
   {
-    icon: Verified,
-    title: "Trusted Platform",
-    description: "Join thousands of families who trust us for finding their perfect matches. 98% satisfaction rate.",
-    color: "from-green-500 to-emerald-500",
-    bgColor: "from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30",
-    iconBg: "bg-green-500",
+    icon: Search,
+    title: "Thoughtful matching",
+    description: "Recommendations based on preferences, values, and lifestyle.",
+    iconColor: "text-[#c9a227]",
+  },
+  {
+    icon: Sparkles,
+    title: "Horoscope compatibility",
+    description: "Thirukanitham and Vakkiyam calculations for astrological alignment.",
+    iconColor: "text-[#3bb9ac]",
+  },
+  {
+    icon: Users,
+    title: "Family dashboard",
+    description: "Parents can browse, shortlist, and discuss profiles with you.",
+    iconColor: "text-[#c9a227]",
   },
   {
     icon: MessageCircle,
-    title: "Easy Communication",
-    description: "Connect and communicate with potential matches through our secure, user-friendly messaging platform.",
-    color: "from-[#FFA500] to-[#3bb9ac]",
-    bgColor: "from-[#FFA500]/10 to-[#3bb9ac]/10 dark:from-[#FFA500]/30 dark:to-[#3bb9ac]/30",
-    iconBg: "bg-[#FFA500]",
+    title: "Secure messaging",
+    description: "Express interest privately without sharing contacts too early.",
+    iconColor: "text-[#c97a7a]",
   },
-  {
-    icon: Star,
-    title: "Premium Experience",
-    description: "Enjoy a premium experience with personalized matchmaking services and dedicated support team.",
-    color: "from-[#FFA500] to-[#1F4068]",
-    bgColor: "from-[#FFA500]/10 to-[#1F4068]/10 dark:from-[#FFA500]/30 dark:to-[#1F4068]/30",
-    iconBg: "bg-[#FFA500]",
-  },
+]
+
+const trustPoints = [
+  "Profiles reviewed",
+  "Family dashboards",
+  "Horoscope tools",
 ]
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-16 sm:py-24 lg:py-32 relative overflow-hidden">
-      {/* Animated gradient background - lighter version */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#3bb9ac]/50 via-[#3bb9ac]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
-      
-      {/* White overlay to lighten */}
-      <div className="absolute inset-0 bg-white/50 dark:bg-[#181818]/50" />
-      
-      {/* Overlay pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
-      
-      {/* Modern geometric elements */}
-      <div className="absolute top-10 right-10 w-20 h-20 sm:w-32 sm:h-32 border border-[#1F4068]/10 rounded-full blur-2xl hidden md:block" />
-      <div className="absolute bottom-10 left-10 w-16 h-16 sm:w-24 sm:h-24 border border-[#3bb9ac]/10 rotate-45 blur-xl hidden lg:block" />
+    <section
+      id="features"
+      className="relative overflow-hidden py-16 sm:py-20 lg:py-0 lg:min-h-[calc(100dvh-4rem)] lg:flex lg:flex-col lg:justify-center bg-[#faf8f4]"
+    >
+      <div
+        className="pointer-events-none absolute inset-0"
+        aria-hidden
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 92% 8%, rgba(255, 182, 193, 0.1) 0%, transparent 28%), radial-gradient(circle at 8% 92%, rgba(59, 185, 172, 0.07) 0%, transparent 32%)",
+        }}
+      />
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-8 lg:py-12">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12 sm:mb-16 lg:mb-20"
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-6xl mx-auto"
         >
-          <motion.span
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-[#1F4068]/20 to-[#3bb9ac]/20 dark:from-[#1F4068]/50 dark:to-[#3bb9ac]/50 text-[#1F4068] dark:text-[#3bb9ac] font-medium mb-4 sm:mb-6 text-sm sm:text-base"
-          >
-            Why Choose Us
-          </motion.span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient px-4">
-            Everything You Need
-          </h2>
-          <p className="mt-4 text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed px-4">
-            Experience the best in matrimonial matchmaking with our comprehensive platform designed for modern families
-          </p>
-        </motion.div>
+          <div className="mb-10 sm:mb-12 lg:mb-14 lg:flex lg:items-end lg:justify-between lg:gap-12">
+            <div className="max-w-2xl">
+              <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-brand-gold mb-3">
+                Why Choose Us
+              </p>
+              <h2 className="font-display text-3xl sm:text-4xl lg:text-[2.75rem] font-semibold text-[#1F4068] leading-[1.12] tracking-tight mb-3">
+                Built for trust and compatibility
+              </h2>
+              <p className="text-base sm:text-lg text-gray-600 leading-relaxed">
+                Verification, privacy, and compatibility — designed for individuals and families.
+              </p>
+            </div>
 
-        {/* Auto-scrolling carousel container */}
-        <div className="relative overflow-hidden">
-          <div className="flex gap-6 animate-scroll">
-            {/* First set of cards */}
+            <div className="mt-6 lg:mt-0 shrink-0">
+              <div className="inline-flex flex-wrap items-center gap-x-1 gap-y-2 rounded-xl border border-gray-100/90 bg-white px-4 py-3 sm:px-5 sm:py-3.5 shadow-[0_8px_32px_rgba(31,64,104,0.06)]">
+                {trustPoints.map((point, index) => (
+                  <span key={point} className="flex items-center">
+                    {index > 0 && (
+                      <span className="text-gray-300/80 text-sm px-2.5 select-none" aria-hidden>
+                        |
+                      </span>
+                    )}
+                    <span className="flex items-center gap-2 text-sm font-medium text-[#1F4068]">
+                      <Check className="h-4 w-4 text-[#3bb9ac]" strokeWidth={2.5} />
+                      {point}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
             {features.map((feature, index) => {
               const Icon = feature.icon
+
               return (
-                <div
-                  key={`first-${feature.title}`}
-                  className="flex-shrink-0 w-[90vw] sm:w-[400px] md:w-[420px] lg:w-[380px] xl:w-[400px] group relative"
+                <motion.article
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-40px" }}
+                  transition={{
+                    duration: 0.4,
+                    delay: index * 0.05,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                  className="group flex gap-4 items-start rounded-xl border border-gray-100/90 bg-white p-5 sm:p-6 shadow-[0_8px_32px_rgba(31,64,104,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(31,64,104,0.1)] min-h-[7.5rem] sm:min-h-[8rem]"
                 >
-                  {/* Gradient border effect */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300 -z-10" />
-                  
-                  {/* Main card */}
-                  <div className="relative h-full rounded-2xl bg-white/80 dark:bg-[#181818]/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-800/50 overflow-hidden transition-all duration-300 group-hover:border-transparent group-hover:shadow-2xl">
-                    {/* Animated gradient overlay */}
-                    <div className={`absolute inset-0 bg-gradient-to-br ${feature.bgColor} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                    
-                    {/* Top accent bar */}
-                    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${feature.color} opacity-60 group-hover:opacity-100 transition-opacity duration-300`} />
-                    
-                    {/* Content */}
-                    <div className="relative z-10 p-8">
-                      {/* Icon with modern design */}
-                      <div className="mb-6">
-                        <div className="relative inline-block">
-                          {/* Icon glow effect */}
-                          <div className={`absolute inset-0 ${feature.iconBg} opacity-20 blur-xl group-hover:opacity-40 transition-opacity duration-300 rounded-2xl`} />
-                          {/* Icon container */}
-                          <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-lg group-hover:shadow-2xl transition-all duration-300`}>
-                            <Icon className="h-8 w-8 text-white relative z-10" />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Title */}
-                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-[#1F4068] group-hover:to-[#3bb9ac] transition-all duration-300">
-                        {feature.title}
-                      </h3>
-                      
-                      {/* Description */}
-                      <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-6 text-base">
-                        {feature.description}
-                      </p>
-                      
-                      {/* Learn more link with modern design */}
-                      <div className="inline-flex items-center gap-2 text-sm font-semibold text-[#1F4068] dark:text-[#3bb9ac] cursor-pointer group/link">
-                        <span className="relative">
-                          Learn more
-                          <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#1F4068] to-[#3bb9ac] group-hover/link:w-full transition-all duration-300" />
-                        </span>
-                        <ArrowRight className="h-4 w-4 group-hover/link:translate-x-1 transition-transform duration-300" />
-                      </div>
-                    </div>
-                    
-                    {/* Decorative corner element */}
-                    <div className={`absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500 rounded-tl-full`} />
+                  <div className="shrink-0 w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center">
+                    <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${feature.iconColor}`} strokeWidth={1.75} />
                   </div>
-                </div>
-              )
-            })}
-            
-            {/* Duplicate set for seamless loop */}
-            {features.map((feature, index) => {
-              const Icon = feature.icon
-              return (
-                <div
-                  key={`second-${feature.title}`}
-                  className="flex-shrink-0 w-[90vw] sm:w-[400px] md:w-[420px] lg:w-[380px] xl:w-[400px] group relative"
-                >
-                  {/* Gradient border effect */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300 -z-10" />
-                  
-                  {/* Main card */}
-                  <div className="relative h-full rounded-2xl bg-white/80 dark:bg-[#181818]/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-800/50 overflow-hidden transition-all duration-300 group-hover:border-transparent group-hover:shadow-2xl">
-                    {/* Animated gradient overlay */}
-                    <div className={`absolute inset-0 bg-gradient-to-br ${feature.bgColor} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                    
-                    {/* Top accent bar */}
-                    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${feature.color} opacity-60 group-hover:opacity-100 transition-opacity duration-300`} />
-                    
-                    {/* Content */}
-                    <div className="relative z-10 p-8">
-                      {/* Icon with modern design */}
-                      <div className="mb-6">
-                        <div className="relative inline-block">
-                          {/* Icon glow effect */}
-                          <div className={`absolute inset-0 ${feature.iconBg} opacity-20 blur-xl group-hover:opacity-40 transition-opacity duration-300 rounded-2xl`} />
-                          {/* Icon container */}
-                          <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-lg group-hover:shadow-2xl transition-all duration-300`}>
-                            <Icon className="h-8 w-8 text-white relative z-10" />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Title */}
-                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-[#1F4068] group-hover:to-[#3bb9ac] transition-all duration-300">
-                        {feature.title}
-                      </h3>
-                      
-                      {/* Description */}
-                      <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-6 text-base">
-                        {feature.description}
-                      </p>
-                      
-                      {/* Learn more link with modern design */}
-                      <div className="inline-flex items-center gap-2 text-sm font-semibold text-[#1F4068] dark:text-[#3bb9ac] cursor-pointer group/link">
-                        <span className="relative">
-                          Learn more
-                          <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#1F4068] to-[#3bb9ac] group-hover/link:w-full transition-all duration-300" />
-                        </span>
-                        <ArrowRight className="h-4 w-4 group-hover/link:translate-x-1 transition-transform duration-300" />
-                      </div>
-                    </div>
-                    
-                    {/* Decorative corner element */}
-                    <div className={`absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500 rounded-tl-full`} />
+
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold text-[#1F4068] mb-1.5 leading-tight">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm sm:text-[15px] text-gray-500 leading-relaxed">
+                      {feature.description}
+                    </p>
                   </div>
-                </div>
+                </motion.article>
               )
             })}
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   )

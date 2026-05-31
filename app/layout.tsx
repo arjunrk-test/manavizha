@@ -14,8 +14,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className="font-josefin antialiased">
+    <html lang="en" className="scroll-smooth font-sans">
+      <body className="antialiased">
         <UserActivityTracker />
         {children}
         <Toaster position="top-center" richColors />

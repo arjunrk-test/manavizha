@@ -1,6 +1,5 @@
 "use client"
 
-import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -14,6 +13,7 @@ import { getUserDashboard } from "@/lib/auth"
 interface AuthDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  defaultMode?: "login" | "signup"
 }
 
 const coupleStories = [
@@ -64,7 +64,16 @@ const COUNTRY_CODES = [
   { code: "+27", flag: "🇿🇦", country: "South Africa" },
 ]
 
-export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
+const authLabelClass =
+  "text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-gold mb-1.5 block"
+
+const authInputClass =
+  "h-11 rounded-xl border border-gray-200/90 bg-white px-4 text-sm text-[#1F4068] placeholder:text-gray-400 focus-visible:border-[#3bb9ac] focus-visible:ring-4 focus-visible:ring-[#3bb9ac]/10 shadow-sm w-full"
+
+const authPrimaryButtonClass =
+  "!bg-[#e87898] !text-white shadow-sm hover:!bg-[#d4567a] hover:!text-white"
+
+export function AuthDialog({ open, onOpenChange, defaultMode = "login" }: AuthDialogProps) {
   const router = useRouter()
   const [authMode, setAuthMode] = useState<"login" | "signup">("login")
   const [email, setEmail] = useState("")
@@ -79,7 +88,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-  // Clear all fields when dialog closes
+  // Clear all fields when dialog closes; apply mode when opening
   useEffect(() => {
     if (!open) {
       setEmail("")
@@ -93,8 +102,10 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
       setAuthMode("login")
       setError(null)
       setSuccessMessage(null)
+    } else {
+      setAuthMode(defaultMode)
     }
-  }, [open])
+  }, [open, defaultMode])
 
   const passwordStrength = (() => {
     if (!password) return { label: "", value: 0, color: "bg-gray-200", isValid: false }
@@ -219,66 +230,37 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-5xl border-0 bg-transparent p-0 sm:p-0">
-        <div className="grid lg:grid-cols-[1.1fr,1fr] overflow-hidden rounded-2xl bg-[#080b16] text-white">
-          <div className="relative flex flex-col gap-6 p-8 sm:p-10 overflow-hidden">
-            {/* Animated gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#1F4068] via-[#3bb9ac] to-[#2fa085] bg-[length:200%_auto] animate-gradient" />
+      <DialogContent className="auth-dialog-content w-[95vw] max-w-5xl border-0 bg-transparent p-0 sm:p-0 overflow-hidden [&>button]:right-4 [&>button]:top-4 sm:[&>button]:right-5 sm:[&>button]:top-5 [&>button]:rounded-full [&>button]:h-9 [&>button]:w-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:bg-white [&>button]:shadow-[0_4px_20px_rgba(31,64,104,0.12)] [&>button]:text-[#1F4068] [&>button]:opacity-100 [&>button]:hover:bg-[#faf8f4] [&>button]:z-20 [&>button]:border [&>button]:border-gray-100/90">
+        <div className="grid lg:grid-cols-[1.05fr,1fr] overflow-hidden rounded-2xl border border-gray-100/90 shadow-[0_24px_64px_rgba(31,64,104,0.14)]">
+          {/* Story panel */}
+          <div className="relative hidden lg:flex flex-col gap-6 p-8 sm:p-10 overflow-hidden min-h-[32rem]">
+            <div className="absolute inset-0 cta-petal-surface" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(255,255,255,0.35),transparent_50%)]" />
 
-            {/* Overlay pattern */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
-
-            {/* Modern grid overlay */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px] opacity-30" />
-
-            {/* Decorative elements */}
-            <div className="absolute inset-0">
-              <motion.div
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.3, 0.5, 0.3],
-                }}
-                transition={{
-                  duration: 8,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="absolute top-0 left-0 w-96 h-96 bg-white/20 rounded-full blur-3xl"
-              />
-              <motion.div
-                animate={{
-                  scale: [1.2, 1, 1.2],
-                  opacity: [0.5, 0.3, 0.5],
-                }}
-                transition={{
-                  duration: 10,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 2,
-                }}
-                className="absolute bottom-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl"
-              />
-            </div>
-
-            <div className="relative z-10 space-y-4">
-              <p className="text-xs uppercase tracking-[0.4em] text-white/90">Welcome back</p>
-              <h3 className="text-3xl sm:text-4xl font-semibold leading-tight text-white">
+            <div className="relative z-10 space-y-3 text-black">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-black/65">
+                {authMode === "login" ? "Welcome back" : "Join Manavizha"}
+              </p>
+              <h3 className="font-display text-3xl font-semibold leading-tight tracking-tight">
                 Find your perfect match with confidence.
               </h3>
-              <p className="text-sm text-white/90">
-                Sign in to access personalized recommendations, connect with verified members, and
-                continue meaningful conversations.
+              <p className="text-sm text-black/75 leading-relaxed max-w-md">
+                {authMode === "login"
+                  ? "Sign in to access personalized recommendations and connect with verified members."
+                  : "Create your profile and start your journey with families who share your values."}
               </p>
             </div>
 
-            <div className="relative z-10 mt-2 space-y-3">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/80">Success stories</p>
-              <div className="overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-sm">
+            <div className="relative z-10 mt-1 space-y-3 flex-1 flex flex-col min-h-0">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-black/60">
+                Success stories
+              </p>
+              <div className="overflow-hidden rounded-xl border border-white/60 bg-white/40 backdrop-blur-sm shadow-[0_8px_32px_rgba(31,64,104,0.08)]">
                 <div className="flex gap-4 p-4 animate-scroll-couples">
                   {[...coupleStories, ...coupleStories, ...coupleStories].map((couple, index) => (
                     <div
                       key={`${couple.name}-${index}`}
-                      className="relative min-w-[280px] h-[200px] overflow-hidden rounded-xl flex-shrink-0"
+                      className="relative min-w-[240px] h-[180px] overflow-hidden rounded-lg flex-shrink-0"
                     >
                       <img
                         src={couple.image}
@@ -286,48 +268,51 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                         className="h-full w-full object-cover"
                         loading="lazy"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                        <p className="font-semibold text-lg mb-1">{couple.name}</p>
-                        <p className="text-xs text-white/90">{couple.location}</p>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
+                        <p className="font-semibold text-base mb-0.5">{couple.name}</p>
+                        <p className="text-xs text-white/85">{couple.location}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-            <div className="relative z-10 mt-auto flex items-center gap-4 text-sm text-white/90">
-              <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center text-lg font-semibold backdrop-blur-sm">
+
+            <div className="relative z-10 mt-auto flex items-center gap-3 text-sm text-black/80">
+              <div className="h-11 w-11 rounded-full bg-white/70 border border-white/80 flex items-center justify-center text-base font-bold text-[#1F4068] shadow-sm">
                 M
               </div>
               <div>
-                <p className="font-medium text-white">Trusted by 10,000+ families</p>
-                <p className="text-xs text-white/70">Secure. Verified. Confidential.</p>
+                <p className="font-semibold text-[#1F4068]">Trusted by 10,000+ families</p>
+                <p className="text-xs text-black/60">Secure · Verified · Confidential</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-200 p-6 sm:p-8 space-y-6">
-            <DialogHeader className="space-y-1 text-left">
-              <DialogTitle className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                {authMode === "login" ? "Welcome back" : "Create an account"}
+          {/* Form panel */}
+          <div className="bg-[#faf8f4] text-[#1F4068] p-6 sm:p-8 lg:p-9 space-y-5 max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="space-y-1.5 text-left pr-8">
+              <DialogTitle className="font-display text-2xl sm:text-[1.65rem] font-semibold text-[#1F4068] leading-tight">
+                {authMode === "login" ? "Sign in" : "Create your profile"}
               </DialogTitle>
-              <DialogDescription className="text-gray-500 dark:text-gray-400">
+              <DialogDescription className="text-sm text-gray-600">
                 {authMode === "login"
-                  ? "Sign in to continue building your story."
-                  : "Join the community and start connecting with verified members."}
+                  ? "Welcome back — continue building your story."
+                  : "Join the community and connect with verified members."}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="flex gap-2 rounded-full bg-gray-100 dark:bg-gray-900/60 p-1 text-sm font-medium">
+            <div className="flex gap-1.5 rounded-xl bg-white border border-gray-100/90 p-1 shadow-sm">
               <Button
                 type="button"
                 size="sm"
                 variant="ghost"
-                className={`flex-1 rounded-full transition-all font-bold uppercase tracking-widest text-[10px] ${authMode === "login"
-                  ? "bg-[#3bb9ac] text-white shadow-lg"
-                  : "text-gray-500 hover:text-[#3bb9ac]"
-                  }`}
+                className={`flex-1 rounded-lg h-10 text-sm font-semibold transition-all ${
+                  authMode === "login"
+                    ? authPrimaryButtonClass
+                    : "text-gray-600 hover:text-[#1F4068] hover:bg-[#faf8f4]"
+                }`}
                 onClick={() => {
                   setAuthMode("login")
                   setPassword("")
@@ -342,10 +327,11 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                className={`flex-1 rounded-full transition-all font-bold uppercase tracking-widest text-[10px] ${authMode === "signup"
-                  ? "bg-[#3bb9ac] text-white shadow-lg"
-                  : "text-gray-500 hover:text-[#3bb9ac]"
-                  }`}
+                className={`flex-1 rounded-lg h-10 text-sm font-semibold transition-all ${
+                  authMode === "signup"
+                    ? authPrimaryButtonClass
+                    : "text-gray-600 hover:text-[#1F4068] hover:bg-[#faf8f4]"
+                }`}
                 onClick={() => {
                   setAuthMode("signup")
                   setName("")
@@ -357,31 +343,27 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   setSuccessMessage(null)
                 }}
               >
-                Sign Up
+                Sign up
               </Button>
             </div>
 
-            <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-gray-400">
-              <span className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
-              Enter your details below
-              <span className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
-            </div>
-
             {error && (
-              <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+              <div className="rounded-xl border border-red-200/90 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {error}
               </div>
             )}
 
             {successMessage && (
-              <div className="rounded-2xl border border-green-200 bg-green-50 p-3 text-sm text-green-600 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
+              <div className="rounded-xl border border-[#3bb9ac]/25 bg-[#3bb9ac]/10 px-4 py-3 text-sm text-[#1F4068]">
                 {successMessage}
               </div>
             )}
 
             <form className="space-y-4" onSubmit={handleAuthSubmit} autoComplete="off">
-              <div className="space-y-2">
-                <Label htmlFor="auth-email" className="sds-label">Email Address</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="auth-email" className={authLabelClass}>
+                  Email address
+                </Label>
                 <Input
                   id="auth-email"
                   type="email"
@@ -392,14 +374,16 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   autoComplete="off"
                   data-1p-ignore
                   data-lpignore="true"
-                  className="sds-input w-full"
+                  className={authInputClass}
                 />
               </div>
 
               {authMode === "signup" && (
                 <>
-                  <div className="space-y-2">
-                    <Label htmlFor="auth-name" className="sds-label">Full Name</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="auth-name" className={authLabelClass}>
+                      Full name
+                    </Label>
                     <Input
                       id="auth-name"
                       type="text"
@@ -410,19 +394,23 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                       autoComplete="off"
                       data-1p-ignore
                       data-lpignore="true"
-                      className="rounded-2xl border-gray-200 bg-gray-50 focus-visible:ring-gray-900 dark:bg-gray-900 dark:border-gray-800"
+                      className={authInputClass}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="auth-phone" className="sds-label">Phone Number</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="auth-phone" className={authLabelClass}>
+                      Phone number
+                    </Label>
                     <div className="flex gap-2">
                       <select
                         value={countryCode}
                         onChange={(e) => setCountryCode(e.target.value)}
-                        className="shrink-0 w-28 h-11 rounded-xl border-2 border-indigo-100/50 bg-white/80 px-2 py-2 text-[12px] font-bold text-gray-900 focus:outline-none focus:border-[#3bb9ac] dark:bg-gray-900 dark:border-gray-800 dark:text-gray-100"
+                        className="shrink-0 w-[5.5rem] h-11 rounded-xl border border-gray-200/90 bg-white px-2 text-xs font-medium text-[#1F4068] shadow-sm focus:outline-none focus:border-[#3bb9ac] focus:ring-4 focus:ring-[#3bb9ac]/10"
                       >
-                        {COUNTRY_CODES.map(c => (
-                          <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+                        {COUNTRY_CODES.map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {c.flag} {c.code}
+                          </option>
                         ))}
                       </select>
                       <Input
@@ -435,7 +423,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                         autoComplete="off"
                         data-1p-ignore
                         data-lpignore="true"
-                        className="flex-1 rounded-2xl border-gray-200 bg-gray-50 focus-visible:ring-gray-900 dark:bg-gray-900 dark:border-gray-800"
+                        className={`${authInputClass} flex-1`}
                       />
                     </div>
                   </div>
@@ -443,8 +431,10 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               )}
 
               <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label htmlFor="auth-password" className="sds-label">Password</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="auth-password" className={authLabelClass}>
+                    Password
+                  </Label>
                   <div className="relative">
                     <Input
                       id="auth-password"
@@ -456,12 +446,12 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                       autoComplete="new-password"
                       data-1p-ignore
                       data-lpignore="true"
-                      className="rounded-2xl border-gray-200 bg-gray-50 pr-12 focus-visible:ring-gray-900 dark:bg-gray-900 dark:border-gray-800"
+                      className={`${authInputClass} pr-11`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"
+                      className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-[#1F4068]"
                       aria-label={showPassword ? "Hide password" : "Show password"}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -470,15 +460,13 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                 </div>
 
                 {password && authMode === "signup" && (
-                  <div className="space-y-2 rounded-2xl border border-gray-200 bg-white p-3 text-sm dark:border-gray-800 dark:bg-gray-900">
+                  <div className="space-y-2 rounded-xl border border-gray-100/90 bg-white p-4 text-sm shadow-sm">
                     <div className="space-y-1">
-                      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center justify-between text-xs text-gray-500">
                         <span>Password strength</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">
-                          {passwordStrength.label}
-                        </span>
+                        <span className="font-medium text-[#1F4068]">{passwordStrength.label}</span>
                       </div>
-                      <div className="h-1.5 rounded-full bg-gray-200 dark:bg-gray-800">
+                      <div className="h-1.5 rounded-full bg-gray-100">
                         <div
                           className={`h-full rounded-full ${passwordStrength.color} transition-all`}
                           style={{ width: `${passwordStrength.value}%` }}
@@ -486,36 +474,36 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                       </div>
                     </div>
 
-                    <div className="space-y-1 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="space-y-1 text-xs text-gray-500">
                       <div className="flex items-center gap-2">
                         {password.length >= 11 ? (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                          <CheckCircle2 className="h-3.5 w-3.5 text-[#3bb9ac]" />
                         ) : (
-                          <XCircle className="h-3.5 w-3.5 text-red-500" />
+                          <XCircle className="h-3.5 w-3.5 text-red-400" />
                         )}
                         Minimum 11 characters
                       </div>
                       <div className="flex items-center gap-2">
                         {/[a-z]/.test(password) && /[A-Z]/.test(password) ? (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                          <CheckCircle2 className="h-3.5 w-3.5 text-[#3bb9ac]" />
                         ) : (
-                          <XCircle className="h-3.5 w-3.5 text-red-500" />
+                          <XCircle className="h-3.5 w-3.5 text-red-400" />
                         )}
                         Lowercase & uppercase letters
                       </div>
                       <div className="flex items-center gap-2">
                         {/\d/.test(password) ? (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                          <CheckCircle2 className="h-3.5 w-3.5 text-[#3bb9ac]" />
                         ) : (
-                          <XCircle className="h-3.5 w-3.5 text-red-500" />
+                          <XCircle className="h-3.5 w-3.5 text-red-400" />
                         )}
                         At least one number
                       </div>
                       <div className="flex items-center gap-2">
                         {/[^A-Za-z0-9]/.test(password) ? (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                          <CheckCircle2 className="h-3.5 w-3.5 text-[#3bb9ac]" />
                         ) : (
-                          <XCircle className="h-3.5 w-3.5 text-red-500" />
+                          <XCircle className="h-3.5 w-3.5 text-red-400" />
                         )}
                         At least one symbol
                       </div>
@@ -523,9 +511,12 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   </div>
                 )}
               </div>
+
               {authMode === "signup" && (
-                <div className="space-y-2">
-                  <Label htmlFor="auth-confirm" className="sds-label">Confirm Password</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="auth-confirm" className={authLabelClass}>
+                    Confirm password
+                  </Label>
                   <div className="relative">
                     <Input
                       id="auth-confirm"
@@ -537,12 +528,12 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                       autoComplete="new-password"
                       data-1p-ignore
                       data-lpignore="true"
-                      className="rounded-2xl border-gray-200 bg-gray-50 pr-12 focus-visible:ring-gray-900 dark:bg-gray-900 dark:border-gray-800"
+                      className={`${authInputClass} pr-11`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"
+                      className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-[#1F4068]"
                       aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                     >
                       {showConfirmPassword ? (
@@ -556,22 +547,23 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                     <div className="flex items-center gap-2 text-sm">
                       {passwordsMatch ? (
                         <>
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                          <span className="text-green-600">Passwords match</span>
+                          <CheckCircle2 className="h-4 w-4 text-[#3bb9ac]" />
+                          <span className="text-[#1F4068]">Passwords match</span>
                         </>
                       ) : (
                         <>
-                          <XCircle className="h-4 w-4 text-red-500" />
-                          <span className="text-red-500">Passwords do not match</span>
+                          <XCircle className="h-4 w-4 text-red-400" />
+                          <span className="text-red-600">Passwords do not match</span>
                         </>
                       )}
                     </div>
                   )}
                 </div>
               )}
+
               <Button
                 type="submit"
-                className="w-full h-12 rounded-full bg-gradient-to-r from-[#1F4068] to-[#3bb9ac] text-white hover:opacity-90 border-0 shadow-lg hover:shadow-emerald-500/20 transition-all font-bold uppercase tracking-[0.2em] text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`w-full h-11 rounded-xl text-sm font-semibold shadow-md disabled:opacity-50 disabled:cursor-not-allowed ${authPrimaryButtonClass}`}
                 disabled={
                   isLoading ||
                   (authMode === "signup" && (!passwordsMatch || !passwordStrength.isValid))
@@ -579,24 +571,33 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               >
                 {isLoading ? (
                   <span className="flex items-center gap-2">
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
                     {authMode === "login" ? "Signing in..." : "Creating account..."}
                   </span>
+                ) : authMode === "login" ? (
+                  "Continue"
                 ) : (
-                  authMode === "login" ? "Continue" : "Create Account"
+                  "Create account"
                 )}
               </Button>
             </form>
 
-            <p className="text-center text-xs text-gray-500">
+            <p className="text-center text-xs text-gray-500 leading-relaxed">
               By continuing, you agree to our{" "}
-              <a href="#" className="font-medium text-gray-900 dark:text-white underline-offset-4 hover:underline">
+              <a
+                href="/terms-of-service"
+                className="font-medium text-[#1F4068] underline-offset-4 hover:underline"
+              >
                 Terms of Service
               </a>{" "}
               and{" "}
-              <a href="#" className="font-medium text-gray-900 dark:text-white underline-offset-4 hover:underline">
+              <a
+                href="/privacy-policy"
+                className="font-medium text-[#1F4068] underline-offset-4 hover:underline"
+              >
                 Privacy Policy
               </a>
+              .
             </p>
           </div>
         </div>

@@ -1,8 +1,8 @@
 "use client"
 
 import { supabase } from "@/lib/supabase"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState, Suspense } from "react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState, Suspense, use } from "react"
 import { ArrowLeft, Users } from "lucide-react"
 import { getAllParentIds } from "@/app/actions/admin"
 import { AnimatedBackground } from "@/components/animated-background"
@@ -24,10 +24,8 @@ const STAGES = [
     { key: "referral", label: "Photos (Referral Yet to be Given)", presentTable: "photos", absentTable: "referral_details", idCol: "user_id" },
 ]
 
-function FunnelContent() {
+function FunnelContent({ stage }: { stage: string }) {
     const router = useRouter()
-    const searchParams = useSearchParams()
-    const stage = searchParams.get("stage") || "personal"
     const stageConfig = STAGES.find(s => s.key === stage) || STAGES[1]
 
     const [isLoading, setIsLoading] = useState(true)
@@ -193,14 +191,20 @@ function FunnelContent() {
     )
 }
 
-export default function AdminFunnelSegmentPage() {
+export default function AdminFunnelSegmentPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ stage?: string }>
+}) {
+    const { stage = "personal" } = use(searchParams)
+
     return (
         <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 mx-auto" />
             </div>
         }>
-            <FunnelContent />
+            <FunnelContent stage={stage} />
         </Suspense>
     )
 }

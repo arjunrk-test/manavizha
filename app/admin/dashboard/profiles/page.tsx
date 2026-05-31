@@ -3,11 +3,10 @@
 import { AdminNavbar } from "@/components/admin-navbar"
 import { AnimatedBackground } from "@/components/animated-background"
 import { supabase } from "@/lib/supabase"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState, useMemo } from "react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState, useMemo, use, Suspense } from "react"
 import { updateUserPremiumSubscription } from "@/app/actions/admin"
 import { ArrowLeft, Users, User, UserCheck, Search, X, HeartHandshake, AlertTriangle, Crown, Star, Gem, Shield, MoreVertical } from "lucide-react"
-import { Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -91,10 +90,8 @@ function getPremiumBadge(isPremium: boolean, plan: string | null, expiresAt: str
     return <span className="bg-[#3bb9ac] text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 w-fit shadow-md shadow-emerald-200 dark:shadow-none"><Crown className="h-3 w-3"/> Premium</span>
 }
 
-function AdminProfilesContent() {
+function AdminProfilesContent({ genderFilter }: { genderFilter: string | null }) {
     const router = useRouter()
-    const searchParams = useSearchParams()
-    const genderFilter = searchParams.get("gender")
 
     const [isLoading, setIsLoading] = useState(true)
     const [allProfiles, setAllProfiles] = useState<any[]>([])
@@ -582,14 +579,20 @@ function AdminProfilesContent() {
     )
 }
 
-export default function AdminProfilesPage() {
+export default function AdminProfilesPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ gender?: string }>
+}) {
+    const { gender: genderFilter = null } = use(searchParams)
+
     return (
         <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
             </div>
         }>
-            <AdminProfilesContent />
+            <AdminProfilesContent genderFilter={genderFilter} />
         </Suspense>
     )
 }
