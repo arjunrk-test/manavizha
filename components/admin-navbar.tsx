@@ -10,18 +10,33 @@ import { supabase } from "@/lib/supabase"
 import { getUserDashboard } from "@/lib/auth"
 import Image from "next/image"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
-const navLinks = [
+const landingNavLinks = [
   { label: "Features", href: "#features" },
   { label: "Capabilities", href: "#capabilities" },
+  { label: "Verification", href: "/admin/verification" },
+]
+
+const dashboardNavLinks = [
+  { label: "Dashboard", href: "/admin/dashboard" },
+  { label: "Profiles", href: "/admin/dashboard/profiles" },
+  { label: "Accounts", href: "/admin/dashboard/accounts" },
   { label: "Verification", href: "/admin/verification" },
 ]
 
 const logoutButtonClass =
   "!bg-red-500 hover:!bg-red-600 !text-white border border-red-500 hover:!text-white shadow-sm rounded-xl"
 
-export function AdminNavbar() {
+interface AdminNavbarProps {
+  variant?: "landing" | "dashboard"
+}
+
+export function AdminNavbar({ variant = "landing" }: AdminNavbarProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  const isDashboard = variant === "dashboard"
+  const navLinks = isDashboard ? dashboardNavLinks : landingNavLinks
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [isLoginOpen, setIsLoginOpen] = useState(false)
@@ -78,14 +93,16 @@ export function AdminNavbar() {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100"
-          : "bg-[#faf8f4]/80 backdrop-blur-sm"
+        isDashboard
+          ? "bg-white/98 backdrop-blur-md shadow-[0_4px_28px_rgba(31,64,104,0.09)] border-b border-gray-100/90 after:pointer-events-none after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-gradient-to-r after:from-[#c9a227]/80 after:via-[#e87898]/70 after:to-[#3bb9ac]/80"
+          : scrolled
+            ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100"
+            : "bg-[#faf8f4]/80 backdrop-blur-sm"
       }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between min-h-16 py-2">
-          <Link href="/admin" className="flex items-center gap-2.5 shrink-0 min-w-0">
+          <Link href={isDashboard ? "/admin/dashboard" : "/admin"} className="flex items-center gap-2.5 shrink-0 min-w-0">
             <Image
               src="/logo.png"
               alt="Manavizha"
@@ -106,16 +123,28 @@ export function AdminNavbar() {
             </div>
           </Link>
 
-          <div className="hidden lg:flex items-center gap-8">
-            {navLinks.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                className="text-sm font-medium text-gray-600 hover:text-[#1F4068] transition-colors"
-              >
-                {item.label}
-              </a>
-            ))}
+          <div className="hidden lg:flex items-center gap-6">
+            {navLinks.map((item) => {
+              const isActive = isDashboard && pathname === item.href
+              const className = `text-sm font-medium transition-colors ${
+                isActive
+                  ? "text-[#1F4068] font-semibold"
+                  : "text-gray-600 hover:text-[#1F4068]"
+              }`
+
+              return isDashboard ? (
+                <Link key={item.label} href={item.href} className={className}>
+                  {item.label}
+                  {isActive && (
+                    <span className="block h-0.5 mt-1 rounded-full bg-gradient-to-r from-[#c9a227] to-[#e87898]" />
+                  )}
+                </Link>
+              ) : (
+                <a key={item.label} href={item.href} className={className}>
+                  {item.label}
+                </a>
+              )
+            })}
           </div>
 
           <div className="hidden md:flex items-center gap-3">
@@ -166,16 +195,32 @@ export function AdminNavbar() {
               exit={{ opacity: 0, height: 0 }}
               className="md:hidden py-4 border-t border-gray-100"
             >
-              {navLinks.map((item) => (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  className="block py-2.5 text-sm font-medium text-gray-700"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {item.label}
-                </a>
-              ))}
+              {navLinks.map((item) => {
+                const isActive = isDashboard && pathname === item.href
+                const className = `block py-2.5 text-sm font-medium ${
+                  isActive ? "text-[#1F4068] font-semibold" : "text-gray-700"
+                }`
+
+                return isDashboard ? (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className={className}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    className={className}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {item.label}
+                  </a>
+                )
+              })}
               <div className="pt-4 flex flex-col gap-2">
                 <Button
                   variant="outline"

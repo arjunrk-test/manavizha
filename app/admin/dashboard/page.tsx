@@ -1,20 +1,144 @@
 "use client"
 
 import { AdminNavbar } from "@/components/admin-navbar"
+import { AdminDashboardBackground } from "@/components/admin/admin-dashboard-background"
+import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { getUserDashboard } from "@/lib/auth"
-import { Users, Database, Mail, ArrowRight, User, ShieldCheck } from "lucide-react"
+import {
+  Users,
+  Database,
+  Mail,
+  ArrowRight,
+  User,
+  ShieldCheck,
+  Sparkles,
+  Heart,
+  TrendingUp,
+} from "lucide-react"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { motion } from "framer-motion"
 
-const statCardClass =
-  "rounded-2xl border border-gray-100/90 bg-white p-6 sm:p-8 shadow-[0_8px_32px_rgba(31,64,104,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(31,64,104,0.1)] h-full relative overflow-hidden group"
+const STAGE_FUNNEL_KEYS: Record<string, string> = {
+  personal_details: "personal",
+  contact_details: "contact",
+  education_details: "education",
+  profession_employee: "professional",
+  family_details: "family",
+  horoscope_details: "horoscope",
+  interests: "interests",
+  social_habits: "social",
+  photos: "referral",
+}
 
-const actionCardClass =
-  "bg-white border border-gray-100/90 shadow-[0_8px_32px_rgba(31,64,104,0.06)] group cursor-pointer transition-all duration-200 rounded-2xl hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(31,64,104,0.1)]"
+const quickActions = [
+  {
+    href: "/admin/dashboard/funnel?stage=personal",
+    title: "Manage profiles",
+    description: "View users who have not completed their profile stages",
+    icon: User,
+    accent: "teal" as const,
+    hoverBorder: "hover:border-[#3bb9ac]/30",
+    iconBg: "bg-[#3bb9ac]/10 group-hover:bg-[#3bb9ac]/18",
+    iconColor: "text-[#3bb9ac]",
+    arrowHover: "group-hover:text-[#3bb9ac]",
+  },
+  {
+    href: "/admin/dashboard/accounts",
+    title: "Accounts",
+    description: "Manage user accounts, profiles, and access permissions",
+    icon: Users,
+    accent: "navy" as const,
+    hoverBorder: "hover:border-[#1F4068]/25",
+    iconBg: "bg-[#1F4068]/8 group-hover:bg-[#1F4068]/14",
+    iconColor: "text-[#1F4068]",
+    arrowHover: "group-hover:text-[#1F4068]",
+  },
+  {
+    href: "/admin/dashboard/masterdata",
+    title: "Master data",
+    description: "Access and manage all platform data and configurations",
+    icon: Database,
+    accent: "gold" as const,
+    hoverBorder: "hover:border-[#c9a227]/35",
+    iconBg: "bg-[#fdf6e3] group-hover:bg-[#f5ebc8]",
+    iconColor: "text-[#c9a227]",
+    arrowHover: "group-hover:text-[#c9a227]",
+  },
+  {
+    href: "/admin/dashboard/email",
+    title: "Email",
+    description: "Manage email templates, campaigns, and communications",
+    icon: Mail,
+    accent: "rose" as const,
+    hoverBorder: "hover:border-[#e87898]/30",
+    iconBg: "bg-[#fce8ef] group-hover:bg-[#f9d4df]",
+    iconColor: "text-[#e87898]",
+    arrowHover: "group-hover:text-[#e87898]",
+  },
+  {
+    href: "/admin/verification",
+    title: "Identity verification",
+    description: "Review and approve pending identity status for users",
+    icon: ShieldCheck,
+    accent: "teal" as const,
+    hoverBorder: "hover:border-[#3bb9ac]/30",
+    iconBg: "bg-[#3bb9ac]/10 group-hover:bg-[#3bb9ac]/18",
+    iconColor: "text-[#3bb9ac]",
+    arrowHover: "group-hover:text-[#3bb9ac]",
+    verification: true,
+  },
+]
+
+const statCards = [
+  {
+    href: "/admin/dashboard/profiles",
+    label: "Total profiles",
+    key: "total" as const,
+    icon: Users,
+    glow: "bg-[#3bb9ac]/8 group-hover:bg-[#3bb9ac]/14",
+    iconWrap: "bg-[#3bb9ac]/12",
+    iconColor: "text-[#3bb9ac]",
+    orb: "bg-[#3bb9ac]/10",
+  },
+  {
+    href: "/admin/dashboard/profiles?gender=Male",
+    label: "Men",
+    key: "men" as const,
+    icon: User,
+    glow: "bg-[#1F4068]/6 group-hover:bg-[#1F4068]/10",
+    iconWrap: "bg-[#1F4068]/10",
+    iconColor: "text-[#1F4068]",
+    orb: "bg-[#1F4068]/8",
+  },
+  {
+    href: "/admin/dashboard/profiles?gender=Female",
+    label: "Women",
+    key: "women" as const,
+    icon: User,
+    glow: "bg-[#e87898]/8 group-hover:bg-[#e87898]/14",
+    iconWrap: "bg-[#fce8ef]",
+    iconColor: "text-[#e87898]",
+    orb: "bg-[#e87898]/10",
+  },
+]
+
+function AnimatedNumber({ value }: { value: number }) {
+  return (
+    <motion.span
+      key={value}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      className="text-3xl sm:text-4xl font-bold text-[#1F4068] tabular-nums"
+    >
+      {value.toLocaleString()}
+    </motion.span>
+  )
+}
 
 export default function AdminDashboardPage() {
   const router = useRouter()
@@ -26,16 +150,15 @@ export default function AdminDashboardPage() {
     pendingVerifications: 0,
   })
   const [stageStats, setStageStats] = useState([
-    { label: "Personal Details", count: 0, table: "personal_details" },
-    { label: "Contact Details", count: 0, table: "contact_details" },
-    { label: "Educational Details", count: 0, table: "education_details" },
-    { label: "Professional Details", count: 0, table: "profession_employee" },
-    { label: "Family Details", count: 0, table: "family_details" },
-    { label: "Horoscope Details", count: 0, table: "horoscope_details" },
+    { label: "Personal", count: 0, table: "personal_details" },
+    { label: "Contact", count: 0, table: "contact_details" },
+    { label: "Education", count: 0, table: "education_details" },
+    { label: "Professional", count: 0, table: "profession_employee" },
+    { label: "Family", count: 0, table: "family_details" },
+    { label: "Horoscope", count: 0, table: "horoscope_details" },
     { label: "Interests", count: 0, table: "interests" },
-    { label: "Social Habits", count: 0, table: "social_habits" },
+    { label: "Social", count: 0, table: "social_habits" },
     { label: "Photos", count: 0, table: "photos" },
-    { label: "Referral", count: 0, table: "referral_details" },
   ])
 
   useEffect(() => {
@@ -91,7 +214,6 @@ export default function AdminDashboardPage() {
         "interests",
         "social_habits",
         "photos",
-        "referral_details",
       ]
 
       const counts = await Promise.all(
@@ -123,239 +245,248 @@ export default function AdminDashboardPage() {
   }, [router])
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#faf8f4]">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#fce8ef] border-t-[#e87898] mx-auto mb-4" />
-          <p className="text-sm text-gray-600">Loading admin dashboard...</p>
-        </div>
-      </div>
-    )
+    return <DashboardLoadingScreen />
   }
 
-  return (
-    <div className="relative min-h-screen flex flex-col bg-[#faf8f4]">
-      <AdminNavbar />
+  const completionBase = stats.total || 1
 
-      <main className="relative flex-1 flex flex-col pt-20">
+  return (
+    <div className="relative min-h-screen flex flex-col">
+      <AdminDashboardBackground />
+      <AdminNavbar variant="dashboard" />
+
+      <main className="relative z-10 flex-1 flex flex-col pt-[4.75rem]">
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10 flex-1">
-          {/* Page header */}
-          <div className="mb-8 sm:mb-10">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-gold mb-2">
-                Admin portal
-              </p>
-              <h1 className="font-display text-3xl sm:text-4xl font-semibold text-[#1F4068] tracking-tight mb-2">
-                Dashboard
-              </h1>
-              <p className="text-sm sm:text-base text-gray-600 max-w-xl">
-                Manage profiles, accounts, verification, and platform settings from one place.
-              </p>
+          {/* Welcome hero */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="relative mb-10 sm:mb-12 overflow-hidden rounded-[1.35rem] border border-white/80 bg-white/75 backdrop-blur-md shadow-[0_20px_60px_rgba(31,64,104,0.1),0_4px_20px_rgba(232,120,152,0.06)]"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-[#fce8ef]/40 via-white/20 to-[#e6f7f5]/35 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-48 h-48 bg-[#c9a227]/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#e87898]/10 rounded-full blur-3xl -ml-12 -mb-12 pointer-events-none" />
+
+            <div className="relative p-6 sm:p-8 lg:p-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              <div className="max-w-2xl">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#fce8ef] bg-white/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-gold mb-4">
+                  <Sparkles className="h-3.5 w-3.5 text-[#c9a227]" />
+                  Sacred matchmaking · Admin control
+                </div>
+                <h1 className="font-display text-3xl sm:text-4xl lg:text-[2.6rem] font-semibold text-[#1F4068] tracking-tight leading-[1.1] mb-3">
+                  Welcome to your
+                  <span className="block text-brand-gold">matrimonial command center</span>
+                </h1>
+                <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                  Oversee profiles, verifications, and family journeys — every decision here shapes
+                  meaningful connections on Manavizha.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
+                {stats.pendingVerifications > 0 && (
+                  <Link
+                    href="/admin/verification"
+                    className="group flex items-center gap-3 rounded-xl border border-[#e87898]/30 bg-gradient-to-r from-[#fce8ef]/80 to-white/90 px-4 py-3 shadow-sm transition-all hover:shadow-md hover:border-[#e87898]/50"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#e87898] text-white shrink-0">
+                      <ShieldCheck className="h-5 w-5" strokeWidth={1.75} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[#1F4068]">
+                        {stats.pendingVerifications} verification{stats.pendingVerifications !== 1 ? "s" : ""} awaiting
+                      </p>
+                      <p className="text-xs text-gray-500 group-hover:text-[#e87898] transition-colors flex items-center gap-1">
+                        Review now <ArrowRight className="h-3 w-3" />
+                      </p>
+                    </div>
+                  </Link>
+                )}
+                <div className="flex items-center gap-3 rounded-xl border border-gray-100/90 bg-white/70 px-4 py-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fdf6e3] shrink-0">
+                    <Heart className="h-5 w-5 text-[#e87898] fill-[#fce8ef]" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">Active profiles</p>
+                    <p className="text-lg font-bold text-[#1F4068]">{stats.total.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          </motion.section>
 
           {/* Profile statistics */}
           <section className="mb-10 sm:mb-12">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-gray-400 mb-5">
-              Profile statistics
-            </h2>
+            <div className="flex items-end justify-between gap-4 mb-5">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-gold mb-1">
+                  Community snapshot
+                </p>
+                <h2 className="font-display text-xl sm:text-2xl font-semibold text-[#1F4068]">
+                  Profile statistics
+                </h2>
+              </div>
+              <TrendingUp className="h-5 w-5 text-[#3bb9ac]/60 hidden sm:block" strokeWidth={1.75} />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-              <Link href="/admin/dashboard/profiles" className="block">
-                <div className={statCardClass}>
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-[#3bb9ac]/5 rounded-full -mr-12 -mt-12 group-hover:bg-[#3bb9ac]/10 transition-colors" />
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500">
-                      Total profiles
-                    </h3>
-                    <div className="bg-[#3bb9ac]/10 p-2.5 rounded-xl">
-                      <Users className="h-5 w-5 text-[#3bb9ac]" strokeWidth={1.75} />
-                    </div>
-                  </div>
-                  <p className="text-3xl sm:text-4xl font-bold text-[#1F4068]">{stats.total}</p>
-                </div>
-              </Link>
+              {statCards.map((card, index) => {
+                const Icon = card.icon
+                return (
+                  <motion.div
+                    key={card.key}
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45, delay: 0.08 + index * 0.06 }}
+                  >
+                    <Link href={card.href} className="block group">
+                      <div className="admin-dashboard-card-shine relative rounded-2xl border border-white/90 bg-white/85 backdrop-blur-sm p-6 sm:p-8 shadow-[0_10px_40px_rgba(31,64,104,0.07)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_48px_rgba(31,64,104,0.12)] h-full overflow-hidden">
+                        <div className={`absolute top-0 right-0 w-28 h-28 ${card.orb} rounded-full -mr-14 -mt-14 transition-transform duration-500 group-hover:scale-110`} />
+                        <div className="flex items-center justify-between mb-4 relative">
+                          <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500">
+                            {card.label}
+                          </h3>
+                          <div className={`${card.iconWrap} p-2.5 rounded-xl transition-transform duration-300 group-hover:scale-110`}>
+                            <Icon className={`h-5 w-5 ${card.iconColor}`} strokeWidth={1.75} />
+                          </div>
+                        </div>
+                        <AnimatedNumber value={stats[card.key]} />
+                      </div>
+                    </Link>
+                  </motion.div>
+                )
+              })}
+            </div>
+          </section>
 
-              <Link href="/admin/dashboard/profiles?gender=Male" className="block">
-                <div className={statCardClass}>
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-[#1F4068]/5 rounded-full -mr-12 -mt-12 group-hover:bg-[#1F4068]/10 transition-colors" />
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500">
-                      Men
-                    </h3>
-                    <div className="bg-[#1F4068]/8 p-2.5 rounded-xl">
-                      <User className="h-5 w-5 text-[#1F4068]" strokeWidth={1.75} />
-                    </div>
-                  </div>
-                  <p className="text-3xl sm:text-4xl font-bold text-[#1F4068]">{stats.men}</p>
-                </div>
-              </Link>
+          {/* Profile completion pipeline */}
+          <section className="mb-10 sm:mb-12">
+            <div className="mb-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-gold mb-1">
+                Journey progress
+              </p>
+              <h2 className="font-display text-xl sm:text-2xl font-semibold text-[#1F4068]">
+                Profile completion by stage
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Tap a stage to see members who stopped there
+              </p>
+            </div>
 
-              <Link href="/admin/dashboard/profiles?gender=Female" className="block">
-                <div className={statCardClass}>
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-[#e87898]/5 rounded-full -mr-12 -mt-12 group-hover:bg-[#e87898]/10 transition-colors" />
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500">
-                      Women
-                    </h3>
-                    <div className="bg-[#fce8ef] p-2.5 rounded-xl">
-                      <User className="h-5 w-5 text-[#e87898]" strokeWidth={1.75} />
-                    </div>
-                  </div>
-                  <p className="text-3xl sm:text-4xl font-bold text-[#1F4068]">{stats.women}</p>
-                </div>
-              </Link>
+            <div className="rounded-[1.25rem] border border-white/80 bg-white/75 backdrop-blur-sm p-4 sm:p-6 shadow-[0_10px_40px_rgba(31,64,104,0.06)]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {stageStats.map((stage, index) => {
+                  const pct = Math.round((stage.count / completionBase) * 100)
+                  const funnelKey = STAGE_FUNNEL_KEYS[stage.table]
+                  const href = funnelKey
+                    ? `/admin/dashboard/funnel?stage=${funnelKey}`
+                    : "/admin/dashboard/funnel?stage=personal"
+
+                  return (
+                    <motion.div
+                      key={stage.table}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.35, delay: 0.04 * index }}
+                    >
+                      <Link
+                        href={href}
+                        className="group block rounded-xl border border-gray-100/90 bg-[#faf8f4]/60 p-3.5 transition-all hover:bg-white hover:border-[#e87898]/25 hover:shadow-sm"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-[#1F4068]">{stage.label}</span>
+                          <span className="text-xs font-semibold text-[#3bb9ac]">{pct}%</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-gray-200/80 overflow-hidden mb-2">
+                          <motion.div
+                            className="h-full rounded-full bg-gradient-to-r from-[#e87898] via-[#c9a227] to-[#3bb9ac]"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 0.8, delay: 0.1 + index * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          {stage.count.toLocaleString()} profile{stage.count !== 1 ? "s" : ""}
+                        </p>
+                      </Link>
+                    </motion.div>
+                  )
+                })}
+              </div>
             </div>
           </section>
 
           {/* Quick actions */}
           <section>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-gray-400 mb-5">
-              Quick actions
-            </h2>
+            <div className="mb-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-gold mb-1">
+                Operations
+              </p>
+              <h2 className="font-display text-xl sm:text-2xl font-semibold text-[#1F4068]">
+                Quick actions
+              </h2>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pb-12 sm:pb-16">
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.05 }}
-              >
-                <Link href="/admin/dashboard/funnel?stage=personal" className="block">
-                  <Card className={`${actionCardClass} hover:border-[#3bb9ac]/25`}>
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="p-3 rounded-xl bg-[#3bb9ac]/10 group-hover:bg-[#3bb9ac]/15 transition-colors">
-                          <User className="h-7 w-7 text-[#3bb9ac]" strokeWidth={1.75} />
-                        </div>
-                        <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-[#3bb9ac] group-hover:translate-x-0.5 transition-all" />
-                      </div>
-                      <CardTitle className="font-display text-xl mt-4 text-[#1F4068]">
-                        Manage profiles
-                      </CardTitle>
-                      <CardDescription className="text-sm mt-2 text-gray-500">
-                        View users who have not completed their profile stages
-                      </CardDescription>
-                    </CardHeader>
-                  </Card>
-                </Link>
-              </motion.div>
+              {quickActions.map((action, index) => {
+                const Icon = action.icon
+                const isVerification = action.verification
+                const hasPending = isVerification && stats.pendingVerifications > 0
 
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-              >
-                <Link href="/admin/dashboard/accounts" className="block">
-                  <Card className={`${actionCardClass} hover:border-[#1F4068]/20`}>
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="p-3 rounded-xl bg-[#1F4068]/8 group-hover:bg-[#1F4068]/12 transition-colors">
-                          <Users className="h-7 w-7 text-[#1F4068]" strokeWidth={1.75} />
-                        </div>
-                        <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-[#1F4068] group-hover:translate-x-0.5 transition-all" />
-                      </div>
-                      <CardTitle className="font-display text-xl mt-4 text-[#1F4068]">
-                        Accounts
-                      </CardTitle>
-                      <CardDescription className="text-sm mt-2 text-gray-500">
-                        Manage user accounts, profiles, and access permissions
-                      </CardDescription>
-                    </CardHeader>
-                  </Card>
-                </Link>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.15 }}
-              >
-                <Link href="/admin/dashboard/masterdata" className="block">
-                  <Card className={`${actionCardClass} hover:border-[#c9a227]/30`}>
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="p-3 rounded-xl bg-[#fdf6e3] group-hover:bg-[#f5ebc8] transition-colors">
-                          <Database className="h-7 w-7 text-[#c9a227]" strokeWidth={1.75} />
-                        </div>
-                        <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-[#c9a227] group-hover:translate-x-0.5 transition-all" />
-                      </div>
-                      <CardTitle className="font-display text-xl mt-4 text-[#1F4068]">
-                        Master data
-                      </CardTitle>
-                      <CardDescription className="text-sm mt-2 text-gray-500">
-                        Access and manage all platform data and configurations
-                      </CardDescription>
-                    </CardHeader>
-                  </Card>
-                </Link>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-              >
-                <Link href="/admin/dashboard/email" className="block">
-                  <Card className={`${actionCardClass} hover:border-[#e87898]/25`}>
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="p-3 rounded-xl bg-[#fce8ef] group-hover:bg-[#f9d4df] transition-colors">
-                          <Mail className="h-7 w-7 text-[#e87898]" strokeWidth={1.75} />
-                        </div>
-                        <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-[#e87898] group-hover:translate-x-0.5 transition-all" />
-                      </div>
-                      <CardTitle className="font-display text-xl mt-4 text-[#1F4068]">
-                        Email
-                      </CardTitle>
-                      <CardDescription className="text-sm mt-2 text-gray-500">
-                        Manage email templates, campaigns, and communications
-                      </CardDescription>
-                    </CardHeader>
-                  </Card>
-                </Link>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.25 }}
-              >
-                <Link href="/admin/verification" className="block">
-                  <Card
-                    className={`${actionCardClass} ${
-                      stats.pendingVerifications > 0
-                        ? "border-[#e87898]/40 ring-2 ring-[#fce8ef] hover:border-[#e87898]/50"
-                        : "hover:border-[#3bb9ac]/25"
-                    }`}
+                return (
+                  <motion.div
+                    key={action.href}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.05 + index * 0.05 }}
+                    whileHover={{ y: -4 }}
                   >
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="p-3 rounded-xl bg-[#3bb9ac]/10 group-hover:bg-[#3bb9ac]/15 transition-colors">
-                          <ShieldCheck className="h-7 w-7 text-[#3bb9ac]" strokeWidth={1.75} />
-                        </div>
-                        <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-[#3bb9ac] group-hover:translate-x-0.5 transition-all" />
-                      </div>
-                      <CardTitle className="font-display text-xl mt-4 text-[#1F4068] flex flex-wrap items-center gap-2">
-                        Identity verification
-                        {stats.pendingVerifications > 0 && (
-                          <span className="inline-flex items-center rounded-full bg-[#e87898] px-2.5 py-0.5 text-[10px] font-semibold text-white">
-                            {stats.pendingVerifications} pending
-                          </span>
-                        )}
-                      </CardTitle>
-                      <CardDescription className="text-sm mt-2 text-gray-500">
-                        Review and approve pending identity status for users
-                      </CardDescription>
-                    </CardHeader>
-                  </Card>
-                </Link>
-              </motion.div>
+                    <Link href={action.href} className="block">
+                      <Card
+                        className={`admin-dashboard-card-shine group cursor-pointer transition-all duration-300 rounded-2xl border bg-white/85 backdrop-blur-sm shadow-[0_10px_40px_rgba(31,64,104,0.07)] hover:shadow-[0_16px_48px_rgba(31,64,104,0.12)] ${
+                          hasPending
+                            ? "border-[#e87898]/35 ring-2 ring-[#fce8ef]/80"
+                            : `border-white/90 ${action.hoverBorder}`
+                        }`}
+                      >
+                        <CardHeader className="pb-4">
+                          <div className="flex items-center justify-between">
+                            <div className={`p-3 rounded-xl transition-all duration-300 group-hover:scale-105 ${action.iconBg}`}>
+                              <Icon className={`h-7 w-7 ${action.iconColor}`} strokeWidth={1.75} />
+                            </div>
+                            <ArrowRight
+                              className={`h-5 w-5 text-gray-300 transition-all group-hover:translate-x-0.5 ${action.arrowHover}`}
+                            />
+                          </div>
+                          <CardTitle className="font-display text-xl mt-4 text-[#1F4068] flex flex-wrap items-center gap-2">
+                            {action.title}
+                            {hasPending && (
+                              <span className="inline-flex items-center rounded-full bg-[#e87898] px-2.5 py-0.5 text-[10px] font-semibold text-white">
+                                {stats.pendingVerifications} pending
+                              </span>
+                            )}
+                          </CardTitle>
+                          <CardDescription className="text-sm mt-2 text-gray-500">
+                            {action.description}
+                          </CardDescription>
+                        </CardHeader>
+                      </Card>
+                    </Link>
+                  </motion.div>
+                )
+              })}
             </div>
           </section>
         </div>
 
-        <footer className="w-full border-t border-[#f0ebe3]/80 bg-[#faf8f4]">
+        <footer className="relative z-10 w-full border-t border-white/60 bg-white/50 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
-              <p>© {new Date().getFullYear()} Manavizha. All rights reserved.</p>
+              <p className="flex items-center gap-2">
+                <Heart className="h-3.5 w-3.5 text-[#e87898]" fill="#fce8ef" />
+                © {new Date().getFullYear()} Manavizha. Nurturing sacred unions.
+              </p>
               <div className="flex items-center gap-6">
                 <Link href="/privacy-policy" className="hover:text-[#1F4068] transition-colors font-medium">
                   Privacy Policy
