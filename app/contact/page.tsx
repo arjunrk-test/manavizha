@@ -96,10 +96,10 @@ export default function ContactPage() {
                     <div>
                       <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Email</h3>
                       <a 
-                        href="mailto:arjun.rksaravanan@gmail.com" 
+                        href="mailto:contact@manavizha.com" 
                         className="text-gray-600 dark:text-gray-400 hover:text-[#3bb9ac] transition-colors"
                       >
-                        arjun.rksaravanan@gmail.com
+                        contact@manavizha.com
                       </a>
                     </div>
                   </div>
@@ -110,12 +110,20 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Phone</h3>
-                      <a 
-                        href="tel:+918072734996" 
-                        className="text-gray-600 dark:text-gray-400 hover:text-[#3bb9ac] transition-colors"
-                      >
-                        +91 8072734996
-                      </a>
+                      <div className="space-y-1">
+                        <a
+                          href="tel:+918925554449"
+                          className="block text-gray-600 dark:text-gray-400 hover:text-[#3bb9ac] transition-colors"
+                        >
+                          +91 8925554449
+                        </a>
+                        <a
+                          href="tel:+918925554440"
+                          className="block text-gray-600 dark:text-gray-400 hover:text-[#3bb9ac] transition-colors"
+                        >
+                          +91 8925554440
+                        </a>
+                      </div>
                     </div>
                   </div>
 

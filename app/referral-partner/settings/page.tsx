@@ -347,7 +347,7 @@ export default function ReferralPartnerSettingsPage() {
                     <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="font-medium mb-1">Partner ID has already been generated.</p>
-                      <p>If there is a problem with the partner ID, feel free to contact the administrator through email <a href="mailto:arjun.rksaravanan@gmail.com" className="underline hover:text-amber-700 dark:hover:text-amber-300">arjun.rksaravanan@gmail.com</a> or phone number <a href="tel:+918072734996" className="underline hover:text-amber-700 dark:hover:text-amber-300">+91 8072734996</a>.</p>
+                      <p>If there is a problem with the partner ID, feel free to contact the administrator through email <a href="mailto:contact@manavizha.com" className="underline hover:text-amber-700 dark:hover:text-amber-300">contact@manavizha.com</a> or phone numbers <a href="tel:+918925554449" className="underline hover:text-amber-700 dark:hover:text-amber-300">+91 8925554449</a> / <a href="tel:+918925554440" className="underline hover:text-amber-700 dark:hover:text-amber-300">+91 8925554440</a>.</p>
                     </div>
                   </div>
                 )}
