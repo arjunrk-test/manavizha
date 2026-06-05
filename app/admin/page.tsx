@@ -5,450 +5,340 @@ import { AdminAuthDialog } from "@/components/admin-auth-dialog"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
-import { 
-  Shield, 
-  Settings, 
-  Users, 
+import {
+  Shield,
+  Settings,
+  Users,
   BarChart3,
   ArrowRight,
-  CheckCircle2,
+  Check,
   Lock,
   Database,
   Activity,
-  Mail,
-  Phone,
-  ShieldCheck
+  ShieldCheck,
 } from "lucide-react"
+import Link from "next/link"
 
 const features = [
   {
     icon: Users,
-    title: "User Management",
-    description: "Manage all user accounts, profiles, and access permissions with comprehensive admin controls.",
-    color: "from-blue-500 to-cyan-500",
-    bgColor: "from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30",
-    iconBg: "bg-blue-500",
+    title: "User management",
+    description: "Manage accounts, profiles, and access permissions across the platform.",
+    iconColor: "text-[#3bb9ac]",
   },
   {
     icon: ShieldCheck,
-    title: "Profile Verification",
-    description: "Review and approve photo verification requests from users via side-by-side comparison.",
-    color: "from-amber-500 to-orange-500",
-    bgColor: "from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30",
-    iconBg: "bg-amber-500",
+    title: "Profile verification",
+    description: "Review and approve photo verification requests with side-by-side comparison.",
+    iconColor: "text-[#c9a227]",
   },
   {
     icon: Database,
-    title: "Data Management",
-    description: "Access and manage all platform data, including profiles, matches, and system configurations.",
-    color: "from-[#3bb9ac] to-[#1F4068]",
-    bgColor: "from-[#3bb9ac]/10 to-[#1F4068]/10 dark:from-[#3bb9ac]/30 dark:to-[#1F4068]/30",
-    iconBg: "bg-[#3bb9ac]",
+    title: "Data management",
+    description: "Access profiles, matches, master data, and system configurations.",
+    iconColor: "text-[#3bb9ac]",
   },
   {
     icon: BarChart3,
-    title: "Analytics & Reports",
-    description: "View detailed analytics, generate reports, and track platform performance metrics.",
-    color: "from-[#3bb9ac] to-[#3bb9ac]",
-    bgColor: "from-[#3bb9ac]/10 to-[#3bb9ac]/10 dark:from-[#3bb9ac]/30 dark:to-[#3bb9ac]/30",
-    iconBg: "bg-[#3bb9ac]",
+    title: "Analytics & reports",
+    description: "Track platform performance, funnel metrics, and operational reports.",
+    iconColor: "text-[#c9a227]",
   },
   {
     icon: Shield,
-    title: "Security & Access",
-    description: "Control security settings, manage admin access, and monitor system security.",
-    color: "from-green-500 to-emerald-500",
-    bgColor: "from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30",
-    iconBg: "bg-green-500",
+    title: "Security & access",
+    description: "Monitor admin access, security settings, and account integrity.",
+    iconColor: "text-[#c97a7a]",
   },
   {
     icon: Settings,
-    title: "System Settings",
-    description: "Configure platform settings, manage system parameters, and control feature toggles.",
-    color: "from-[#FFA500] to-[#3bb9ac]",
-    bgColor: "from-[#FFA500]/10 to-[#3bb9ac]/10 dark:from-[#FFA500]/30 dark:to-[#3bb9ac]/30",
-    iconBg: "bg-[#FFA500]",
-  },
-  {
-    icon: Activity,
-    title: "Activity Monitoring",
-    description: "Monitor real-time platform activity, track user actions, and system events.",
-    color: "from-[#FFA500] to-[#1F4068]",
-    bgColor: "from-[#FFA500]/10 to-[#1F4068]/10 dark:from-[#FFA500]/30 dark:to-[#1F4068]/30",
-    iconBg: "bg-[#FFA500]",
+    title: "System settings",
+    description: "Configure platform parameters, email tools, and feature controls.",
+    iconColor: "text-[#c97a7a]",
   },
 ]
 
 const capabilities = [
   {
     number: "01",
-    title: "Access Control",
-    description: "Manage user permissions and access levels with granular control over platform features.",
+    title: "Access control",
+    description: "Granular permissions over who can view and change platform data.",
     icon: Lock,
   },
   {
     number: "02",
-    title: "Data Management",
-    description: "View, edit, and manage all user data, profiles, and platform content efficiently.",
+    title: "Data oversight",
+    description: "View, edit, and manage user records and verification workflows.",
     icon: Database,
   },
   {
     number: "03",
-    title: "Analytics Dashboard",
-    description: "Access comprehensive analytics and generate detailed reports on platform usage.",
+    title: "Analytics dashboard",
+    description: "Real-time insights into sign-ups, activity, and conversion funnels.",
     icon: BarChart3,
   },
   {
     number: "04",
-    title: "System Configuration",
-    description: "Configure system settings, manage features, and control platform behavior.",
-    icon: Settings,
+    title: "Activity monitoring",
+    description: "Track system events and stay on top of operational health.",
+    icon: Activity,
   },
 ]
+
+const trustPoints = ["Secure access", "Role-based login", "Audit-ready tools"]
 
 export default function AdminPage() {
   const [isLoginOpen, setIsLoginOpen] = useState(false)
 
   return (
-    <main className="min-h-screen relative">
+    <main className="min-h-screen bg-[#faf8f4] [&_*]:not-italic">
       <AdminNavbar />
       <AdminAuthDialog open={isLoginOpen} onOpenChange={setIsLoginOpen} />
 
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-14">
-        {/* Animated gradient background */}
-        <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] via-[#3bb9ac] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
-        
-        {/* White overlay to lighten the gradient */}
-        <div className="fixed inset-0 bg-white/40 dark:bg-[#181818]/40" />
-        
-        {/* Overlay pattern */}
-        <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
-        
-        {/* Modern grid overlay */}
-        <div className="fixed inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px] opacity-30" />
-        
-        {/* Decorative elements */}
-        <div className="fixed inset-0">
+      {/* Hero */}
+      <section
+        id="hero"
+        className="home-hero-surface relative overflow-hidden scroll-mt-16 pt-20 pb-16 sm:pt-24 sm:pb-20 lg:pt-28 lg:pb-24"
+      >
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.5, 0.3],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="absolute top-0 left-0 w-96 h-96 bg-white/20 rounded-full blur-3xl"
-          />
-          <motion.div
-            animate={{
-              scale: [1.2, 1, 1.2],
-              opacity: [0.5, 0.3, 0.5],
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 2,
-            }}
-            className="absolute bottom-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl"
-          />
-        </div>
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-3xl mx-auto text-center lg:max-w-4xl"
+          >
+            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-brand-gold mb-4">
+              Admin portal
+            </p>
 
-        {/* Animated PNG Background Images */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden">
-          {[
-            "/patterns/pattern1.png",
-            "/patterns/pattern2.png",
-            "/patterns/pattern3.png",
-            "/patterns/pattern4.png",
-            "/patterns/pattern5.png",
-            "/patterns/pattern6.png",
-            "/patterns/pattern7.png",
-          ].map((imagePath, i) => {
-            const baseX = 5 + (i * 13) % 82
-            const baseY = 8 + (i * 15) % 75
-            const size = 280 + (i % 3) * 80
-            const fadeDuration = 8 + (i % 4)
-            const rotateDuration = 60 + i * 8
-            const moveDuration = 12 + (i % 6)
-            
-            return (
-              <motion.div
-                key={`bg-image-${i}`}
-                className="absolute"
-                style={{
-                  left: `${baseX}%`,
-                  top: `${baseY}%`,
-                  width: `${size}px`,
-                  height: `${size}px`,
-                }}
-                initial={{ opacity: 0.15 }}
-                animate={{
-                  opacity: [0.1, 0.25, 0.15, 0.25, 0.1],
-                  rotate: [0, 360],
-                  x: [-40, 40, -40],
-                }}
-                transition={{
-                  opacity: {
-                    duration: fadeDuration,
-                    repeat: Infinity,
-                    delay: i * 1.2,
-                    ease: "easeInOut",
-                  },
-                  rotate: {
-                    duration: rotateDuration,
-                    repeat: Infinity,
-                    ease: "linear",
-                  },
-                  x: {
-                    duration: moveDuration,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: i * 0.7,
-                  },
-                }}
-              >
-                <img
-                  src={imagePath}
-                  alt={`Background pattern ${i + 1}`}
-                  className="w-full h-full object-contain"
-                  style={{
-                    filter: "brightness(0) invert(1)",
-                    mixBlendMode: "screen",
-                  }}
-                  onError={(e) => {
-                    console.warn(`Image not found: ${imagePath}`)
-                    e.currentTarget.style.display = "none"
-                  }}
-                />
-              </motion.div>
-            )
-          })}
-        </div>
-
-        <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24">
-          <div className="max-w-4xl mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 text-sm font-medium text-gray-700 dark:text-gray-300 mb-6 sm:mb-8 shadow-sm"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3bb9ac] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#3bb9ac]"></span>
-              </span>
-              Admin Access Only
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 sm:mb-8 leading-tight"
-            >
-              <span className="bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
-                Admin Panel
-              </span>
+            <h1 className="font-display text-[2rem] sm:text-4xl lg:text-[2.75rem] xl:text-5xl font-semibold leading-[1.1] tracking-tight mb-4">
+              <span className="text-[#1F4068]">Manage the platform</span>
               <br />
-              <span className="text-gray-900 dark:text-white">
-                Manage Your Platform
-              </span>
-            </motion.h1>
+              <span className="text-brand-gold">with confidence</span>
+            </h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed"
-            >
-              Comprehensive admin tools to manage users, data, analytics, and system settings. 
-              Secure access to all platform administration features.
-            </motion.p>
+            <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto mb-8">
+              Secure tools for user management, verification, analytics, and system
+              configuration — built for the Manavizha operations team.
+            </p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4"
-            >
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-8">
               <Button
                 size="lg"
+                className="w-full sm:w-auto rounded-xl btn-brand-gradient px-7 h-11 text-sm font-semibold"
                 onClick={() => setIsLoginOpen(true)}
-                className="rounded-full bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] hover:from-[#3bb9ac] hover:via-[#3bb9ac] hover:to-[#1F4068] text-white border-0 shadow-lg hover:shadow-xl transition-all px-8 py-6 text-lg font-semibold group"
               >
-                Access Admin Panel
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                Access admin panel
+                <ArrowRight className="h-4 w-4 text-black" />
               </Button>
-            </motion.div>
-          </div>
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full sm:w-auto rounded-xl border border-gray-200 bg-white text-[#1F4068] hover:bg-gray-50 px-7 h-11 text-sm font-semibold shadow-sm"
+                asChild
+              >
+                <Link href="/admin/verification">
+                  <ShieldCheck className="h-4 w-4" />
+                  Verification queue
+                </Link>
+              </Button>
+            </div>
+
+            <div className="inline-flex flex-wrap items-center justify-center gap-x-1 gap-y-2 rounded-xl border border-gray-100/90 bg-white px-4 py-3 sm:px-5 shadow-[0_8px_32px_rgba(31,64,104,0.06)]">
+              {trustPoints.map((point, index) => (
+                <span key={point} className="flex items-center">
+                  {index > 0 && (
+                    <span className="text-gray-300/80 text-sm px-2.5 select-none" aria-hidden>
+                      |
+                    </span>
+                  )}
+                  <span className="flex items-center gap-2 text-sm font-medium text-[#1F4068]">
+                    <Check className="h-4 w-4 text-[#3bb9ac]" strokeWidth={2.5} />
+                    {point}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
-        {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#3bb9ac]/50 via-[#3bb9ac]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
-        
-        {/* White overlay */}
-        <div className="absolute inset-0 bg-white/50 dark:bg-[#181818]/50" />
-        
-        {/* Overlay pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
+      {/* Features */}
+      <section
+        id="features"
+        className="relative overflow-hidden py-16 sm:py-20 bg-white scroll-mt-16"
+      >
+        <div
+          className="pointer-events-none absolute inset-0"
+          aria-hidden
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 92% 8%, rgba(255, 182, 193, 0.08) 0%, transparent 28%), radial-gradient(circle at 8% 92%, rgba(59, 185, 172, 0.06) 0%, transparent 32%)",
+          }}
+        />
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12 sm:mb-16"
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-6xl mx-auto"
           >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
-              Admin Features
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Powerful tools to manage and control your platform
-            </p>
-          </motion.div>
+            <div className="mb-10 sm:mb-12 text-center max-w-2xl mx-auto">
+              <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-brand-gold mb-3">
+                Admin tools
+              </p>
+              <h2 className="font-display text-3xl sm:text-4xl font-semibold text-[#1F4068] leading-tight tracking-tight mb-3">
+                Everything you need in one place
+              </h2>
+              <p className="text-base sm:text-lg text-gray-600 leading-relaxed">
+                From verification to analytics — manage the full platform lifecycle.
+              </p>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-7xl mx-auto">
-            {features.map((feature, index) => {
-              const Icon = feature.icon
-              return (
-                <motion.div
-                  key={feature.title}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="group relative"
-                >
-                  <div className="relative h-full p-6 sm:p-8 rounded-2xl bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                    <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${feature.bgColor} mb-4`}>
-                      <Icon className={`h-6 w-6 ${feature.iconBg} text-white rounded-lg p-1.5`} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
+              {features.map((feature, index) => {
+                const Icon = feature.icon
+                return (
+                  <motion.article
+                    key={feature.title}
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-40px" }}
+                    transition={{
+                      duration: 0.4,
+                      delay: index * 0.05,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                    className="group flex gap-4 items-start rounded-xl border border-gray-100/90 bg-[#faf8f4] p-5 sm:p-6 shadow-[0_8px_32px_rgba(31,64,104,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(31,64,104,0.08)] min-h-[7.5rem]"
+                  >
+                    <div className="shrink-0 w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center">
+                      <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${feature.iconColor}`} strokeWidth={1.75} />
                     </div>
-                    <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
-                      {feature.title}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                      {feature.description}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-semibold text-[#1F4068] mb-1.5 leading-tight">
+                        {feature.title}
+                      </h3>
+                      <p className="text-sm sm:text-[15px] text-gray-500 leading-relaxed">
+                        {feature.description}
+                      </p>
+                    </div>
+                  </motion.article>
+                )
+              })}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Capabilities */}
+      <section
+        id="capabilities"
+        className="relative overflow-hidden py-16 sm:py-20 bg-[#faf8f4] scroll-mt-16"
+      >
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-6xl mx-auto"
+          >
+            <div className="mb-10 sm:mb-12 text-center max-w-2xl mx-auto">
+              <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-brand-gold mb-3">
+                Capabilities
+              </p>
+              <h2 className="font-display text-3xl sm:text-4xl font-semibold text-[#1F4068] leading-tight tracking-tight mb-3">
+                Built for operational control
+              </h2>
+              <p className="text-base sm:text-lg text-gray-600 leading-relaxed">
+                Core workflows that keep the platform secure, accurate, and running smoothly.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+              {capabilities.map((capability, index) => {
+                const Icon = capability.icon
+                return (
+                  <motion.div
+                    key={capability.number}
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-40px" }}
+                    transition={{
+                      duration: 0.4,
+                      delay: index * 0.06,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                    className="rounded-xl border border-gray-100/90 bg-white p-5 sm:p-6 shadow-[0_8px_32px_rgba(31,64,104,0.04)]"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-gold mb-3">
+                      {capability.number}
                     </p>
-                  </div>
-                </motion.div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Capabilities Section */}
-      <section className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
-        {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] via-[#3bb9ac] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
-        
-        {/* White overlay */}
-        <div className="absolute inset-0 bg-white/40 dark:bg-[#181818]/40" />
-        
-        {/* Overlay pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12 sm:mb-16"
-          >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
-              Admin Capabilities
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Everything you need to manage your platform effectively
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 max-w-7xl mx-auto">
-            {capabilities.map((capability, index) => {
-              const Icon = capability.icon
-              return (
-                <motion.div
-                  key={capability.number}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="relative"
-                >
-                  <div className="relative h-full p-6 sm:p-8 rounded-2xl bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 shadow-sm hover:shadow-xl transition-all duration-300 text-center">
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                        {capability.number}
-                      </div>
+                    <div className="mb-3">
+                      <Icon className="h-5 w-5 text-[#3bb9ac]" strokeWidth={1.75} />
                     </div>
-                    <div className="mt-6 mb-4 flex justify-center">
-                      <div className="p-4 rounded-xl bg-gradient-to-br from-[#3bb9ac]/10 to-[#3bb9ac]/10 dark:from-[#3bb9ac]/30 dark:to-[#3bb9ac]/30">
-                        <Icon className="h-8 w-8 text-[#3bb9ac] dark:text-[#3bb9ac]" />
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-white">
+                    <h3 className="text-base font-semibold text-[#1F4068] mb-2 leading-tight">
                       {capability.title}
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                    <p className="text-sm text-gray-500 leading-relaxed">
                       {capability.description}
                     </p>
-                  </div>
-                  {index < capabilities.length - 1 && (
-                    <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-gradient-to-r from-[#3bb9ac] to-[#3bb9ac] -translate-y-1/2 z-0" />
-                  )}
-                </motion.div>
-              )
-            })}
-          </div>
+                  </motion.div>
+                )
+              })}
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
-        {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] via-[#3bb9ac] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
-        
-        {/* White overlay */}
-        <div className="absolute inset-0 bg-white/40 dark:bg-[#181818]/40" />
-        
-        {/* Overlay pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
+      {/* CTA */}
+      <section id="cta" className="py-14 sm:py-16 lg:py-20 relative overflow-hidden scroll-mt-16">
+        <div className="absolute inset-0 cta-petal-surface" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent_55%)]" />
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="max-w-4xl mx-auto text-center bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm rounded-3xl p-8 sm:p-12 lg:p-16 border border-gray-200/50 dark:border-gray-800/50 shadow-2xl"
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="text-center max-w-3xl mx-auto text-black"
           >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
-              Ready to Access Admin Panel?
+            <p className="text-sm font-medium text-black/70 mb-3">Admin sign-in</p>
+            <h2 className="font-display text-3xl sm:text-4xl font-semibold leading-[1.15] tracking-tight mb-4">
+              Ready to open the admin panel?
             </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-              Secure admin access to manage your platform. 
-              Login with your admin credentials to get started.
+            <p className="text-base sm:text-lg text-black/80 leading-relaxed mb-8 max-w-xl mx-auto">
+              Sign in with your admin credentials to manage users, verification, and platform
+              settings.
             </p>
             <Button
               size="lg"
+              className="rounded-full bg-white text-black hover:bg-white/90 shadow-lg text-base px-7 py-6 font-semibold"
               onClick={() => setIsLoginOpen(true)}
-              className="rounded-full bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] hover:from-[#3bb9ac] hover:via-[#3bb9ac] hover:to-[#1F4068] text-white border-0 shadow-lg hover:shadow-xl transition-all px-8 py-6 text-lg font-semibold group"
             >
-              Access Admin Panel
-              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              Access admin panel
+              <ArrowRight className="h-4 w-4 text-black" />
             </Button>
           </motion.div>
         </div>
       </section>
+
+      <footer className="border-t border-[#f0ebe3]/80 bg-[#faf8f4] py-8">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-sm text-gray-500">
+            <Link href="/" className="text-[#1F4068] font-medium hover:underline">
+              Back to Manavizha
+            </Link>
+            <span className="mx-2 text-gray-300" aria-hidden>
+              ·
+            </span>
+            Admin access for authorized personnel only
+          </p>
+        </div>
+      </footer>
     </main>
   )
 }
