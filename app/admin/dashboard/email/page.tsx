@@ -87,7 +87,7 @@ export default function AdminEmailPage() {
                 <a href="/terms-of-service" className="hover:text-[#3bb9ac] dark:hover:text-[#3bb9ac] transition-colors">
                   Terms of Service
                 </a>
-                <a href="/contact" className="hover:text-[#3bb9ac] dark:hover:text-[#3bb9ac] transition-colors">
+                <a href="/#contact" className="hover:text-[#3bb9ac] dark:hover:text-[#3bb9ac] transition-colors">
                   Contact Us
                 </a>
               </div>

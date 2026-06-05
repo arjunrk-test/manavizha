@@ -14,7 +14,7 @@ const navLinks = [
   { label: "Testimonials", href: "#testimonials" },
   { label: "Horoscope", href: "/horoscope" },
   { label: "About Us", href: "#about" },
-  { label: "Contact", href: "/contact" },
+  { label: "Contact", href: "#contact" },
 ]
 
 export function Navbar() {

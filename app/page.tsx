@@ -3,6 +3,7 @@ import { HeroSection } from "@/components/hero-section"
 import { FeaturesSection } from "@/components/features-section"
 import { TestimonialsSection } from "@/components/testimonials-section"
 import { CTASection } from "@/components/cta-section"
+import { ContactSection } from "@/components/contact-section"
 import { ScrollToHeroButton } from "@/components/home/scroll-to-hero-button"
 
 export default function Home() {
@@ -13,6 +14,7 @@ export default function Home() {
       <FeaturesSection />
       <TestimonialsSection />
       <CTASection />
+      <ContactSection />
       <ScrollToHeroButton />
     </main>
   )

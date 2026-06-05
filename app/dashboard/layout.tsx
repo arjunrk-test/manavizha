@@ -528,7 +528,7 @@ export default function DashboardLayout({
             <div className="flex items-center gap-5">
               <a href="/privacy-policy" className="hover:text-[#3bb9ac] transition-colors">Privacy</a>
               <a href="/terms-of-service" className="hover:text-[#3bb9ac] transition-colors">Terms</a>
-              <a href="/contact" className="hover:text-[#3bb9ac] transition-colors">Contact</a>
+              <a href="/#contact" className="hover:text-[#3bb9ac] transition-colors">Contact</a>
             </div>
           </div>
         </div>

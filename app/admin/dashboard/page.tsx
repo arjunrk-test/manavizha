@@ -359,7 +359,7 @@ export default function AdminDashboardPage() {
                 <a href="/terms-of-service" className="hover:text-[#3bb9ac] dark:hover:text-[#3bb9ac] transition-colors font-medium">
                   Terms of Service
                 </a>
-                <a href="/contact" className="hover:text-[#3bb9ac] dark:hover:text-[#3bb9ac] transition-colors font-medium">
+                <a href="/#contact" className="hover:text-[#3bb9ac] dark:hover:text-[#3bb9ac] transition-colors font-medium">
                   Contact Us
                 </a>
               </div>
