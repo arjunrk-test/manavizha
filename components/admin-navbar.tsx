@@ -11,6 +11,7 @@ import { getUserDashboard } from "@/lib/auth"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { ScrollProgress } from "@/components/ui/scroll-progress"
 
 const landingNavLinks = [
   { label: "Features", href: "#features" },
@@ -94,7 +95,7 @@ export function AdminNavbar({ variant = "landing" }: AdminNavbarProps) {
       transition={{ duration: 0.4 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isDashboard
-          ? "bg-white/98 backdrop-blur-md shadow-[0_4px_28px_rgba(31,64,104,0.09)] border-b border-gray-100/90 after:pointer-events-none after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-gradient-to-r after:from-[#c9a227]/80 after:via-[#e87898]/70 after:to-[#3bb9ac]/80"
+          ? "bg-white/98 backdrop-blur-md shadow-[0_4px_28px_rgba(31,64,104,0.09)] border-b border-gray-100/90"
           : scrolled
             ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100"
             : "bg-[#faf8f4]/80 backdrop-blur-sm"
@@ -148,14 +149,6 @@ export function AdminNavbar({ variant = "landing" }: AdminNavbarProps) {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <Button
-              size="sm"
-              variant="outline"
-              className="rounded-full border-gray-200 text-[#1F4068] h-9 px-4 text-sm font-medium"
-              asChild
-            >
-              <Link href="/">Main site</Link>
-            </Button>
             {isAdmin ? (
               <Button
                 size="sm"
@@ -222,15 +215,6 @@ export function AdminNavbar({ variant = "landing" }: AdminNavbarProps) {
                 )
               })}
               <div className="pt-4 flex flex-col gap-2">
-                <Button
-                  variant="outline"
-                  className="rounded-xl w-full border-gray-200 text-[#1F4068]"
-                  asChild
-                >
-                  <Link href="/" onClick={() => setIsOpen(false)}>
-                    Main site
-                  </Link>
-                </Button>
                 {isAdmin ? (
                   <Button
                     className={`${logoutButtonClass} w-full`}
@@ -256,6 +240,13 @@ export function AdminNavbar({ variant = "landing" }: AdminNavbarProps) {
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+
+      <div
+        aria-hidden
+        className="pointer-events-none absolute bottom-0 left-0 right-0 z-[60] h-[2px] bg-[#f0ebe3]/90"
+      >
+        <ScrollProgress className="h-full w-full" />
       </div>
 
       <AdminAuthDialog open={isLoginOpen} onOpenChange={setIsLoginOpen} />

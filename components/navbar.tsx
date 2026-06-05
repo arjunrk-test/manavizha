@@ -8,6 +8,7 @@ import { AuthDialog } from "@/components/auth-dialog"
 import { supabase } from "@/lib/supabase"
 import { getUserDashboard } from "@/lib/auth"
 import Image from "next/image"
+import { ScrollProgress } from "@/components/ui/scroll-progress"
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -176,6 +177,13 @@ export function Navbar() {
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+
+      <div
+        aria-hidden
+        className="pointer-events-none absolute bottom-0 left-0 right-0 z-[60] h-[2px] bg-[#f0ebe3]/90"
+      >
+        <ScrollProgress className="h-full w-full" />
       </div>
 
       <AuthDialog open={isAuthOpen} onOpenChange={setIsAuthOpen} defaultMode={authMode} />
