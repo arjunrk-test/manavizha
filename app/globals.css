@@ -113,6 +113,16 @@ body {
   background-size: auto, auto, 140px 140px;
 }
 
+.admin-hero-surface {
+  background-color: #faf8f4;
+  background-image:
+    radial-gradient(ellipse 100% 70% at 82% 8%, rgba(255, 192, 203, 0.32) 0%, transparent 55%),
+    radial-gradient(ellipse 85% 60% at 100% 65%, rgba(255, 182, 193, 0.24) 0%, transparent 52%),
+    radial-gradient(ellipse 70% 55% at 8% 92%, rgba(255, 228, 230, 0.4) 0%, transparent 48%),
+    radial-gradient(circle at 55% 45%, rgba(255, 240, 245, 0.5) 0%, transparent 42%),
+    radial-gradient(circle at 8% 12%, rgba(255, 182, 193, 0.08) 0%, transparent 28%);
+}
+
 .hero-image-curve {
   clip-path: ellipse(92% 88% at 38% 48%);
 }

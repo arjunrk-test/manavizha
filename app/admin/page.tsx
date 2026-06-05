@@ -2,6 +2,7 @@
 
 import { AdminNavbar } from "@/components/admin-navbar"
 import { AdminAuthDialog } from "@/components/admin-auth-dialog"
+import { AdminHeroSection } from "@/components/admin/admin-hero-section"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
@@ -11,7 +12,6 @@ import {
   Users,
   BarChart3,
   ArrowRight,
-  Check,
   Lock,
   Database,
   Activity,
@@ -85,8 +85,6 @@ const capabilities = [
   },
 ]
 
-const trustPoints = ["Secure access", "Role-based login", "Audit-ready tools"]
-
 export default function AdminPage() {
   const [isLoginOpen, setIsLoginOpen] = useState(false)
 
@@ -95,73 +93,7 @@ export default function AdminPage() {
       <AdminNavbar />
       <AdminAuthDialog open={isLoginOpen} onOpenChange={setIsLoginOpen} />
 
-      {/* Hero */}
-      <section
-        id="hero"
-        className="home-hero-surface relative overflow-hidden scroll-mt-16 pt-20 pb-16 sm:pt-24 sm:pb-20 lg:pt-28 lg:pb-24"
-      >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="max-w-3xl mx-auto text-center lg:max-w-4xl"
-          >
-            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-brand-gold mb-4">
-              Admin portal
-            </p>
-
-            <h1 className="font-display text-[2rem] sm:text-4xl lg:text-[2.75rem] xl:text-5xl font-semibold leading-[1.1] tracking-tight mb-4">
-              <span className="text-[#1F4068]">Manage the platform</span>
-              <br />
-              <span className="text-brand-gold">with confidence</span>
-            </h1>
-
-            <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto mb-8">
-              Secure tools for user management, verification, analytics, and system
-              configuration — built for the Manavizha operations team.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-8">
-              <Button
-                size="lg"
-                className="w-full sm:w-auto rounded-xl btn-brand-gradient px-7 h-11 text-sm font-semibold"
-                onClick={() => setIsLoginOpen(true)}
-              >
-                Access admin panel
-                <ArrowRight className="h-4 w-4 text-black" />
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full sm:w-auto rounded-xl border border-gray-200 bg-white text-[#1F4068] hover:bg-gray-50 px-7 h-11 text-sm font-semibold shadow-sm"
-                asChild
-              >
-                <Link href="/admin/verification">
-                  <ShieldCheck className="h-4 w-4" />
-                  Verification queue
-                </Link>
-              </Button>
-            </div>
-
-            <div className="inline-flex flex-wrap items-center justify-center gap-x-1 gap-y-2 rounded-xl border border-gray-100/90 bg-white px-4 py-3 sm:px-5 shadow-[0_8px_32px_rgba(31,64,104,0.06)]">
-              {trustPoints.map((point, index) => (
-                <span key={point} className="flex items-center">
-                  {index > 0 && (
-                    <span className="text-gray-300/80 text-sm px-2.5 select-none" aria-hidden>
-                      |
-                    </span>
-                  )}
-                  <span className="flex items-center gap-2 text-sm font-medium text-[#1F4068]">
-                    <Check className="h-4 w-4 text-[#3bb9ac]" strokeWidth={2.5} />
-                    {point}
-                  </span>
-                </span>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
+      <AdminHeroSection onLoginOpen={() => setIsLoginOpen(true)} />
 
       {/* Features */}
       <section
