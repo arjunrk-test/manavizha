@@ -1,149 +1,221 @@
 "use client"
 
 import { AdminNavbar } from "@/components/admin-navbar"
-import { AnimatedBackground } from "@/components/animated-background"
+import { AdminDashboardBackground } from "@/components/admin/admin-dashboard-background"
+import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
+import { DashboardJourneyPatterns } from "@/components/dashboard/dashboard-journey-patterns"
 import { supabase } from "@/lib/supabase"
+import { getUserDashboard } from "@/lib/auth"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { ArrowLeft, Database, Circle, ChevronDown, ChevronRight, Plus } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import {
+  ArrowLeft,
+  ArrowRight,
+  Briefcase,
+  Database,
+  GraduationCap,
+  Heart,
+  MessageCircle,
+  Plus,
+  Star,
+  User,
+  Users,
+  type LucideIcon,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
 import { MasterDataManager } from "@/components/master-data-manager"
 import { masterDataConfig } from "@/constants/master-data"
 
-const personalDetailsSubmenus = [
-  { id: "gender", title: "Gender" },
-  { id: "skin-colour", title: "Skin Colour" },
-  { id: "body-type", title: "Body Type" },
-  { id: "marital-status", title: "Marital Status" },
-  { id: "food-preferences", title: "Food Preferences" },
-  { id: "indian-languages", title: "Indian Languages" },
-  { id: "international-languages", title: "International Languages" },
-]
+type MasterDataItem = { id: string; title: string }
 
-const educationalDetailsSubmenus = [
-  { id: "education-level", title: "Education Level" },
-  { id: "status", title: "Status" },
-]
-
-const professionalDetailsSubmenus = [
-  { id: "employment-type", title: "Employment Type" },
-  { id: "sector", title: "Sector" },
-  { id: "type-of-business", title: "Type of Business" },
-  { id: "year-of-study", title: "Year of Study" },
-]
-
-const familyDetailsSubmenus = [
-  { id: "caste", title: "Caste" },
-  { id: "subcaste", title: "Subcaste" },
-  { id: "kulam", title: "Kulam" },
-  { id: "gotram", title: "Gotram" },
-  { id: "family-type", title: "Family Type" },
-  { id: "family-status", title: "Family Status" },
-]
-
-const horoscopeDetailsSubmenus = [
-  { id: "zodiac-moon-sign", title: "Zodiac or Moon Sign" },
-  { id: "star", title: "Star" },
-  { id: "lagnam", title: "Lagnam" },
-]
-
-const interestsSubmenus = [
-  { id: "hobbies", title: "Hobbies" },
-  { id: "interests", title: "Interests" },
-]
-
-const socialHabitsSubmenus = [
-  { id: "smoking", title: "Smoking" },
-  { id: "drinking", title: "Drinking" },
-  { id: "parties", title: "Parties" },
-  { id: "pubs", title: "Pubs" },
-]
-
-interface MenuSectionProps {
+type MasterDataCategory = {
+  id: string
   title: string
-  submenus: { id: string; title: string }[]
-  isOpen: boolean
-  onToggle: () => void
-  currentStep: string
-  onSubmenuClick: (id: string) => void
+  description: string
+  icon: LucideIcon
+  iconBg: string
+  iconColor: string
+  hoverBorder: string
+  items: MasterDataItem[]
 }
 
-function MenuSection({ title, submenus, isOpen, onToggle, currentStep, onSubmenuClick }: MenuSectionProps) {
+const MASTER_DATA_CATEGORIES: MasterDataCategory[] = [
+  {
+    id: "personal",
+    title: "Personal Details",
+    description: "Gender, appearance, languages, and lifestyle basics",
+    icon: User,
+    iconBg: "bg-[#fce8ef]",
+    iconColor: "text-[#e87898]",
+    hoverBorder: "hover:border-[#e87898]/30",
+    items: [
+      { id: "gender", title: "Gender" },
+      { id: "skin-colour", title: "Skin Colour" },
+      { id: "body-type", title: "Body Type" },
+      { id: "marital-status", title: "Marital Status" },
+      { id: "food-preferences", title: "Food Preferences" },
+      { id: "indian-languages", title: "Indian Languages" },
+      { id: "international-languages", title: "International Languages" },
+    ],
+  },
+  {
+    id: "education",
+    title: "Educational Details",
+    description: "Education levels and academic status options",
+    icon: GraduationCap,
+    iconBg: "bg-[#fdf6e3]",
+    iconColor: "text-[#c9a227]",
+    hoverBorder: "hover:border-[#c9a227]/35",
+    items: [
+      { id: "education-level", title: "Education Level" },
+      { id: "status", title: "Status" },
+    ],
+  },
+  {
+    id: "professional",
+    title: "Professional Details",
+    description: "Employment, sector, and career-related lookups",
+    icon: Briefcase,
+    iconBg: "bg-[#1F4068]/10",
+    iconColor: "text-[#1F4068]",
+    hoverBorder: "hover:border-[#1F4068]/25",
+    items: [
+      { id: "employment-type", title: "Employment Type" },
+      { id: "sector", title: "Sector" },
+      { id: "type-of-business", title: "Type of Business" },
+      { id: "year-of-study", title: "Year of Study" },
+    ],
+  },
+  {
+    id: "horoscope",
+    title: "Horoscope Details",
+    description: "Stars, signs, and horoscope-related fields",
+    icon: Star,
+    iconBg: "bg-[#fdf6e3]",
+    iconColor: "text-[#c9a227]",
+    hoverBorder: "hover:border-[#c9a227]/35",
+    items: [
+      { id: "zodiac-moon-sign", title: "Zodiac or Moon Sign" },
+      { id: "star", title: "Star" },
+      { id: "lagnam", title: "Lagnam" },
+    ],
+  },
+  {
+    id: "interests",
+    title: "Interests",
+    description: "Hobbies and personal interest options",
+    icon: Heart,
+    iconBg: "bg-[#fce8ef]",
+    iconColor: "text-[#e87898]",
+    hoverBorder: "hover:border-[#e87898]/30",
+    items: [
+      { id: "hobbies", title: "Hobbies" },
+      { id: "interests", title: "Interests" },
+    ],
+  },
+  {
+    id: "social",
+    title: "Social Habits",
+    description: "Smoking, drinking, and social preference values",
+    icon: MessageCircle,
+    iconBg: "bg-[#e6f7f5]",
+    iconColor: "text-[#3bb9ac]",
+    hoverBorder: "hover:border-[#3bb9ac]/30",
+    items: [
+      { id: "smoking", title: "Smoking" },
+      { id: "drinking", title: "Drinking" },
+      { id: "parties", title: "Parties" },
+      { id: "pubs", title: "Pubs" },
+    ],
+  },
+  {
+    id: "family",
+    title: "Family Details",
+    description: "Caste, community, and family background fields",
+    icon: Users,
+    iconBg: "bg-[#fce8ef]",
+    iconColor: "text-[#e87898]",
+    hoverBorder: "hover:border-[#e87898]/30",
+    items: [
+      { id: "caste", title: "Caste" },
+      { id: "subcaste", title: "Subcaste" },
+      { id: "kulam", title: "Kulam" },
+      { id: "gotram", title: "Gotram" },
+      { id: "family-type", title: "Family Type" },
+      { id: "family-status", title: "Family Status" },
+    ],
+  },
+]
+
+function ThemedPanel({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
   return (
-    <div className="mt-2">
-      <button
-        onClick={onToggle}
-        className="w-full text-left p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-600"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex-shrink-0">
-              {isOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm">{title}</div>
-            </div>
-          </div>
-        </div>
-      </button>
-
-      {isOpen && (
-        <div>
-          <div className="pl-4 pt-2 space-y-1">
-            {submenus.map((submenu) => {
-              const isActive = currentStep === submenu.id
-
-              return (
-                <button
-                  key={submenu.id}
-                  onClick={() => onSubmenuClick(submenu.id)}
-                  className={`w-full text-left p-3 rounded-lg ${
-                    isActive
-                      ? "bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] text-white shadow-lg"
-                      : "bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0">
-                      {isActive ? (
-                        <Circle className="h-4 w-4 fill-white text-white" />
-                      ) : (
-                        <Circle className="h-4 w-4" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm">{submenu.title}</div>
-                    </div>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
+    <div
+      className={`relative overflow-hidden rounded-xl border border-[#f0ebe3] bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] shadow-[0_2px_16px_rgba(31,64,104,0.05)] ${className}`}
+    >
+      <DashboardJourneyPatterns />
+      <div className="relative z-10">{children}</div>
     </div>
+  )
+}
+
+function CategoryCard({
+  category,
+  onSelect,
+}: {
+  category: MasterDataCategory
+  onSelect: () => void
+}) {
+  const Icon = category.icon
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`group w-full rounded-xl border border-[#f0ebe3] bg-white/85 px-4 py-4 text-left transition-all hover:shadow-[0_4px_16px_rgba(31,64,104,0.08)] ${category.hoverBorder}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${category.iconBg}`}>
+          <Icon className={`h-5 w-5 ${category.iconColor}`} strokeWidth={1.75} />
+        </div>
+        <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-gray-300 transition-all group-hover:translate-x-0.5 group-hover:text-[#c9a227]" />
+      </div>
+      <h3 className="mt-3 text-[13px] font-semibold text-[#1F4068]">{category.title}</h3>
+      <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-gray-500">{category.description}</p>
+      <p className="mt-2 text-[10px] font-medium text-[#c9a227]">
+        {category.items.length} lookup{category.items.length !== 1 ? "s" : ""}
+      </p>
+    </button>
   )
 }
 
 export default function AdminMasterDataPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
-  const [isPersonalDetailsOpen, setIsPersonalDetailsOpen] = useState(false)
-  const [isEducationalDetailsOpen, setIsEducationalDetailsOpen] = useState(false)
-  const [isProfessionalDetailsOpen, setIsProfessionalDetailsOpen] = useState(false)
-  const [isFamilyDetailsOpen, setIsFamilyDetailsOpen] = useState(false)
-  const [isHoroscopeDetailsOpen, setIsHoroscopeDetailsOpen] = useState(false)
-  const [isInterestsOpen, setIsInterestsOpen] = useState(false)
-  const [isSocialHabitsOpen, setIsSocialHabitsOpen] = useState(false)
-  const [currentStep, setCurrentStep] = useState<string>("")
-  
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
+  const [currentStep, setCurrentStep] = useState<string | null>(null)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [refreshKey] = useState(0)
+
+  const activeCategory = useMemo(
+    () => MASTER_DATA_CATEGORIES.find((category) => category.id === selectedCategoryId) ?? null,
+    [selectedCategoryId]
+  )
+
+  const activeItem = useMemo(() => {
+    if (!activeCategory || !currentStep) return null
+    return activeCategory.items.find((item) => item.id === currentStep) ?? null
+  }, [activeCategory, currentStep])
+
+  const stepConfig = currentStep ? masterDataConfig[currentStep] ?? null : null
 
   useEffect(() => {
-    // Check if user is authenticated and is an admin
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
@@ -151,217 +223,236 @@ export default function AdminMasterDataPage() {
         return
       }
 
-      // TODO: Verify user is an admin (add admin check logic here)
+      const dashboardPath = await getUserDashboard(user.id)
+      if (dashboardPath !== "/admin/dashboard") {
+        router.push(dashboardPath)
+        return
+      }
 
-      setUser(user)
       setIsLoading(false)
     }
 
     checkUser()
   }, [router])
 
-  const getCurrentStepConfig = () => {
-    return currentStep ? masterDataConfig[currentStep] : null
+  const handleCategorySelect = (categoryId: string) => {
+    const category = MASTER_DATA_CATEGORIES.find((entry) => entry.id === categoryId)
+    if (!category) return
+    setSelectedCategoryId(categoryId)
+    setCurrentStep(category.items[0].id)
+    setIsAddDialogOpen(false)
   }
 
-  const getTitleForCurrentStep = () => {
-    const allSubmenus = [
-      ...personalDetailsSubmenus,
-      ...educationalDetailsSubmenus,
-      ...professionalDetailsSubmenus,
-      ...familyDetailsSubmenus,
-      ...horoscopeDetailsSubmenus,
-      ...interestsSubmenus,
-      ...socialHabitsSubmenus,
-    ]
-    return allSubmenus.find((s) => s.id === currentStep)?.title || "Master Data"
+  const handleBackToCategories = () => {
+    setSelectedCategoryId(null)
+    setCurrentStep(null)
+    setIsAddDialogOpen(false)
   }
 
-  const handleSubmenuClick = (id: string) => {
-    setCurrentStep(id)
+  const handleItemSelect = (itemId: string) => {
+    setCurrentStep(itemId)
+    setIsAddDialogOpen(false)
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 mx-auto mb-4" />
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
+    return <DashboardLoadingScreen />
   }
 
   return (
-    <div className="min-h-screen relative">
-      <AnimatedBackground />
+    <div className="relative min-h-screen flex flex-col">
+      <AdminDashboardBackground />
+      <AdminNavbar variant="dashboard" />
 
-      {/* Header */}
-      <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Database className="h-6 w-6 text-[#3bb9ac]" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Master Data</h1>
-          </div>
-          <Button
-            onClick={() => router.push("/admin/dashboard")}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Button>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 py-8">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Left Sidebar Navigation */}
-            <div className="lg:col-span-1">
-              <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-lg p-6 sticky top-24 max-h-[calc(100vh-8rem)] flex flex-col">
-                <div className="mb-6 flex-shrink-0">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Master Data</h3>
+      <main className="relative z-10 flex-1 flex flex-col pt-[4.75rem]">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 pb-10">
+          <ThemedPanel className={`flex flex-col ${selectedCategoryId ? "min-h-[calc(100vh-7rem)]" : ""}`}>
+            {/* Page header */}
+            <div className="border-b border-[#f0ebe3]/80 px-4 py-3 sm:px-5 sm:py-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fdf6e3]">
+                  <Database className="h-5 w-5 text-[#c9a227]" strokeWidth={1.75} />
                 </div>
-
-                <div className="space-y-2 overflow-y-auto flex-1 pr-2">
-                  <MenuSection
-                    title="Personal Details"
-                    submenus={personalDetailsSubmenus}
-                    isOpen={isPersonalDetailsOpen}
-                    onToggle={() => setIsPersonalDetailsOpen(!isPersonalDetailsOpen)}
-                    currentStep={currentStep}
-                    onSubmenuClick={handleSubmenuClick}
-                  />
-
-                  <MenuSection
-                    title="Educational Details"
-                    submenus={educationalDetailsSubmenus}
-                    isOpen={isEducationalDetailsOpen}
-                    onToggle={() => setIsEducationalDetailsOpen(!isEducationalDetailsOpen)}
-                    currentStep={currentStep}
-                    onSubmenuClick={handleSubmenuClick}
-                  />
-
-                  <MenuSection
-                    title="Professional Details"
-                    submenus={professionalDetailsSubmenus}
-                    isOpen={isProfessionalDetailsOpen}
-                    onToggle={() => setIsProfessionalDetailsOpen(!isProfessionalDetailsOpen)}
-                    currentStep={currentStep}
-                    onSubmenuClick={handleSubmenuClick}
-                  />
-
-                  <MenuSection
-                    title="Horoscope Details"
-                    submenus={horoscopeDetailsSubmenus}
-                    isOpen={isHoroscopeDetailsOpen}
-                    onToggle={() => setIsHoroscopeDetailsOpen(!isHoroscopeDetailsOpen)}
-                    currentStep={currentStep}
-                    onSubmenuClick={handleSubmenuClick}
-                  />
-
-                  <MenuSection
-                    title="Interests"
-                    submenus={interestsSubmenus}
-                    isOpen={isInterestsOpen}
-                    onToggle={() => setIsInterestsOpen(!isInterestsOpen)}
-                    currentStep={currentStep}
-                    onSubmenuClick={handleSubmenuClick}
-                  />
-
-                  <MenuSection
-                    title="Social Habits"
-                    submenus={socialHabitsSubmenus}
-                    isOpen={isSocialHabitsOpen}
-                    onToggle={() => setIsSocialHabitsOpen(!isSocialHabitsOpen)}
-                    currentStep={currentStep}
-                    onSubmenuClick={handleSubmenuClick}
-                  />
-
-                  <MenuSection
-                    title="Family Details"
-                    submenus={familyDetailsSubmenus}
-                    isOpen={isFamilyDetailsOpen}
-                    onToggle={() => setIsFamilyDetailsOpen(!isFamilyDetailsOpen)}
-                    currentStep={currentStep}
-                    onSubmenuClick={handleSubmenuClick}
-                  />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#c9a227]">
+                    Operations
+                  </p>
+                  <h1 className="font-display text-lg font-semibold text-[#1F4068] sm:text-xl">
+                    Master data
+                  </h1>
+                  <p className="mt-0.5 text-[11px] text-gray-500">
+                    {selectedCategoryId
+                      ? "Choose a lookup type, then manage its values"
+                      : "Pick a profile section to manage its lookup values"}
+                  </p>
                 </div>
               </div>
             </div>
 
-                  {/* Right Content Area */}
-                  <div className="lg:col-span-3">
-                    <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-lg flex flex-col h-[calc(100vh-8rem)]">
-                      {!currentStep ? (
-                        <div className="flex flex-col items-center justify-center py-16 flex-1">
-                          <Database className="h-16 w-16 text-gray-400 dark:text-gray-600 mb-4" />
-                          <h2 className="text-2xl font-bold text-gray-600 dark:text-gray-400 mb-2">
-                            Select a category to manage
-                          </h2>
-                          <p className="text-gray-500 dark:text-gray-500">
-                            Choose a menu item from the sidebar to get started
+            <AnimatePresence mode="wait">
+              {!selectedCategoryId ? (
+                <motion.div
+                  key="categories"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                  className="px-4 py-4 sm:px-5 sm:py-5"
+                >
+                  <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">
+                    Choose a section
+                  </p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {MASTER_DATA_CATEGORIES.map((category) => (
+                      <CategoryCard
+                        key={category.id}
+                        category={category}
+                        onSelect={() => handleCategorySelect(category.id)}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              ) : (
+                activeCategory && (
+                  <motion.div
+                    key="editor"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex min-h-0 flex-1 flex-col"
+                  >
+                    {/* Step 2 header */}
+                    <div className="border-b border-[#f0ebe3]/80 px-4 py-3 sm:px-5">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${activeCategory.iconBg}`}
+                          >
+                            {(() => {
+                              const Icon = activeCategory.icon
+                              return <Icon className={`h-4 w-4 ${activeCategory.iconColor}`} strokeWidth={1.75} />
+                            })()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[10px] text-gray-500">
+                              Master data
+                              <span className="mx-1.5 text-gray-300">/</span>
+                              <span className="font-medium text-[#c9a227]">{activeCategory.title}</span>
+                            </p>
+                            <h2 className="font-display text-base font-semibold text-[#1F4068] sm:text-lg">
+                              {activeCategory.title}
+                            </h2>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleBackToCategories}
+                          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#f0ebe3] bg-white/80 px-3 py-2 text-[11px] font-medium text-gray-600 transition-colors hover:border-[#c9a227]/35 hover:bg-[#faf8f4] hover:text-[#1F4068]"
+                        >
+                          <ArrowLeft className="h-3.5 w-3.5" />
+                          All categories
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Lookup chips */}
+                    <div className="border-b border-[#f0ebe3]/80 px-4 py-3 sm:px-5">
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">
+                        Lookup type
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {activeCategory.items.map((item) => {
+                          const isActive = currentStep === item.id
+
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => handleItemSelect(item.id)}
+                              className={`rounded-full px-3 py-1.5 text-[11px] font-medium transition-all ${
+                                isActive
+                                  ? "bg-[#1F4068] text-white shadow-sm"
+                                  : "border border-[#f0ebe3] bg-white/80 text-gray-600 hover:border-[#c9a227]/35 hover:text-[#1F4068]"
+                              }`}
+                            >
+                              {item.title}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Table header */}
+                    {activeItem && (
+                      <div className="flex shrink-0 flex-col gap-3 border-b border-[#f0ebe3]/80 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                        <div>
+                          <h3 className="font-display text-lg font-semibold text-[#1F4068] sm:text-xl">
+                            {activeItem.title}
+                          </h3>
+                          <p className="mt-0.5 text-[11px] text-gray-500">
+                            Manage values for {activeItem.title.toLowerCase()}
                           </p>
                         </div>
-                      ) : (
-                        <>
-                          {/* Step Title - Fixed */}
-                          <div className="flex items-center justify-between p-8 pb-6 flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
-                            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                              {getTitleForCurrentStep()}
-                            </h2>
-                            {getCurrentStepConfig() && (
-                              <Button
-                                onClick={() => setIsAddDialogOpen(true)}
-                                className="flex items-center gap-2 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] hover:opacity-90 text-white"
-                              >
-                                <Plus className="h-4 w-4" />
-                                {getCurrentStepConfig()?.addButtonText}
-                              </Button>
+                        {stepConfig && (
+                          <Button
+                            onClick={() => setIsAddDialogOpen(true)}
+                            size="sm"
+                            className="rounded-lg bg-[#c9a227] text-white hover:bg-[#b8921f] shadow-sm"
+                          >
+                            <Plus className="mr-1.5 h-4 w-4" />
+                            {stepConfig.addButtonText}
+                          </Button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Table */}
+                    <div className="min-h-0 flex-1">
+                      <AnimatePresence mode="wait">
+                        {currentStep && (
+                          <motion.div
+                            key={currentStep}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                            className="h-full min-h-[320px] lg:min-h-[400px]"
+                          >
+                            {stepConfig ? (
+                              <MasterDataManager
+                                tableName={stepConfig.tableName}
+                                title={stepConfig.title}
+                                addButtonText={stepConfig.addButtonText}
+                                dialogTitle={stepConfig.dialogTitle}
+                                dialogDescription={stepConfig.dialogDescription}
+                                inputPlaceholder={stepConfig.inputPlaceholder}
+                                isAddDialogOpen={isAddDialogOpen}
+                                onAddDialogChange={setIsAddDialogOpen}
+                                showColourCode={currentStep === "skin-colour"}
+                                showCategory={
+                                  currentStep === "education-level" || currentStep === "subcaste"
+                                }
+                                refreshKey={refreshKey}
+                              />
+                            ) : (
+                              <div className="flex h-full items-center justify-center px-6 py-12 text-center">
+                                <p className="text-sm text-gray-500">
+                                  No configuration found for this lookup type.
+                                </p>
+                              </div>
                             )}
-                          </div>
-
-                          {/* Scrollable Content */}
-                          <div className="flex-1 min-h-0">
-                            <AnimatePresence mode="wait">
-                              <motion.div
-                                key={currentStep}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                transition={{ duration: 0.3 }}
-                                className="h-full"
-                              >
-                                {getCurrentStepConfig() ? (
-                                  <MasterDataManager
-                                    tableName={getCurrentStepConfig()!.tableName}
-                                    title={getCurrentStepConfig()!.title}
-                                    addButtonText={getCurrentStepConfig()!.addButtonText}
-                                    dialogTitle={getCurrentStepConfig()!.dialogTitle}
-                                    dialogDescription={getCurrentStepConfig()!.dialogDescription}
-                                    inputPlaceholder={getCurrentStepConfig()!.inputPlaceholder}
-                                    isAddDialogOpen={isAddDialogOpen}
-                                    onAddDialogChange={setIsAddDialogOpen}
-                                    showColourCode={currentStep === "skin-colour"}
-                                    showCategory={currentStep === "education-level" || currentStep === "subcaste"}
-                                    refreshKey={refreshKey}
-                                  />
-                                ) : null}
-                              </motion.div>
-                            </AnimatePresence>
-                          </div>
-                        </>
-                      )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
-                  </div>
-          </div>
+                  </motion.div>
+                )
+              )}
+            </AnimatePresence>
+          </ThemedPanel>
         </div>
-      </div>
-
-
+      </main>
     </div>
   )
 }

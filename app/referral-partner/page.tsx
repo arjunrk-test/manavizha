@@ -477,18 +477,25 @@ export default function ReferralPartnerPage() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <a
-                href="mailto:arjun.rksaravanan@gmail.com"
+                href="mailto:contact@manavizha.com"
                 className="flex items-center gap-3 px-6 py-4 rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 text-gray-900 dark:text-white hover:border-[#3bb9ac] transition-all shadow-sm hover:shadow-md"
               >
                 <Mail className="h-5 w-5 text-[#3bb9ac]" />
-                <span className="font-medium">arjun.rksaravanan@gmail.com</span>
+                <span className="font-medium">contact@manavizha.com</span>
               </a>
               <a
-                href="tel:+918072734996"
+                href="tel:+918925554449"
                 className="flex items-center gap-3 px-6 py-4 rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 text-gray-900 dark:text-white hover:border-[#3bb9ac] transition-all shadow-sm hover:shadow-md"
               >
                 <Phone className="h-5 w-5 text-[#3bb9ac]" />
-                <span className="font-medium">+91 8072734996</span>
+                <span className="font-medium">+91 8925554449</span>
+              </a>
+              <a
+                href="tel:+918925554440"
+                className="flex items-center gap-3 px-6 py-4 rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 text-gray-900 dark:text-white hover:border-[#3bb9ac] transition-all shadow-sm hover:shadow-md"
+              >
+                <Phone className="h-5 w-5 text-[#3bb9ac]" />
+                <span className="font-medium">+91 8925554440</span>
               </a>
             </div>
           </motion.div>

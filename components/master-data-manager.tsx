@@ -198,24 +198,24 @@ export function MasterDataManager({
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
           <table className="w-full border-collapse">
             <thead className="sticky top-0 z-10">
-              <tr className="bg-gray-50 dark:bg-gray-700/50 border-b-2 border-gray-200 dark:border-gray-600">
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700/50">
+              <tr className="border-b border-[#f0ebe3] bg-[#faf8f4]/95">
+                <th className="bg-[#faf8f4]/95 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#1F4068] sm:px-5">
                   S.No
                 </th>
                 {showCategory && (
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700/50">
+                  <th className="bg-[#faf8f4]/95 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#1F4068] sm:px-5">
                     Category
                   </th>
                 )}
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700/50">
+                <th className="bg-[#faf8f4]/95 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#1F4068] sm:px-5">
                   Value
                 </th>
                 {showColourCode && (
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700/50">
-                    Colour Code (HEX)
+                  <th className="bg-[#faf8f4]/95 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#1F4068] sm:px-5">
+                    Colour Code
                   </th>
                 )}
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700/50">
+                <th className="bg-[#faf8f4]/95 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#1F4068] sm:px-5">
                   Actions
                 </th>
               </tr>
@@ -223,61 +223,56 @@ export function MasterDataManager({
             <tbody>
               {values.length === 0 ? (
                 <tr>
-                  <td colSpan={showCategory ? (showColourCode ? 5 : 4) : (showColourCode ? 4 : 3)} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                    No {title.toLowerCase()} values found. Click "{addButtonText}" to add one.
+                  <td
+                    colSpan={showCategory ? (showColourCode ? 5 : 4) : showColourCode ? 4 : 3}
+                    className="px-5 py-10 text-center text-[12px] text-gray-500"
+                  >
+                    No {title.toLowerCase()} values found. Click &ldquo;{addButtonText}&rdquo; to add one.
                   </td>
                 </tr>
               ) : (
                 values.map((item, index) => (
                   <tr
                     key={item.id}
-                    className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                    className="border-b border-[#f0ebe3]/80 transition-colors hover:bg-[#faf8f4]/60"
                   >
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                      {index + 1}
-                    </td>
+                    <td className="px-4 py-3 text-[13px] tabular-nums text-gray-600 sm:px-5">{index + 1}</td>
                     {showCategory && (
-                      <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                        {item.category || "-"}
-                      </td>
+                      <td className="px-4 py-3 text-[13px] text-[#1F4068] sm:px-5">{item.category || "-"}</td>
                     )}
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                      {item.value}
-                    </td>
+                    <td className="px-4 py-3 text-[13px] font-medium text-[#1F4068] sm:px-5">{item.value}</td>
                     {showColourCode && (
-                      <td className="px-6 py-4 text-sm">
+                      <td className="px-4 py-3 text-[13px] sm:px-5">
                         <div className="flex items-center gap-2">
                           {item.colour_code && (
                             <div
-                              className="w-8 h-8 rounded border border-gray-300 dark:border-gray-600"
+                              className="h-7 w-7 rounded-md border border-[#f0ebe3] shadow-sm"
                               style={{ backgroundColor: item.colour_code }}
                             />
                           )}
-                          <span className="text-gray-900 dark:text-white font-mono">
-                            {item.colour_code || "-"}
-                          </span>
+                          <span className="font-mono text-[12px] text-gray-600">{item.colour_code || "-"}</span>
                         </div>
                       </td>
                     )}
-                    <td className="px-6 py-4 text-sm">
-                      <div className="flex items-center gap-2">
+                    <td className="px-4 py-3 text-[13px] sm:px-5">
+                      <div className="flex items-center gap-1.5">
                         <Button
                           onClick={() => handleEdit(item)}
                           variant="outline"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-8 w-8 rounded-lg border-[#f0ebe3] p-0 text-[#1F4068] hover:border-[#c9a227]/40 hover:bg-[#fdf6e3]"
                           title="Edit"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           onClick={() => handleDelete(item)}
                           variant="outline"
                           size="sm"
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          className="h-8 w-8 rounded-lg border-[#f0ebe3] p-0 text-red-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                           title="Delete"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </td>
@@ -291,7 +286,7 @@ export function MasterDataManager({
 
       {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="rounded-xl border-[#f0ebe3] sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>{editingId ? `Edit ${title}` : dialogTitle}</DialogTitle>
             <DialogDescription>
@@ -378,13 +373,14 @@ export function MasterDataManager({
                 setEditingId(null)
               }}
               disabled={isSaving}
+              className="rounded-lg border-[#f0ebe3]"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSave}
               disabled={isSaving || !inputValue.trim() || (showColourCode && !colourCodeValue.trim()) || (showCategory && !categoryValue.trim())}
-              className="bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] hover:opacity-90 text-white"
+              className="rounded-lg bg-[#1F4068] text-white hover:bg-[#1a3558]"
             >
               {isSaving ? "Saving..." : editingId ? "Update" : "Save"}
             </Button>
@@ -394,7 +390,7 @@ export function MasterDataManager({
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="rounded-xl border-[#f0ebe3] sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Delete {title} Value</DialogTitle>
             <DialogDescription>
@@ -409,13 +405,14 @@ export function MasterDataManager({
                 setItemToDelete(null)
               }}
               disabled={isDeleting}
+              className="rounded-lg border-[#f0ebe3]"
             >
               Cancel
             </Button>
             <Button
               onClick={confirmDelete}
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="rounded-lg bg-red-500 text-white hover:bg-red-600"
             >
               {isDeleting ? "Deleting..." : "Delete"}
             </Button>

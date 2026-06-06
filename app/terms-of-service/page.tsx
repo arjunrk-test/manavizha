@@ -210,8 +210,8 @@ export default function TermsOfServicePage() {
                 If you have any questions about these Terms of Service, please contact us at:
               </p>
               <div className="mt-4 space-y-2 text-gray-700 dark:text-gray-300">
-                <p><strong>Email:</strong> arjun.rksaravanan@gmail.com</p>
-                <p><strong>Phone:</strong> +91 8072734996</p>
+                <p><strong>Email:</strong> contact@manavizha.com</p>
+                <p><strong>Phone:</strong> +91 8925554449, +91 8925554440</p>
               </div>
             </section>
           </motion.div>
