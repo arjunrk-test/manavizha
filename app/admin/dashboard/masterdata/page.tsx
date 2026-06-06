@@ -8,12 +8,11 @@ import { supabase } from "@/lib/supabase"
 import { getUserDashboard } from "@/lib/auth"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { ArrowLeft, Database, ChevronDown, ChevronRight, Plus } from "lucide-react"
+import { Database, ChevronDown, ChevronRight, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
 import { MasterDataManager } from "@/components/master-data-manager"
 import { masterDataConfig } from "@/constants/master-data"
-import Link from "next/link"
 
 const personalDetailsSubmenus = [
   { id: "gender", title: "Gender" },
@@ -209,35 +208,21 @@ export default function AdminMasterDataPage() {
       <main className="relative z-10 flex-1 flex flex-col pt-[4.75rem]">
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 pb-10">
           <ThemedPanel className="mb-4 sm:mb-5">
-            <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fdf6e3]">
-                  <Database className="h-5 w-5 text-[#c9a227]" strokeWidth={1.75} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#c9a227]">
-                    Operations
-                  </p>
-                  <h1 className="font-display text-lg font-semibold text-[#1F4068] sm:text-xl">
-                    Master data
-                  </h1>
-                  <p className="mt-0.5 text-[11px] text-gray-500">
-                    Manage platform lookups and profile configurations
-                  </p>
-                </div>
+            <div className="flex items-start gap-3 px-4 py-3 sm:px-5 sm:py-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fdf6e3]">
+                <Database className="h-5 w-5 text-[#c9a227]" strokeWidth={1.75} />
               </div>
-
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className="shrink-0 rounded-lg border-[#f0ebe3] bg-white/80 text-[#1F4068] hover:bg-[#faf8f4] hover:text-[#1F4068]"
-              >
-                <Link href="/admin/dashboard" className="flex items-center gap-2">
-                  <ArrowLeft className="h-4 w-4" />
-                  Back to dashboard
-                </Link>
-              </Button>
+              <div className="min-w-0">
+                <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#c9a227]">
+                  Operations
+                </p>
+                <h1 className="font-display text-lg font-semibold text-[#1F4068] sm:text-xl">
+                  Master data
+                </h1>
+                <p className="mt-0.5 text-[11px] text-gray-500">
+                  Manage platform lookups and profile configurations
+                </p>
+              </div>
             </div>
           </ThemedPanel>
 
