@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
-import { motion, AnimatePresence } from "framer-motion"
-import { CheckCircle2, Circle, CheckCircle } from "lucide-react"
+import { AnimatePresence, motion } from "framer-motion"
+import { CheckCircle2, CheckCircle, ClipboardList, ShieldCheck } from "lucide-react"
+import { DashboardJourneyPatterns } from "@/components/dashboard/dashboard-journey-patterns"
+import { cn } from "@/lib/utils"
 import type { FormData } from "@/types/profile"
 import { toast } from "sonner"
 import { PersonalDetailsStep } from "@/components/profile-steps/personal-details-step"
@@ -3471,11 +3473,8 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   // Show loading state while data is being loaded
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">Loading your profile...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#f0f0f0] border-t-[#e87898]" />
       </div>
     )
   }
@@ -3483,84 +3482,118 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const stepProgress = calculateStepProgress(formSteps[currentStep].id)
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-full mx-auto px-4 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Sidebar Navigation */}
-          <div className="lg:col-span-3">
-            <div className="sds-glass rounded-[2.5rem] p-4 border-2 border-indigo-50 sticky top-24 overflow-hidden shadow-[0_20px_50px_rgba(59,185,172,0.05)]">
-              <div className="p-6 border-b border-black/5 mb-6">
-                <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/50 mb-1">Profile Journey</h4>
-                <h3 className="text-2xl font-light text-gray-900 tracking-tight">Step Breakdown</h3>
-              </div>
+    <div className="profile-setup-theme p-5 lg:p-6 max-w-[1200px] mx-auto">
+      <div className="mb-5">
+        <h1 className="text-[22px] font-semibold text-[#1F4068] tracking-tight">Profile Setup</h1>
+        <p className="text-[13px] text-[#6b7280] mt-1">
+          Complete each section to build your profile and improve match quality
+        </p>
+        <div className="mt-4 max-w-md">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="text-[11px] font-medium text-[#6b7280]">Overall completion</span>
+            <span className="text-[13px] font-semibold text-[#1F4068]">{overallProgress}%</span>
+          </div>
+          <div className="h-[6px] bg-[#f3f4f6] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#e87898] rounded-full transition-all duration-500"
+              style={{ width: `${overallProgress}%` }}
+            />
+          </div>
+        </div>
+      </div>
 
-              <div className="space-y-1">
-                {formSteps.map((step, index) => {
-                  const stepProg = calculateStepProgress(step.id)
-                  const isActive = index === currentStep
-                  const isCompleted = stepProg === 100
+      <div className="flex flex-col lg:flex-row gap-5">
+        <aside className="w-full lg:w-[272px] shrink-0">
+          <nav className="relative overflow-hidden rounded-[20px] border border-[#f0ebe3] bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] shadow-[0_2px_12px_rgba(31,64,104,0.04)] lg:sticky lg:top-4">
+            <DashboardJourneyPatterns />
 
-                  return (
-                    <motion.button
-                      key={step.id}
-                      onClick={() => handleStepClick(index)}
-                      className={`w-full text-left px-5 py-4 rounded-2xl transition-all duration-300 relative group flex items-center justify-between ${isActive
-                          ? "bg-[#3bb9ac] text-white shadow-xl shadow-emerald-500/20"
-                          : isCompleted
-                            ? "bg-emerald-50/50 text-emerald-700 hover:bg-emerald-50 border border-emerald-100"
-                            : "hover:bg-[#3bb9ac]/5 text-gray-400 hover:text-[#3bb9ac]"
-                        }`}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className="flex-shrink-0">
-                          {isCompleted ? (
-                            <CheckCircle className="h-4 w-4 text-emerald-600" />
-                          ) : (
-                            <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${isActive ? 'border-white/40' : 'border-gray-300 group-hover:border-[#3bb9ac]/30'}`}>
-                              <span className="text-[8px] font-black">{index + 1}</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-[11px] font-black uppercase tracking-widest truncate group-hover:text-[#3bb9ac] transition-colors">{step.title}</div>
-                          {isCompleted && !isActive && <span className="text-[9px] font-black text-emerald-500/80 uppercase tracking-tighter">Verified</span>}
-                        </div>
-                      </div>
-                      {isActive && <div className="w-1.5 h-1.5 rounded-full bg-white opacity-40 shadow-sm" />}
-                    </motion.button>
-                  )
-                })}
+            <div className="relative border-b border-[#f0ebe3]/80 px-4 py-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fce8ef] shadow-sm">
+                  <ClipboardList className="h-4 w-4 text-[#e87898]" />
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold text-[#1F4068]">Profile sections</p>
+                  <p className="text-[11px] text-[#9ca3af]">
+                    Step {currentStep + 1} of {formSteps.length}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-9">
-            <div className="sds-glass rounded-[3rem] p-10 md:p-16 border-2 border-indigo-50 shadow-2xl shadow-indigo-100/20 relative overflow-hidden">
-              {/* Header logic */}
-              <div className="flex items-end justify-between mb-12 border-b border-black/5 pb-8">
-                <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#3bb9ac]/40 mb-2">Phase {currentStep + 1} / {formSteps.length}</h4>
-                  <h2 className="text-5xl font-light text-gray-900 tracking-tight">
-                    {formSteps[currentStep].title}
-                  </h2>
-                </div>
-                <div className="text-right">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-[#3bb9ac] mb-2">Integrity Score</div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-4xl font-black text-[#3bb9ac] tracking-tighter">{stepProgress}%</div>
-                  </div>
+            <div className="relative max-h-[min(60vh,520px)] overflow-y-auto p-2 space-y-0.5">
+              {formSteps.map((step, index) => {
+                const stepProg = calculateStepProgress(step.id)
+                const isActive = index === currentStep
+                const isCompleted = stepProg === 100
+
+                return (
+                  <button
+                    key={step.id}
+                    type="button"
+                    onClick={() => handleStepClick(index)}
+                    className={cn(
+                      "group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 ease-in-out text-left",
+                      isActive && "bg-[#fce8ef] text-[#e87898] shadow-[0_1px_4px_rgba(232,120,152,0.12)]",
+                      !isActive && isCompleted && "text-[#374151] hover:bg-[#faf8f4]",
+                      !isActive && !isCompleted && "text-[#6b7280] hover:bg-[#faf8f4] hover:text-[#374151]"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-200 ease-in-out text-[11px] font-semibold",
+                        isActive && "bg-[#e87898] text-white shadow-sm",
+                        !isActive && isCompleted && "bg-[#e6f7f5] text-[#3bb9ac]",
+                        !isActive && !isCompleted && "bg-[#faf8f4] text-[#9ca3af] group-hover:bg-[#fce8ef]/50 group-hover:text-[#e87898]"
+                      )}
+                    >
+                      {isCompleted && !isActive ? (
+                        <CheckCircle className="h-4 w-4" />
+                      ) : (
+                        index + 1
+                      )}
+                    </span>
+                    <span className="flex-1 truncate">{step.title}</span>
+                    {isActive && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#e87898]" />}
+                    {!isActive && isCompleted && (
+                      <span className="text-[10px] font-semibold text-[#3bb9ac] shrink-0">Done</span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </nav>
+        </aside>
+
+        <div className="flex-1 min-w-0">
+          <div className="relative overflow-hidden rounded-[20px] border border-[#f0ebe3] bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] shadow-[0_2px_12px_rgba(31,64,104,0.04)]">
+            <DashboardJourneyPatterns />
+
+            <div className="relative border-b border-[#f0ebe3]/80 px-4 py-4 sm:px-5 sm:py-5">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#c9a227]">
+                Step {currentStep + 1} of {formSteps.length}
+              </p>
+              <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <h2 className="font-display text-xl font-semibold text-[#1F4068] sm:text-2xl">
+                  {formSteps[currentStep].title}
+                </h2>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[11px] text-[#6b7280]">Section progress</span>
+                  <span className="inline-flex items-center rounded-full border border-[#fce8ef] bg-[#fce8ef] px-2.5 py-1 text-[11px] font-semibold text-[#e87898]">
+                    {stepProgress}%
+                  </span>
                 </div>
               </div>
+            </div>
 
+            <div className="relative p-3 sm:p-4">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentStep}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.2 }}
                 >
                   {currentStep === 0 && <PersonalDetailsStep formData={formData} onChange={handleInputChange} />}
                   {currentStep === 1 && <ContactDetailsStep formData={formData} onChange={handleInputChange} />}
@@ -3572,43 +3605,49 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
                   {currentStep === 7 && <SocialHabitsStep formData={formData} onChange={handleInputChange} />}
                   {currentStep === 8 && <PhotosStep formData={formData} onChange={handleInputChange} userId={userId} />}
                   {currentStep === 9 && <PartnerPreferencesStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 10 && <ReferralStep formData={formData} onChange={handleInputChange} onPartnerNameChange={handlePartnerNameChange} />}
+                  {currentStep === 10 && (
+                    <ReferralStep
+                      formData={formData}
+                      onChange={handleInputChange}
+                      onPartnerNameChange={handlePartnerNameChange}
+                    />
+                  )}
                 </motion.div>
               </AnimatePresence>
 
-              {/* Action Vector */}
-              <div className="mt-12 pt-10 border-t border-black/5 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="text-center md:text-left">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4" /> Data Protection Active
-                  </p>
-                  <p className="text-[10px] text-gray-400 font-bold tracking-tight">Your intelligence is encrypted and secure.</p>
+              <div className="mt-6 pt-4 border-t border-[#f0ebe3] flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-[12px] text-[#6b7280]">
+                  <ShieldCheck className="h-4 w-4 text-[#3bb9ac] shrink-0" />
+                  <span>Your profile data is stored securely</span>
                 </div>
                 <Button
                   onClick={handleSave}
                   disabled={
-                    isSaving || 
-                    (currentStep === 0 && !hasPersonalDetailsChanged()) || 
-                    (currentStep === 1 && !hasContactDetailsChanged()) || 
-                    (currentStep === 2 && !hasEducationDetailsChanged()) || 
-                    (currentStep === 3 && !hasProfessionalDetailsChanged()) || 
-                    (currentStep === 4 && !hasFamilyDetailsChanged()) || 
-                    (currentStep === 5 && !hasHoroscopeDetailsChanged()) || 
-                    (currentStep === 6 && !hasInterestsDetailsChanged()) || 
-                    (currentStep === 7 && !hasSocialHabitsDetailsChanged()) || 
-                    (currentStep === 8 && !hasPhotosDetailsChanged()) || 
-                    (currentStep === 9 && !hasPartnerPreferencesChanged()) || 
+                    isSaving ||
+                    (currentStep === 0 && !hasPersonalDetailsChanged()) ||
+                    (currentStep === 1 && !hasContactDetailsChanged()) ||
+                    (currentStep === 2 && !hasEducationDetailsChanged()) ||
+                    (currentStep === 3 && !hasProfessionalDetailsChanged()) ||
+                    (currentStep === 4 && !hasFamilyDetailsChanged()) ||
+                    (currentStep === 5 && !hasHoroscopeDetailsChanged()) ||
+                    (currentStep === 6 && !hasInterestsDetailsChanged()) ||
+                    (currentStep === 7 && !hasSocialHabitsDetailsChanged()) ||
+                    (currentStep === 8 && !hasPhotosDetailsChanged()) ||
+                    (currentStep === 9 && !hasPartnerPreferencesChanged()) ||
                     (currentStep === 10 && !hasReferralDetailsChanged())
                   }
-                  className="h-16 px-12 rounded-[2rem] bg-[#3bb9ac] text-white font-black text-[12px] uppercase tracking-[0.2em] shadow-2xl shadow-indigo-500/40 hover:shadow-indigo-500/60 transition-all disabled:opacity-30 disabled:grayscale"
+                  className="h-10 px-6 rounded-[10px] bg-[#e87898] hover:bg-[#d66686] text-white text-[13px] font-medium shadow-none disabled:opacity-40"
                 >
                   {isSaving ? (
-                    <div className="flex items-center gap-3">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                      <span>Synchronizing...</span>
-                    </div>
+                    <span className="flex items-center gap-2">
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      Saving…
+                    </span>
                   ) : (
-                    <span>Update {formSteps[currentStep].title}</span>
+                    <span className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Save {formSteps[currentStep].title}
+                    </span>
                   )}
                 </Button>
               </div>

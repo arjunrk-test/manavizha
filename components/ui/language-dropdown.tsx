@@ -32,7 +32,7 @@ export function LanguageDropdown({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="sds-input w-full h-14 px-6 flex items-center justify-between text-left group transition-all"
+          className="sds-input w-full h-9 px-3 flex items-center justify-between text-left group transition-all"
         >
           <div className="flex items-center gap-2 flex-wrap">
             {selectedCount > 0 ? (
