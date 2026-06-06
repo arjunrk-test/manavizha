@@ -234,7 +234,7 @@ export default function AdminDashboardPage() {
             </div>
           </motion.section>
 
-          <section className="mb-10 sm:mb-12">
+          <section className="mb-6 sm:mb-8">
             <AdminProfileStagesPanel stages={stageStats} totalUsers={stats.total} />
           </section>
 
