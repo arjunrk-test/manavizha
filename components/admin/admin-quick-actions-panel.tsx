@@ -6,7 +6,6 @@ import {
   Database,
   Mail,
   ShieldCheck,
-  User,
   Users,
   type LucideIcon,
 } from "lucide-react"
@@ -24,15 +23,6 @@ type QuickAction = {
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
-  {
-    href: "/admin/dashboard/funnel?stage=personal",
-    title: "Manage profiles",
-    description: "Users who have not completed profile stages",
-    icon: User,
-    iconBg: "bg-[#e6f7f5]",
-    iconColor: "text-[#3bb9ac]",
-    accentColor: "group-hover:text-[#3bb9ac]",
-  },
   {
     href: "/admin/dashboard/accounts",
     title: "Accounts",
