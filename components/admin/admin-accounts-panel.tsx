@@ -14,7 +14,7 @@ import {
   Pencil,
   Plus,
   Search,
-  UserCog,
+  Trash2,
   Users,
   X,
 } from "lucide-react"
@@ -78,6 +78,38 @@ function StatusPill({ active, label }: { active: boolean; label?: string }) {
   )
 }
 
+function IconActionButton({
+  onClick,
+  icon: Icon,
+  title,
+  tone = "default",
+}: {
+  onClick: () => void
+  icon: React.ComponentType<{ className?: string }>
+  title: string
+  tone?: "default" | "danger" | "gold"
+}) {
+  const styles = {
+    default: "border-[#f0ebe3] bg-white text-[#1F4068] hover:border-[#c9a227]/40 hover:bg-[#fdf6e3]",
+    danger: "border-[#f0ebe3] bg-white text-red-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600",
+    gold: "border-[#c9a227]/30 bg-white text-[#c9a227] hover:border-[#c9a227]/50 hover:bg-[#fdf6e3]",
+  }
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={onClick}
+      title={title}
+      aria-label={title}
+      className={`h-8 w-8 shrink-0 rounded-lg p-0 ${styles[tone]}`}
+    >
+      <Icon className="h-3.5 w-3.5" />
+    </Button>
+  )
+}
+
 function ActionButton({
   onClick,
   icon: Icon,
@@ -109,10 +141,38 @@ function ActionButton({
   )
 }
 
+function matchesCurrentAdmin(
+  admin: any,
+  current: { id: string | null; email: string | null }
+): boolean | null {
+  if (!current.id && !current.email) return null
+
+  const adminUserId = admin.user_id || admin.id
+  if (current.id && adminUserId === current.id) return true
+
+  if (
+    current.email &&
+    admin.email &&
+    admin.email.toLowerCase() === current.email.toLowerCase()
+  ) {
+    return true
+  }
+
+  return false
+}
+
+async function getCurrentAuthUser() {
+  const { data: { user } } = await supabase.auth.getUser()
+  return { id: user?.id ?? null, email: user?.email ?? null }
+}
+
 export function AdminAccountsPanel() {
   const router = useRouter()
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null)
+  const [currentUser, setCurrentUser] = useState<{ id: string | null; email: string | null }>({
+    id: null,
+    email: null,
+  })
+  const [isSessionReady, setIsSessionReady] = useState(false)
   const [admins, setAdmins] = useState<any[]>([])
   const [partners, setPartners] = useState<any[]>([])
   const [selectedPartner, setSelectedPartner] = useState<any>(null)
@@ -167,33 +227,41 @@ export function AdminAccountsPanel() {
   }, [partners, q])
 
   useEffect(() => {
-    const loadCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setCurrentUserId(user.id)
-        setCurrentUserEmail(user.email ?? null)
-      }
+    let cancelled = false
+
+    const init = async () => {
+      const authUser = await getCurrentAuthUser()
+      if (cancelled) return
+
+      setCurrentUser(authUser)
+      setIsSessionReady(true)
+      await fetchData()
     }
 
-    loadCurrentUser()
-    fetchData()
+    init()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
-  const isCurrentAdmin = (admin: any) => {
-    if (!currentUserId && !currentUserEmail) return false
+  const isCurrentAdmin = (admin: any) => matchesCurrentAdmin(admin, currentUser) === true
 
-    const adminUserId = admin.user_id || admin.id
-    if (currentUserId && adminUserId === currentUserId) return true
+  const assertCanModifyAdmin = async (admin: any) => {
+    const authUser = await getCurrentAuthUser()
+    const match = matchesCurrentAdmin(admin, authUser)
 
-    if (
-      currentUserEmail &&
-      admin.email &&
-      admin.email.toLowerCase() === currentUserEmail.toLowerCase()
-    ) {
-      return true
+    if (match === true) {
+      toast.error("You cannot change or revoke your own admin account")
+      return false
     }
 
-    return false
+    if (match === null) {
+      toast.error("Unable to verify your session. Please try again.")
+      return false
+    }
+
+    return true
   }
 
   const fetchData = async () => {
@@ -353,10 +421,15 @@ export function AdminAccountsPanel() {
     }
   }
 
-  const handleOpenAdminDialog = (mode: "add" | "edit" | "revoke", admin: any = null) => {
-    if (admin && (mode === "edit" || mode === "revoke") && isCurrentAdmin(admin)) {
-      toast.error("You cannot change or revoke your own admin account")
-      return
+  const handleOpenAdminDialog = async (mode: "add" | "edit" | "revoke", admin: any = null) => {
+    if (admin && (mode === "edit" || mode === "revoke")) {
+      if (!isSessionReady) {
+        toast.error("Still loading your session. Please try again.")
+        return
+      }
+
+      const canModify = await assertCanModifyAdmin(admin)
+      if (!canModify) return
     }
 
     setAdminDialogMode(mode)
@@ -387,18 +460,16 @@ export function AdminAccountsPanel() {
         if (!res.success) throw new Error(res.error)
         toast.success("Admin account created successfully")
       } else if (adminDialogMode === "edit" && selectedAdmin) {
-        if (isCurrentAdmin(selectedAdmin)) {
-          toast.error("You cannot change your own admin role")
-          return
-        }
+        const canModify = await assertCanModifyAdmin(selectedAdmin)
+        if (!canModify) return
+
         const res = await updateAdminRole(selectedAdmin.user_id, adminFormData.role)
         if (!res.success) throw new Error(res.error)
         toast.success("Admin role updated successfully")
       } else if (adminDialogMode === "revoke" && selectedAdmin) {
-        if (isCurrentAdmin(selectedAdmin)) {
-          toast.error("You cannot revoke your own admin access")
-          return
-        }
+        const canModify = await assertCanModifyAdmin(selectedAdmin)
+        if (!canModify) return
+
         const res = await revokeAdminAccess(selectedAdmin.user_id)
         if (!res.success) throw new Error(res.error)
         toast.success("Admin access revoked successfully")
@@ -570,23 +641,27 @@ export function AdminAccountsPanel() {
                             <StatusPill active />
                           </td>
                           <td className="px-4 py-3">
-                            {isCurrentAdmin(admin) ? (
+                            {!isSessionReady ? (
+                              <div className="flex justify-end">
+                                <span className="text-[10px] text-gray-400">—</span>
+                              </div>
+                            ) : isCurrentAdmin(admin) ? (
                               <div className="flex justify-end">
                                 <span className="inline-flex items-center gap-1 rounded-full bg-[#e8eef5] px-2 py-0.5 text-[10px] font-semibold text-[#1F4068]">
                                   Your account
                                 </span>
                               </div>
                             ) : (
-                              <div className="flex flex-wrap items-center justify-end gap-1.5">
-                                <ActionButton
+                              <div className="flex items-center justify-end gap-1.5">
+                                <IconActionButton
                                   onClick={() => handleOpenAdminDialog("edit", admin)}
-                                  icon={UserCog}
-                                  label="Edit role"
+                                  icon={Pencil}
+                                  title="Edit role"
                                 />
-                                <ActionButton
+                                <IconActionButton
                                   onClick={() => handleOpenAdminDialog("revoke", admin)}
-                                  icon={Ban}
-                                  label="Revoke"
+                                  icon={Trash2}
+                                  title="Revoke access"
                                   tone="danger"
                                 />
                               </div>
