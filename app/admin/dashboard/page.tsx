@@ -12,7 +12,7 @@ import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { getUserDashboard } from "@/lib/auth"
+import { getUserDashboard, getAdminRole } from "@/lib/auth"
 import {
   ArrowRight,
   Heart,
@@ -23,6 +23,7 @@ import { motion } from "framer-motion"
 export default function AdminDashboardPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
+  const [adminRole, setAdminRole] = useState<string | null>(null)
   const [stats, setStats] = useState({
     total: 0,
     men: 0,
@@ -55,6 +56,7 @@ export default function AdminDashboardPage() {
         return
       }
 
+      setAdminRole(await getAdminRole(authUser.id))
       setIsLoading(false)
     }
 
@@ -185,7 +187,10 @@ export default function AdminDashboardPage() {
           </section>
 
           <section className="pb-10 sm:pb-12">
-            <AdminQuickActionsPanel pendingVerifications={stats.pendingVerifications} />
+            <AdminQuickActionsPanel
+              pendingVerifications={stats.pendingVerifications}
+              adminRole={adminRole}
+            />
           </section>
         </div>
 

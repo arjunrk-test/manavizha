@@ -5,7 +5,7 @@ import { AdminDashboardBackground } from "@/components/admin/admin-dashboard-bac
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { DashboardJourneyPatterns } from "@/components/dashboard/dashboard-journey-patterns"
 import { supabase } from "@/lib/supabase"
-import { getUserDashboard } from "@/lib/auth"
+import { getUserDashboard, isSuperAdmin } from "@/lib/auth"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import {
@@ -226,6 +226,11 @@ export default function AdminMasterDataPage() {
       const dashboardPath = await getUserDashboard(user.id)
       if (dashboardPath !== "/admin/dashboard") {
         router.push(dashboardPath)
+        return
+      }
+
+      if (!(await isSuperAdmin(user.id))) {
+        router.push("/admin/dashboard")
         return
       }
 

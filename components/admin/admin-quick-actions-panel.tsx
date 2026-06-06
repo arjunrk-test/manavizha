@@ -11,6 +11,8 @@ import {
 } from "lucide-react"
 import { DashboardJourneyPatterns } from "@/components/dashboard/dashboard-journey-patterns"
 
+type AdminQuickActionRole = "super_admin" | "admin" | "editor" | "viewer"
+
 type QuickAction = {
   href: string
   title: string
@@ -20,6 +22,7 @@ type QuickAction = {
   iconColor: string
   accentColor: string
   verification?: boolean
+  allowedRoles?: AdminQuickActionRole[]
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
@@ -40,6 +43,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     iconBg: "bg-[#fdf6e3]",
     iconColor: "text-[#c9a227]",
     accentColor: "group-hover:text-[#c9a227]",
+    allowedRoles: ["super_admin"],
   },
   {
     href: "/admin/dashboard/email",
@@ -49,6 +53,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     iconBg: "bg-[#fce8ef]",
     iconColor: "text-[#e87898]",
     accentColor: "group-hover:text-[#e87898]",
+    allowedRoles: ["super_admin", "admin"],
   },
   {
     href: "/admin/verification",
@@ -64,6 +69,7 @@ const QUICK_ACTIONS: QuickAction[] = [
 
 interface AdminQuickActionsPanelProps {
   pendingVerifications?: number
+  adminRole?: string | null
 }
 
 function ActionCard({
@@ -113,7 +119,16 @@ function ActionCard({
   )
 }
 
-export function AdminQuickActionsPanel({ pendingVerifications = 0 }: AdminQuickActionsPanelProps) {
+export function AdminQuickActionsPanel({
+  pendingVerifications = 0,
+  adminRole = null,
+}: AdminQuickActionsPanelProps) {
+  const visibleActions = QUICK_ACTIONS.filter((action) => {
+    if (!action.allowedRoles) return true
+    if (!adminRole) return false
+    return action.allowedRoles.includes(adminRole as AdminQuickActionRole)
+  })
+
   return (
     <div className="relative overflow-hidden rounded-xl border border-[#f0ebe3] bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] shadow-[0_2px_16px_rgba(31,64,104,0.05)]">
       <DashboardJourneyPatterns />
@@ -131,7 +146,7 @@ export function AdminQuickActionsPanel({ pendingVerifications = 0 }: AdminQuickA
       </div>
 
       <div className="relative z-10 grid grid-cols-1 gap-2 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3">
-        {QUICK_ACTIONS.map((action) => (
+        {visibleActions.map((action) => (
           <ActionCard
             key={action.href}
             action={action}

@@ -5,7 +5,7 @@ import { AdminDashboardBackground } from "@/components/admin/admin-dashboard-bac
 import { AdminEmailPanel } from "@/components/admin/admin-email-panel"
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { supabase } from "@/lib/supabase"
-import { getUserDashboard } from "@/lib/auth"
+import { getUserDashboard, canAccessAdminEmail } from "@/lib/auth"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
@@ -24,6 +24,11 @@ export default function AdminEmailPage() {
       const dashboardPath = await getUserDashboard(user.id)
       if (dashboardPath !== "/admin/dashboard") {
         router.push(dashboardPath)
+        return
+      }
+
+      if (!(await canAccessAdminEmail(user.id))) {
+        router.push("/admin/dashboard")
         return
       }
 
