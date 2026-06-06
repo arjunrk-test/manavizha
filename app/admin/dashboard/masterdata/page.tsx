@@ -357,11 +357,11 @@ export default function AdminMasterDataPage() {
                     </div>
 
                     {/* Lookup chips */}
-                    <div className="border-b border-[#f0ebe3]/80 px-4 py-3 sm:px-5">
-                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">
+                    <div className="border-b border-[#c5d4e4] bg-[#e8eef5] px-4 py-3 text-center sm:px-5">
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#1F4068]/60">
                         Lookup type
                       </p>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap justify-center gap-1.5">
                         {activeCategory.items.map((item) => {
                           const isActive = currentStep === item.id
 
@@ -373,7 +373,7 @@ export default function AdminMasterDataPage() {
                               className={`rounded-full px-3 py-1.5 text-[11px] font-medium transition-all ${
                                 isActive
                                   ? "bg-[#1F4068] text-white shadow-sm"
-                                  : "border border-[#f0ebe3] bg-white/80 text-gray-600 hover:border-[#c9a227]/35 hover:text-[#1F4068]"
+                                  : "border border-[#c5d4e4] bg-white text-gray-600 hover:border-[#1F4068]/30 hover:text-[#1F4068]"
                               }`}
                             >
                               {item.title}
