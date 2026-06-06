@@ -90,12 +90,21 @@ function getPremiumBadge(isPremium: boolean, plan: string | null, expiresAt: str
     return <span className="bg-[#3bb9ac] text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 w-fit shadow-md shadow-emerald-200 dark:shadow-none"><Crown className="h-3 w-3"/> Premium</span>
 }
 
-function AdminProfilesContent({ genderFilter }: { genderFilter: string | null }) {
+function AdminProfilesContent({
+    genderFilter,
+    referralPartnerIdFilter,
+}: {
+    genderFilter: string | null
+    referralPartnerIdFilter: string | null
+}) {
     const router = useRouter()
 
     const [isLoading, setIsLoading] = useState(true)
     const [allProfiles, setAllProfiles] = useState<any[]>([])
-    const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS)
+    const [filters, setFilters] = useState<Filters>({
+        ...EMPTY_FILTERS,
+        referralPartnerId: referralPartnerIdFilter || "",
+    })
     const [selectedProfileForMarriage, setSelectedProfileForMarriage] = useState<string | null>(null)
     const [isUpdatingPremium, setIsUpdatingPremium] = useState<string | null>(null)
     const [isManageSubOpen, setIsManageSubOpen] = useState(false)
@@ -582,9 +591,9 @@ function AdminProfilesContent({ genderFilter }: { genderFilter: string | null })
 export default function AdminProfilesPage({
     searchParams,
 }: {
-    searchParams: Promise<{ gender?: string }>
+    searchParams: Promise<{ gender?: string; referralPartnerId?: string }>
 }) {
-    const { gender: genderFilter = null } = use(searchParams)
+    const { gender: genderFilter = null, referralPartnerId: referralPartnerIdFilter = null } = use(searchParams)
 
     return (
         <Suspense fallback={
@@ -592,7 +601,7 @@ export default function AdminProfilesPage({
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
             </div>
         }>
-            <AdminProfilesContent genderFilter={genderFilter} />
+            <AdminProfilesContent genderFilter={genderFilter} referralPartnerIdFilter={referralPartnerIdFilter} />
         </Suspense>
     )
 }
