@@ -110,37 +110,6 @@ function IconActionButton({
   )
 }
 
-function ActionButton({
-  onClick,
-  icon: Icon,
-  label,
-  tone = "default",
-}: {
-  onClick: () => void
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  tone?: "default" | "danger" | "gold"
-}) {
-  const styles = {
-    default: "border-[#f0ebe3] text-[#1F4068] hover:border-[#c9a227]/35 hover:bg-[#fdf6e3]",
-    danger: "border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50",
-    gold: "border-[#c9a227]/30 text-[#c9a227] hover:border-[#c9a227]/50 hover:bg-[#fdf6e3]",
-  }
-
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      onClick={onClick}
-      className={`h-8 rounded-lg px-2.5 text-[11px] ${styles[tone]}`}
-    >
-      <Icon className="mr-1 h-3.5 w-3.5" />
-      {label}
-    </Button>
-  )
-}
-
 function matchesCurrentAdmin(
   admin: any,
   current: { id: string | null; email: string | null }
@@ -776,35 +745,35 @@ export function AdminAccountsPanel() {
                           <td className="px-4 py-3">
                             <StatusPill active={partner.status === "Active"} />
                           </td>
-                          <td className="px-4 py-3">
-                            <div className="flex flex-wrap items-center justify-end gap-1.5">
-                              <ActionButton
+                          <td className="whitespace-nowrap px-4 py-3">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <IconActionButton
                                 onClick={() => {
                                   setSelectedPartner(partner)
                                   setIsEditDialogOpen(true)
                                 }}
                                 icon={Pencil}
-                                label="Edit"
+                                title="Edit profile"
                               />
-                              <ActionButton
+                              <IconActionButton
                                 onClick={() => handleCopyReferralCode(partner.referralCode)}
                                 icon={Copy}
-                                label="Copy code"
+                                title="Copy referral code"
                                 tone="gold"
                               />
-                              <ActionButton
+                              <IconActionButton
                                 onClick={() =>
                                   router.push(
                                     `/admin/dashboard/profiles?referralPartnerId=${encodeURIComponent(partner.referralCode)}`
                                   )
                                 }
                                 icon={Users}
-                                label="Referrals"
+                                title="View referrals"
                               />
-                              <ActionButton
+                              <IconActionButton
                                 onClick={() => handleTogglePartnerStatus(partner)}
                                 icon={partner.status === "Active" ? Ban : CheckCircle2}
-                                label={partner.status === "Active" ? "Deactivate" : "Activate"}
+                                title={partner.status === "Active" ? "Deactivate partner" : "Activate partner"}
                                 tone={partner.status === "Active" ? "danger" : "default"}
                               />
                             </div>
