@@ -5,7 +5,7 @@ import { AdminDashboardBackground } from "@/components/admin/admin-dashboard-bac
 import { AdminFunnelPanel } from "@/components/admin/admin-funnel-panel"
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { supabase } from "@/lib/supabase"
-import { getUserDashboard } from "@/lib/auth"
+import { finishAuthRedirect, getUserDashboard } from "@/lib/auth"
 import { useRouter } from "next/navigation"
 import { Suspense, use, useEffect, useState } from "react"
 
@@ -26,13 +26,13 @@ export default function AdminFunnelSegmentPage({
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        router.push("/admin")
+        finishAuthRedirect(router, "/admin", setIsAuthLoading)
         return
       }
 
       const dashboardPath = await getUserDashboard(user.id)
       if (dashboardPath !== "/admin/dashboard") {
-        router.push(dashboardPath)
+        finishAuthRedirect(router, dashboardPath, setIsAuthLoading)
         return
       }
 

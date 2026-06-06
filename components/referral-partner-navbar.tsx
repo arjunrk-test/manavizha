@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Menu, X, LogOut, UserRound } from "lucide-react"
+import { ArrowLeft, Menu, X, LogOut, UserRound } from "lucide-react"
 import { useState, useEffect } from "react"
 import { ReferralPartnerAuthDialog } from "@/components/referral-partner-auth-dialog"
 import { supabase } from "@/lib/supabase"
@@ -37,6 +37,8 @@ export function ReferralPartnerNavbar({ variant = "landing" }: ReferralPartnerNa
   const pathname = usePathname()
   const isDashboard = variant === "dashboard"
   const navLinks = isDashboard ? dashboardNavLinks : landingNavLinks
+  const showBackToDashboard =
+    isDashboard && pathname !== "/referral-partner/dashboard"
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [isLoginOpen, setIsLoginOpen] = useState(false)
@@ -153,6 +155,19 @@ export function ReferralPartnerNavbar({ variant = "landing" }: ReferralPartnerNa
           </div>
 
           <div className="hidden md:flex items-center gap-3">
+            {showBackToDashboard && (
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="h-9 rounded-lg border-[#f0ebe3] bg-white/80 text-[#1F4068] hover:bg-[#faf8f4] hover:text-[#1F4068]"
+              >
+                <Link href="/referral-partner/dashboard" className="flex items-center gap-1.5">
+                  <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
+                  <span>Back to dashboard</span>
+                </Link>
+              </Button>
+            )}
             {isPartner || isDashboard ? (
               <Button
                 size="sm"
@@ -192,6 +207,16 @@ export function ReferralPartnerNavbar({ variant = "landing" }: ReferralPartnerNa
               exit={{ opacity: 0, height: 0 }}
               className="md:hidden py-4 border-t border-gray-100"
             >
+              {showBackToDashboard && (
+                <Link
+                  href="/referral-partner/dashboard"
+                  className="mb-3 flex items-center gap-2 rounded-lg border border-[#f0ebe3] bg-[#faf8f4]/80 px-3 py-2.5 text-sm font-medium text-[#1F4068]"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
+                  Back to dashboard
+                </Link>
+              )}
               {navLinks.map((item) => {
                 const isActive = isDashboard && pathname === item.href
                 const className = `block py-2.5 text-sm font-medium ${

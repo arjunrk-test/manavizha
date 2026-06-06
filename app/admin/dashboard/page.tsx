@@ -12,7 +12,7 @@ import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { getUserDashboard, getAdminRole } from "@/lib/auth"
+import { finishAuthRedirect, getAdminRole, getUserDashboard } from "@/lib/auth"
 import {
   ArrowRight,
   BarChart3,
@@ -47,13 +47,13 @@ export default function AdminDashboardPage() {
     const checkUser = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser()
       if (!authUser) {
-        router.push("/admin")
+        finishAuthRedirect(router, "/admin", setIsLoading)
         return
       }
 
       const dashboardPath = await getUserDashboard(authUser.id)
       if (dashboardPath !== "/admin/dashboard") {
-        router.push(dashboardPath)
+        finishAuthRedirect(router, dashboardPath, setIsLoading)
         return
       }
 

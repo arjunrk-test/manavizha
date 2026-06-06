@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { BrowseProfiles } from "@/components/browse-profiles"
 import { LogOut, ArrowLeft } from "lucide-react"
-import { getUserDashboard } from "@/lib/auth"
+import { finishAuthRedirect, getUserDashboard } from "@/lib/auth"
 
 export default function ParentDashboardPage() {
     const router = useRouter()
@@ -17,13 +17,13 @@ export default function ParentDashboardPage() {
         const checkParent = async () => {
             const { data: { user: authUser } } = await supabase.auth.getUser()
             if (!authUser) {
-                router.push("/")
+                finishAuthRedirect(router, "/", setIsLoading)
                 return
             }
 
             const dashboardPath = await getUserDashboard(authUser.id)
             if (dashboardPath !== "/parent-dashboard") {
-                router.push(dashboardPath)
+                finishAuthRedirect(router, dashboardPath, setIsLoading)
                 return
             }
 
@@ -35,8 +35,7 @@ export default function ParentDashboardPage() {
                 .single()
 
             if (parentError || !parentData) {
-                // Safety net redirect
-                router.push("/")
+                finishAuthRedirect(router, "/", setIsLoading)
                 return
             }
 

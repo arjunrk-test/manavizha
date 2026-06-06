@@ -5,7 +5,7 @@ import { AdminDashboardBackground } from "@/components/admin/admin-dashboard-bac
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { DashboardJourneyPatterns } from "@/components/dashboard/dashboard-journey-patterns"
 import { supabase } from "@/lib/supabase"
-import { getUserDashboard, isSuperAdmin } from "@/lib/auth"
+import { finishAuthRedirect, getUserDashboard, isSuperAdmin } from "@/lib/auth"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import {
@@ -219,18 +219,18 @@ export default function AdminMasterDataPage() {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        router.push("/admin")
+        finishAuthRedirect(router, "/admin", setIsLoading)
         return
       }
 
       const dashboardPath = await getUserDashboard(user.id)
       if (dashboardPath !== "/admin/dashboard") {
-        router.push(dashboardPath)
+        finishAuthRedirect(router, dashboardPath, setIsLoading)
         return
       }
 
       if (!(await isSuperAdmin(user.id))) {
-        router.push("/admin/dashboard")
+        finishAuthRedirect(router, "/admin/dashboard", setIsLoading)
         return
       }
 

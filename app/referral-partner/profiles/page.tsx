@@ -4,7 +4,7 @@ import { AdminDashboardBackground } from "@/components/admin/admin-dashboard-bac
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { ReferralPartnerNavbar } from "@/components/referral-partner-navbar"
 import { ReferralPartnerProfilesPanel } from "@/components/referral-partner/referral-partner-profiles-panel"
-import { getUserDashboard } from "@/lib/auth"
+import { finishAuthRedirect, getUserDashboard } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { Suspense, use, useEffect, useState } from "react"
@@ -28,13 +28,13 @@ export default function ReferralPartnerProfilesListPage({
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) {
-        router.push("/referral-partner")
+        finishAuthRedirect(router, "/referral-partner", setIsAuthLoading)
         return
       }
 
       const dashboardPath = await getUserDashboard(user.id)
       if (dashboardPath !== "/referral-partner/dashboard") {
-        router.push(dashboardPath)
+        finishAuthRedirect(router, dashboardPath, setIsAuthLoading)
         return
       }
 

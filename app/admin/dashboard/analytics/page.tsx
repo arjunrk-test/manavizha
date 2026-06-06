@@ -4,7 +4,7 @@ import { AdminNavbar } from "@/components/admin-navbar"
 import { AdminAnalyticsPanel } from "@/components/admin/admin-analytics-panel"
 import { AdminDashboardBackground } from "@/components/admin/admin-dashboard-background"
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
-import { getUserDashboard } from "@/lib/auth"
+import { finishAuthRedirect, getUserDashboard } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -19,13 +19,13 @@ export default function AdminAnalyticsPage() {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) {
-        router.push("/admin")
+        finishAuthRedirect(router, "/admin", setIsLoading)
         return
       }
 
       const dashboardPath = await getUserDashboard(user.id)
       if (dashboardPath !== "/admin/dashboard") {
-        router.push(dashboardPath)
+        finishAuthRedirect(router, dashboardPath, setIsLoading)
         return
       }
 

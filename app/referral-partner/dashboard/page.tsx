@@ -7,7 +7,7 @@ import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading
 import { ReferralPartnerNavbar } from "@/components/referral-partner-navbar"
 import { ReferralPartnerProfileStatsPanel } from "@/components/referral-partner/referral-partner-profile-stats-panel"
 import { ReferralPartnerQuickActionsPanel } from "@/components/referral-partner/referral-partner-quick-actions-panel"
-import { getUserDashboard } from "@/lib/auth"
+import { finishAuthRedirect, getUserDashboard } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 import { motion } from "framer-motion"
 import { ArrowRight, Copy, Heart, Users } from "lucide-react"
@@ -33,13 +33,13 @@ export default function ReferralPartnerDashboardPage() {
         data: { user: authUser },
       } = await supabase.auth.getUser()
       if (!authUser) {
-        router.push("/referral-partner")
+        finishAuthRedirect(router, "/referral-partner", setIsLoading)
         return
       }
 
       const dashboardPath = await getUserDashboard(authUser.id)
       if (dashboardPath !== "/referral-partner/dashboard") {
-        router.push(dashboardPath)
+        finishAuthRedirect(router, dashboardPath, setIsLoading)
         return
       }
 
@@ -50,7 +50,7 @@ export default function ReferralPartnerDashboardPage() {
         .single()
 
       if (partnerError || !partnerData) {
-        router.push(dashboardPath)
+        finishAuthRedirect(router, dashboardPath, setIsLoading)
         return
       }
 

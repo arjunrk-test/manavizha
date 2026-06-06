@@ -1,5 +1,19 @@
 import { supabase } from "./supabase"
 
+type AuthRedirectRouter = {
+  push: (href: string) => void
+}
+
+/** Clears loading state before redirecting away from a protected page. */
+export function finishAuthRedirect(
+  router: AuthRedirectRouter,
+  path: string,
+  setLoading: (value: boolean) => void
+): void {
+  setLoading(false)
+  router.push(path)
+}
+
 /**
  * Determines the correct dashboard path for a user based on their single role.
  * Role check order: Admin > Referral Partner > Parent > Standard User.
