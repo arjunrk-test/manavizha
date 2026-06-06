@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useMasterData } from "@/hooks/use-master-data"
 import { toast } from "sonner"
+import { normalizeTamilMasterLabel } from "@/lib/tamil-display"
 
 const FIELD_INPUT =
   "rounded-lg border-[#f0ebe3] bg-white text-[#1F4068] placeholder:text-gray-400"
@@ -128,7 +129,9 @@ function F({
   return (
     <div>
       <p className="mb-1 text-[11px] text-gray-500">{label}</p>
-      <p className="text-[13px] font-medium text-[#1F4068]">{value ?? "—"}</p>
+      <p className="text-[13px] font-medium text-[#1F4068]">
+        {normalizeTamilMasterLabel(value?.toString())}
+      </p>
     </div>
   )
 }
@@ -160,7 +163,7 @@ function D({
           <option value="">Select…</option>
           {options.map((option) => (
             <option key={option.id} value={option.value}>
-              {option.value}
+              {normalizeTamilMasterLabel(option.value)}
             </option>
           ))}
         </select>
@@ -171,7 +174,9 @@ function D({
   return (
     <div>
       <p className="mb-1 text-[11px] text-gray-500">{label}</p>
-      <p className="text-[13px] font-medium text-[#1F4068]">{value ?? "—"}</p>
+      <p className="text-[13px] font-medium text-[#1F4068]">
+        {normalizeTamilMasterLabel(value)}
+      </p>
     </div>
   )
 }
