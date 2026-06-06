@@ -2,6 +2,7 @@
 
 import { AdminNavbar } from "@/components/admin-navbar"
 import { AdminDashboardBackground } from "@/components/admin/admin-dashboard-background"
+import { AdminQuickActionsPanel } from "@/components/admin/admin-quick-actions-panel"
 import { AdminProfileStatsPanel } from "@/components/admin/admin-profile-stats-panel"
 import { AdminProfileStagesPanel } from "@/components/admin/admin-profile-stages-panel"
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
@@ -11,70 +12,11 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { getUserDashboard } from "@/lib/auth"
 import {
-  Users,
-  Database,
-  Mail,
   ArrowRight,
-  User,
-  ShieldCheck,
   Heart,
+  ShieldCheck,
 } from "lucide-react"
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { motion } from "framer-motion"
-
-const quickActions = [
-  {
-    href: "/admin/dashboard/funnel?stage=personal",
-    title: "Manage profiles",
-    description: "View users who have not completed their profile stages",
-    icon: User,
-    hoverBorder: "hover:border-[#3bb9ac]/30",
-    iconBg: "bg-[#3bb9ac]/10 group-hover:bg-[#3bb9ac]/18",
-    iconColor: "text-[#3bb9ac]",
-    arrowHover: "group-hover:text-[#3bb9ac]",
-  },
-  {
-    href: "/admin/dashboard/accounts",
-    title: "Accounts",
-    description: "Manage user accounts, profiles, and access permissions",
-    icon: Users,
-    hoverBorder: "hover:border-[#1F4068]/25",
-    iconBg: "bg-[#1F4068]/8 group-hover:bg-[#1F4068]/14",
-    iconColor: "text-[#1F4068]",
-    arrowHover: "group-hover:text-[#1F4068]",
-  },
-  {
-    href: "/admin/dashboard/masterdata",
-    title: "Master data",
-    description: "Access and manage all platform data and configurations",
-    icon: Database,
-    hoverBorder: "hover:border-[#c9a227]/35",
-    iconBg: "bg-[#fdf6e3] group-hover:bg-[#f5ebc8]",
-    iconColor: "text-[#c9a227]",
-    arrowHover: "group-hover:text-[#c9a227]",
-  },
-  {
-    href: "/admin/dashboard/email",
-    title: "Email",
-    description: "Manage email templates, campaigns, and communications",
-    icon: Mail,
-    hoverBorder: "hover:border-[#e87898]/30",
-    iconBg: "bg-[#fce8ef] group-hover:bg-[#f9d4df]",
-    iconColor: "text-[#e87898]",
-    arrowHover: "group-hover:text-[#e87898]",
-  },
-  {
-    href: "/admin/verification",
-    title: "Identity verification",
-    description: "Review and approve pending identity status for users",
-    icon: ShieldCheck,
-    hoverBorder: "hover:border-[#3bb9ac]/30",
-    iconBg: "bg-[#3bb9ac]/10 group-hover:bg-[#3bb9ac]/18",
-    iconColor: "text-[#3bb9ac]",
-    arrowHover: "group-hover:text-[#3bb9ac]",
-    verification: true,
-  },
-]
 
 export default function AdminDashboardPage() {
   const router = useRouter()
@@ -238,65 +180,8 @@ export default function AdminDashboardPage() {
             <AdminProfileStagesPanel stages={stageStats} totalUsers={stats.total} />
           </section>
 
-          <section>
-            <div className="mb-5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-gold mb-1">
-                Operations
-              </p>
-              <h2 className="font-display text-xl sm:text-2xl font-semibold text-[#1F4068]">
-                Quick actions
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pb-12 sm:pb-16">
-              {quickActions.map((action, index) => {
-                const Icon = action.icon
-                const isVerification = action.verification
-                const hasPending = isVerification && stats.pendingVerifications > 0
-
-                return (
-                  <motion.div
-                    key={action.href}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.05 + index * 0.05 }}
-                    whileHover={{ y: -4 }}
-                  >
-                    <Link href={action.href} className="block">
-                      <Card
-                        className={`admin-dashboard-card-shine group cursor-pointer transition-all duration-300 rounded-2xl border bg-white/85 backdrop-blur-sm shadow-[0_10px_40px_rgba(31,64,104,0.07)] hover:shadow-[0_16px_48px_rgba(31,64,104,0.12)] ${
-                          hasPending
-                            ? "border-[#e87898]/35 ring-2 ring-[#fce8ef]/80"
-                            : `border-white/90 ${action.hoverBorder}`
-                        }`}
-                      >
-                        <CardHeader className="pb-4">
-                          <div className="flex items-center justify-between">
-                            <div className={`p-3 rounded-xl transition-all duration-300 group-hover:scale-105 ${action.iconBg}`}>
-                              <Icon className={`h-7 w-7 ${action.iconColor}`} strokeWidth={1.75} />
-                            </div>
-                            <ArrowRight
-                              className={`h-5 w-5 text-gray-300 transition-all group-hover:translate-x-0.5 ${action.arrowHover}`}
-                            />
-                          </div>
-                          <CardTitle className="font-display text-xl mt-4 text-[#1F4068] flex flex-wrap items-center gap-2">
-                            {action.title}
-                            {hasPending && (
-                              <span className="inline-flex items-center rounded-full bg-[#e87898] px-2.5 py-0.5 text-[10px] font-semibold text-white">
-                                {stats.pendingVerifications} pending
-                              </span>
-                            )}
-                          </CardTitle>
-                          <CardDescription className="text-sm mt-2 text-gray-500">
-                            {action.description}
-                          </CardDescription>
-                        </CardHeader>
-                      </Card>
-                    </Link>
-                  </motion.div>
-                )
-              })}
-            </div>
+          <section className="pb-10 sm:pb-12">
+            <AdminQuickActionsPanel pendingVerifications={stats.pendingVerifications} />
           </section>
         </div>
 
