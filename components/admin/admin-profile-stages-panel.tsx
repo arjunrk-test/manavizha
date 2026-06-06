@@ -15,6 +15,7 @@ import {
   GitBranch,
   type LucideIcon,
 } from "lucide-react"
+import { DashboardJourneyPatterns } from "@/components/dashboard/dashboard-journey-patterns"
 
 export type StageStat = {
   label: string
@@ -142,8 +143,10 @@ function FunnelViewButton() {
 
 export function AdminProfileStagesPanel({ stages, totalUsers }: AdminProfileStagesPanelProps) {
   return (
-    <div className="overflow-hidden rounded-xl border border-[#f0ebe3] bg-white/95 shadow-[0_2px_16px_rgba(31,64,104,0.05)]">
-      <div className="flex flex-col gap-2 border-b border-[#f0ebe3]/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+    <div className="relative overflow-hidden rounded-xl border border-[#f0ebe3] bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] shadow-[0_2px_16px_rgba(31,64,104,0.05)]">
+      <DashboardJourneyPatterns />
+
+      <div className="relative z-10 flex flex-col gap-2 border-b border-[#f0ebe3]/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="min-w-0">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#c9a227]">
@@ -167,7 +170,7 @@ export function AdminProfileStagesPanel({ stages, totalUsers }: AdminProfileStag
         </div>
       </div>
 
-      <div className="space-y-2 px-4 py-3 sm:px-5">
+      <div className="relative z-10 space-y-2 px-4 py-3 sm:px-5">
         <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2 md:grid-cols-5">
           {stages.slice(0, 5).map((stage) => (
             <StageCard key={stage.table} stage={stage} />

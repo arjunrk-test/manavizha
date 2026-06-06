@@ -5,6 +5,8 @@ import { AdminDashboardBackground } from "@/components/admin/admin-dashboard-bac
 import { AdminQuickActionsPanel } from "@/components/admin/admin-quick-actions-panel"
 import { AdminProfileStatsPanel } from "@/components/admin/admin-profile-stats-panel"
 import { AdminProfileStagesPanel } from "@/components/admin/admin-profile-stages-panel"
+import { DashboardHeroPatterns } from "@/components/dashboard/dashboard-hero-patterns"
+import { DashboardHeroStaticPatterns } from "@/components/dashboard/dashboard-hero-static-patterns"
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
@@ -135,13 +137,15 @@ export default function AdminDashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="relative mb-10 sm:mb-12 overflow-hidden rounded-[1.35rem] border border-white/80 bg-white/75 backdrop-blur-md shadow-[0_20px_60px_rgba(31,64,104,0.1),0_4px_20px_rgba(232,120,152,0.06)]"
+            className="relative mb-10 sm:mb-12 overflow-hidden rounded-[1.35rem] border border-[#eadfce] bg-gradient-to-br from-[#fffdf8] via-[#fef8ee] to-[#fdf3e4] shadow-[0_20px_60px_rgba(31,64,104,0.1),0_4px_20px_rgba(232,120,152,0.06)]"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-[#fce8ef]/40 via-white/20 to-[#e6f7f5]/35 pointer-events-none" />
             <div className="absolute top-0 right-0 w-48 h-48 bg-[#c9a227]/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#e87898]/10 rounded-full blur-3xl -ml-12 -mb-12 pointer-events-none" />
+            <DashboardHeroStaticPatterns />
+            <DashboardHeroPatterns />
 
-            <div className="relative p-6 sm:p-8 lg:p-10 grid grid-cols-1 lg:grid-cols-[1fr,auto] gap-8 lg:gap-10 items-start">
+            <div className="relative z-10 p-6 sm:p-8 lg:p-10 grid grid-cols-1 lg:grid-cols-[1fr,auto] gap-8 lg:gap-10 items-start">
               <div className="max-w-2xl">
                 <h1 className="font-display text-3xl sm:text-4xl lg:text-[2.6rem] font-semibold text-[#1F4068] tracking-tight leading-[1.1] mb-3">
                   Welcome to your

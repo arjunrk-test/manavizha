@@ -10,6 +10,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react"
+import { DashboardJourneyPatterns } from "@/components/dashboard/dashboard-journey-patterns"
 
 type QuickAction = {
   href: string
@@ -124,8 +125,10 @@ function ActionCard({
 
 export function AdminQuickActionsPanel({ pendingVerifications = 0 }: AdminQuickActionsPanelProps) {
   return (
-    <div className="overflow-hidden rounded-xl border border-[#f0ebe3] bg-white/95 shadow-[0_2px_16px_rgba(31,64,104,0.05)]">
-      <div className="border-b border-[#f0ebe3]/80 px-4 py-3 sm:px-5">
+    <div className="relative overflow-hidden rounded-xl border border-[#f0ebe3] bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] shadow-[0_2px_16px_rgba(31,64,104,0.05)]">
+      <DashboardJourneyPatterns />
+
+      <div className="relative z-10 border-b border-[#f0ebe3]/80 px-4 py-3 sm:px-5">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#c9a227]">
             Operations
@@ -137,7 +140,7 @@ export function AdminQuickActionsPanel({ pendingVerifications = 0 }: AdminQuickA
         <p className="mt-0.5 text-[11px] text-gray-500">Jump to common admin tasks</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3">
+      <div className="relative z-10 grid grid-cols-1 gap-2 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3">
         {QUICK_ACTIONS.map((action) => (
           <ActionCard
             key={action.href}
