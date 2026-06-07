@@ -1,6 +1,7 @@
 "use client"
 
 import { LikesView } from "@/components/likes-view"
+import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { Suspense, use, useEffect, useState } from "react"
@@ -21,7 +22,7 @@ function LikesPageContent({
     fetchUser()
   }, [])
 
-  if (!userId) return null
+  if (!userId) return <DashboardLoadingScreen />
 
   return (
     <LikesView 
@@ -41,7 +42,7 @@ export default function LikesPage({
   const initialTab = (tab as "mutual" | "liked" | "likedme" | undefined) ?? "mutual"
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<DashboardLoadingScreen />}>
       <LikesPageContent initialTab={initialTab} />
     </Suspense>
   )

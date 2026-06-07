@@ -2,118 +2,200 @@
 
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Menu, X } from "lucide-react"
+import { ArrowLeft, Menu, X, LogOut, UserRound } from "lucide-react"
 import { useState, useEffect } from "react"
 import { ReferralPartnerAuthDialog } from "@/components/referral-partner-auth-dialog"
+import { supabase } from "@/lib/supabase"
+import { getUserDashboard } from "@/lib/auth"
 import Image from "next/image"
+import Link from "next/link"
+import { useRouter, usePathname } from "next/navigation"
+import { ScrollProgress } from "@/components/ui/scroll-progress"
 
-export function ReferralPartnerNavbar() {
+const landingNavLinks = [
+  { label: "Benefits", href: "#benefits" },
+  { label: "How it works", href: "#how-it-works" },
+  { label: "Contact", href: "#contact" },
+]
+
+const dashboardNavLinks = [
+  { label: "Dashboard", href: "/referral-partner/dashboard" },
+  { label: "Profiles", href: "/referral-partner/profiles" },
+  { label: "Account", href: "/referral-partner/profile" },
+  { label: "Settings", href: "/referral-partner/settings" },
+]
+
+const logoutButtonClass =
+  "!bg-red-500 hover:!bg-red-600 !text-white border border-red-500 hover:!text-white shadow-sm rounded-xl"
+
+interface ReferralPartnerNavbarProps {
+  variant?: "landing" | "dashboard"
+}
+
+export function ReferralPartnerNavbar({ variant = "landing" }: ReferralPartnerNavbarProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const isDashboard = variant === "dashboard"
+  const navLinks = isDashboard ? dashboardNavLinks : landingNavLinks
+  const showBackToDashboard =
+    isDashboard && pathname !== "/referral-partner/dashboard"
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [isLoginOpen, setIsLoginOpen] = useState(false)
+  const [isPartner, setIsPartner] = useState(false)
+  const [partnerEmail, setPartnerEmail] = useState<string | null>(null)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20)
+    const syncAuth = async (userId: string | undefined, email?: string | null) => {
+      if (!userId) {
+        setIsPartner(false)
+        setPartnerEmail(null)
+        return
+      }
+      const path = await getUserDashboard(userId)
+      const isPartnerUser = path === "/referral-partner/dashboard"
+      setIsPartner(isPartnerUser)
+      setPartnerEmail(isPartnerUser ? email ?? null : null)
     }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      syncAuth(session?.user?.id, session?.user?.email)
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      syncAuth(session?.user?.id, session?.user?.email)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 16)
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  const handleLogout = async () => {
+    setIsLoggingOut(true)
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      console.error("Error signing out:", error)
+      setIsLoggingOut(false)
+      return
+    }
+    setIsOpen(false)
+    router.push("/referral-partner")
+    setIsLoggingOut(false)
+  }
+
   return (
     <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.5 }}
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.4 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg border-b border-gray-200/60 dark:border-gray-800/60"
-          : "bg-transparent"
+        isDashboard
+          ? "bg-white/98 backdrop-blur-md shadow-[0_4px_28px_rgba(31,64,104,0.09)] border-b border-gray-100/90"
+          : scrolled
+            ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100"
+            : "bg-[#faf8f4]/80 backdrop-blur-sm"
       }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-3 group cursor-pointer"
+        <div className="flex items-center justify-between min-h-16 py-2">
+          <Link
+            href={isDashboard ? "/referral-partner/dashboard" : "/referral-partner"}
+            className="flex items-center gap-2.5 shrink-0 min-w-0"
           >
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.3 }}
-              className="flex items-center gap-3"
-            >
-              <Image 
-                src="/logo.png" 
-                alt="Manavizha Logo" 
-                width={48}
-                height={48}
-                className="h-10 w-auto object-contain"
-                priority
-              />
-              <span className="text-xl font-bold bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
-                Manavizha Partners
+            <Image
+              src="/logo.png"
+              alt="Manavizha"
+              width={40}
+              height={40}
+              className="h-9 w-auto object-contain shrink-0"
+              priority
+            />
+            <div className="min-w-0">
+              <span className="block text-xl font-bold tracking-tight text-[#1F4068] leading-tight">
+                Manavizha <span className="text-brand-gold font-semibold">Partners</span>
               </span>
-            </motion.div>
-          </motion.div>
+              {isPartner && partnerEmail && (
+                <p className="text-xs text-gray-500 truncate max-w-[160px] sm:max-w-[220px]" title={partnerEmail}>
+                  {partnerEmail}
+                </p>
+              )}
+            </div>
+          </Link>
 
-          <div className="hidden md:flex items-center gap-8">
-            {["Contact"].map((item, index) => (
-              <motion.a
-                key={item}
-                href={`#${item.toLowerCase()}`}
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="text-gray-700 dark:text-gray-300 hover:text-[#1F4068] transition-colors font-medium relative group"
+          <div className="hidden lg:flex items-center gap-6">
+            {navLinks.map((item) => {
+              const isActive = isDashboard && pathname === item.href
+              const className = `text-sm font-medium transition-colors ${
+                isActive
+                  ? "text-[#1F4068] font-semibold"
+                  : "text-gray-600 hover:text-[#1F4068]"
+              }`
+
+              return isDashboard ? (
+                <Link key={item.label} href={item.href} className={className}>
+                  {item.label}
+                  {isActive && (
+                    <span className="block h-0.5 mt-1 rounded-full bg-gradient-to-r from-[#c9a227] to-[#e87898]" />
+                  )}
+                </Link>
+              ) : (
+                <a key={item.label} href={item.href} className={className}>
+                  {item.label}
+                </a>
+              )
+            })}
+          </div>
+
+          <div className="hidden md:flex items-center gap-3">
+            {showBackToDashboard && (
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="h-9 rounded-lg border-[#f0ebe3] bg-white/80 text-[#1F4068] hover:bg-[#faf8f4] hover:text-[#1F4068]"
               >
-                {item}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#1F4068] to-[#3bb9ac] group-hover:w-full transition-all duration-300" />
-              </motion.a>
-            ))}
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.4 }}
-            >
+                <Link href="/referral-partner/dashboard" className="flex items-center gap-1.5">
+                  <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
+                  <span>Back to dashboard</span>
+                </Link>
+              </Button>
+            )}
+            {isPartner || isDashboard ? (
               <Button
                 size="sm"
-                className="rounded-full bg-red-500 hover:bg-white text-white hover:text-black border-0 shadow-sm hover:shadow-md transition-all px-6 py-2"
+                className={`${logoutButtonClass} h-9 min-w-[7.5rem] px-5`}
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              >
+                <LogOut className="h-4 w-4 shrink-0" aria-hidden />
+                <span>{isLoggingOut ? "Signing out..." : "Logout"}</span>
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                className="nav-login-btn rounded-xl btn-brand-gradient-outline h-9 min-w-[7.5rem] px-5"
                 onClick={() => setIsLoginOpen(true)}
               >
-                Login
+                <UserRound className="h-4 w-4 shrink-0" aria-hidden />
+                <span className="nav-login-btn__label">Login</span>
               </Button>
-            </motion.div>
+            )}
           </div>
 
           <button
-            className="md:hidden p-2"
+            className="md:hidden p-2 text-[#1F4068]"
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle menu"
           >
-            <AnimatePresence mode="wait">
-              {isOpen ? (
-                <motion.div
-                  key="close"
-                  initial={{ rotate: -90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <X className="h-6 w-6" />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="menu"
-                  initial={{ rotate: 90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: -90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Menu className="h-6 w-6" />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
 
@@ -123,38 +205,80 @@ export function ReferralPartnerNavbar() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="md:hidden py-4 space-y-4 border-t border-gray-200 dark:border-gray-800 mt-4"
+              className="md:hidden py-4 border-t border-gray-100"
             >
-              {["Contact"].map((item) => (
-                <a
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
-                  className="block text-gray-700 dark:text-gray-300 hover:text-[#1F4068] transition-colors font-medium py-2"
+              {showBackToDashboard && (
+                <Link
+                  href="/referral-partner/dashboard"
+                  className="mb-3 flex items-center gap-2 rounded-lg border border-[#f0ebe3] bg-[#faf8f4]/80 px-3 py-2.5 text-sm font-medium text-[#1F4068]"
                   onClick={() => setIsOpen(false)}
                 >
-                  {item}
-                </a>
-              ))}
-              <div className="pt-2">
-                <Button
-                  size="sm"
-                  className="w-full rounded-full bg-red-500 hover:bg-white text-white hover:text-black border-0 shadow-sm hover:shadow-md transition-all py-2"
-                  onClick={() => {
-                    setIsLoginOpen(true)
-                    setIsOpen(false)
-                  }}
-                >
-                  Login
-                </Button>
+                  <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
+                  Back to dashboard
+                </Link>
+              )}
+              {navLinks.map((item) => {
+                const isActive = isDashboard && pathname === item.href
+                const className = `block py-2.5 text-sm font-medium ${
+                  isActive ? "text-[#1F4068] font-semibold" : "text-gray-700"
+                }`
+
+                return isDashboard ? (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className={className}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    className={className}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {item.label}
+                  </a>
+                )
+              })}
+              <div className="pt-4 flex flex-col gap-2">
+                {isPartner || isDashboard ? (
+                  <Button
+                    className={`${logoutButtonClass} w-full`}
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                  >
+                    <LogOut className="h-4 w-4 shrink-0" aria-hidden />
+                    <span>{isLoggingOut ? "Signing out..." : "Logout"}</span>
+                  </Button>
+                ) : (
+                  <Button
+                    className="nav-login-btn rounded-xl w-full btn-brand-gradient-outline"
+                    onClick={() => {
+                      setIsLoginOpen(true)
+                      setIsOpen(false)
+                    }}
+                  >
+                    <UserRound className="h-4 w-4 shrink-0" aria-hidden />
+                    <span className="nav-login-btn__label">Login</span>
+                  </Button>
+                )}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
+      <div
+        aria-hidden
+        className="pointer-events-none absolute bottom-0 left-0 right-0 z-[60] h-[2px] bg-[#f0ebe3]/90"
+      >
+        <ScrollProgress className="h-full w-full" />
+      </div>
+
       <ReferralPartnerAuthDialog open={isLoginOpen} onOpenChange={setIsLoginOpen} />
     </motion.nav>
   )
 }
-
-

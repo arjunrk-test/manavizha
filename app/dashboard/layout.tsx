@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
-import { getUserDashboard } from "@/lib/auth"
+import { finishAuthRedirect, getUserDashboard } from "@/lib/auth"
 import { LogOut, ArrowLeft, Edit, Settings, MessageSquare, User, Bell, Heart, Eye, Sparkles, ArrowRight } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { DashboardScrollProgress } from "@/components/dashboard/dashboard-scroll-progress"
@@ -37,7 +37,7 @@ export default function DashboardLayout({
              console.warn("Auth check error, signing out:", authError.message)
              await supabase.auth.signOut()
           }
-          router.push("/")
+          finishAuthRedirect(router, "/", setIsLoading)
           return
         }
 
@@ -45,7 +45,7 @@ export default function DashboardLayout({
         const dashboardPath = await getUserDashboard(authUser.id)
         
         if (dashboardPath !== "/dashboard") {
-          router.push(dashboardPath)
+          finishAuthRedirect(router, dashboardPath, setIsLoading)
           return
         }
 
@@ -83,7 +83,7 @@ export default function DashboardLayout({
         }
       } catch (err) {
         console.error("Critical error in checkUser:", err)
-        router.push("/")
+        finishAuthRedirect(router, "/", setIsLoading)
       }
     }
 
@@ -231,6 +231,7 @@ export default function DashboardLayout({
     if (pathname.includes("/selections")) return "Parent Selections"
     if (pathname.includes("/preferences")) return "Partner Preferences"
     if (pathname.includes("/likes")) return "My Likes"
+    if (pathname.includes("/daily-recommendations")) return "Daily Recommendations"
     if (pathname.includes("/horoscope")) return "Horoscope Generator"
     if (pathname.includes("/messages")) return "Messages"
     if (pathname.includes("/settings")) return "Profile Settings"

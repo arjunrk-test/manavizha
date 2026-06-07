@@ -1,5 +1,19 @@
 import { supabase } from "./supabase"
 
+type AuthRedirectRouter = {
+  push: (href: string) => void
+}
+
+/** Clears loading state before redirecting away from a protected page. */
+export function finishAuthRedirect(
+  router: AuthRedirectRouter,
+  path: string,
+  setLoading: (value: boolean) => void
+): void {
+  setLoading(false)
+  router.push(path)
+}
+
 /**
  * Determines the correct dashboard path for a user based on their single role.
  * Role check order: Admin > Referral Partner > Parent > Standard User.
@@ -47,4 +61,32 @@ export async function getUserDashboard(userId: string): Promise<string> {
     console.error("Error determining user dashboard:", error)
     return "/dashboard"
   }
+}
+
+export async function getAdminRole(userId: string): Promise<string | null> {
+  if (!userId) return null
+
+  try {
+    const { data, error } = await supabase
+      .from("admins")
+      .select("role")
+      .eq("user_id", userId)
+      .maybeSingle()
+
+    if (error || !data) return null
+    return data.role ?? null
+  } catch (error) {
+    console.error("Error fetching admin role:", error)
+    return null
+  }
+}
+
+export async function isSuperAdmin(userId: string): Promise<boolean> {
+  const role = await getAdminRole(userId)
+  return role === "super_admin"
+}
+
+export async function canAccessAdminEmail(userId: string): Promise<boolean> {
+  const role = await getAdminRole(userId)
+  return role === "super_admin" || role === "admin"
 }

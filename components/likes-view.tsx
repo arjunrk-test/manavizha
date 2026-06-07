@@ -103,6 +103,15 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
     }, [initialTab])
 
     useEffect(() => {
+        const tabMap: Record<Section, string> = {
+            mutual: "mutual",
+            received: "likedme",
+            sent: "liked",
+        }
+        router.replace(`/dashboard/interests?tab=${tabMap[activeSection]}`, { scroll: false })
+    }, [activeSection, router])
+
+    useEffect(() => {
         fetchLikes()
         fetchStatus()
         fetchShortlists()
@@ -442,143 +451,131 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
 
     const NavItem = ({ label, count, section, status = "all", icon: Icon }: NavItemProps) => {
         const isActive = activeSection === section && activeStatus === status
-        
+
         return (
             <button
+                type="button"
                 onClick={() => {
                     setActiveSection(section)
                     setActiveStatus(status)
                 }}
                 className={cn(
-                    "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group",
-                    isActive 
-                        ? "bg-[#3bb9ac] text-white shadow-lg shadow-emerald-200" 
-                        : "text-gray-500 hover:bg-indigo-50/50 hover:text-[#3bb9ac]"
+                    "w-full flex items-center gap-3 py-2.5 text-[13px] font-medium transition-colors text-left",
+                    isActive
+                        ? "bg-[#fce8ef] text-[#e87898] border-l-[3px] border-[#e87898] pl-[13px] pr-3 rounded-r-xl"
+                        : "text-[#4b5563] hover:bg-[#faf8f4] px-4"
                 )}
             >
-                <div className="flex items-center gap-3">
-                    {Icon && <Icon className={cn("h-4 w-4", isActive ? "text-white" : "text-gray-400 group-hover:text-indigo-400")} />}
-                    <span className={cn("text-[13px] font-bold tracking-tight", isActive ? "text-white" : "text-gray-700")}>
-                        {label}
-                    </span>
-                </div>
-                {count !== undefined && (
-                    <span className={cn(
-                        "text-[11px] font-black px-2 py-0.5 rounded-full",
-                        isActive ? "bg-white/20 text-white" : "bg-gray-100 text-gray-400"
-                    )}>
-                        ({count})
+                {Icon && (
+                    <Icon className={cn("h-[18px] w-[18px] shrink-0", isActive ? "text-[#e87898]" : "text-[#9ca3af]")} />
+                )}
+                <span className="flex-1 truncate">{label}</span>
+                {count !== undefined && count > 0 && (
+                    <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-[#e87898] text-white text-[11px] font-semibold flex items-center justify-center">
+                        {count}
                     </span>
                 )}
             </button>
         )
     }
 
+    const sectionTitle =
+        activeSection === "mutual"
+            ? "Mutual Interest"
+            : activeSection === "received"
+              ? `Received — ${activeStatus === "all" ? "All" : activeStatus.charAt(0).toUpperCase() + activeStatus.slice(1)}`
+              : `Sent — ${activeStatus === "all" ? "All" : activeStatus.charAt(0).toUpperCase() + activeStatus.slice(1)}`
+
     return (
-        <div className="w-full px-6 md:px-10 py-12">
-            {/* Page Header */}
-            <div className="mb-12 border-b border-black/5 pb-8 flex items-end justify-between">
-                <div className="flex-1">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#3bb9ac]/40 mb-2">Connection Matrix</h4>
-                    <h2 className="text-5xl font-light text-gray-900 tracking-tight flex items-center gap-4">
-                        Interests <span className="text-[#3bb9ac] font-black">&</span> Matches
-                    </h2>
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-semibold text-[#1F4068]">Interests & Matches</h1>
+                    <p className="text-sm text-[#6b7280] mt-1">
+                        Mutual connections and interest requests in one place
+                    </p>
                 </div>
-                <div className="flex items-center gap-6 text-right">
-                    <div className="hidden xl:block">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Platform Analytics</p>
-                        <p className="text-xs font-bold text-[#3bb9ac]">Real-time match scoring active</p>
-                    </div>
-                    <Button 
-                        onClick={() => window.location.href = "/dashboard/browse"}
-                        className="h-14 px-8 rounded-2xl bg-[#3bb9ac] hover:bg-[#2fa085] text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-emerald-200 group flex items-center gap-3 transition-all active:scale-95"
-                    >
-                        <Sparkles className="h-4 w-4 group-hover:rotate-12 transition-transform" />
-                        Find New Interests
-                    </Button>
-                </div>
+                <Button
+                    onClick={() => router.push("/dashboard/browse")}
+                    className="h-10 px-5 rounded-xl bg-[#e87898] hover:bg-[#d66686] text-white text-sm font-medium shadow-sm gap-2"
+                >
+                    <Sparkles className="h-4 w-4" />
+                    Browse Profiles
+                </Button>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-8 items-start">
-                {/* Vertical Navigation Sidebar */}
-                <aside className="w-full lg:w-[17rem] flex-shrink-0 sds-glass rounded-[2rem] p-4 space-y-6 lg:sticky lg:top-24">
+            <div className="flex flex-col lg:flex-row gap-6 items-start">
+                <aside className="w-full lg:w-56 shrink-0 lg:sticky lg:top-24 bg-white rounded-[18px] border border-[#f0ebe3] shadow-[0_2px_12px_rgba(31,64,104,0.05)] p-3 space-y-4">
                     <div>
-                        <NavItem 
-                            label="Mutual Interest" 
-                            count={counts.mutual} 
-                            section="mutual" 
+                        <NavItem
+                            label="Mutual Interest"
+                            count={counts.mutual}
+                            section="mutual"
                             icon={HeartHandshake}
                         />
                     </div>
 
-                    <div className="space-y-1">
-                        <div className="px-4 py-2 border-b border-gray-100 mb-2">
-                             <h4 className="text-[11px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                                <Inbox className="h-3 w-3" /> Interests Received
-                             </h4>
-                        </div>
+                    <div className="space-y-0.5">
+                        <p className="px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#9ca3af] flex items-center gap-2">
+                            <Inbox className="h-3.5 w-3.5" />
+                            Received
+                        </p>
                         <NavItem label="All" count={counts.received.all} section="received" status="all" />
                         <NavItem label="Pending" count={counts.received.pending} section="received" status="pending" />
-                        <NavItem label="Accepted/Replied" count={counts.received.accepted} section="received" status="accepted" />
+                        <NavItem label="Accepted" count={counts.received.accepted} section="received" status="accepted" />
                         <NavItem label="Declined" count={counts.received.declined} section="received" status="declined" />
                     </div>
 
-                    <div className="space-y-1">
-                        <div className="px-4 py-2 border-b border-gray-100 mb-2">
-                             <h4 className="text-[11px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                                <Send className="h-3 w-3" /> Interests Sent
-                             </h4>
-                        </div>
+                    <div className="space-y-0.5">
+                        <p className="px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#9ca3af] flex items-center gap-2">
+                            <Send className="h-3.5 w-3.5" />
+                            Sent
+                        </p>
                         <NavItem label="All" count={counts.sent.all} section="sent" status="all" />
                         <NavItem label="Pending" count={counts.sent.pending} section="sent" status="pending" />
-                        <NavItem label="Accepted/Replied" count={counts.sent.accepted} section="sent" status="accepted" />
+                        <NavItem label="Accepted" count={counts.sent.accepted} section="sent" status="accepted" />
                         <NavItem label="Declined" count={counts.sent.declined} section="sent" status="declined" />
                     </div>
                 </aside>
 
-                {/* Main Content Area */}
                 <div className="flex-1 min-w-0">
-                    <div className="mb-6 flex items-center justify-between">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-[#3bb9ac]">
-                            {activeSection === 'mutual' ? 'Mutual Connections' : 
-                             activeSection === 'received' ? `Received Interests > ${activeStatus}` : 
-                             `Sent Interests > ${activeStatus}`}
-                        </h3>
-                        <div className="h-px bg-indigo-100 flex-1 mx-6" />
-                        <span className="text-[11px] font-black text-gray-400 bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
-                            {filteredProfiles.length} Profiles Found
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                        <h2 className="text-base font-semibold text-[#1F4068]">{sectionTitle}</h2>
+                        <span className="text-xs font-medium text-[#6b7280] bg-[#faf8f4] px-3 py-1 rounded-full border border-[#f0ebe3]">
+                            {filteredProfiles.length} {filteredProfiles.length === 1 ? "profile" : "profiles"}
                         </span>
                     </div>
 
                     {isLoading ? (
-                        <div className="flex justify-center items-center py-20" >
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3bb9ac]"></div>
+                        <div className="flex justify-center items-center py-24">
+                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#f0ebe3] border-t-[#e87898]" />
                         </div>
                     ) : filteredProfiles.length === 0 ? (
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="text-center py-32 sds-glass rounded-3xl border border-gray-100"
+                            className="text-center py-20 bg-white rounded-[18px] border border-[#f0ebe3] shadow-[0_2px_12px_rgba(31,64,104,0.05)]"
                         >
-                            <div className="mx-auto w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
-                                <Inbox className="h-10 w-10 text-indigo-300" />
+                            <div className="mx-auto w-16 h-16 bg-[#fce8ef] rounded-full flex items-center justify-center mb-4">
+                                <Inbox className="h-8 w-8 text-[#e87898]/60" />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">
-                                No profiles to display
-                            </h3>
-                            <p className="text-gray-500 text-sm max-w-sm mx-auto mb-8">
-                                Try adjusting your filters or explore more profiles to see matches here.
+                            <h3 className="text-lg font-semibold text-[#1F4068] mb-2">No profiles yet</h3>
+                            <p className="text-[#6b7280] text-sm max-w-sm mx-auto mb-6">
+                                {activeSection === "mutual"
+                                    ? "When you and someone both show interest, they will appear here."
+                                    : "Try another filter or browse profiles to send new interests."}
                             </p>
-                            <Button 
-                                onClick={() => window.location.href = "/dashboard/browse"}
+                            <Button
+                                onClick={() => router.push("/dashboard/browse")}
                                 variant="outline"
-                                className="h-12 px-8 rounded-xl border-indigo-100 text-[#3bb9ac] font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50"
+                                className="h-10 px-5 rounded-xl border-[#f0ebe3] text-[#e87898] hover:bg-[#fce8ef] text-sm font-medium"
                             >
-                                <Users2 className="h-4 w-4 mr-2" /> Browse Profiles
+                                <Users2 className="h-4 w-4 mr-2" />
+                                Browse Profiles
                             </Button>
                         </motion.div>
                     ) : (
-                        <div className="space-y-6">
+                        <div className="space-y-4">
                             <AnimatePresence mode="popLayout">
                                 {filteredProfiles.map((profile, idx) => (
                                     <div key={profile.user_id}>
@@ -610,11 +607,11 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
 
             {/* Profile Detail Modal */}
             <Dialog open={!!selectedProfile} onOpenChange={(open) => !open && setSelectedProfile(null)}>
-                <DialogContent className="max-w-3xl p-0 overflow-hidden bg-white dark:bg-gray-900 border-none rounded-2xl">
+                <DialogContent className="max-w-3xl p-0 overflow-hidden bg-white border border-[#f0ebe3] rounded-[18px]">
                     <DialogTitle className="sr-only">Profile Details</DialogTitle>
                     {selectedProfile && (
                         <div className="flex flex-col md:flex-row h-[85vh] md:h-[35rem]">
-                            <div className="md:w-2/5 bg-gray-100 relative group shrink-0">
+                            <div className="md:w-2/5 bg-[#faf8f4] relative group shrink-0">
                                 {(() => {
                                     const photoArr: string[] = mutualFullData?.photos || selectedProfile.photos || [selectedProfile.photo].filter(Boolean) as string[]
                                     return photoArr.length > 0 ? (
@@ -634,56 +631,56 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                                     ) : <div className="flex items-center justify-center h-full"><User className="h-20 w-20 opacity-20" /></div>
                                 })()}
                             </div>
-                            <div className="flex-1 overflow-y-auto p-8 bg-white/40 backdrop-blur-xl">
-                                <div className="flex items-center justify-between mb-8">
-                                    <h2 className="text-4xl font-light text-gray-900 tracking-tight">
+                            <div className="flex-1 overflow-y-auto p-6 sm:p-8 bg-white">
+                                <div className="flex items-center justify-between mb-6 gap-3">
+                                    <h2 className="text-2xl font-semibold text-[#1F4068]">
                                         {selectedProfile.name}{selectedProfile.age && `, ${selectedProfile.age}`}
                                     </h2>
-                                    {selectedProfile.interaction_status === 'accepted' && (
-                                        <div className="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100 flex items-center gap-2">
-                                            <CheckCircle2 className="h-4 w-4" /> Connected
+                                    {selectedProfile.interaction_status === "accepted" && (
+                                        <div className="bg-[#fce8ef] text-[#e87898] px-3 py-1.5 rounded-full text-xs font-semibold border border-[#f0ebe3] flex items-center gap-1.5 shrink-0">
+                                            <CheckCircle2 className="h-3.5 w-3.5" /> Connected
                                         </div>
                                     )}
                                 </div>
-                                {isFetchingFull ? <div className="flex items-center gap-3 text-indigo-400 font-bold animate-pulse"><Clock className="h-5 w-5 animate-spin" /> Verifying profile intel...</div> : (
-                                    <div className="space-y-10">
+                                {isFetchingFull ? (
+                                    <div className="flex items-center gap-2 text-[#e87898] text-sm animate-pulse">
+                                        <Clock className="h-4 w-4 animate-spin" /> Loading profile…
+                                    </div>
+                                ) : (
+                                    <div className="space-y-8">
                                         <section>
-                                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-900/40 mb-4">Identity Information</h3>
-                                            <div className="grid grid-cols-2 gap-6 bg-white/50 p-6 rounded-[2rem] border border-indigo-50/50">
-                                                <div><span className="text-[9px] font-black uppercase tracking-widest text-gray-400 block mb-1">Height</span><span className="text-sm font-bold">{mutualFullData?.personal?.height}cm</span></div>
-                                                <div><span className="text-[9px] font-black uppercase tracking-widest text-gray-400 block mb-1">Location</span><span className="text-sm font-bold">{selectedProfile.location}</span></div>
-                                                <div><span className="text-[9px] font-black uppercase tracking-widest text-gray-400 block mb-1">Vocation</span><span className="text-sm font-bold">{selectedProfile.profession}</span></div>
-                                                <div><span className="text-[9px] font-black uppercase tracking-widest text-gray-400 block mb-1">Caste/Nakshatra</span><span className="text-sm font-bold">{mutualFullData?.personal?.caste} • {mutualFullData?.horo?.star || 'N/A'}</span></div>
+                                            <h3 className="text-xs font-semibold uppercase tracking-wide text-[#9ca3af] mb-3">Profile details</h3>
+                                            <div className="grid grid-cols-2 gap-4 bg-[#faf8f4] p-4 rounded-[14px] border border-[#f0ebe3]">
+                                                <div><span className="text-[11px] text-[#9ca3af] block mb-0.5">Height</span><span className="text-sm font-medium text-[#1F4068]">{mutualFullData?.personal?.height}cm</span></div>
+                                                <div><span className="text-[11px] text-[#9ca3af] block mb-0.5">Location</span><span className="text-sm font-medium text-[#1F4068]">{selectedProfile.location}</span></div>
+                                                <div><span className="text-[11px] text-[#9ca3af] block mb-0.5">Profession</span><span className="text-sm font-medium text-[#1F4068]">{selectedProfile.profession}</span></div>
+                                                <div><span className="text-[11px] text-[#9ca3af] block mb-0.5">Caste / Star</span><span className="text-sm font-medium text-[#1F4068]">{mutualFullData?.personal?.caste} • {mutualFullData?.horo?.star || "N/A"}</span></div>
                                             </div>
                                         </section>
                                         
-                                        {selectedProfile.interaction_status === 'accepted' && (
-                                            <div className="flex gap-4">
-                                                <Button 
+                                        {selectedProfile.interaction_status === "accepted" && (
+                                            <div className="flex gap-3">
+                                                <Button
                                                     onClick={() => {
                                                         setMessageTarget({ id: selectedProfile.user_id, name: selectedProfile.name })
                                                         setIsMessageDialogOpen(true)
                                                     }}
-                                                    className="flex-1 h-14 rounded-2xl bg-[#3bb9ac] hover:bg-[#2fa085] text-white font-black text-[11px] uppercase tracking-widest shadow-xl shadow-emerald-200"
+                                                    className="flex-1 h-11 rounded-xl bg-[#e87898] hover:bg-[#d66686] text-white text-sm font-medium"
                                                 >
-                                                    Open Communications
+                                                    Send Message
                                                 </Button>
-                                                <Button 
-                                                    variant="outline" 
+                                                <Button
+                                                    variant="outline"
                                                     className={cn(
-                                                        "h-14 w-14 rounded-2xl border-indigo-100 flex items-center justify-center transition-all",
-                                                        shortlistedIds.includes(selectedProfile.user_id) ? "text-[#3bb9ac] bg-primary border-primary shadow-sm" : "text-gray-300 border-gray-100 hover:text-[#3bb9ac] hover:bg-indigo-50"
+                                                        "h-11 w-11 rounded-xl border-[#f0ebe3] flex items-center justify-center",
+                                                        shortlistedIds.includes(selectedProfile.user_id)
+                                                            ? "text-[#e87898] bg-[#fce8ef] border-[#e87898]"
+                                                            : "text-[#9ca3af] hover:text-[#e87898] hover:bg-[#fce8ef]"
                                                     )}
                                                     onClick={(e) => handleShortlist(e, selectedProfile.user_id)}
                                                     disabled={shortlistLoadingId === selectedProfile.user_id}
                                                 >
-                                                    <Bookmark className={cn("h-6 w-6", shortlistedIds.includes(selectedProfile.user_id) && "fill-current")} />
-                                                </Button>
-                                                <Button 
-                                                    variant="outline" 
-                                                    className="h-14 w-14 rounded-2xl border-indigo-100 flex items-center justify-center text-indigo-600"
-                                                >
-                                                    <Phone className="h-6 w-6" />
+                                                    <Bookmark className={cn("h-5 w-5", shortlistedIds.includes(selectedProfile.user_id) && "fill-current")} />
                                                 </Button>
                                             </div>
                                         )}
@@ -730,31 +727,26 @@ export function LikesHorizontalCard({ profile, section, onAction, onView, onMess
 
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 30 }}
-            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ 
-                duration: 0.8, 
-                delay: index * 0.05,
-                ease: [0.16, 1, 0.3, 1]
-            }}
+            transition={{ duration: 0.35, delay: index * 0.04 }}
             className="w-full"
         >
             <div
-                className="sds-glass rounded-3xl overflow-hidden hover:shadow-[0_40px_80px_-20px_rgba(59,185,172,0.15)] transition-all duration-700 cursor-pointer group flex flex-col md:flex-row h-auto md:h-[260px] border-2 border-indigo-100/20 hover:border-[#3bb9ac]/30 active:scale-[0.99] bg-white/95"
+                className="bg-white rounded-[18px] overflow-hidden hover:shadow-[0_6px_20px_rgba(31,64,104,0.1)] transition-shadow cursor-pointer group flex flex-col md:flex-row h-auto md:min-h-[220px] border border-[#f0ebe3] shadow-[0_2px_12px_rgba(31,64,104,0.05)]"
                 onClick={() => onView(profile)}
             >
-                {/* Left: Image Section */}
-                <div className="w-full md:w-56 h-72 md:h-full relative overflow-hidden bg-gray-100/50 shrink-0">
+                <div className="w-full md:w-44 h-56 md:h-auto relative overflow-hidden bg-[#faf8f4] shrink-0 md:rounded-l-[18px]">
                     {profile.photos && profile.photos.length > 0 ? (
                         <>
                             <img
                                 src={profile.photos[cardPhotoIndex]}
                                 alt={profile.name}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-[cubic-bezier(0.33,1,0.68,1)]"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                             {hasMultiplePhotos && (
-                                <div className="absolute bottom-4 right-4 sds-glass text-[9px] px-3 py-1.5 rounded-full z-10 font-black tracking-[0.2em] text-[#3bb9ac] bg-white/90 shadow-xl border-indigo-50/50">
+                                <div className="absolute bottom-3 right-3 text-[10px] px-2 py-1 rounded-full z-10 font-medium text-[#1F4068] bg-white/95 shadow-sm border border-[#f0ebe3]">
                                     {cardPhotoIndex + 1} / {profile.photos.length}
                                 </div>
                             )}
@@ -772,223 +764,201 @@ export function LikesHorizontalCard({ profile, section, onAction, onView, onMess
                             )}
                         </>
                     ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-indigo-900/10 bg-indigo-50/30">
-                            <User className="h-24 w-24 opacity-50" />
-                            <span className="text-[9px] mt-4 font-black uppercase tracking-[0.4em] opacity-40">No Image</span>
+                        <div className="w-full h-full flex flex-col items-center justify-center text-[#e87898]/20 bg-[#fce8ef]/30">
+                            <User className="h-16 w-16 opacity-40" />
+                            <span className="text-[11px] mt-2 text-[#9ca3af]">No photo</span>
                         </div>
                     )}
                     
                     {profile.photo_verified && (
-                        <div className="absolute bottom-4 left-4 bg-emerald-500 text-white px-3 py-1.5 rounded-full text-[8px] font-black flex items-center gap-1.5 shadow-2xl shadow-emerald-500/40 uppercase tracking-[0.2em] backdrop-blur-xl border border-emerald-400/30">
-                            <Shield className="h-3 w-3 shadow-sm" /> Verified
+                        <div className="absolute bottom-3 left-3 bg-[#1F4068] text-white px-2 py-1 rounded-full text-[10px] font-medium flex items-center gap-1">
+                            <Shield className="h-3 w-3" /> Verified
                         </div>
                     )}
 
                     {profile.isPremium && (
-                        <div className="absolute top-4 left-4 z-30">
-                            <div className="bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-white p-1 rounded-xl shadow-2xl shadow-amber-500/40 border border-white/20">
+                        <div className="absolute top-3 left-3 z-30">
+                            <div className="bg-amber-500 text-white p-1 rounded-lg shadow-sm">
                                 <Crown className="h-3.5 w-3.5" />
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* Right: Content Section */}
-                <div className="p-6 md:p-8 flex-1 flex flex-col relative bg-gradient-to-br from-white/60 via-white/40 to-transparent">
-                    {/* Compatibility Score & Interaction Badges */}
-                    <div className="absolute top-6 right-8 z-20 flex flex-col items-end gap-2">
-                        <div className="flex items-center gap-6">
-                            <MatchScoreBadge 
+                <div className="p-4 sm:p-5 flex-1 flex flex-col relative min-w-0">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                                <h3 className="text-lg font-semibold text-[#1F4068] truncate group-hover:text-[#e87898] transition-colors">
+                                    {profile.name}
+                                    {profile.age ? `, ${profile.age}` : ""}
+                                </h3>
+                                {profile.isPremium && (
+                                    <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md">Premium</span>
+                                )}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[#6b7280]">
+                                <span className="flex items-center gap-1 truncate">
+                                    <MapPinIcon className="h-3.5 w-3.5 shrink-0 text-[#9ca3af]" />
+                                    {profile.location.split(",")[0]}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <ShieldCheck className="h-3.5 w-3.5 text-[#9ca3af]" />
+                                    Trust {calculateTrustScore(
+                                        !!profile.photo_verified,
+                                        profile.completion_percentage || 80,
+                                        profile.photos?.length || 0
+                                    )}%
+                                </span>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                            <MatchScoreBadge
                                 lifestyleScore={profile.lifestyleMatch?.totalScore || 0}
                                 poruthamScore={profile.compatibility?.score || 0}
                                 isPremium={true}
-                                onClick={(e) => { e.stopPropagation(); onView(profile); }}
+                                onClick={(e) => { e.stopPropagation(); onView(profile) }}
                             />
-                            <Button
-                                variant="ghost"
-                                size="sm"
+                            <button
+                                type="button"
                                 onClick={(e) => onShortlist(e, profile.user_id)}
                                 disabled={actionLoading}
                                 className={cn(
-                                    "p-0 h-auto hover:bg-transparent transition-all hover:scale-110 flex items-start -mt-2",
-                                    shortlistedIds.includes(profile.user_id) ? "text-[#3bb9ac]" : "text-gray-300 hover:text-[#3bb9ac]"
+                                    "w-8 h-8 rounded-full flex items-center justify-center border transition-colors",
+                                    shortlistedIds.includes(profile.user_id)
+                                        ? "bg-[#e87898] border-[#e87898] text-white"
+                                        : "bg-white border-[#f0ebe3] text-[#9ca3af] hover:text-[#e87898] hover:border-[#e87898]"
                                 )}
                             >
-                                <Bookmark className={cn("h-[64px] w-[32px]", shortlistedIds.includes(profile.user_id) && "fill-current")} />
-                            </Button>
-                        </div>
-                         
-                        {profile.last_active_at && (
-                            <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50/50 px-3 py-1 rounded-full border border-emerald-100/50">
-                                <span className={cn("w-1.5 h-1.5 rounded-full bg-emerald-500", formatActivityTime(profile.last_active_at) === "Online" && "animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]")} />
-                                {formatActivityTime(profile.last_active_at)}
-                            </div>
-                        )}
-                        
-                        {profile.viewed_me_date && (
-                            <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest text-[#3bb9ac] bg-white/90 shadow-md px-3 py-1.5 rounded-full border border-indigo-100/50">
-                                <Eye className="h-3.5 w-3.5" />
-                                Profile viewed you on {formatToDDMMYYYY(profile.viewed_me_date)}
-                            </div>
-                        )}
-                    </div>
-                    <div className="mb-4">
-                        <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-2xl font-light text-gray-900 tracking-tighter leading-none group-hover:text-[#3bb9ac] transition-colors duration-500">
-                                {profile.name}
-                            </h3>
-                            <span className="text-lg font-black text-[#3bb9ac]/20 tracking-tighter">{profile.age && `${profile.age}`}</span>
-                            {profile.isPremium && (
-                                <span className="text-[8px] font-black uppercase tracking-[0.3em] text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-100/50">Elite</span>
-                            )}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-3">
-                            <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-900/60">
-                                <MapPinIcon className="h-3 w-3 text-indigo-500/40" />
-                                {profile.location.split(',')[0]}
-                            </div>
-                            <div className="h-1 w-1 bg-indigo-100 rounded-full" />
-                            <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600">
-                                <ShieldCheck className="h-3 w-3 opacity-60" />
-                                Trust Vector {calculateTrustScore(
-                                    !!profile.photo_verified, 
-                                    profile.completion_percentage || 80, 
-                                    profile.photos?.length || 0
-                                )}% Approved
-                            </div>
+                                <Bookmark className={cn("h-4 w-4", shortlistedIds.includes(profile.user_id) && "fill-current")} />
+                            </button>
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 mb-6">
+                    <div className="flex flex-wrap gap-1.5 mb-3">
                         {getRoleAndHeightStr(profile).split(" • ").filter(Boolean).map((tag, i) => (
-                            <span key={i} className="px-3.5 py-1.5 rounded-full bg-indigo-50/30 text-indigo-900/70 text-[8px] font-bold tracking-widest uppercase border border-indigo-100/30 group-hover:bg-white group-hover:border-indigo-200 transition-all">
+                            <span key={i} className="px-2.5 py-1 rounded-md bg-[#faf8f4] text-[#4b5563] text-[11px] font-medium border border-[#f0ebe3]">
                                 {tag}
                             </span>
                         ))}
                     </div>
-                    
-                    <div className="mt-auto pt-6 border-t border-black/[0.04]">
-                        {/* Interaction timeline labels (Match Profiles Style) */}
-                        <div className="flex flex-col gap-2 mb-6">
+
+                    {(profile.last_active_at || profile.viewed_me_date) && (
+                        <div className="flex flex-wrap gap-2 mb-3">
+                            {profile.last_active_at && (
+                                <span className="inline-flex items-center gap-1 text-[11px] text-[#6b7280] bg-[#faf8f4] px-2 py-0.5 rounded-full border border-[#f0ebe3]">
+                                    <span className={cn("w-1.5 h-1.5 rounded-full bg-[#22c55e]", formatActivityTime(profile.last_active_at) === "Online" && "animate-pulse")} />
+                                    {formatActivityTime(profile.last_active_at)}
+                                </span>
+                            )}
+                            {profile.viewed_me_date && (
+                                <span className="inline-flex items-center gap-1 text-[11px] text-[#e87898] bg-[#fce8ef] px-2 py-0.5 rounded-full">
+                                    <Eye className="h-3 w-3" />
+                                    Viewed you {formatToDDMMYYYY(profile.viewed_me_date)}
+                                </span>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="mt-auto pt-3 border-t border-[#f0ebe3]">
+                        <div className="flex flex-col gap-1.5 mb-3">
                             {profile.shortlisted_me_date && (
-                                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#3bb9ac]">
-                                    <Bookmark className="h-3.5 w-3.5 text-[#3bb9ac]" />
+                                <p className="flex items-center gap-1.5 text-[12px] text-[#e87898]">
+                                    <Bookmark className="h-3.5 w-3.5" />
                                     {pronoun} shortlisted you on {formatToDDMMYYYY(profile.shortlisted_me_date)}
-                                </div>
+                                </p>
                             )}
 
-                            {section === 'sent' && (
-                                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-emerald-600">
-                                    <Heart className="h-3.5 w-3.5 fill-emerald-600" />
-                                    {profile.interaction_status === 'accepted' ? (
-                                        <>{pronoun} accepted your interest {profile.interaction_date ? `on ${formatToDDMMYYYY(profile.interaction_date)}` : 'Recently'}</>
-                                    ) : profile.interaction_status === 'declined' ? (
-                                        <span className="text-gray-500">{pronoun} declined your interest {profile.interaction_date ? `on ${formatToDDMMYYYY(profile.interaction_date)}` : 'Recently'}</span>
+                            {section === "sent" && (
+                                <p className="flex items-center gap-1.5 text-[12px] text-[#4b5563]">
+                                    <Heart className="h-3.5 w-3.5 text-[#e87898]" />
+                                    {profile.interaction_status === "accepted" ? (
+                                        <>{pronoun} accepted your interest{profile.interaction_date ? ` on ${formatToDDMMYYYY(profile.interaction_date)}` : ""}</>
+                                    ) : profile.interaction_status === "declined" ? (
+                                        <>{pronoun} declined your interest{profile.interaction_date ? ` on ${formatToDDMMYYYY(profile.interaction_date)}` : ""}</>
                                     ) : (
-                                        <span className="text-indigo-900/50">You sent an interest {profile.interaction_date ? `on ${formatToDDMMYYYY(profile.interaction_date)}` : ''} - <span className="text-amber-500 ml-1">Pending</span></span>
+                                        <>Interest sent{profile.interaction_date ? ` on ${formatToDDMMYYYY(profile.interaction_date)}` : ""} — <span className="text-amber-600 font-medium">Pending</span></>
                                     )}
-                                </div>
+                                </p>
                             )}
 
-                            {section === 'received' && (
-                                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-emerald-600">
-                                    <Heart className="h-3.5 w-3.5 fill-emerald-600" />
-                                    {profile.interaction_status === 'accepted' ? (
-                                        <>You accepted {pronoun.toLowerCase()} interest {profile.interaction_date ? `on ${formatToDDMMYYYY(profile.interaction_date)}` : 'Recently'}</>
-                                    ) : profile.interaction_status === 'declined' ? (
-                                        <span className="text-gray-500">You declined {pronoun.toLowerCase()} interest {profile.interaction_date ? `on ${formatToDDMMYYYY(profile.interaction_date)}` : 'Recently'}</span>
+                            {section === "received" && (
+                                <p className="flex items-center gap-1.5 text-[12px] text-[#4b5563]">
+                                    <Heart className="h-3.5 w-3.5 text-[#e87898]" />
+                                    {profile.interaction_status === "accepted" ? (
+                                        <>You accepted {pronoun.toLowerCase()}&apos;s interest{profile.interaction_date ? ` on ${formatToDDMMYYYY(profile.interaction_date)}` : ""}</>
+                                    ) : profile.interaction_status === "declined" ? (
+                                        <>You declined {pronoun.toLowerCase()}&apos;s interest{profile.interaction_date ? ` on ${formatToDDMMYYYY(profile.interaction_date)}` : ""}</>
                                     ) : (
-                                        <>{pronoun} showed interest {profile.interaction_date ? `on ${formatToDDMMYYYY(profile.interaction_date)}` : 'Recently'}</>
+                                        <>{pronoun} showed interest{profile.interaction_date ? ` on ${formatToDDMMYYYY(profile.interaction_date)}` : ""}</>
                                     )}
-                                </div>
+                                </p>
                             )}
 
-                            {section === 'mutual' && (
-                                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-emerald-600">
-                                    <Star className="h-3.5 w-3.5 fill-emerald-600" />
-                                    Mutual Interest Found!
-                                </div>
+                            {section === "mutual" && (
+                                <p className="flex items-center gap-1.5 text-[12px] font-medium text-[#e87898]">
+                                    <Star className="h-3.5 w-3.5 fill-[#e87898]" />
+                                    Mutual interest — you can message each other
+                                </p>
                             )}
                         </div>
 
-                        <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <Button
-                                onClick={(e) => { e.stopPropagation(); handleContactClick('whatsapp'); }}
-                                variant="outline"
-                                size="icon"
-                                className="h-12 w-12 rounded-2xl border-none bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all duration-300 shadow-sm"
-                            >
-                                <MessageCircleIcon className="h-5 w-5" />
-                            </Button>
-                            <Button
-                                onClick={(e) => { e.stopPropagation(); handleContactClick('call'); }}
-                                variant="outline"
-                                size="icon"
-                                className="h-12 w-12 rounded-2xl border-none bg-indigo-50 text-[#3bb9ac] hover:bg-[#3bb9ac] hover:text-white transition-all duration-300 shadow-sm"
-                            >
-                                <Phone className="h-5 w-5" />
-                            </Button>
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                {section === "received" && profile.interaction_status === "pending" ? (
+                                    <>
+                                        <Button
+                                            onClick={(e) => { e.stopPropagation(); onAction(profile.user_id, "accepted", true) }}
+                                            disabled={actionLoading}
+                                            className="h-9 px-4 rounded-xl bg-[#e87898] hover:bg-[#d66686] text-white text-sm font-medium border-none"
+                                        >
+                                            <HeartHandshakeIcon className="h-4 w-4 mr-1.5" />
+                                            Accept
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            onClick={(e) => { e.stopPropagation(); onAction(profile.user_id, "declined", true) }}
+                                            disabled={actionLoading}
+                                            className="h-9 px-4 rounded-xl border-[#f0ebe3] text-[#6b7280] hover:bg-[#faf8f4] text-sm"
+                                        >
+                                            Decline
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            if (section === "mutual" || profile.interaction_status === "accepted") {
+                                                onMessage(profile)
+                                            } else {
+                                                toast.info(`Status: ${profile.interaction_status}`)
+                                            }
+                                        }}
+                                        disabled={!(section === "mutual" || profile.interaction_status === "accepted")}
+                                        className={cn(
+                                            "h-9 px-4 rounded-xl text-sm font-medium border-none",
+                                            section === "mutual" || profile.interaction_status === "accepted"
+                                                ? "bg-[#e87898] hover:bg-[#d66686] text-white"
+                                                : "bg-[#f3f4f6] text-[#9ca3af] cursor-not-allowed"
+                                        )}
+                                    >
+                                        <MessageCircleIcon className="h-4 w-4 mr-1.5" />
+                                        {section === "mutual" || profile.interaction_status === "accepted" ? "Message" : profile.interaction_status}
+                                    </Button>
+                                )}
+                            </div>
 
-                            {section === "received" && profile.interaction_status === "pending" ? (
-                                <div className="flex gap-2">
-                                    <Button
-                                        onClick={(e) => { e.stopPropagation(); onAction(profile.user_id, "accepted", true); }}
-                                        disabled={actionLoading}
-                                        className="h-12 px-8 rounded-2xl bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200 border-none"
-                                    >
-                                        <HeartHandshakeIcon className="h-4 w-4 mr-2" />
-                                        Accept Interest
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        onClick={(e) => { e.stopPropagation(); onAction(profile.user_id, "declined", true); }}
-                                        disabled={actionLoading}
-                                        className="h-12 px-6 rounded-2xl border-none bg-primary text-primary font-bold text-[10px] uppercase tracking-widest hover:bg-primary hover:text-white transition-all"
-                                    >
-                                        Decline
-                                    </Button>
-                                </div>
-                            ) : (
-                                <Button
-                                    onClick={(e) => { 
-                                        e.stopPropagation(); 
-                                        if (section === "mutual" || profile.interaction_status === 'accepted') {
-                                            onMessage(profile);
-                                        } else {
-                                            toast.info(`Current status: ${profile.interaction_status.toUpperCase()}`);
-                                        }
-                                    }}
-                                    className={cn(
-                                        "h-12 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 shadow-xl border-none",
-                                        (section === "mutual" || profile.interaction_status === 'accepted') 
-                                            ? "bg-[#FF4500] text-white hover:bg-[#FF6347]" 
-                                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                    )}
-                                >
-                                    {(section === "mutual" || profile.interaction_status === 'accepted') ? (
-                                        <span className="flex items-center gap-2">
-                                            <MessageCircleIcon className="h-4 w-4" />
-                                            Send Message
-                                        </span>
-                                    ) : (
-                                        <span className="capitalize">{profile.interaction_status}</span>
-                                    )}
-                                </Button>
-                            )}
+                            <Button
+                                variant="ghost"
+                                className="h-9 px-3 rounded-xl text-sm text-[#6b7280] hover:text-[#e87898] hover:bg-[#fce8ef]"
+                                onClick={(e) => { e.stopPropagation(); onView(profile) }}
+                            >
+                                View profile
+                                <ArrowRight className="h-4 w-4 ml-1" />
+                            </Button>
                         </div>
-                        
-                        <Button 
-                            variant="ghost"
-                            className="h-12 px-6 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] text-gray-400 hover:text-[#3bb9ac] hover:bg-indigo-50/50 transition-all"
-                            onClick={(e) => { e.stopPropagation(); onView(profile); }}
-                        >
-                            Full Profile
-                            <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
-                        </Button>
                     </div>
                 </div>
-            </div>
             </div>
         </motion.div>
     )

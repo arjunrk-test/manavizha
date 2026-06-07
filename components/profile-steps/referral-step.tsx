@@ -5,6 +5,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FormData } from "@/types/profile"
 import { supabase } from "@/lib/supabase"
+import {
+  SETUP_SECTION_CARD,
+  SetupSectionHeader,
+} from "@/components/profile-steps/setup-section-header"
+import { Handshake } from "lucide-react"
 
 interface ReferralStepProps {
   formData: FormData
@@ -126,22 +131,17 @@ export function ReferralStep({ formData, onChange, onPartnerNameChange }: Referr
   const isValidPattern = partnerIdPattern.test(formData.referralPartnerId || "")
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="space-y-8">
-        <div className="flex items-center gap-4 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
-            <span className="text-[#3bb9ac] font-black text-xs">R1</span>
-          </div>
-          <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Referral</h4>
-            <h3 className="text-xl font-light text-gray-900 tracking-tight">Partner Details</h3>
-          </div>
-          <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
-        </div>
-
-        <div className="sds-glass rounded-[2.5rem] p-10 border-indigo-50/50 space-y-8 shadow-[0_20px_50px_-20px_rgba(59,185,172,0.1)]">
-          <div className="space-y-3">
-            <Label htmlFor="referralPartnerId" className="sds-label ml-1">Referral Partner ID *</Label>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="setup-section-stack">
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={Handshake}
+            title="Partner details"
+            description="Enter your referral partner ID to link your profile"
+          />
+          <div className="setup-section-card-body space-y-6">
+          <div className="space-y-1.5">
+            <Label htmlFor="referralPartnerId" className="sds-label">Referral Partner ID *</Label>
             <div className="relative group">
               <Input
                 id="referralPartnerId"
@@ -149,56 +149,54 @@ export function ReferralStep({ formData, onChange, onPartnerNameChange }: Referr
                 onChange={handleInputChange}
                 placeholder="e.g., AB1234CD567"
                 maxLength={11}
-                className={`sds-input w-full uppercase font-black tracking-widest h-16 px-6 text-lg transition-all duration-500 ${
-                  isValidPattern && partnerName ? "border-emerald-200 bg-emerald-50/20" : 
+                className={`sds-input w-full uppercase font-semibold tracking-wider ${
+                  isValidPattern && partnerName ? "border-[#fce8ef] bg-[#fce8ef]/40" :
                   partnerError ? "border-primary bg-primary" : ""
                 }`}
               />
               {isLoadingPartner && (
-                <div className="absolute right-6 top-1/2 -translate-y-1/2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#3bb9ac]/20 border-t-[#3bb9ac]"></div>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#e87898]/20 border-t-[#e87898]" />
                 </div>
               )}
             </div>
-            
-            <div className="px-2">
+
+            <div>
               {!isValidPattern && formData.referralPartnerId && (
-                <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mt-2 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
-                  <span className="w-1 h-1 rounded-full bg-amber-500" />
-                  Format: 2 Letters, 4 Numbers, 2 Letters, 3 Numbers
+                <p className="text-[11px] font-medium text-amber-600 mt-1.5 flex items-center gap-2">
+                  Format: 2 letters, 4 numbers, 2 letters, 3 numbers
                 </p>
               )}
               {isValidPattern && !partnerError && partnerName && (
-                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-2 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  ID Verified
+                <p className="text-[11px] font-medium text-[#e87898] mt-1.5 flex items-center gap-2">
+                  ID verified
                 </p>
               )}
-              <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest mt-3">
+              <p className="text-[11px] text-[#9ca3af] mt-1">
                 Enter the ID of your referral partner
               </p>
             </div>
           </div>
 
-          <div className="space-y-3 pt-6 border-t border-indigo-50/50">
-            <Label htmlFor="referralPartnerName" className="sds-label ml-1">Partner Name</Label>
+          <div className="space-y-1.5 pt-4 border-t border-[#f0ebe3]">
+            <Label htmlFor="referralPartnerName" className="sds-label">Partner Name</Label>
             <div className="relative">
               <Input
                 id="referralPartnerName"
                 value={isLoadingPartner ? "Finding partner..." : partnerError || partnerName}
                 readOnly
                 disabled
-                className={`sds-input w-full h-16 px-6 font-bold transition-all duration-700 ${
-                  partnerError ? "text-primary bg-primary border-primary" : 
-                  partnerName ? "text-[#3bb9ac] bg-indigo-50/10 border-indigo-100" : 
-                  "text-gray-300 bg-black/[0.02] border-transparent opacity-40 cursor-not-allowed"
+                className={`sds-input w-full font-medium ${
+                  partnerError ? "text-primary bg-primary border-primary" :
+                  partnerName ? "text-[#1F4068] bg-[#faf8f4] border-[#f0ebe3]" :
+                  "text-gray-400 bg-black/[0.02] border-transparent opacity-60 cursor-not-allowed"
                 }`}
                 placeholder="Waiting for ID..."
               />
               {partnerName && !isLoadingPartner && !partnerError && (
-                <div className="absolute right-6 top-1/2 -translate-y-1/2">
-                  <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                    <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="w-5 h-5 rounded-full bg-[#fce8ef]0 flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
@@ -206,10 +204,9 @@ export function ReferralStep({ formData, onChange, onPartnerNameChange }: Referr
               )}
             </div>
             {partnerError && (
-              <p className="text-[9px] font-black text-primary uppercase tracking-[0.2em] mt-2 px-2 animate-pulse">
-                {partnerError}
-              </p>
+              <p className="text-[11px] font-medium text-primary mt-1">{partnerError}</p>
             )}
+          </div>
           </div>
         </div>
       </div>

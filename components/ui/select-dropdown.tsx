@@ -34,7 +34,7 @@ export function SelectDropdown({
           required={required}
           disabled={disabled}
         >
-          <option value="" disabled={required}>Select Position / Value</option>
+          <option value="" disabled={required}>Select an option</option>
           {options.map((option) => (
             <option 
               key={option.id} 

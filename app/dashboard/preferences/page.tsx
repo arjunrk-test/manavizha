@@ -1,6 +1,7 @@
 "use client"
 
 import { PartnerPreferencesForm } from "@/components/partner-preferences-form"
+import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -17,7 +18,7 @@ export default function PreferencesPage() {
     fetchUser()
   }, [])
 
-  if (!userId) return null
+  if (!userId) return <DashboardLoadingScreen />
 
   return (
     <PartnerPreferencesForm 

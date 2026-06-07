@@ -1,5 +1,6 @@
 "use client"
 
+import { finishAuthRedirect } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -137,7 +138,7 @@ export default function ReferralPartnerMyProfilePage() {
             // 1. Auth check
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) {
-                router.push("/referral-partner")
+                finishAuthRedirect(router, "/referral-partner", setIsLoading)
                 return
             }
 
@@ -150,7 +151,7 @@ export default function ReferralPartnerMyProfilePage() {
 
             if (partnerError || !partnerData) {
                 await supabase.auth.signOut()
-                router.push("/referral-partner")
+                finishAuthRedirect(router, "/referral-partner", setIsLoading)
                 return
             }
 

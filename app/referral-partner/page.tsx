@@ -1,100 +1,89 @@
 "use client"
 
 import { ReferralPartnerNavbar } from "@/components/referral-partner-navbar"
+import { ReferralPartnerAuthDialog } from "@/components/referral-partner-auth-dialog"
+import { ReferralPartnerHeroSection } from "@/components/referral-partner/referral-partner-hero-section"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { 
-  Users, 
-  DollarSign, 
-  TrendingUp, 
-  Shield, 
-  Award, 
+import { useState } from "react"
+import {
+  Users,
+  DollarSign,
+  TrendingUp,
+  Shield,
+  Award,
   Zap,
   ArrowRight,
-  CheckCircle2,
   Handshake,
   Target,
   BarChart3,
   Mail,
-  Phone
+  Phone,
 } from "lucide-react"
-import { useState } from "react"
-import { ReferralPartnerAuthDialog } from "@/components/referral-partner-auth-dialog"
+import Link from "next/link"
 
 const benefits = [
   {
     icon: DollarSign,
-    title: "Earn Commissions",
-    description: "Get rewarded for every successful referral. Competitive commission structure with timely payouts.",
-    color: "from-green-500 to-emerald-500",
-    bgColor: "from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30",
-    iconBg: "bg-green-500",
+    title: "Earn commissions",
+    description: "Get rewarded for every successful referral with competitive rates and timely payouts.",
+    iconColor: "text-[#c9a227]",
   },
   {
     icon: Users,
-    title: "Expand Your Network",
-    description: "Connect with families and build meaningful relationships while helping people find their perfect match.",
-    color: "from-blue-500 to-cyan-500",
-    bgColor: "from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30",
-    iconBg: "bg-blue-500",
+    title: "Expand your network",
+    description: "Connect with families and build meaningful relationships while helping people find their match.",
+    iconColor: "text-[#3bb9ac]",
   },
   {
     icon: TrendingUp,
-    title: "Grow Your Business",
-    description: "Scale your referral business with our comprehensive partner program and dedicated support team.",
-    color: "from-[#3bb9ac] to-[#1F4068]",
-    bgColor: "from-[#3bb9ac]/10 to-[#1F4068]/10 dark:from-[#3bb9ac]/30 dark:to-[#1F4068]/30",
-    iconBg: "bg-[#3bb9ac]",
+    title: "Grow your business",
+    description: "Scale with our partner program, referral tracking tools, and dedicated support team.",
+    iconColor: "text-[#3bb9ac]",
   },
   {
     icon: Shield,
-    title: "Trusted Platform",
-    description: "Partner with a verified, secure platform trusted by thousands of families across the country.",
-    color: "from-[#3bb9ac] to-[#3bb9ac]",
-    bgColor: "from-[#3bb9ac]/10 to-[#3bb9ac]/10 dark:from-[#3bb9ac]/30 dark:to-[#3bb9ac]/30",
-    iconBg: "bg-[#3bb9ac]",
+    title: "Trusted platform",
+    description: "Partner with a verified, secure platform trusted by thousands of families.",
+    iconColor: "text-[#c97a7a]",
   },
   {
     icon: Award,
-    title: "Recognition & Rewards",
-    description: "Earn badges, recognition, and exclusive rewards as you reach milestones in your referral journey.",
-    color: "from-[#FFA500] to-[#3bb9ac]",
-    bgColor: "from-[#FFA500]/10 to-[#3bb9ac]/10 dark:from-[#FFA500]/30 dark:to-[#3bb9ac]/30",
-    iconBg: "bg-[#FFA500]",
+    title: "Recognition & rewards",
+    description: "Earn recognition and exclusive rewards as you reach milestones in your referral journey.",
+    iconColor: "text-[#c9a227]",
   },
   {
     icon: Zap,
-    title: "Easy Process",
-    description: "Simple onboarding, intuitive dashboard, and all the tools you need to succeed as a referral partner.",
-    color: "from-[#FFA500] to-[#1F4068]",
-    bgColor: "from-[#FFA500]/10 to-[#1F4068]/10 dark:from-[#FFA500]/30 dark:to-[#1F4068]/30",
-    iconBg: "bg-[#FFA500]",
+    title: "Easy process",
+    description: "Simple onboarding, an intuitive dashboard, and everything you need to succeed.",
+    iconColor: "text-[#c97a7a]",
   },
 ]
 
 const steps = [
   {
     number: "01",
-    title: "Sign Up",
-    description: "Create your referral partner account with just a few simple steps. Complete your profile and verification.",
+    title: "Sign up",
+    description: "Create your referral partner account and complete your profile verification.",
     icon: Handshake,
   },
   {
     number: "02",
-    title: "Get Your Partner ID",
-    description: "Receive your unique partner ID that you can use to track referrals and earn commissions.",
+    title: "Get your partner ID",
+    description: "Receive a unique partner ID to track referrals and earn commissions.",
     icon: Target,
   },
   {
     number: "03",
-    title: "Start Referring",
-    description: "Share your partner link and start referring families. Track your performance in real-time.",
+    title: "Start referring",
+    description: "Share your partner link and track performance in real time from your dashboard.",
     icon: BarChart3,
   },
   {
     number: "04",
-    title: "Earn Rewards",
-    description: "Get paid for successful referrals. Enjoy competitive commissions and timely payouts.",
+    title: "Earn rewards",
+    description: "Get paid for successful referrals with transparent commission tracking.",
     icon: DollarSign,
   },
 ]
@@ -103,404 +92,233 @@ export default function ReferralPartnerPage() {
   const [isLoginOpen, setIsLoginOpen] = useState(false)
 
   return (
-    <main className="min-h-screen relative">
+    <main className="min-h-screen bg-[#faf8f4] [&_*]:not-italic">
       <ReferralPartnerNavbar />
       <ReferralPartnerAuthDialog open={isLoginOpen} onOpenChange={setIsLoginOpen} />
 
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-14">
-        {/* Animated gradient background */}
-        <div className="fixed inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] via-[#3bb9ac] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
-        
-        {/* White overlay to lighten the gradient */}
-        <div className="fixed inset-0 bg-white/40 dark:bg-[#181818]/40" />
-        
-        {/* Overlay pattern */}
-        <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
-        
-        {/* Modern grid overlay */}
-        <div className="fixed inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:40px_40px] opacity-30" />
-        
-        {/* Decorative elements */}
-        <div className="fixed inset-0">
-          <motion.div
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.5, 0.3],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="absolute top-0 left-0 w-96 h-96 bg-white/20 rounded-full blur-3xl"
-          />
-          <motion.div
-            animate={{
-              scale: [1.2, 1, 1.2],
-              opacity: [0.5, 0.3, 0.5],
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 2,
-            }}
-            className="absolute bottom-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl"
-          />
-        </div>
+      <ReferralPartnerHeroSection onLoginOpen={() => setIsLoginOpen(true)} />
 
-        {/* Animated PNG Background Images */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden">
-          {[
-            "/patterns/pattern1.png",
-            "/patterns/pattern2.png",
-            "/patterns/pattern3.png",
-            "/patterns/pattern4.png",
-            "/patterns/pattern5.png",
-            "/patterns/pattern6.png",
-            "/patterns/pattern7.png",
-          ].map((imagePath, i) => {
-            const baseX = 5 + (i * 13) % 82
-            const baseY = 8 + (i * 15) % 75
-            const size = 280 + (i % 3) * 80
-            const fadeDuration = 8 + (i % 4)
-            const rotateDuration = 60 + i * 8
-            const moveDuration = 12 + (i % 6)
-            
-            return (
-              <motion.div
-                key={`bg-image-${i}`}
-                className="absolute"
-                style={{
-                  left: `${baseX}%`,
-                  top: `${baseY}%`,
-                  width: `${size}px`,
-                  height: `${size}px`,
-                }}
-                initial={{ opacity: 0.15 }}
-                animate={{
-                  opacity: [0.1, 0.25, 0.15, 0.25, 0.1],
-                  rotate: [0, 360],
-                  x: [-40, 40, -40],
-                }}
-                transition={{
-                  opacity: {
-                    duration: fadeDuration,
-                    repeat: Infinity,
-                    delay: i * 1.2,
-                    ease: "easeInOut",
-                  },
-                  rotate: {
-                    duration: rotateDuration,
-                    repeat: Infinity,
-                    ease: "linear",
-                  },
-                  x: {
-                    duration: moveDuration,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: i * 0.7,
-                  },
-                }}
-              >
-                <img
-                  src={imagePath}
-                  alt={`Background pattern ${i + 1}`}
-                  className="w-full h-full object-contain"
-                  style={{
-                    filter: "brightness(0) invert(1)",
-                    mixBlendMode: "screen",
-                  }}
-                  onError={(e) => {
-                    console.warn(`Image not found: ${imagePath}`)
-                    e.currentTarget.style.display = "none"
-                  }}
-                />
-              </motion.div>
-            )
-          })}
-        </div>
-
-        <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24">
-          <div className="max-w-4xl mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 text-sm font-medium text-gray-700 dark:text-gray-300 mb-6 sm:mb-8 shadow-sm"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3bb9ac] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#3bb9ac]"></span>
-              </span>
-              Join 500+ Active Partners
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 sm:mb-8 leading-tight"
-            >
-              <span className="bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
-                Become a Referral Partner
-              </span>
-              <br />
-              <span className="text-gray-900 dark:text-white">
-                & Earn with Every Match
-              </span>
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed"
-            >
-              Help families find their perfect match while building a rewarding business. 
-              Join our network of trusted referral partners and start earning today.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4"
-            >
-              <Button
-                size="lg"
-                onClick={() => setIsLoginOpen(true)}
-                className="rounded-full bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] hover:from-[#3bb9ac] hover:via-[#3bb9ac] hover:to-[#1F4068] text-white border-0 shadow-lg hover:shadow-xl transition-all px-8 py-6 text-lg font-semibold group"
-              >
-                Get Started Now
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border-2 border-gray-300 dark:border-gray-700 hover:border-[#3bb9ac] text-gray-900 dark:text-white px-8 py-6 text-lg font-semibold"
-              >
-                Learn More
-              </Button>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits Section */}
-      <section className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
-        {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#3bb9ac]/50 via-[#3bb9ac]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
-        
-        {/* White overlay */}
-        <div className="absolute inset-0 bg-white/50 dark:bg-[#181818]/50" />
-        
-        {/* Overlay pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
+      {/* Benefits */}
+      <section
+        id="benefits"
+        className="relative overflow-hidden py-16 sm:py-20 bg-white scroll-mt-16"
+      >
+        <div
+          className="pointer-events-none absolute inset-0"
+          aria-hidden
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 92% 8%, rgba(255, 182, 193, 0.08) 0%, transparent 28%), radial-gradient(circle at 8% 92%, rgba(59, 185, 172, 0.06) 0%, transparent 32%)",
+          }}
+        />
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12 sm:mb-16"
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-6xl mx-auto"
           >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
-              Why Become a Partner?
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Discover the benefits of joining our referral partner program
-            </p>
-          </motion.div>
+            <div className="mb-10 sm:mb-12 text-center max-w-2xl mx-auto">
+              <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-brand-gold mb-3">
+                Partner benefits
+              </p>
+              <h2 className="font-display text-3xl sm:text-4xl font-semibold text-[#1F4068] leading-tight tracking-tight mb-3">
+                Why become a partner?
+              </h2>
+              <p className="text-base sm:text-lg text-gray-600 leading-relaxed">
+                Discover the advantages of joining the Manavizha referral partner program.
+              </p>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-7xl mx-auto">
-            {benefits.map((benefit, index) => {
-              const Icon = benefit.icon
-              return (
-                <motion.div
-                  key={benefit.title}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="group relative"
-                >
-                  <div className="relative h-full p-6 sm:p-8 rounded-2xl bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                    <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${benefit.bgColor} mb-4`}>
-                      <Icon className={`h-6 w-6 ${benefit.iconBg} text-white rounded-lg p-1.5`} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
+              {benefits.map((benefit, index) => {
+                const Icon = benefit.icon
+                return (
+                  <motion.article
+                    key={benefit.title}
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-40px" }}
+                    transition={{
+                      duration: 0.4,
+                      delay: index * 0.05,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                    className="group flex gap-4 items-start rounded-xl border border-gray-100/90 bg-[#faf8f4] p-5 sm:p-6 shadow-[0_8px_32px_rgba(31,64,104,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(31,64,104,0.08)] min-h-[7.5rem]"
+                  >
+                    <div className="shrink-0 w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center">
+                      <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${benefit.iconColor}`} strokeWidth={1.75} />
                     </div>
-                    <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
-                      {benefit.title}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                      {benefit.description}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-semibold text-[#1F4068] mb-1.5 leading-tight">
+                        {benefit.title}
+                      </h3>
+                      <p className="text-sm sm:text-[15px] text-gray-500 leading-relaxed">
+                        {benefit.description}
+                      </p>
+                    </div>
+                  </motion.article>
+                )
+              })}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section
+        id="how-it-works"
+        className="relative overflow-hidden py-16 sm:py-20 bg-[#faf8f4] scroll-mt-16"
+      >
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-6xl mx-auto"
+          >
+            <div className="mb-10 sm:mb-12 text-center max-w-2xl mx-auto">
+              <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-brand-gold mb-3">
+                How it works
+              </p>
+              <h2 className="font-display text-3xl sm:text-4xl font-semibold text-[#1F4068] leading-tight tracking-tight mb-3">
+                Get started in four steps
+              </h2>
+              <p className="text-base sm:text-lg text-gray-600 leading-relaxed">
+                From sign-up to your first commission — a simple, transparent process.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+              {steps.map((step, index) => {
+                const Icon = step.icon
+                return (
+                  <motion.div
+                    key={step.number}
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-40px" }}
+                    transition={{
+                      duration: 0.4,
+                      delay: index * 0.06,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                    className="rounded-xl border border-gray-100/90 bg-white p-5 sm:p-6 shadow-[0_8px_32px_rgba(31,64,104,0.04)]"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-gold mb-3">
+                      {step.number}
                     </p>
-                  </div>
-                </motion.div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
-        {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] via-[#3bb9ac] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
-        
-        {/* White overlay */}
-        <div className="absolute inset-0 bg-white/40 dark:bg-[#181818]/40" />
-        
-        {/* Overlay pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12 sm:mb-16"
-          >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
-              How It Works
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Get started in just four simple steps
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 max-w-7xl mx-auto">
-            {steps.map((step, index) => {
-              const Icon = step.icon
-              return (
-                <motion.div
-                  key={step.number}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="relative"
-                >
-                  <div className="relative h-full p-6 sm:p-8 rounded-2xl bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 shadow-sm hover:shadow-xl transition-all duration-300 text-center">
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                        {step.number}
-                      </div>
+                    <div className="mb-3">
+                      <Icon className="h-5 w-5 text-[#3bb9ac]" strokeWidth={1.75} />
                     </div>
-                    <div className="mt-6 mb-4 flex justify-center">
-                      <div className="p-4 rounded-xl bg-gradient-to-br from-[#3bb9ac]/10 to-[#3bb9ac]/10 dark:from-[#3bb9ac]/30 dark:to-[#3bb9ac]/30">
-                        <Icon className="h-8 w-8 text-[#3bb9ac] dark:text-[#3bb9ac]" />
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-white">
+                    <h3 className="text-base font-semibold text-[#1F4068] mb-2 leading-tight">
                       {step.title}
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                      {step.description}
-                    </p>
-                  </div>
-                  {index < steps.length - 1 && (
-                    <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-gradient-to-r from-[#3bb9ac] to-[#3bb9ac] -translate-y-1/2 z-0" />
-                  )}
-                </motion.div>
-              )
-            })}
-          </div>
+                    <p className="text-sm text-gray-500 leading-relaxed">{step.description}</p>
+                  </motion.div>
+                )
+              })}
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
-        {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] via-[#3bb9ac] to-[#FFA500] bg-[length:200%_auto] animate-gradient" />
-        
-        {/* White overlay */}
-        <div className="absolute inset-0 bg-white/40 dark:bg-[#181818]/40" />
-        
-        {/* Overlay pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
+      {/* CTA */}
+      <section id="cta" className="py-14 sm:py-16 lg:py-20 relative overflow-hidden scroll-mt-16">
+        <div className="absolute inset-0 cta-petal-surface" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent_55%)]" />
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="max-w-4xl mx-auto text-center bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm rounded-3xl p-8 sm:p-12 lg:p-16 border border-gray-200/50 dark:border-gray-800/50 shadow-2xl"
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="text-center max-w-3xl mx-auto text-black"
           >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
-              Ready to Get Started?
+            <p className="text-sm font-medium text-black/70 mb-3">Partner sign-in</p>
+            <h2 className="font-display text-3xl sm:text-4xl font-semibold leading-[1.15] tracking-tight mb-4">
+              Ready to start earning?
             </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-              Join hundreds of successful referral partners and start earning today. 
-              Sign up now and get your unique partner ID.
+            <p className="text-base sm:text-lg text-black/80 leading-relaxed mb-8 max-w-xl mx-auto">
+              Sign in to your partner dashboard to track referrals, view earnings, and manage
+              your profile.
             </p>
             <Button
               size="lg"
+              className="rounded-full bg-white text-black hover:bg-white/90 shadow-lg text-base px-7 py-6 font-semibold"
               onClick={() => setIsLoginOpen(true)}
-              className="rounded-full bg-gradient-to-r from-[#1F4068] via-[#3bb9ac] to-[#3bb9ac] hover:from-[#3bb9ac] hover:via-[#3bb9ac] hover:to-[#1F4068] text-white border-0 shadow-lg hover:shadow-xl transition-all px-8 py-6 text-lg font-semibold group"
             >
-              Become a Partner Now
-              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              Partner login
+              <ArrowRight className="h-4 w-4 text-black" />
             </Button>
           </motion.div>
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section id="contact" className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
-        {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1F4068]/50 via-[#3bb9ac]/50 via-[#3bb9ac]/50 to-[#FFA500]/50 bg-[length:200%_auto] animate-gradient" />
-        
-        {/* White overlay */}
-        <div className="absolute inset-0 bg-white/50 dark:bg-[#181818]/50" />
-        
-        {/* Overlay pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      {/* Contact */}
+      <section id="contact" className="relative py-16 sm:py-20 bg-white scroll-mt-16">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="max-w-4xl mx-auto text-center"
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-3xl mx-auto text-center"
           >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
-              Have Questions?
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-              Get in touch with our partner support team
+            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-brand-gold mb-3">
+              Contact
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+            <h2 className="font-display text-3xl sm:text-4xl font-semibold text-[#1F4068] leading-tight tracking-tight mb-3">
+              Have questions?
+            </h2>
+            <p className="text-base sm:text-lg text-gray-600 leading-relaxed mb-8">
+              Reach out to our partner support team — we&apos;re here to help you get started.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
               <a
                 href="mailto:contact@manavizha.com"
-                className="flex items-center gap-3 px-6 py-4 rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 text-gray-900 dark:text-white hover:border-[#3bb9ac] transition-all shadow-sm hover:shadow-md"
+                className="inline-flex items-center justify-center gap-3 rounded-xl border border-gray-100 bg-[#faf8f4] px-5 py-3.5 text-sm font-medium text-[#1F4068] shadow-[0_8px_32px_rgba(31,64,104,0.04)] transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(31,64,104,0.08)]"
               >
-                <Mail className="h-5 w-5 text-[#3bb9ac]" />
-                <span className="font-medium">contact@manavizha.com</span>
+                <Mail className="h-4 w-4 text-[#3bb9ac]" strokeWidth={1.75} />
+                contact@manavizha.com
               </a>
               <a
                 href="tel:+918925554449"
-                className="flex items-center gap-3 px-6 py-4 rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 text-gray-900 dark:text-white hover:border-[#3bb9ac] transition-all shadow-sm hover:shadow-md"
+                className="inline-flex items-center justify-center gap-3 rounded-xl border border-gray-100 bg-[#faf8f4] px-5 py-3.5 text-sm font-medium text-[#1F4068] shadow-[0_8px_32px_rgba(31,64,104,0.04)] transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(31,64,104,0.08)]"
               >
-                <Phone className="h-5 w-5 text-[#3bb9ac]" />
-                <span className="font-medium">+91 8925554449</span>
+                <Phone className="h-4 w-4 text-[#3bb9ac]" strokeWidth={1.75} />
+                +91 8925554449
               </a>
               <a
                 href="tel:+918925554440"
-                className="flex items-center gap-3 px-6 py-4 rounded-full bg-white/80 dark:bg-[#181818]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 text-gray-900 dark:text-white hover:border-[#3bb9ac] transition-all shadow-sm hover:shadow-md"
+                className="inline-flex items-center justify-center gap-3 rounded-xl border border-gray-100 bg-[#faf8f4] px-5 py-3.5 text-sm font-medium text-[#1F4068] shadow-[0_8px_32px_rgba(31,64,104,0.04)] transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(31,64,104,0.08)]"
               >
-                <Phone className="h-5 w-5 text-[#3bb9ac]" />
-                <span className="font-medium">+91 8925554440</span>
+                <Phone className="h-4 w-4 text-[#3bb9ac]" strokeWidth={1.75} />
+                +91 8925554440
               </a>
             </div>
           </motion.div>
         </div>
       </section>
+
+      <footer className="border-t border-[#f0ebe3]/80 bg-[#faf8f4] py-8">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-sm text-gray-500">
+            <Link href="/" className="text-[#1F4068] font-medium hover:underline">
+              Back to Manavizha
+            </Link>
+            <span className="mx-2 text-gray-300" aria-hidden>
+              ·
+            </span>
+            Partner access for authorized referral partners only
+          </p>
+        </div>
+      </footer>
     </main>
   )
 }

@@ -3,10 +3,14 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
-import { motion, AnimatePresence } from "framer-motion"
-import { CheckCircle2, Circle, CheckCircle } from "lucide-react"
+import { AnimatePresence, motion } from "framer-motion"
+import { CheckCircle2, ShieldCheck } from "lucide-react"
+import { DashboardJourneyPatterns } from "@/components/dashboard/dashboard-journey-patterns"
+import { ProfileSetupWizardTimeline } from "@/components/profile-setup/profile-setup-wizard-timeline"
 import type { FormData } from "@/types/profile"
 import { toast } from "sonner"
+import { hasValidPhoneNumber, normalizePhoneForStorage } from "@/lib/country-codes"
+import { getErrorMessage } from "@/lib/utils"
 import { PersonalDetailsStep } from "@/components/profile-steps/personal-details-step"
 import { ContactDetailsStep } from "@/components/profile-steps/contact-details-step"
 import { EducationalDetailsStep } from "@/components/profile-steps/educational-details-step"
@@ -18,6 +22,17 @@ import { SocialHabitsStep } from "@/components/profile-steps/social-habits-step"
 import { PhotosStep } from "@/components/profile-steps/photos-step"
 import { PartnerPreferencesStep } from "@/components/profile-steps/partner-preferences-step"
 import { ReferralStep } from "@/components/profile-steps/referral-step"
+
+function classifyEmploymentType(employmentType: string) {
+  const type = (employmentType || "").toLowerCase()
+  return {
+    type,
+    isEmployee: ["employee", "private", "government/psu", "defence"].includes(type),
+    isBusiness: ["business", "self employed"].includes(type),
+    isStudent: type === "student",
+    isNotWorking: type === "not working",
+  }
+}
 
 const formSteps = [
   { id: "personal", title: "Personal Details" },
@@ -236,7 +251,6 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             languages: data.languages || [],
             createdBy: data.created_by || "Self",
             physicalStatus: data.physical_status || "Normal",
-            subcaste: data.subcaste || "",
           }
 
           // Store original data for comparison
@@ -790,7 +804,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           }
 
           const loadedData = {
-            employmentType: "employee",
+            employmentType: employeeData.employment_type || "Private",
             sector: employeeData.sector || "",
             sectorOther: employeeData.sector_other || "",
             company: employeeData.company || "",
@@ -843,7 +857,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           }
 
           const loadedData = {
-            employmentType: "business",
+            employmentType: businessData.employment_type || "Business",
             sector: businessData.sector || "",
             sectorOther: businessData.sector_other || "",
             businessName: businessData.business_name || "",
@@ -879,7 +893,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           }
 
           const loadedData = {
-            employmentType: "student",
+            employmentType: studentData.employment_type || "Student",
             institution: studentData.institution || "",
             course: studentData.course || "",
             fieldOfStudy: studentData.field_of_study || "",
@@ -980,19 +994,24 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       }
 
       const employmentType = formData.employmentType || ""
+      const buckets = classifyEmploymentType(employmentType)
 
       if (!employmentType || employmentType.trim() === "") {
         return 0
       }
 
+      if (buckets.isNotWorking) {
+        return 100
+      }
+
       let fields: (keyof FormData)[] = []
-      if (employmentType === "employee") {
+      if (buckets.isEmployee) {
         // Exclude payslip as it's optional
         fields = ["employmentType", "sector", "company", "designation", "salary", "workLocation"]
-      } else if (employmentType === "business") {
+      } else if (buckets.isBusiness) {
         // Exclude itrDocument as it's optional
         fields = ["employmentType", "sector", "businessName", "businessType", "designation", "annualReturns", "businessLocation"]
-      } else if (employmentType === "student") {
+      } else if (buckets.isStudent) {
         fields = ["employmentType", "institution", "course", "fieldOfStudy", "yearOfStudy", "expectedGraduationYear"]
       }
 
@@ -1034,6 +1053,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     const fields = stepFields[stepId] || []
     const filled = fields.filter((field) => {
       const value = formData[field]
+      if (field === "phone" || field === "whatsappNumber") {
+        return hasValidPhoneNumber(value as string)
+      }
       if (field === "educationDetails") {
         // For education details, check if all entries have required fields filled
         const educationArray = value as FormData["educationDetails"]
@@ -1146,11 +1168,62 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     return true
   }
 
+  const validateContactDetails = (): boolean => {
+    const requiredFields = [
+      { key: "phone", label: "Phone Number" },
+      { key: "whatsappNumber", label: "WhatsApp Number" },
+      { key: "permanentAddressLine1", label: "Permanent Address Line 1" },
+      { key: "permanentPincode", label: "Permanent Pincode" },
+      { key: "permanentArea", label: "Permanent Area / Colony" },
+      { key: "currentAddressLine1", label: "Current Address Line 1" },
+      { key: "currentPincode", label: "Current Pincode" },
+      { key: "currentArea", label: "Current Area / Colony" },
+    ]
+
+    const missingFields: string[] = []
+
+    requiredFields.forEach((field) => {
+      const value = formData[field.key as keyof FormData]
+      if (field.key === "phone" || field.key === "whatsappNumber") {
+        if (!hasValidPhoneNumber(value as string)) {
+          missingFields.push(field.label)
+        }
+        return
+      }
+
+      if (!value || (typeof value === "string" && value.trim() === "")) {
+        missingFields.push(field.label)
+      }
+    })
+
+    if (missingFields.length > 0) {
+      toast.error(
+        missingFields.length === 1
+          ? `Please fill out ${missingFields[0]}`
+          : "Please fill out all required contact fields",
+        {
+          description:
+            missingFields.length === 1
+              ? "This field is required to save your contact details."
+              : "Phone, WhatsApp, and address details are required before saving.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        }
+      )
+      return false
+    }
+
+    return true
+  }
+
   // Check if personal details have changed
   const hasPersonalDetailsChanged = (): boolean => {
     if (!originalPersonalDetails) {
       // If no original data exists, check if any field is filled
-      const personalFields = ["name", "dateOfBirth", "age", "sex", "religion", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages", "physicalStatus", "subcaste"]
+      const personalFields = ["name", "dateOfBirth", "age", "sex", "religion", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages", "physicalStatus"]
       return personalFields.some((field) => {
         const value = formData[field as keyof FormData]
         if (Array.isArray(value)) {
@@ -1162,7 +1235,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     }
 
     // Compare current form data with original saved data
-    const fieldsToCompare: (keyof FormData)[] = ["name", "dateOfBirth", "age", "sex", "religion", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages", "physicalStatus", "subcaste"]
+    const fieldsToCompare: (keyof FormData)[] = ["name", "dateOfBirth", "age", "sex", "religion", "height", "weight", "skinColor", "bodyType", "maritalStatus", "about", "foodPreference", "languages", "physicalStatus"]
 
     for (const field of fieldsToCompare) {
       const currentValue = formData[field]
@@ -1358,7 +1431,6 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       { key: "drinking", label: "Drinking" },
       { key: "parties", label: "Parties" },
       { key: "pubs", label: "Pubs" },
-      { key: "diet", label: "Diet" },
     ]
 
     const missingFields: string[] = []
@@ -1452,11 +1524,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   }
 
   const validateProfessionalDetails = (): boolean => {
-    const employmentType = (formData.employmentType || "").toLowerCase()
+    const buckets = classifyEmploymentType(formData.employmentType || "")
 
-    if (!employmentType || employmentType.trim() === "" || employmentType === "not working") {
-      if (employmentType === "not working") return true
-      
+    if (!buckets.type || buckets.type.trim() === "") {
       toast.error("Please select employment type", {
         description: "Employment type is required to save your professional details.",
         style: {
@@ -1468,11 +1538,12 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       return false
     }
 
+    if (buckets.isNotWorking) {
+      return true
+    }
+
     const missingFields: string[] = []
-    
-    const isEmployee = ["employee", "private", "government/psu", "defence"].includes(employmentType)
-    const isBusiness = ["business", "self employed"].includes(employmentType)
-    const isStudent = employmentType === "student"
+    const { isEmployee, isBusiness, isStudent } = buckets
 
     if (isEmployee) {
       if (!formData.sector || formData.sector.trim() === "") {
@@ -2142,15 +2213,27 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           languages: formData.languages || [],
           created_by: formData.createdBy || "Self",
           physical_status: formData.physicalStatus || "Normal",
-          subcaste: formData.subcaste || null,
           completion_percentage: personalDetailsProgress,
         }
 
-        const { error } = await supabase
+        let { error } = await supabase
           .from("personal_details")
           .upsert(personalDetailsData, {
             onConflict: "user_id",
           })
+
+        if (error && getErrorMessage(error).includes("religion")) {
+          const { religion: _religion, ...personalDetailsWithoutReligion } = personalDetailsData
+          const retry = await supabase
+            .from("personal_details")
+            .upsert(personalDetailsWithoutReligion, {
+              onConflict: "user_id",
+            })
+          error = retry.error
+          if (!error) {
+            toast.warning("Personal details saved. Religion requires a database update — ask your admin to run migrations/personal_details_religion_migration.sql.")
+          }
+        }
 
         if (error) throw error
 
@@ -2171,7 +2254,6 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           languages: formData.languages,
           createdBy: formData.createdBy,
           physicalStatus: formData.physicalStatus,
-          subcaste: formData.subcaste,
         })
 
         toast.success("Personal details saved successfully!", {
@@ -2183,13 +2265,18 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         })
       } else if (currentStep === 1) {
         // Save contact details if we're on the contact details step
+        if (!validateContactDetails()) {
+          setIsSaving(false)
+          return
+        }
+
         // Calculate completion percentage for contact details
         const contactDetailsProgress = calculateStepProgress("contact")
 
         const contactDetailsData = {
           user_id: userId,
-          phone: formData.phone || null,
-          whatsapp_number: formData.whatsappNumber || null,
+          phone: normalizePhoneForStorage(formData.phone),
+          whatsapp_number: normalizePhoneForStorage(formData.whatsappNumber),
           permanent_address_line1: formData.permanentAddressLine1 || null,
           permanent_address_line2: formData.permanentAddressLine2 || null,
           permanent_pincode: formData.permanentPincode || null,
@@ -2322,15 +2409,14 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         // Update the stored completion percentage after calculation
         setProfessionalCompletionPercentage(professionalDetailsProgress)
 
-        const employmentType = (formData.employmentType || "").toLowerCase()
-        const originalEmploymentType = (originalProfessionalDetails?.employmentType || "").toLowerCase()
+        const employmentBuckets = classifyEmploymentType(formData.employmentType || "")
+        const employmentType = employmentBuckets.type
+        const originalBuckets = classifyEmploymentType(originalProfessionalDetails?.employmentType || "")
+        const originalEmploymentType = originalBuckets.type
 
-        const isEmployee = ["employee", "private", "government/psu", "defence"].includes(employmentType)
-        const isBusiness = ["business", "self employed"].includes(employmentType)
-        const isStudent = employmentType === "student"
-        
-        const wasEmployee = ["private", "government/psu", "defence"].includes(originalEmploymentType) || originalEmploymentType === "employee"
-        const wasBusiness = ["business", "self employed"].includes(originalEmploymentType) || originalEmploymentType === "business"
+        const { isEmployee, isBusiness, isStudent } = employmentBuckets
+        const wasEmployee = originalBuckets.isEmployee
+        const wasBusiness = originalBuckets.isBusiness
 
         // If employment type changed, delete old files from storage
         if (originalEmploymentType && originalEmploymentType !== employmentType) {
@@ -2400,7 +2486,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             const payslip = payslips[i]
 
             // If payslip is a base64 data URL (new upload), upload to Supabase storage
-            if (payslip && payslip.startsWith("data:image/") || payslip.startsWith("data:application/pdf")) {
+            if (payslip && (payslip.startsWith("data:image/") || payslip.startsWith("data:application/pdf"))) {
               try {
                 // Convert base64 to blob
                 const response = await fetch(payslip)
@@ -2452,6 +2538,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           // Save to employee table
           const employeeData = {
             user_id: userId,
+            employment_type: formData.employmentType || null,
             sector: formData.sector || null,
             sector_other: formData.sector === "other" ? (formData.sectorOther || null) : null,
             company: formData.company || null,
@@ -3293,9 +3380,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               return
             }
           } catch (error) {
-            console.error("Error checking partner ID:", error)
+            const message = getErrorMessage(error)
+            console.error("Error checking partner ID:", message, error)
             toast.error("Error validating partner ID", {
-              description: "Please try again.",
+              description: message || "Please try again.",
               style: {
                 background: "#fee2e2",
                 border: "1px solid #ef4444",
@@ -3324,9 +3412,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           })
 
         if (error) {
-          console.error("Error saving referral details:", error)
+          const message = getErrorMessage(error)
+          console.error("Error saving referral details:", message, error)
           toast.error("Error saving referral details", {
-            description: "Please try again.",
+            description: message || "Please try again.",
             style: {
               background: "#fee2e2",
               border: "1px solid #ef4444",
@@ -3373,6 +3462,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           preferred_degrees: formData.preferredDegrees || [],
           preferred_branches: formData.preferredBranches || [],
           preferred_languages: formData.preferredLanguages || [],
+          preferred_employment_type: formData.preferredEmploymentType || "Any",
           preferred_employed_in: formData.preferredEmployedIn || [],
           preferred_occupation: formData.preferredOccupation || [],
           preferred_annual_income: formData.preferredAnnualIncome || null,
@@ -3411,6 +3501,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           preferredEducation: formData.preferredEducation,
           preferredDegrees: formData.preferredDegrees,
           preferredBranches: formData.preferredBranches,
+          preferredLanguages: formData.preferredLanguages,
           preferredEmploymentType: formData.preferredEmploymentType,
           preferredEmployedIn: formData.preferredEmployedIn,
           preferredOccupation: formData.preferredOccupation,
@@ -3429,25 +3520,17 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           },
         })
       } else {
-        // For other steps, use the existing save logic
-        const { error } = await supabase
-          .from("users")
-          .update(formData)
-          .eq("id", userId)
-
-        if (error) throw error
-        toast.success("Profile saved successfully!", {
-          style: {
-            background: "#dcfce7",
-            border: "1px solid #22c55e",
-            color: "#166534",
-          },
-        })
+        throw new Error(`Unknown setup step: ${currentStep}`)
       }
-    } catch (error: any) {
-      console.error("Error saving profile:", error)
+    } catch (error: unknown) {
+      const message = getErrorMessage(error)
+      console.error(
+        `Error saving profile (step ${currentStep}: ${formSteps[currentStep]?.title}):`,
+        message,
+        error
+      )
       toast.error("Error saving profile", {
-        description: "Please try again.",
+        description: message || "Please try again.",
         style: {
           background: "#fee2e2",
           border: "1px solid #ef4444",
@@ -3471,11 +3554,8 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   // Show loading state while data is being loaded
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">Loading your profile...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#f0f0f0] border-t-[#e87898]" />
       </div>
     )
   }
@@ -3483,136 +3563,121 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   const stepProgress = calculateStepProgress(formSteps[currentStep].id)
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-full mx-auto px-4 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Sidebar Navigation */}
-          <div className="lg:col-span-3">
-            <div className="sds-glass rounded-[2.5rem] p-4 border-2 border-indigo-50 sticky top-24 overflow-hidden shadow-[0_20px_50px_rgba(59,185,172,0.05)]">
-              <div className="p-6 border-b border-black/5 mb-6">
-                <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/50 mb-1">Profile Journey</h4>
-                <h3 className="text-2xl font-light text-gray-900 tracking-tight">Step Breakdown</h3>
-              </div>
+    <div className="profile-setup-theme p-5 lg:p-6 max-w-[1200px] mx-auto">
+      <div className="mb-5">
+        <h1 className="text-[22px] font-semibold text-[#1F4068] tracking-tight">Profile Setup</h1>
+        <p className="text-[13px] text-[#6b7280] mt-1">
+          Complete each section to build your profile and improve match quality
+        </p>
+        <div className="mt-4 max-w-md">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="text-[11px] font-medium text-[#6b7280]">Overall completion</span>
+            <span className="text-[13px] font-semibold text-[#1F4068]">{overallProgress}%</span>
+          </div>
+          <div className="h-[6px] bg-[#f3f4f6] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#e87898] rounded-full transition-all duration-500"
+              style={{ width: `${overallProgress}%` }}
+            />
+          </div>
+        </div>
+      </div>
 
-              <div className="space-y-1">
-                {formSteps.map((step, index) => {
-                  const stepProg = calculateStepProgress(step.id)
-                  const isActive = index === currentStep
-                  const isCompleted = stepProg === 100
+      <div className="relative overflow-hidden rounded-[20px] border border-[#f0ebe3] bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] shadow-[0_2px_12px_rgba(31,64,104,0.04)]">
+        <DashboardJourneyPatterns />
 
-                  return (
-                    <motion.button
-                      key={step.id}
-                      onClick={() => handleStepClick(index)}
-                      className={`w-full text-left px-5 py-4 rounded-2xl transition-all duration-300 relative group flex items-center justify-between ${isActive
-                          ? "bg-[#3bb9ac] text-white shadow-xl shadow-emerald-500/20"
-                          : isCompleted
-                            ? "bg-emerald-50/50 text-emerald-700 hover:bg-emerald-50 border border-emerald-100"
-                            : "hover:bg-[#3bb9ac]/5 text-gray-400 hover:text-[#3bb9ac]"
-                        }`}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className="flex-shrink-0">
-                          {isCompleted ? (
-                            <CheckCircle className="h-4 w-4 text-emerald-600" />
-                          ) : (
-                            <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${isActive ? 'border-white/40' : 'border-gray-300 group-hover:border-[#3bb9ac]/30'}`}>
-                              <span className="text-[8px] font-black">{index + 1}</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-[11px] font-black uppercase tracking-widest truncate group-hover:text-[#3bb9ac] transition-colors">{step.title}</div>
-                          {isCompleted && !isActive && <span className="text-[9px] font-black text-emerald-500/80 uppercase tracking-tighter">Verified</span>}
-                        </div>
-                      </div>
-                      {isActive && <div className="w-1.5 h-1.5 rounded-full bg-white opacity-40 shadow-sm" />}
-                    </motion.button>
-                  )
-                })}
-              </div>
+        <div className="relative border-b border-[#f0ebe3]/80 px-4 py-4 sm:px-5 sm:py-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#c9a227]">
+                Profile journey
+              </p>
+              <h2 className="font-display text-xl font-semibold text-[#1F4068] sm:text-2xl mt-1">
+                {formSteps[currentStep].title}
+              </h2>
+              <p className="text-[12px] text-[#9ca3af] mt-1">
+                Step {currentStep + 1} of {formSteps.length}
+              </p>
             </div>
+            <span className="inline-flex w-fit shrink-0 items-center rounded-full border border-[#fce8ef] bg-[#fce8ef] px-2.5 py-1 text-[11px] font-semibold text-[#e87898]">
+              {stepProgress}% in this section
+            </span>
           </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-9">
-            <div className="sds-glass rounded-[3rem] p-10 md:p-16 border-2 border-indigo-50 shadow-2xl shadow-indigo-100/20 relative overflow-hidden">
-              {/* Header logic */}
-              <div className="flex items-end justify-between mb-12 border-b border-black/5 pb-8">
-                <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#3bb9ac]/40 mb-2">Phase {currentStep + 1} / {formSteps.length}</h4>
-                  <h2 className="text-5xl font-light text-gray-900 tracking-tight">
-                    {formSteps[currentStep].title}
-                  </h2>
-                </div>
-                <div className="text-right">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-[#3bb9ac] mb-2">Integrity Score</div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-4xl font-black text-[#3bb9ac] tracking-tighter">{stepProgress}%</div>
-                  </div>
-                </div>
-              </div>
+          <div className="relative mt-4 pt-4 border-t border-[#f0ebe3]/80">
+            <ProfileSetupWizardTimeline
+              steps={formSteps}
+              currentStep={currentStep}
+              getStepProgress={(stepId) => calculateStepProgress(stepId)}
+              onStepClick={handleStepClick}
+            />
+          </div>
+        </div>
 
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentStep}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {currentStep === 0 && <PersonalDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 1 && <ContactDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 2 && <EducationalDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 3 && <ProfessionalDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 4 && <FamilyDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 5 && <HoroscopeDetailsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 6 && <InterestsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 7 && <SocialHabitsStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 8 && <PhotosStep formData={formData} onChange={handleInputChange} userId={userId} />}
-                  {currentStep === 9 && <PartnerPreferencesStep formData={formData} onChange={handleInputChange} />}
-                  {currentStep === 10 && <ReferralStep formData={formData} onChange={handleInputChange} onPartnerNameChange={handlePartnerNameChange} />}
-                </motion.div>
-              </AnimatePresence>
+        <div className="relative p-3 sm:p-4">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.2 }}
+            >
+              {currentStep === 0 && <PersonalDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 1 && <ContactDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 2 && <EducationalDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 3 && <ProfessionalDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 4 && <FamilyDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 5 && <HoroscopeDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 6 && <InterestsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 7 && <SocialHabitsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 8 && <PhotosStep formData={formData} onChange={handleInputChange} userId={userId} />}
+              {currentStep === 9 && <PartnerPreferencesStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 10 && (
+                <ReferralStep
+                  formData={formData}
+                  onChange={handleInputChange}
+                  onPartnerNameChange={handlePartnerNameChange}
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
 
-              {/* Action Vector */}
-              <div className="mt-12 pt-10 border-t border-black/5 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="text-center md:text-left">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4" /> Data Protection Active
-                  </p>
-                  <p className="text-[10px] text-gray-400 font-bold tracking-tight">Your intelligence is encrypted and secure.</p>
-                </div>
-                <Button
-                  onClick={handleSave}
-                  disabled={
-                    isSaving || 
-                    (currentStep === 0 && !hasPersonalDetailsChanged()) || 
-                    (currentStep === 1 && !hasContactDetailsChanged()) || 
-                    (currentStep === 2 && !hasEducationDetailsChanged()) || 
-                    (currentStep === 3 && !hasProfessionalDetailsChanged()) || 
-                    (currentStep === 4 && !hasFamilyDetailsChanged()) || 
-                    (currentStep === 5 && !hasHoroscopeDetailsChanged()) || 
-                    (currentStep === 6 && !hasInterestsDetailsChanged()) || 
-                    (currentStep === 7 && !hasSocialHabitsDetailsChanged()) || 
-                    (currentStep === 8 && !hasPhotosDetailsChanged()) || 
-                    (currentStep === 9 && !hasPartnerPreferencesChanged()) || 
-                    (currentStep === 10 && !hasReferralDetailsChanged())
-                  }
-                  className="h-16 px-12 rounded-[2rem] bg-[#3bb9ac] text-white font-black text-[12px] uppercase tracking-[0.2em] shadow-2xl shadow-indigo-500/40 hover:shadow-indigo-500/60 transition-all disabled:opacity-30 disabled:grayscale"
-                >
-                  {isSaving ? (
-                    <div className="flex items-center gap-3">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                      <span>Synchronizing...</span>
-                    </div>
-                  ) : (
-                    <span>Update {formSteps[currentStep].title}</span>
-                  )}
-                </Button>
-              </div>
+          <div className="mt-6 pt-4 border-t border-[#f0ebe3] flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-[12px] text-[#6b7280]">
+              <ShieldCheck className="h-4 w-4 text-[#e87898] shrink-0" />
+              <span>Your profile data is stored securely</span>
             </div>
+            <Button
+              onClick={handleSave}
+              disabled={
+                isSaving ||
+                (currentStep === 0 && !hasPersonalDetailsChanged()) ||
+                (currentStep === 1 && !hasContactDetailsChanged()) ||
+                (currentStep === 2 && !hasEducationDetailsChanged()) ||
+                (currentStep === 3 && !hasProfessionalDetailsChanged()) ||
+                (currentStep === 4 && !hasFamilyDetailsChanged()) ||
+                (currentStep === 5 && !hasHoroscopeDetailsChanged()) ||
+                (currentStep === 6 && !hasInterestsDetailsChanged()) ||
+                (currentStep === 7 && !hasSocialHabitsDetailsChanged()) ||
+                (currentStep === 8 && !hasPhotosDetailsChanged()) ||
+                (currentStep === 9 && !hasPartnerPreferencesChanged()) ||
+                (currentStep === 10 && !hasReferralDetailsChanged())
+              }
+              className="h-10 px-6 rounded-[10px] bg-[#e87898] hover:bg-[#d66686] text-white text-[13px] font-medium shadow-none disabled:opacity-40"
+            >
+              {isSaving ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  Saving…
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Save {formSteps[currentStep].title}
+                </span>
+              )}
+            </Button>
           </div>
         </div>
       </div>

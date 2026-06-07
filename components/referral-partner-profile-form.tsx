@@ -8,6 +8,34 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Upload, X, AlertCircle, CheckCircle2, ChevronDown } from "lucide-react"
+import { toast } from "sonner"
+
+const FIELD_INPUT =
+  "rounded-lg border-[#f0ebe3] bg-white text-[#1F4068] placeholder:text-gray-400 h-9 text-[12px]"
+const FIELD_INPUT_READONLY =
+  "rounded-lg border-[#f0ebe3] bg-[#faf8f4] text-[#1F4068] cursor-not-allowed h-9 text-[12px]"
+const FIELD_LABEL = "text-[11px] font-medium text-gray-500"
+const FIELD_ERROR = "text-[11px] text-[#e87898]"
+
+function FormSection({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string
+  subtitle?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-[#f0ebe3] bg-white/90">
+      <div className="border-b border-[#f0ebe3] px-4 py-3 sm:px-5">
+        <h2 className="font-display text-base font-semibold text-[#1F4068]">{title}</h2>
+        {subtitle ? <p className="mt-1 text-[11px] text-gray-500">{subtitle}</p> : null}
+      </div>
+      <div className="p-4 sm:p-5">{children}</div>
+    </div>
+  )
+}
 
 interface PostOffice {
   Name: string
@@ -744,6 +772,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
         setErrors({ submit: error.message || "Failed to save profile. Please try again." })
       } else {
         setSaveSuccess(true)
+        toast.success("Profile saved successfully")
         setTimeout(() => setSaveSuccess(false), 3000)
         // Update saved form data to current form data after successful save
         setSavedFormData({ ...formData })
@@ -758,52 +787,45 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 mx-auto mb-4" />
-          <p className="text-gray-600">Loading profile...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center gap-3 py-16">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#f0ebe3] border-t-[#1F4068]" />
+        <p className="text-[12px] text-gray-500">Loading profile…</p>
       </div>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      {/* Success Message */}
+    <form onSubmit={handleSubmit} className="space-y-5">
       {saveSuccess && (
-        <div className="flex items-center gap-2 text-green-600 text-sm bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-          <CheckCircle2 className="h-5 w-5" />
-          <span>Profile saved successfully!</span>
+        <div className="flex items-center gap-2 rounded-lg border border-[#e6f7f5] bg-[#e6f7f5]/60 px-4 py-3 text-[12px] text-[#1F4068]">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-[#3bb9ac]" />
+          <span>Profile saved successfully.</span>
         </div>
       )}
 
-      {/* Error Message */}
       {errors.submit && (
-        <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
-          <AlertCircle className="h-5 w-5" />
+        <div className="flex items-center gap-2 rounded-lg border border-[#fce8ef] bg-[#fce8ef]/60 px-4 py-3 text-[12px] text-[#1F4068]">
+          <AlertCircle className="h-4 w-4 shrink-0 text-[#e87898]" />
           <span>{errors.submit}</span>
         </div>
       )}
 
-      {/* Basic Information */}
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Basic Information</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
+      <FormSection title="Basic information" subtitle="Contact details linked to your partner account.">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="name" className={FIELD_LABEL}>Name *</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => handleInputChange("name", e.target.value)}
               placeholder="Enter your full name"
               required
+              className={FIELD_INPUT}
             />
-            {errors.name && (
-              <p className="text-sm text-red-600 dark:text-red-400">{errors.name}</p>
-            )}
+            {errors.name && <p className={FIELD_ERROR}>{errors.name}</p>}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number *</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="phone" className={FIELD_LABEL}>Phone number *</Label>
             <div className="relative">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none z-10">
                 +91
@@ -827,16 +849,14 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 placeholder="Enter your phone number"
                 maxLength={10}
                 required
-                className="pl-12"
+                className={`pl-12 ${FIELD_INPUT}`}
               />
             </div>
-            {errors.phone && (
-              <p className="text-sm text-red-600 dark:text-red-400">{errors.phone}</p>
-            )}
+            {errors.phone && <p className={FIELD_ERROR}>{errors.phone}</p>}
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="whatsapp_number">WhatsApp Number *</Label>
+          <div className="space-y-1.5 md:col-span-2">
+            <div className="flex items-center justify-between gap-3">
+              <Label htmlFor="whatsapp_number" className={FIELD_LABEL}>WhatsApp number *</Label>
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -852,7 +872,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   }}
                   className="rounded border-gray-300"
                 />
-                <Label htmlFor="isWhatsappSameAsPhone" className="text-sm font-normal cursor-pointer">
+                <Label htmlFor="isWhatsappSameAsPhone" className={`${FIELD_LABEL} cursor-pointer font-normal`}>
                   Same as phone number
                 </Label>
               </div>
@@ -881,15 +901,13 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 maxLength={10}
                 required
                 disabled={isWhatsappSameAsPhone}
-                className={`pl-12 ${isWhatsappSameAsPhone ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : ""}`}
+                className={`pl-12 ${FIELD_INPUT} ${isWhatsappSameAsPhone ? `${FIELD_INPUT_READONLY}` : ""}`}
               />
             </div>
-            {errors.whatsapp_number && (
-              <p className="text-sm text-red-600 dark:text-red-400">{errors.whatsapp_number}</p>
-            )}
+            {errors.whatsapp_number && <p className={FIELD_ERROR}>{errors.whatsapp_number}</p>}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className={FIELD_LABEL}>Email *</Label>
             <Input
               id="email"
               type="email"
@@ -898,37 +916,34 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
               required
               readOnly
               disabled
-              className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+              className={FIELD_INPUT_READONLY}
             />
           </div>
         </div>
-      </div>
+      </FormSection>
 
-      {/* Company/Organization */}
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Company/Organization</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="company_name">Company Name *</Label>
+      <FormSection title="Company / organization">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="company_name" className={FIELD_LABEL}>Company name *</Label>
             <Input
               id="company_name"
               value={formData.company_name}
               onChange={(e) => handleInputChange("company_name", e.target.value)}
               placeholder="Enter company name"
               required
+              className={FIELD_INPUT}
             />
-            {errors.company_name && (
-              <p className="text-sm text-red-600 dark:text-red-400">{errors.company_name}</p>
-            )}
+            {errors.company_name && <p className={FIELD_ERROR}>{errors.company_name}</p>}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="organization_type">Organization Type *</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="organization_type" className={FIELD_LABEL}>Organization type *</Label>
             <Select
               value={formData.organization_type}
               onValueChange={(value) => handleInputChange("organization_type", value)}
               required
             >
-              <SelectTrigger>
+              <SelectTrigger className={FIELD_INPUT}>
                 <SelectValue placeholder="Select organization type" />
               </SelectTrigger>
               <SelectContent>
@@ -942,42 +957,38 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 <SelectItem value="Other">Other</SelectItem>
               </SelectContent>
             </Select>
-            {errors.organization_type && (
-              <p className="text-sm text-red-600 dark:text-red-400">{errors.organization_type}</p>
-            )}
+            {errors.organization_type && <p className={FIELD_ERROR}>{errors.organization_type}</p>}
           </div>
         </div>
-      </div>
+      </FormSection>
 
-      {/* Address */}
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Address</h2>
+      <FormSection title="Address" subtitle="Pincode auto-fills area, district, and state.">
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="address_line1">Address Line 1 *</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="address_line1" className={FIELD_LABEL}>Address line 1 *</Label>
             <Input
               id="address_line1"
               value={formData.address_line1}
               onChange={(e) => handleInputChange("address_line1", e.target.value)}
               placeholder="Enter address line 1"
               required
+              className={FIELD_INPUT}
             />
-            {errors.address_line1 && (
-              <p className="text-sm text-red-600 dark:text-red-400">{errors.address_line1}</p>
-            )}
+            {errors.address_line1 && <p className={FIELD_ERROR}>{errors.address_line1}</p>}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="address_line2">Address Line 2</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="address_line2" className={FIELD_LABEL}>Address line 2</Label>
             <Input
               id="address_line2"
               value={formData.address_line2}
               onChange={(e) => handleInputChange("address_line2", e.target.value)}
               placeholder="Enter address line 2 (optional)"
+              className={FIELD_INPUT}
             />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="pincode">Pincode *</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="pincode" className={FIELD_LABEL}>Pincode *</Label>
               <div className="relative">
                 <Input
                   id="pincode"
@@ -992,7 +1003,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   placeholder="Enter pincode"
                   maxLength={6}
                   required
-                  className={isLoadingAddress ? "pr-10" : ""}
+                  className={`${FIELD_INPUT} ${isLoadingAddress ? "pr-10" : ""}`}
                 />
                 {isLoadingAddress && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -1000,18 +1011,16 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   </div>
                 )}
               </div>
-              {errors.pincode && (
-                <p className="text-sm text-red-600 dark:text-red-400">{errors.pincode}</p>
-              )}
+              {errors.pincode && <p className={FIELD_ERROR}>{errors.pincode}</p>}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="area">Area Name *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="area" className={FIELD_LABEL}>Area name *</Label>
               <div className="relative" ref={areaRef}>
                 <button
                   type="button"
                   onClick={() => areas.length > 0 && setIsAreaOpen(!isAreaOpen)}
                   disabled={isLoadingAddress || areas.length === 0}
-                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3bb9ac] dark:bg-gray-900 dark:border-gray-800 flex items-center justify-between text-left min-h-[2.5rem] disabled:bg-gray-100 disabled:dark:bg-gray-800 disabled:cursor-not-allowed"
+                  className={`w-full rounded-lg border border-[#f0ebe3] bg-white px-3 py-2 text-[12px] text-[#1F4068] focus:outline-none focus:ring-2 focus:ring-[#3bb9ac]/20 flex items-center justify-between text-left min-h-9 disabled:bg-[#faf8f4] disabled:cursor-not-allowed`}
                 >
                   <span className={formData.area ? "" : "text-gray-500"}>
                     {formData.area || (isLoadingAddress ? "Loading areas..." : areas.length === 0 ? "Enter pincode first" : "Select Area")}
@@ -1024,15 +1033,15 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   </div>
                 )}
                 {isAreaOpen && areas.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden">
-                    <div className="overflow-y-auto language-dropdown-scroll" style={{ maxHeight: '250px' }}>
+                  <div className="absolute z-10 w-full mt-1 overflow-hidden rounded-lg border border-[#f0ebe3] bg-white shadow-lg">
+                    <div className="overflow-y-auto language-dropdown-scroll" style={{ maxHeight: "250px" }}>
                       {areas.map((postOffice, index) => (
                         <button
                           key={index}
                           type="button"
                           onClick={() => handleAreaSelect(postOffice)}
-                          className={`w-full px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-left transition-colors ${
-                            formData.area === postOffice.Name ? "bg-gray-100 dark:bg-gray-800" : ""
+                          className={`w-full px-3 py-2 text-left text-[12px] transition-colors hover:bg-[#faf8f4] ${
+                            formData.area === postOffice.Name ? "bg-[#faf8f4] font-medium" : ""
                           }`}
                         >
                           {postOffice.Name}
@@ -1042,12 +1051,10 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   </div>
                 )}
               </div>
-              {errors.area && (
-                <p className="text-sm text-red-600 dark:text-red-400">{errors.area}</p>
-              )}
+              {errors.area && <p className={FIELD_ERROR}>{errors.area}</p>}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="taluk">Taluk *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="taluk" className={FIELD_LABEL}>Taluk *</Label>
               <div className="relative">
                 <Input
                   id="taluk"
@@ -1056,7 +1063,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   placeholder="Taluk (auto-filled)"
                   required
                   readOnly
-                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                  className={FIELD_INPUT_READONLY}
                 />
                 {isLoadingAddress && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -1065,7 +1072,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 )}
               </div>
               {errors.taluk && (
-                <p className="text-sm text-red-600 dark:text-red-400">{errors.taluk}</p>
+                <p className={FIELD_ERROR}>{errors.taluk}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -1078,7 +1085,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   placeholder="District (auto-filled)"
                   required
                   readOnly
-                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                  className={FIELD_INPUT_READONLY}
                 />
                 {isLoadingAddress && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -1087,7 +1094,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 )}
               </div>
               {errors.district && (
-                <p className="text-sm text-red-600 dark:text-red-400">{errors.district}</p>
+                <p className={FIELD_ERROR}>{errors.district}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -1100,7 +1107,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   placeholder="Division (auto-filled)"
                   required
                   readOnly
-                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                  className={FIELD_INPUT_READONLY}
                 />
                 {isLoadingAddress && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -1109,7 +1116,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 )}
               </div>
               {errors.division && (
-                <p className="text-sm text-red-600 dark:text-red-400">{errors.division}</p>
+                <p className={FIELD_ERROR}>{errors.division}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -1122,7 +1129,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   placeholder="Region (auto-filled)"
                   required
                   readOnly
-                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                  className={FIELD_INPUT_READONLY}
                 />
                 {isLoadingAddress && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -1131,7 +1138,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 )}
               </div>
               {errors.region && (
-                <p className="text-sm text-red-600 dark:text-red-400">{errors.region}</p>
+                <p className={FIELD_ERROR}>{errors.region}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -1142,9 +1149,10 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 onChange={(e) => handleInputChange("city", e.target.value)}
                 placeholder="Enter city"
                 required
+                className={FIELD_INPUT}
               />
               {errors.city && (
-                <p className="text-sm text-red-600 dark:text-red-400">{errors.city}</p>
+                <p className={FIELD_ERROR}>{errors.city}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -1157,7 +1165,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   placeholder="State (auto-filled)"
                   required
                   readOnly
-                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                  className={FIELD_INPUT_READONLY}
                 />
                 {isLoadingAddress && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -1166,7 +1174,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 )}
               </div>
               {errors.state && (
-                <p className="text-sm text-red-600 dark:text-red-400">{errors.state}</p>
+                <p className={FIELD_ERROR}>{errors.state}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -1179,7 +1187,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   placeholder="Country (auto-filled)"
                   required
                   readOnly
-                  className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                  className={FIELD_INPUT_READONLY}
                 />
                 {isLoadingAddress && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -1188,45 +1196,45 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 )}
               </div>
               {errors.country && (
-                <p className="text-sm text-red-600 dark:text-red-400">{errors.country}</p>
+                <p className={FIELD_ERROR}>{errors.country}</p>
               )}
             </div>
           </div>
         </div>
-      </div>
+      </FormSection>
 
-      {/* Bank Details */}
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Bank Details</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="account_number">Account Number *</Label>
+      <FormSection title="Bank details">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="account_number" className={FIELD_LABEL}>Account number *</Label>
             <Input
               id="account_number"
               value={formData.account_number}
               onChange={(e) => handleInputChange("account_number", e.target.value)}
               placeholder="Enter account number"
               required
+              className={FIELD_INPUT}
             />
             {errors.account_number && (
-              <p className="text-sm text-red-600 dark:text-red-400">{errors.account_number}</p>
+              <p className={FIELD_ERROR}>{errors.account_number}</p>
             )}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="account_holder_name">Account Holder Name *</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="account_holder_name" className={FIELD_LABEL}>Account holder name *</Label>
             <Input
               id="account_holder_name"
               value={formData.account_holder_name}
               onChange={(e) => handleInputChange("account_holder_name", e.target.value)}
               placeholder="Enter account holder name"
               required
+              className={FIELD_INPUT}
             />
             {errors.account_holder_name && (
-              <p className="text-sm text-red-600 dark:text-red-400">{errors.account_holder_name}</p>
+              <p className={FIELD_ERROR}>{errors.account_holder_name}</p>
             )}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="ifsc_code">IFSC Code *</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="ifsc_code" className={FIELD_LABEL}>IFSC code *</Label>
             <div className="relative">
               <Input
                 id="ifsc_code"
@@ -1235,7 +1243,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 placeholder="Enter IFSC code"
                 maxLength={11}
                 required
-                className={isLoadingIFSC ? "pr-10" : ""}
+                className={`${FIELD_INPUT} ${isLoadingIFSC ? "pr-10" : ""}`}
               />
               {isLoadingIFSC && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -1244,35 +1252,33 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
               )}
             </div>
             {errors.ifsc_code && (
-              <p className="text-sm text-red-600 dark:text-red-400">{errors.ifsc_code}</p>
+              <p className={FIELD_ERROR}>{errors.ifsc_code}</p>
             )}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="branch_name">Branch Name *</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="branch_name" className={FIELD_LABEL}>Branch name *</Label>
             <Input
               id="branch_name"
               value={formData.branch_name}
               onChange={(e) => handleInputChange("branch_name", e.target.value)}
               placeholder="Enter branch name (auto-filled from IFSC)"
               required
+              className={FIELD_INPUT}
             />
             {errors.branch_name && (
-              <p className="text-sm text-red-600 dark:text-red-400">{errors.branch_name}</p>
+              <p className={FIELD_ERROR}>{errors.branch_name}</p>
             )}
           </div>
         </div>
-      </div>
+      </FormSection>
 
-      {/* Documents */}
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Documents</h2>
-        
-        {/* Partner Photo */}
+      <FormSection title="Documents" subtitle="Upload clear photos of your ID and partner profile image.">
+        <div className="space-y-6">
         <div className="space-y-4">
-          <Label>Partner Photo *</Label>
+          <Label className={FIELD_LABEL}>Partner photo *</Label>
           {errors.partner_photo && (
-            <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
-              <AlertCircle className="h-4 w-4" />
+            <div className="flex items-center gap-2 rounded-lg border border-[#fce8ef] bg-[#fce8ef]/50 p-3 text-[12px] text-[#1F4068]">
+              <AlertCircle className="h-4 w-4 shrink-0 text-[#e87898]" />
               <span>{errors.partner_photo}</span>
             </div>
           )}
@@ -1283,7 +1289,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                 src={imageUrls.partner_photo || formData.partner_photo}
                 alt="Partner photo"
                 loading="eager"
-                className="w-full h-auto max-h-96 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                className="w-full h-auto max-h-96 object-contain rounded-xl border-2 border-[#f0ebe3] bg-[#faf8f4]"
                 onError={async (e) => {
                   const imgElement = e.currentTarget
                   if (!imgElement) return
@@ -1347,7 +1353,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
               </div>
             </div>
           ) : (
-            <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
+            <div className="rounded-xl border-2 border-dashed border-[#f0ebe3] bg-[#faf8f4]/50 p-6 text-center">
               <input
                 type="file"
                 accept="image/*"
@@ -1402,7 +1408,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                     src={imageUrls.aadhar_front || formData.aadhar_front}
                     alt="Aadhar front"
                     loading="lazy"
-                    className="w-full h-auto max-h-96 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                    className="w-full h-auto max-h-96 object-contain rounded-xl border-2 border-[#f0ebe3] bg-[#faf8f4]"
                     onError={async (e) => {
                       const imgElement = e.currentTarget
                       if (!imgElement) return
@@ -1464,7 +1470,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   </div>
                 </div>
               ) : (
-                <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
+                <div className="rounded-xl border-2 border-dashed border-[#f0ebe3] bg-[#faf8f4]/50 p-6 text-center">
                   <input
                     type="file"
                     accept="image/*"
@@ -1502,7 +1508,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                     src={imageUrls.aadhar_back || formData.aadhar_back}
                     alt="Aadhar back"
                     loading="lazy"
-                    className="w-full h-auto max-h-96 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                    className="w-full h-auto max-h-96 object-contain rounded-xl border-2 border-[#f0ebe3] bg-[#faf8f4]"
                     onError={async (e) => {
                       const imgElement = e.currentTarget
                       if (!imgElement) return
@@ -1564,7 +1570,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   </div>
                 </div>
               ) : (
-                <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
+                <div className="rounded-xl border-2 border-dashed border-[#f0ebe3] bg-[#faf8f4]/50 p-6 text-center">
                   <input
                     type="file"
                     accept="image/*"
@@ -1619,7 +1625,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                     src={imageUrls.pancard_front || formData.pancard_front}
                     alt="PAN front"
                     loading="lazy"
-                    className="w-full h-auto max-h-96 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                    className="w-full h-auto max-h-96 object-contain rounded-xl border-2 border-[#f0ebe3] bg-[#faf8f4]"
                     onError={async (e) => {
                       const imgElement = e.currentTarget
                       if (!imgElement) return
@@ -1681,7 +1687,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   </div>
                 </div>
               ) : (
-                <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
+                <div className="rounded-xl border-2 border-dashed border-[#f0ebe3] bg-[#faf8f4]/50 p-6 text-center">
                   <input
                     type="file"
                     accept="image/*"
@@ -1729,7 +1735,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                     src={imageUrls.pancard_back || formData.pancard_back}
                     alt="PAN back"
                     loading="lazy"
-                    className="w-full h-auto max-h-96 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                    className="w-full h-auto max-h-96 object-contain rounded-xl border-2 border-[#f0ebe3] bg-[#faf8f4]"
                     onError={async (e) => {
                       const imgElement = e.currentTarget
                       if (!imgElement) return
@@ -1791,7 +1797,7 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
                   </div>
                 </div>
               ) : (
-                <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center">
+                <div className="rounded-xl border-2 border-dashed border-[#f0ebe3] bg-[#faf8f4]/50 p-6 text-center">
                   <input
                     type="file"
                     accept="image/*"
@@ -1825,14 +1831,14 @@ export function ReferralPartnerProfileForm({ userId, userEmail }: ReferralPartne
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      </FormSection>
 
-      {/* Submit Button */}
-      <div className="flex justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex justify-end border-t border-[#f0ebe3] pt-5">
         <Button
           type="submit"
           disabled={isSaveDisabled()}
-          className="px-8"
+          className="h-10 rounded-lg bg-[#1F4068] px-8 text-[13px] font-medium text-white hover:bg-[#1a3558] disabled:opacity-50"
         >
           {isSaving ? (
             <span className="flex items-center gap-2">

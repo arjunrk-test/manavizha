@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { MessageCircle, Send, Crown } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface MessageDialogProps {
     isOpen: boolean
@@ -41,9 +42,9 @@ export function MessageDialog({
 
         setIsSending(true)
         try {
-            const res = await fetch('/api/messages', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+            const res = await fetch("/api/messages", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     senderId,
                     receiverId,
@@ -69,51 +70,71 @@ export function MessageDialog({
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px] rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-gray-900">
-                <div className="bg-gradient-to-r from-[#3bb9ac] to-[#3bb9ac] p-6 text-white text-center">
-                    <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-3">
-                        <MessageCircle className="h-8 w-8 text-white" />
+            <DialogContent className="sm:max-w-[425px] rounded-[18px] border border-[#f0ebe3] shadow-[0_8px_30px_rgba(31,64,104,0.12)] p-0 overflow-hidden bg-white gap-0">
+                <div className="px-6 pt-6 pb-4 border-b border-[#f0ebe3]">
+                    <div className="flex items-start gap-3 pr-6">
+                        <div className="h-10 w-10 rounded-xl bg-[#fce8ef] flex items-center justify-center shrink-0">
+                            <MessageCircle className="h-5 w-5 text-[#e87898]" />
+                        </div>
+                        <div className="min-w-0 text-left">
+                            <DialogTitle className="text-lg font-semibold text-[#1F4068] leading-snug">
+                                Message {receiverName}
+                            </DialogTitle>
+                            <p className="text-sm text-[#6b7280] mt-1">
+                                Send a thoughtful note to express your interest
+                            </p>
+                        </div>
                     </div>
-                    <DialogTitle className="text-xl font-bold">Send Message to {receiverName}</DialogTitle>
-                    <p className="text-white/80 text-xs mt-1">Express your interest with a personalized message</p>
                 </div>
-                
-                <div className="p-6 space-y-4">
+
+                <div className="px-6 py-4 space-y-4">
                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Your Message</label>
+                        <label htmlFor="message-body" className="text-sm font-medium text-[#1F4068]">
+                            Your message
+                        </label>
                         <Textarea
-                            placeholder="Type something thoughtful..."
-                            className="min-h-[120px] rounded-2xl bg-gray-50 dark:bg-gray-800 border-none resize-none"
+                            id="message-body"
+                            placeholder="Write something personal…"
+                            className="min-h-[120px] rounded-xl bg-[#faf8f4] border border-[#f0ebe3] resize-none text-sm text-[#1F4068] placeholder:text-[#9ca3af] focus-visible:ring-[#e87898]/30 focus-visible:border-[#e87898]"
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                         />
                     </div>
 
                     {!isPremium && (
-                        <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 rounded-2xl flex items-start gap-3">
+                        <div className="p-3.5 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-3">
                             <Crown className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                             <div>
-                                <p className="text-xs text-amber-800 dark:text-amber-500 font-bold mb-1 uppercase tracking-wider">Premium Only</p>
-                                <p className="text-[11px] text-amber-700 dark:text-amber-600 leading-relaxed">
-                                    Only premium members can send personalized messages. Upgrade now to connect!
+                                <p className="text-sm text-amber-900 font-medium mb-0.5">Premium only</p>
+                                <p className="text-xs text-amber-800 leading-relaxed">
+                                    Upgrade to send personalized messages to your matches.
                                 </p>
                             </div>
                         </div>
                     )}
                 </div>
 
-                <DialogFooter className="p-6 bg-gray-50/50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800">
-                    <Button variant="ghost" onClick={() => onOpenChange(false)} className="rounded-xl h-11 px-6 font-bold text-gray-400">
-                        CANCEL
-                    </Button>
-                    <Button 
-                        onClick={handleSend} 
-                        disabled={!message.trim() || isSending || !isPremium}
-                        className="rounded-xl h-11 px-8 bg-gradient-to-r from-[#3bb9ac] to-[#3bb9ac] hover:opacity-90 text-white font-bold group"
+                <DialogFooter className="px-6 py-4 bg-[#faf8f4] border-t border-[#f0ebe3] sm:justify-end gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => onOpenChange(false)}
+                        className="rounded-xl h-10 px-4 border-[#f0ebe3] bg-white text-[#6b7280] hover:bg-white hover:text-[#1F4068] text-sm font-medium"
                     >
-                        {isSending ? "SENDING..." : (
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleSend}
+                        disabled={!message.trim() || isSending || !isPremium}
+                        className={cn(
+                            "rounded-xl h-10 px-5 text-sm font-medium gap-2",
+                            "bg-[#e87898] hover:bg-[#d66686] text-white",
+                            "disabled:bg-[#f3f4f6] disabled:text-[#9ca3af] disabled:hover:bg-[#f3f4f6]"
+                        )}
+                    >
+                        {isSending ? "Sending…" : (
                             <>
-                                SEND <Send className="ml-2 h-4 w-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                Send
+                                <Send className="h-4 w-4" />
                             </>
                         )}
                     </Button>

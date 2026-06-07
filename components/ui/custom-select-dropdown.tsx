@@ -11,6 +11,8 @@ interface CustomSelectDropdownProps {
   options: { id: string; value: string }[]
   required?: boolean
   className?: string
+  placeholder?: string
+  disabled?: boolean
   showOtherInput?: boolean
   otherValue?: string
   onOtherChange?: (value: string) => void
@@ -25,6 +27,8 @@ export function CustomSelectDropdown({
   options,
   required = false,
   className = "",
+  placeholder = "Select an option",
+  disabled = false,
   showOtherInput = false,
   otherValue = "",
   onOtherChange,
@@ -67,17 +71,18 @@ export function CustomSelectDropdown({
       <div className="relative" ref={dropdownRef}>
         <button
           type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className={`sds-input w-full flex items-center justify-between text-left group transition-all duration-300 active:scale-[0.98] ${isOpen ? "border-[#3bb9ac] bg-white" : ""}`}
+          onClick={() => !disabled && setIsOpen(!isOpen)}
+          disabled={disabled}
+          className={`sds-input w-full flex items-center justify-between text-left group transition-all duration-300 active:scale-[0.98] ${isOpen ? "border-[#e87898] bg-white" : ""} ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
         >
-          <span className={`flex-1 truncate ${selectedOption ? "text-gray-900" : "text-gray-300 transition-colors"}`}>
+          <span className={`flex-1 truncate ${selectedOption ? "text-[#1F4068]" : "text-[#9ca3af] transition-colors"}`}>
             {selectedOption ? (
-              <span className="font-bold">{selectedOption.value}</span>
+              <span className="font-medium">{selectedOption.value}</span>
             ) : (
-              "Select Position / Area"
+              placeholder
             )}
           </span>
-          <ChevronDown className={`h-4 w-4 text-[#3bb9ac]/40 transition-transform duration-500 ml-2 flex-shrink-0 ${isOpen ? "rotate-180" : ""}`} />
+          <ChevronDown className={`h-4 w-4 text-[#e87898]/50 transition-transform duration-500 ml-2 flex-shrink-0 ${isOpen ? "rotate-180" : ""}`} />
         </button>
         {isOpen && (
           <div className="absolute z-50 w-full mt-3 sds-glass rounded-3xl shadow-2xl border-indigo-50/50 backdrop-blur-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -98,8 +103,8 @@ export function CustomSelectDropdown({
                     }}
                     className={`w-full px-5 py-3.5 rounded-2xl text-left text-xs font-bold transition-all duration-300 ${
                       isSelected 
-                      ? "bg-[#3bb9ac] text-white shadow-lg shadow-indigo-900/20" 
-                      : "hover:bg-indigo-50/50 text-gray-500 hover:text-[#3bb9ac]"
+                      ? "bg-[#e87898] text-white shadow-lg shadow-[#e87898]/20" 
+                      : "hover:bg-[#fce8ef]/80 text-[#6b7280] hover:text-[#1F4068]"
                     }`}
                   >
                     {option.value}

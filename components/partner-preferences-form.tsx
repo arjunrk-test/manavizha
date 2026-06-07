@@ -5,11 +5,16 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabase } from "@/lib/supabase"
-import { ArrowLeft, Save, Heart, ChevronDown, ChevronUp, Search, Check } from "lucide-react"
+import { ArrowLeft, Save, ChevronDown, ChevronUp, Search, Check, SlidersHorizontal, Moon, Briefcase } from "lucide-react"
 import { toast } from "sonner"
 import { motion } from "framer-motion"
 import { INDIAN_LANGUAGES, EMPLOYMENT_TYPES, OCCUPATIONS as OCCUPATIONS_FROM_LIB, EDUCATION_LEVELS } from "@/lib/profile-data"
 import { useMasterData } from "@/hooks/use-master-data"
+import {
+  SETUP_SECTION_BODY,
+  SETUP_SECTION_CARD,
+  SetupSectionHeader,
+} from "@/components/profile-steps/setup-section-header"
 
 interface PartnerPreferencesFormProps {
   userId: string
@@ -53,18 +58,18 @@ function MultiSelectDropdown({ label, options, selected, onChange, searchable = 
   return (
     <div ref={ref} className="relative">
       <button type="button" onClick={() => setOpen((o) => !o)}
-        className="w-full h-11 px-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-all text-left">
-        <span className="text-sm text-gray-700 truncate max-w-[240px]">{displayLabel}</span>
-        {open ? <ChevronUp className="h-4 w-4 text-gray-400 flex-shrink-0" /> : <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />}
+        className="sds-input w-full h-11 px-4 flex items-center justify-between rounded-xl border border-[#f0ebe3] bg-white hover:bg-[#faf8f4] transition-all text-left">
+        <span className="text-sm text-[#1F4068] truncate max-w-[240px]">{displayLabel}</span>
+        {open ? <ChevronUp className="h-4 w-4 text-[#9ca3af] shrink-0" /> : <ChevronDown className="h-4 w-4 text-[#9ca3af] shrink-0" />}
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-2xl overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full rounded-xl border border-[#f0ebe3] bg-white shadow-[0_8px_30px_rgba(31,64,104,0.12)] overflow-hidden">
           {searchable && (
-            <div className="p-2 border-b border-gray-100">
+            <div className="p-2 border-b border-[#f0ebe3]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#9ca3af]" />
                 <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder={`Search ${label}`}
-                  className="w-full pl-9 pr-4 py-2 text-sm rounded-lg bg-gray-50 border border-gray-100 focus:outline-none placeholder:text-gray-300" />
+                  className="w-full pl-9 pr-4 py-2 text-sm rounded-lg bg-[#faf8f4] border border-[#f0ebe3] focus:outline-none focus:border-[#e87898] placeholder:text-[#9ca3af]" />
               </div>
             </div>
           )}
@@ -73,17 +78,17 @@ function MultiSelectDropdown({ label, options, selected, onChange, searchable = 
               const checked = isChecked(opt)
               return (
                 <button key={opt} type="button" onClick={() => toggle(opt)}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#3bb9ac]/5 transition-colors text-left group">
-                  <div className={`h-4 w-4 rounded flex-shrink-0 border flex items-center justify-center transition-all ${checked ? "bg-emerald-500 border-emerald-500" : "bg-white border-gray-300"}`}>
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#fce8ef] transition-colors text-left group">
+                  <div className={`h-4 w-4 rounded flex-shrink-0 border flex items-center justify-center transition-all ${checked ? "bg-[#e87898] border-[#e87898]" : "bg-white border-[#f0ebe3] group-hover:border-[#e87898]/40"}`}>
                     {checked && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
                   </div>
-                  <span className="text-sm text-gray-700">{opt}</span>
+                  <span className="text-sm text-[#4b5563]">{opt}</span>
                 </button>
               )
             })}
           </div>
-          <div className="px-3 py-2 border-t border-gray-100 bg-gray-50/50">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+          <div className="px-3 py-2 border-t border-[#f0ebe3] bg-[#faf8f4]">
+            <span className="text-xs text-[#9ca3af]">
               {selected.length === 0 || selected.includes("Any") ? "Showing all" : `${selected.filter(s => s !== "Any").length} selected`}
             </span>
           </div>
@@ -93,44 +98,30 @@ function MultiSelectDropdown({ label, options, selected, onChange, searchable = 
   )
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function SectionHeader({ num, sub, title }: { num: string; sub: string; title: string }) {
-  return (
-    <div className="flex items-center gap-4 mb-6">
-      <div className="w-9 h-9 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10 flex-shrink-0">
-        <span className="text-[#3bb9ac] font-black text-[10px]">{num}</span>
-      </div>
-      <div>
-        <p className="text-[9px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30">{sub}</p>
-        <h3 className="text-lg font-light text-gray-900 tracking-tight">{title}</h3>
-      </div>
-      <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-2" />
-    </div>
-  )
-}
-
 function Field({ label, children, wide }: { label: string; children: React.ReactNode; wide?: boolean }) {
   return (
     <div className={`space-y-2 ${wide ? "md:col-span-2" : ""}`}>
-      {label && <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500">{label}</Label>}
+      {label && <Label className="text-sm font-medium text-[#1F4068]">{label}</Label>}
       {children}
     </div>
   )
 }
 
-function PrefSelect({ label, value, options, onChange, wide, disabled }: { 
-  label: string; value: string; options: string[]; onChange: (v: string) => void; wide?: boolean; disabled?: boolean 
+const inputClass = "w-full h-11 px-4 rounded-xl border border-[#f0ebe3] bg-white text-sm text-[#1F4068] focus:outline-none focus:border-[#e87898] focus:ring-2 focus:ring-[#e87898]/20"
+
+function PrefSelect({ label, value, options, onChange, wide, disabled }: {
+  label: string; value: string; options: string[]; onChange: (v: string) => void; wide?: boolean; disabled?: boolean
 }) {
   return (
     <Field label={label} wide={wide}>
       <div className={`transition-opacity duration-300 ${disabled ? "opacity-40 cursor-not-allowed" : "opacity-100"}`}>
         <Select value={value || "Any"} onValueChange={(v) => onChange(v === "Any" ? "" : v)} disabled={disabled}>
-          <SelectTrigger className="w-full h-11 px-4 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:border-[#3bb9ac]/30 transition-all">
+          <SelectTrigger className={`${inputClass} transition-all`}>
             <SelectValue placeholder="Any" />
           </SelectTrigger>
-          <SelectContent className="sds-glass rounded-2xl border-indigo-50/50 shadow-2xl p-2 z-[100] max-h-72">
+          <SelectContent className="rounded-xl border border-[#f0ebe3] bg-white shadow-lg p-1 z-[100] max-h-72">
             {options.map((opt) => (
-              <SelectItem key={opt} value={opt} className="rounded-xl p-3 focus:bg-[#3bb9ac] focus:text-white text-[10px] font-black uppercase tracking-widest">{opt}</SelectItem>
+              <SelectItem key={opt} value={opt} className="rounded-lg p-2.5 focus:bg-[#fce8ef] focus:text-[#e87898] text-sm">{opt}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -338,43 +329,52 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
     finally { setIsSaving(false) }
   }
 
-  if (isLoading) return <div className="flex justify-center items-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3bb9ac]" /></div>
-
-  const card = "sds-glass rounded-[2.5rem] p-8 border border-indigo-50/50 shadow-[0_20px_50px_-20px_rgba(59,185,172,0.05)] mb-10"
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-24">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#f0ebe3] border-t-[#e87898]" />
+      </div>
+    )
+  }
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <Button onClick={onBack} variant="ghost" className="mb-3 -ml-3 hover:bg-transparent hover:text-[#3bb9ac] text-gray-500">
-          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Dashboard
+    <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="mb-6">
+        <Button
+          onClick={onBack}
+          variant="outline"
+          size="sm"
+          className="mb-4 rounded-xl border-[#f0ebe3] bg-white text-[#4b5563] hover:text-[#1F4068] hover:bg-[#faf8f4] h-9 px-4 text-sm font-medium"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
         </Button>
-        <div className="flex items-center gap-3">
-          <Heart className="h-7 w-7 text-[#3bb9ac]" fill="currentColor" />
-          <div>
-            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Partner Preferences</h2>
-            <p className="text-sm text-gray-400">Set your criteria — we'll use this to find your best matches.</p>
-          </div>
-        </div>
+        <h1 className="text-2xl font-semibold text-[#1F4068]">Partner Preferences</h1>
+        <p className="text-sm text-[#6b7280] mt-1">
+          Set your criteria — we use this to find your best matches.
+        </p>
       </div>
 
-      <motion.form onSubmit={handleSave} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-
-        {/* P1: Basic */}
-        <SectionHeader num="P1" sub="Basics" title="Basic & Lifestyle Preferences" />
-        <div className={card}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Field label="Age Range">
+      <motion.form onSubmit={handleSave} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={SlidersHorizontal}
+            title="Basic & lifestyle preferences"
+            description="Age, height, marital status, and lifestyle habits"
+          />
+          <div className={`${SETUP_SECTION_BODY} grid-cols-1 md:grid-cols-2 p-4 sm:p-5`}>
+            <Field label="Age range">
               <div className="flex items-center gap-2">
-                <input type="number" value={fd.preferredAgeMin} onChange={(e) => set("preferredAgeMin", e.target.value)} placeholder="Min (e.g. 24)" min="18" className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none bg-white" />
-                <span className="text-gray-300 flex-shrink-0">—</span>
-                <input type="number" value={fd.preferredAgeMax} onChange={(e) => set("preferredAgeMax", e.target.value)} placeholder="Max (e.g. 32)" min="18" className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none bg-white" />
+                <input type="number" value={fd.preferredAgeMin} onChange={(e) => set("preferredAgeMin", e.target.value)} placeholder="Min" min="18" className={inputClass} />
+                <span className="text-[#9ca3af] shrink-0 text-sm">to</span>
+                <input type="number" value={fd.preferredAgeMax} onChange={(e) => set("preferredAgeMax", e.target.value)} placeholder="Max" min="18" className={inputClass} />
               </div>
             </Field>
-            <Field label="Height Range (cm)">
+            <Field label="Height range (cm)">
               <div className="flex items-center gap-2">
-                <input type="number" value={fd.preferredHeightMin} onChange={(e) => set("preferredHeightMin", e.target.value)} placeholder="Min" className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none bg-white" />
-                <span className="text-gray-300 flex-shrink-0">—</span>
-                <input type="number" value={fd.preferredHeightMax} onChange={(e) => set("preferredHeightMax", e.target.value)} placeholder="Max" className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none bg-white" />
+                <input type="number" value={fd.preferredHeightMin} onChange={(e) => set("preferredHeightMin", e.target.value)} placeholder="Min" className={inputClass} />
+                <span className="text-[#9ca3af] shrink-0 text-sm">to</span>
+                <input type="number" value={fd.preferredHeightMax} onChange={(e) => set("preferredHeightMax", e.target.value)} placeholder="Max" className={inputClass} />
               </div>
             </Field>
             <PrefSelect label="Marital Status" value={fd.preferredMaritalStatus} options={maritalOptions} onChange={(v) => set("preferredMaritalStatus", v)} />
@@ -384,14 +384,17 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
             </Field>
             <PrefSelect label="Eating Habits" value={fd.preferredEatingHabits} options={foodOptions} onChange={(v) => set("preferredEatingHabits", v)} />
             <PrefSelect label="Smoking Habit" value={fd.preferredSmokingHabits} options={["Any", "Never", "Occasionally"]} onChange={(v) => set("preferredSmokingHabits", v)} />
-            <PrefSelect label="Drinking Habit" value={fd.preferredDrinkingHabits} options={["Any", "Never", "Occasionally"]} onChange={(v) => set("preferredDrinkingHabits", v)} />
+            <PrefSelect label="Drinking habit" value={fd.preferredDrinkingHabits} options={["Any", "Never", "Occasionally"]} onChange={(v) => set("preferredDrinkingHabits", v)} />
           </div>
         </div>
 
-        {/* P2: Religion */}
-        <SectionHeader num="P2" sub="Religion" title="Religious & Horoscope Preferences" />
-        <div className={card}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={Moon}
+            title="Religious & horoscope preferences"
+            description="Religion, caste, and astrological details"
+          />
+          <div className={`${SETUP_SECTION_BODY} grid-cols-1 md:grid-cols-2 p-4 sm:p-5`}>
             <PrefSelect label="Religion" value={fd.preferredReligion} options={religionOptions} onChange={(v) => set("preferredReligion", v)} />
             <PrefSelect label="Caste" value={fd.preferredCaste} options={casteOptions} onChange={(v) => {
               set("preferredCaste", v)
@@ -406,10 +409,13 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
           </div>
         </div>
 
-        {/* P3: Professional */}
-        <SectionHeader num="P3" sub="Professional" title="Professional & Location Preferences" />
-        <div className={card}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={Briefcase}
+            title="Professional & location"
+            description="Education, career, income, and location preferences"
+          />
+          <div className={`${SETUP_SECTION_BODY} grid-cols-1 md:grid-cols-2 p-4 sm:p-5`}>
             <Field label="Preferred Education Level">
               <MultiSelectDropdown label="Education Level" options={educationLevelOptions} selected={fd.preferredEducation} onChange={(v) => {
                 set("preferredEducation", v)
@@ -432,14 +438,18 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
             <PrefSelect label="Preferred Annual Income (From)" value={fd.preferredAnnualIncomeMin} options={INCOME_OPTIONS} onChange={(v) => set("preferredAnnualIncomeMin", v)} wide />
             <PrefSelect label="Country" value={fd.preferredCountry} options={COUNTRIES} onChange={(v) => set("preferredCountry", v)} />
             <PrefSelect label="State" value={fd.preferredState} options={STATES} onChange={(v) => set("preferredState", v)} />
-            <PrefSelect label="City" value={fd.preferredCity} options={CITIES} onChange={(v) => set("preferredCity", v)} />
+            <PrefSelect label="City" value={fd.preferredCity} options={CITIES} onChange={(v) => set("preferredCity", v)} wide />
           </div>
         </div>
 
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isSaving} className="h-14 px-12 rounded-[2rem] bg-[#3bb9ac] text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all disabled:opacity-40">
-            <Save className={`mr-3 h-4 w-4 ${isSaving ? "animate-pulse" : ""}`} />
-            {isSaving ? "Saving…" : "Save Preferences"}
+        <div className="flex justify-end pt-2">
+          <Button
+            type="submit"
+            disabled={isSaving}
+            className="h-10 px-6 rounded-xl bg-[#e87898] hover:bg-[#d66686] text-white text-sm font-medium disabled:opacity-50"
+          >
+            <Save className={`mr-2 h-4 w-4 ${isSaving ? "animate-pulse" : ""}`} />
+            {isSaving ? "Saving…" : "Save preferences"}
           </Button>
         </div>
       </motion.form>

@@ -12,9 +12,10 @@ import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { getUserDashboard } from "@/lib/auth"
+import { finishAuthRedirect, getAdminRole, getUserDashboard } from "@/lib/auth"
 import {
   ArrowRight,
+  BarChart3,
   Heart,
   ShieldCheck,
 } from "lucide-react"
@@ -23,6 +24,7 @@ import { motion } from "framer-motion"
 export default function AdminDashboardPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
+  const [adminRole, setAdminRole] = useState<string | null>(null)
   const [stats, setStats] = useState({
     total: 0,
     men: 0,
@@ -45,16 +47,17 @@ export default function AdminDashboardPage() {
     const checkUser = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser()
       if (!authUser) {
-        router.push("/admin")
+        finishAuthRedirect(router, "/admin", setIsLoading)
         return
       }
 
       const dashboardPath = await getUserDashboard(authUser.id)
       if (dashboardPath !== "/admin/dashboard") {
-        router.push(dashboardPath)
+        finishAuthRedirect(router, dashboardPath, setIsLoading)
         return
       }
 
+      setAdminRole(await getAdminRole(authUser.id))
       setIsLoading(false)
     }
 
@@ -156,24 +159,41 @@ export default function AdminDashboardPage() {
                   meaningful connections on Manavizha.
                 </p>
 
-                {stats.pendingVerifications > 0 && (
+                <div className="mt-6 flex flex-wrap items-stretch gap-3">
+                  {stats.pendingVerifications > 0 && (
+                    <Link
+                      href="/admin/verification"
+                      className="group inline-flex items-center gap-3 rounded-xl border border-[#e87898]/30 bg-gradient-to-r from-[#fce8ef]/80 to-white/90 px-4 py-3 shadow-sm transition-all hover:shadow-md hover:border-[#e87898]/50"
+                    >
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e87898] text-white shrink-0">
+                        <ShieldCheck className="h-4 w-4" strokeWidth={1.75} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-[#1F4068]">
+                          {stats.pendingVerifications} verification{stats.pendingVerifications !== 1 ? "s" : ""} awaiting review
+                        </p>
+                        <p className="text-xs text-gray-500 group-hover:text-[#e87898] transition-colors flex items-center gap-1">
+                          Open queue <ArrowRight className="h-3 w-3" />
+                        </p>
+                      </div>
+                    </Link>
+                  )}
+
                   <Link
-                    href="/admin/verification"
-                    className="group inline-flex items-center gap-3 rounded-xl border border-[#e87898]/30 bg-gradient-to-r from-[#fce8ef]/80 to-white/90 px-4 py-3 shadow-sm transition-all hover:shadow-md hover:border-[#e87898]/50 mt-6"
+                    href="/admin/dashboard/analytics"
+                    className="group inline-flex items-center gap-3 rounded-xl border border-[#c9a227]/30 bg-gradient-to-r from-[#fdf6e3]/80 to-white/90 px-4 py-3 shadow-sm transition-all hover:shadow-md hover:border-[#c9a227]/50"
                   >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e87898] text-white shrink-0">
-                      <ShieldCheck className="h-4 w-4" strokeWidth={1.75} />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#c9a227] text-white shrink-0">
+                      <BarChart3 className="h-4 w-4" strokeWidth={1.75} />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-[#1F4068]">
-                        {stats.pendingVerifications} verification{stats.pendingVerifications !== 1 ? "s" : ""} awaiting review
-                      </p>
-                      <p className="text-xs text-gray-500 group-hover:text-[#e87898] transition-colors flex items-center gap-1">
-                        Open queue <ArrowRight className="h-3 w-3" />
+                      <p className="text-sm font-semibold text-[#1F4068]">Analytics</p>
+                      <p className="text-xs text-gray-500 group-hover:text-[#c9a227] transition-colors flex items-center gap-1">
+                        View insights <ArrowRight className="h-3 w-3" />
                       </p>
                     </div>
                   </Link>
-                )}
+                </div>
               </div>
 
               <AdminProfileStatsPanel stats={stats} />
@@ -185,7 +205,10 @@ export default function AdminDashboardPage() {
           </section>
 
           <section className="pb-10 sm:pb-12">
-            <AdminQuickActionsPanel pendingVerifications={stats.pendingVerifications} />
+            <AdminQuickActionsPanel
+              pendingVerifications={stats.pendingVerifications}
+              adminRole={adminRole}
+            />
           </section>
         </div>
 

@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -9,30 +8,33 @@ import { useMasterData } from "@/hooks/use-master-data"
 import { SelectDropdown } from "@/components/ui/select-dropdown"
 import { LanguageDropdown } from "@/components/ui/language-dropdown"
 import { SkinColorDropdown } from "@/components/ui/skin-color-dropdown"
+import { SetupSectionHeader, SETUP_SECTION_CARD, SETUP_SECTION_BODY } from "@/components/profile-steps/setup-section-header"
 import { INDIAN_LANGUAGES, INTERNATIONAL_LANGUAGES } from "@/lib/profile-data"
+import { FileText, Globe, User, UserRound } from "lucide-react"
 
 interface PersonalDetailsStepProps {
   formData: FormData
   onChange: (field: keyof FormData, value: any) => void
 }
 
+const SECTION_CARD = SETUP_SECTION_CARD
+const SECTION_BODY = SETUP_SECTION_BODY
+
 export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepProps) {
-  // Fetch all master data using the common hook
   const { data: genderOptions } = useMasterData({ tableName: "master_gender" })
   const { data: skinColorData } = useMasterData({ tableName: "master_skin_colour" })
   const { data: bodyTypeOptions } = useMasterData({ tableName: "master_body_type" })
   const { data: maritalStatusOptions } = useMasterData({ tableName: "master_marital_status" })
   const { data: foodPreferenceOptions } = useMasterData({ tableName: "master_food_preferences" })
   const { data: religionOptions } = useMasterData({ tableName: "master_religion" })
-  
+
   const indianLanguages = INDIAN_LANGUAGES
   const internationalLanguages = INTERNATIONAL_LANGUAGES
-  
-  // Transform skin color data to match the expected structure
+
   const skinColorOptions = skinColorData.map((item) => ({
     value: item.value,
     label: item.value,
-    color: item.colour_code || "#000000", // Default to black if no colour_code
+    color: item.colour_code || "#000000",
   }))
 
   const toggleLanguage = (lang: string) => {
@@ -44,7 +46,6 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
     }
   }
 
-  // Fallback religions if master data is empty
   const religions = religionOptions.length > 0 ? religionOptions : [
     { id: "Hindu", value: "Hindu" },
     { id: "Christian", value: "Christian" },
@@ -52,28 +53,20 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
     { id: "Jain", value: "Jain" },
     { id: "Sikh", value: "Sikh" },
     { id: "Buddhist", value: "Buddhist" },
-    { id: "Other", value: "Other" }
+    { id: "Other", value: "Other" },
   ]
 
   return (
-    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        
-        {/* Basic Details Section */}
-        <div className="space-y-8 md:col-span-2">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
-              <span className="text-[#3bb9ac] font-black text-xs">01</span>
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Basic Details</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Personal Information</h3>
-            </div>
-            <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50">
-            <div className="space-y-2 md:col-span-1">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="setup-section-stack">
+        <div className={SECTION_CARD}>
+          <SetupSectionHeader
+            icon={User}
+            title="Personal information"
+            description="Name, date of birth, gender, and religion"
+          />
+          <div className={`${SECTION_BODY} grid-cols-1 md:grid-cols-3`}>
+            <div className="space-y-1.5 md:col-span-1">
               <Label htmlFor="name" className="sds-label">Full Name *</Label>
               <Input
                 id="name"
@@ -85,7 +78,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="dateOfBirth" className="sds-label">Date of Birth *</Label>
               <Input
                 id="dateOfBirth"
@@ -98,7 +91,10 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
                     const today = new Date()
                     const age = today.getFullYear() - birthDate.getFullYear()
                     const monthDiff = today.getMonth() - birthDate.getMonth()
-                    const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age
+                    const actualAge =
+                      monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())
+                        ? age - 1
+                        : age
                     onChange("dateOfBirth", selectedDate)
                     onChange("age", actualAge.toString())
                   } else {
@@ -106,14 +102,14 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
                     onChange("age", "")
                   }
                 }}
-                max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
-                min={new Date(new Date().setFullYear(new Date().getFullYear() - 100)).toISOString().split('T')[0]}
+                max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split("T")[0]}
+                min={new Date(new Date().setFullYear(new Date().getFullYear() - 100)).toISOString().split("T")[0]}
                 required
                 className="sds-input w-full"
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="age" className="sds-label">Age</Label>
               <Input
                 id="age"
@@ -121,19 +117,25 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
                 readOnly
                 disabled
                 placeholder="Calculated"
-                className="sds-input w-full bg-black/[0.02] border-indigo-50/30 opacity-60 cursor-not-allowed font-medium text-gray-500"
+                className="sds-input w-full bg-black/[0.02] border-[#f0ebe3] opacity-60 cursor-not-allowed font-medium text-gray-500"
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="createdBy" className="sds-label">Created By *</Label>
               <Select value={formData.createdBy} onValueChange={(value) => onChange("createdBy", value)}>
-                <SelectTrigger id="createdBy" className="sds-input w-full h-14 border-indigo-50/50">
+                <SelectTrigger id="createdBy" className="sds-input w-full border-[#f0ebe3]">
                   <SelectValue placeholder="Select Creator" />
                 </SelectTrigger>
-                <SelectContent className="sds-glass rounded-2xl border-indigo-50/50 shadow-2xl p-2 z-[100] backdrop-blur-2xl">
-                  {["Self", "Parents", "Sibling", "Relative", "Friend"].map(val => (
-                    <SelectItem key={val} value={val} className="rounded-xl p-3 focus:bg-[#3bb9ac] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">{val}</SelectItem>
+                <SelectContent className="sds-glass rounded-2xl border-[#f0ebe3] shadow-2xl p-2 z-[100] backdrop-blur-2xl">
+                  {["Self", "Parents", "Sibling", "Relative", "Friend"].map((val) => (
+                    <SelectItem
+                      key={val}
+                      value={val}
+                      className="rounded-xl p-3 focus:bg-[#e87898] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest"
+                    >
+                      {val}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -168,21 +170,14 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
           </div>
         </div>
 
-        {/* Physical Section */}
-        <div className="space-y-8 md:col-span-2">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
-              <span className="text-[#3bb9ac] font-black text-xs">02</span>
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Physical</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Appearance & Build</h3>
-            </div>
-            <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50">
-            <div className="space-y-2">
+        <div className={SECTION_CARD}>
+          <SetupSectionHeader
+            icon={UserRound}
+            title="Appearance & build"
+            description="Height, weight, body type, and physical status"
+          />
+          <div className={`${SECTION_BODY} grid-cols-1 md:grid-cols-4`}>
+            <div className="space-y-1.5">
               <Label htmlFor="height" className="sds-label">Height (cm) *</Label>
               <Input
                 id="height"
@@ -201,7 +196,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="weight" className="sds-label">Weight (kg) *</Label>
               <Input
                 id="weight"
@@ -236,35 +231,38 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
               required
             />
 
-            <div className="space-y-2 md:col-span-4">
+            <div className="space-y-1.5 md:col-span-4">
               <Label htmlFor="physicalStatus" className="sds-label">Physical Status *</Label>
               <Select value={formData.physicalStatus} onValueChange={(value) => onChange("physicalStatus", value)}>
-                <SelectTrigger id="physicalStatus" className="sds-input w-full h-14 border-indigo-50/50">
+                <SelectTrigger id="physicalStatus" className="sds-input w-full border-[#f0ebe3]">
                   <SelectValue placeholder="Are you physically challenged?" />
                 </SelectTrigger>
-                <SelectContent className="sds-glass rounded-2xl border-indigo-50/50 shadow-2xl p-2 z-[100] backdrop-blur-2xl">
-                  <SelectItem value="Normal" className="rounded-xl p-3 focus:bg-[#3bb9ac] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">No</SelectItem>
-                  <SelectItem value="Physically Challenged" className="rounded-xl p-3 focus:bg-[#3bb9ac] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest">Yes</SelectItem>
+                <SelectContent className="sds-glass rounded-2xl border-[#f0ebe3] shadow-2xl p-2 z-[100] backdrop-blur-2xl">
+                  <SelectItem
+                    value="Normal"
+                    className="rounded-xl p-3 focus:bg-[#e87898] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest"
+                  >
+                    No
+                  </SelectItem>
+                  <SelectItem
+                    value="Physically Challenged"
+                    className="rounded-xl p-3 focus:bg-[#e87898] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest"
+                  >
+                    Yes
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
         </div>
 
-        {/* Lifestyle Section */}
-        <div className="space-y-8 md:col-span-2">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
-              <span className="text-[#3bb9ac] font-black text-xs">03</span>
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Culture</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Languages & Food</h3>
-            </div>
-            <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50">
+        <div className={SECTION_CARD}>
+          <SetupSectionHeader
+            icon={Globe}
+            title="Languages & food"
+            description="Diet preference and languages you speak"
+          />
+          <div className={`${SECTION_BODY} grid-cols-1 md:grid-cols-2`}>
             <SelectDropdown
               id="foodPreference"
               label="Food Preference *"
@@ -274,8 +272,8 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
               required
             />
 
-            <div className="space-y-2 md:col-span-2">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-1.5 md:col-span-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <LanguageDropdown
                   label="Languages you speak *"
                   languages={indianLanguages}
@@ -296,24 +294,26 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
           </div>
         </div>
 
-        {/* About Me Section */}
-        <div className="space-y-8 md:col-span-2">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
-              <span className="text-[#3bb9ac] font-black text-xs">04</span>
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Description</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">About Yourself</h3>
-            </div>
-            <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between px-2">
-              <Label htmlFor="about" className="sds-label">About me *</Label>
-              <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${formData.about.length < 100 ? "text-[#3bb9ac]/40 border-[#3bb9ac]/10" : formData.about.length > 550 ? "text-primary border-primary bg-primary" : "text-emerald-500 border-emerald-100 bg-emerald-50/50"}`}>
-                {formData.about.length} / 600 {formData.about.length < 100 && "(MIN 100 CHARS)"}
+        <div className={SECTION_CARD}>
+          <SetupSectionHeader
+            icon={FileText}
+            title="About yourself"
+            description="Write a short introduction for your profile (minimum 100 characters)"
+          />
+          <div className="setup-section-card-body space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="about" className="sds-label mb-0">About me *</Label>
+              <span
+                className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${
+                  formData.about.length < 100
+                    ? "text-[#9ca3af] border-[#f0ebe3] bg-[#faf8f4]"
+                    : formData.about.length > 550
+                      ? "text-[#e87898] border-[#fce8ef] bg-[#fce8ef]"
+                      : "text-[#e87898] border-[#fce8ef] bg-[#fce8ef]"
+                }`}
+              >
+                {formData.about.length} / 600
+                {formData.about.length < 100 && " · min 100"}
               </span>
             </div>
             <textarea
@@ -324,11 +324,11 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
                 if (value.length <= 600) onChange("about", value)
               }}
               placeholder="Example: I am a software engineer who loves trekking and classical music. I value family traditions and am looking for someone with similar interests..."
-              rows={6}
+              rows={4}
               maxLength={600}
               required
-              className={`sds-input w-full resize-none py-6 px-6 leading-relaxed transition-all duration-500 min-h-[160px] ${
-                formData.about.length < 100 && formData.about.length > 0 ? "border-[#3bb9ac]/20" : ""
+              className={`sds-input w-full resize-none leading-relaxed transition-all duration-500 ${
+                formData.about.length < 100 && formData.about.length > 0 ? "border-[#e87898]/20" : ""
               }`}
             />
           </div>
@@ -337,4 +337,3 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
     </div>
   )
 }
-

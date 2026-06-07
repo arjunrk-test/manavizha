@@ -4,7 +4,19 @@ import { useState, useEffect, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FormData } from "@/types/profile"
-import { ChevronDown } from "lucide-react"
+import {
+  SETUP_SECTION_BODY,
+  SETUP_SECTION_CARD,
+  SetupSectionHeader,
+} from "@/components/profile-steps/setup-section-header"
+import { ChevronDown, Home, MapPin, Phone } from "lucide-react"
+import {
+  buildPhoneNumber,
+  COUNTRY_CODES,
+  DEFAULT_COUNTRY_CODE,
+  getMaxNationalDigits,
+  parsePhoneWithCountryCode,
+} from "@/lib/country-codes"
 
 interface ContactDetailsStepProps {
   formData: FormData
@@ -211,9 +223,45 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
   // Sync WhatsApp number with phone number when checkbox is checked
   useEffect(() => {
     if (isWhatsappSameAsPhone && formData.whatsappNumber !== formData.phone) {
-      onChange("whatsappNumber", formData.phone || "+91")
+      onChange("whatsappNumber", formData.phone || DEFAULT_COUNTRY_CODE)
     }
   }, [formData.phone, isWhatsappSameAsPhone])
+
+  const phoneParsed = parsePhoneWithCountryCode(formData.phone || DEFAULT_COUNTRY_CODE)
+  const whatsappParsed = parsePhoneWithCountryCode(
+    isWhatsappSameAsPhone
+      ? formData.phone || DEFAULT_COUNTRY_CODE
+      : formData.whatsappNumber || DEFAULT_COUNTRY_CODE
+  )
+
+  const handlePhoneCountryChange = (countryCode: string) => {
+    onChange("phone", buildPhoneNumber(countryCode, phoneParsed.nationalNumber))
+  }
+
+  const handlePhoneNationalChange = (value: string) => {
+    const digits = value.replace(/[^0-9]/g, "")
+    const maxDigits = getMaxNationalDigits(phoneParsed.countryCode)
+    if (digits.length <= maxDigits) {
+      onChange("phone", buildPhoneNumber(phoneParsed.countryCode, digits))
+    }
+  }
+
+  const handleWhatsappCountryChange = (countryCode: string) => {
+    onChange("whatsappNumber", buildPhoneNumber(countryCode, whatsappParsed.nationalNumber))
+  }
+
+  const handleWhatsappNationalChange = (value: string) => {
+    const digits = value.replace(/[^0-9]/g, "")
+    const maxDigits = getMaxNationalDigits(whatsappParsed.countryCode)
+    if (digits.length <= maxDigits) {
+      onChange("whatsappNumber", buildPhoneNumber(whatsappParsed.countryCode, digits))
+    }
+  }
+
+  const countryCodeSelectClass =
+    "country-code-select sds-input shrink-0 cursor-pointer text-[#1F4068]"
+
+  const phoneInputRowClass = "flex items-stretch gap-2 min-w-0"
 
   // Sync current address with permanent address when checkbox is checked
   useEffect(() => {
@@ -251,136 +299,124 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
   ])
 
   return (
-    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      
-      {/* Communication Section */}
-      <div className="space-y-8">
-        <div className="flex items-center gap-4 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
-            <span className="text-[#3bb9ac] font-black text-xs">01</span>
-          </div>
-          <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Contact</h4>
-            <h3 className="text-xl font-light text-gray-900 tracking-tight">Phone & WhatsApp</h3>
-          </div>
-          <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50 shadow-[0_20px_50px_-20px_rgba(59,185,172,0.05)]">
-          <div className="flex flex-col space-y-3">
-            <Label htmlFor="phone" className="sds-label ml-1">Phone Number *</Label>
-            <div className="relative group">
-              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#3bb9ac]/40 font-black text-[11px] pointer-events-none z-10 transition-colors group-focus-within:text-[#3bb9ac] tracking-widest">
-                +91
-              </div>
-              <Input
-                id="phone"
-                type="tel"
-                value={formData.phone.startsWith("+91") ? formData.phone.slice(3) : formData.phone}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, "")
-                  if (value.length <= 10) {
-                    onChange("phone", value ? `+91${value}` : "+91")
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Backspace" && formData.phone === "+91") {
-                    e.preventDefault()
-                  }
-                }}
-                placeholder="e.g., 9876543210"
-                maxLength={10}
-                required
-                className="sds-input pl-16 w-full"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <Label htmlFor="whatsappNumber" className="sds-label">WhatsApp Number *</Label>
-              <div 
-                className="flex items-center gap-2 cursor-pointer group/toggle"
-                onClick={() => {
-                  const newVal = !isWhatsappSameAsPhone;
-                  setIsWhatsappSameAsPhone(newVal);
-                  if (newVal) onChange("whatsappNumber", formData.phone);
-                }}
-              >
-                <div className={`w-8 h-4 rounded-full transition-all duration-300 relative ${isWhatsappSameAsPhone ? "bg-emerald-500" : "bg-gray-200"}`}>
-                  <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all duration-300 ${isWhatsappSameAsPhone ? "left-4.5" : "left-0.5"}`} />
-                </div>
-                <span className="text-[8px] font-black uppercase tracking-widest text-[#3bb9ac]/40 group-hover/toggle:text-[#3bb9ac] transition-colors">Same as Phone</span>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="setup-section-stack">
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={Phone}
+            title="Phone & WhatsApp"
+            description="Contact numbers for communication"
+          />
+          <div className={`${SETUP_SECTION_BODY} grid-cols-1 md:grid-cols-2`}>
+            <div className="space-y-1.5">
+              <Label htmlFor="phone" className="sds-label">Phone Number *</Label>
+              <div className={phoneInputRowClass}>
+                <select
+                  id="phoneCountryCode"
+                  value={phoneParsed.countryCode}
+                  onChange={(e) => handlePhoneCountryChange(e.target.value)}
+                  className={countryCodeSelectClass}
+                  aria-label="Phone country code"
+                >
+                  {COUNTRY_CODES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.flag} {c.code}
+                    </option>
+                  ))}
+                </select>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={phoneParsed.nationalNumber}
+                  onChange={(e) => handlePhoneNationalChange(e.target.value)}
+                  placeholder="e.g., 9876543210"
+                  maxLength={getMaxNationalDigits(phoneParsed.countryCode)}
+                  required
+                  className="sds-input flex-1 min-w-0 w-full"
+                />
               </div>
             </div>
-            <div className="relative group">
-              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#3bb9ac]/40 font-black text-[11px] pointer-events-none z-10 transition-colors group-focus-within:text-[#3bb9ac] tracking-widest">
-                +91
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="whatsappNumber" className="sds-label mb-0">WhatsApp Number *</Label>
+                <label className="flex items-center gap-2 cursor-pointer shrink-0 select-none">
+                  <input
+                    type="checkbox"
+                    checked={isWhatsappSameAsPhone}
+                    onChange={(e) => {
+                      const newVal = e.target.checked
+                      setIsWhatsappSameAsPhone(newVal)
+                      if (newVal) onChange("whatsappNumber", formData.phone || DEFAULT_COUNTRY_CODE)
+                    }}
+                    className="h-3.5 w-3.5 rounded border-[#f0ebe3] text-[#e87898] focus:ring-2 focus:ring-[#e87898]/20"
+                  />
+                  <span className="text-[10px] font-medium uppercase tracking-wide text-[#6b7280]">
+                    Same as Phone
+                  </span>
+                </label>
               </div>
-              <Input
-                id="whatsappNumber"
-                type="tel"
-                value={formData.whatsappNumber.startsWith("+91") ? formData.whatsappNumber.slice(3) : formData.whatsappNumber}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, "")
-                  if (value.length <= 10) {
-                    onChange("whatsappNumber", value ? `+91${value}` : "+91")
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Backspace" && formData.whatsappNumber === "+91") {
-                    e.preventDefault()
-                  }
-                }}
-                placeholder="e.g., 9876543210"
-                maxLength={10}
-                required
-                disabled={isWhatsappSameAsPhone}
-                className={`sds-input pl-16 w-full ${isWhatsappSameAsPhone ? "opacity-40 grayscale cursor-not-allowed border-dashed bg-black/[0.02]" : ""}`}
-              />
+              <div className={phoneInputRowClass}>
+                <select
+                  id="whatsappCountryCode"
+                  value={whatsappParsed.countryCode}
+                  onChange={(e) => handleWhatsappCountryChange(e.target.value)}
+                  disabled={isWhatsappSameAsPhone}
+                  className={`${countryCodeSelectClass} ${isWhatsappSameAsPhone ? "opacity-40 cursor-not-allowed" : ""}`}
+                  aria-label="WhatsApp country code"
+                >
+                  {COUNTRY_CODES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.flag} {c.code}
+                    </option>
+                  ))}
+                </select>
+                <Input
+                  id="whatsappNumber"
+                  type="tel"
+                  value={whatsappParsed.nationalNumber}
+                  onChange={(e) => handleWhatsappNationalChange(e.target.value)}
+                  placeholder="e.g., 9876543210"
+                  maxLength={getMaxNationalDigits(whatsappParsed.countryCode)}
+                  required
+                  disabled={isWhatsappSameAsPhone}
+                  className={`sds-input flex-1 min-w-0 w-full ${isWhatsappSameAsPhone ? "opacity-40 cursor-not-allowed border-dashed bg-black/[0.02]" : ""}`}
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Permanent Address Section */}
-      <div className="space-y-8">
-        <div className="flex items-center gap-4 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
-            <span className="text-[#3bb9ac] font-black text-xs">02</span>
-          </div>
-          <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Permanent Address</h4>
-            <h3 className="text-xl font-light text-gray-900 tracking-tight">Where you live permanently</h3>
-          </div>
-          <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
-        </div>
-
-        <div className="sds-glass rounded-[2.5rem] p-10 border-indigo-50/50 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3 md:col-span-2">
-              <Label htmlFor="permanentAddressLine1" className="sds-label ml-1">Address Line 1 *</Label>
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={Home}
+            title="Permanent address"
+            description="Where you live permanently"
+          />
+          <div className={`${SETUP_SECTION_BODY} grid-cols-1 md:grid-cols-2`}>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label htmlFor="permanentAddressLine1" className="sds-label">Address Line 1 *</Label>
               <Input
                 id="permanentAddressLine1"
                 value={formData.permanentAddressLine1}
                 onChange={(e) => onChange("permanentAddressLine1", e.target.value)}
                 placeholder="e.g., Flat No. 402, Sunshine Apartments"
                 required
-                className="sds-input w-full px-6"
+                className="sds-input w-full"
               />
             </div>
-            <div className="space-y-3 md:col-span-2">
-              <Label htmlFor="permanentAddressLine2" className="sds-label ml-1">Address Line 2</Label>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label htmlFor="permanentAddressLine2" className="sds-label">Address Line 2</Label>
               <Input
                 id="permanentAddressLine2"
                 value={formData.permanentAddressLine2}
                 onChange={(e) => onChange("permanentAddressLine2", e.target.value)}
                 placeholder="e.g., 123, Green Street, Apartment 4B"
-                className="sds-input w-full px-6"
+                className="sds-input w-full"
               />
             </div>
-            <div className="space-y-3">
-              <Label htmlFor="permanentPincode" className="sds-label ml-1">Pincode *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="permanentPincode" className="sds-label">Pincode *</Label>
               <div className="relative">
                 <Input
                   id="permanentPincode"
@@ -395,31 +431,31 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                   placeholder="e.g., 600017"
                   maxLength={6}
                   required
-                  className={`sds-input w-full px-6 font-black tracking-widest ${isLoadingPermanentAddress ? "pr-14" : ""}`}
+                  className={`sds-input w-full font-black tracking-widest ${isLoadingPermanentAddress ? "pr-10" : ""}`}
                 />
                 {isLoadingPermanentAddress && (
-                  <div className="absolute right-5 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#3bb9ac]/20 border-t-[#3bb9ac]"></div>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#e87898]/20 border-t-[#e87898]"></div>
                   </div>
                 )}
               </div>
             </div>
-            <div className="space-y-3">
-              <Label htmlFor="permanentArea" className="sds-label ml-1">Area / Colony *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="permanentArea" className="sds-label">Area / Colony *</Label>
               <div className="relative" ref={permanentAreaRef}>
                 <button
                   type="button"
                   onClick={() => permanentAreas.length > 0 && setIsPermanentAreaOpen(!isPermanentAreaOpen)}
                   disabled={isLoadingPermanentAddress || permanentAreas.length === 0}
-                  className="sds-input w-full h-14 px-6 flex items-center justify-between text-left disabled:opacity-50 disabled:cursor-not-allowed group transition-all"
+                  className="sds-input w-full flex items-center justify-between text-left disabled:opacity-50 disabled:cursor-not-allowed group transition-all"
                 >
                   <span className={`text-[11px] font-bold tracking-widest uppercase ${formData.permanentArea ? "text-gray-900" : "text-gray-300"}`}>
                     {formData.permanentArea || (isLoadingPermanentAddress ? "Scanning..." : "Select Area")}
                   </span>
-                  <ChevronDown className={`h-4 w-4 text-[#3bb9ac]/40 transition-transform duration-500 ${isPermanentAreaOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-4 w-4 text-[#e87898]/40 transition-transform duration-500 ${isPermanentAreaOpen ? "rotate-180" : ""}`} />
                 </button>
                 {isPermanentAreaOpen && permanentAreas.length > 0 && (
-                  <div className="absolute z-50 w-full mt-3 sds-glass rounded-3xl shadow-2xl border-indigo-50/50 backdrop-blur-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                  <div className="absolute z-50 w-full mt-3 sds-glass rounded-3xl shadow-2xl border-[#f0ebe3] backdrop-blur-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                     <div className="overflow-y-auto max-h-[250px] p-2 space-y-1 custom-scrollbar">
                       {permanentAreas.map((postOffice, index) => (
                         <button
@@ -427,9 +463,9 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                           type="button"
                           onClick={() => handleAreaSelect(postOffice, "permanent")}
                           className={`w-full px-5 py-3.5 rounded-2xl text-left text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
-                            formData.permanentArea === postOffice.Name 
-                            ? "bg-[#3bb9ac] text-white shadow-lg shadow-indigo-900/20" 
-                            : "hover:bg-indigo-50/50 text-gray-500 hover:text-[#3bb9ac]"
+                            formData.permanentArea === postOffice.Name
+                              ? "bg-[#e87898] text-white shadow-lg shadow-[#e87898]/15"
+                              : "hover:bg-[#fce8ef]/80 text-gray-500 hover:text-[#e87898]"
                           }`}
                         >
                           {postOffice.Name}
@@ -440,82 +476,83 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                 )}
               </div>
             </div>
-            <div className="space-y-3">
-              <Label htmlFor="permanentDistrict" className="sds-label ml-1">District</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="permanentDistrict" className="sds-label">District</Label>
               <Input
                 id="permanentDistrict"
                 value={formData.permanentDistrict}
                 readOnly
-                className="sds-input w-full px-6 bg-black/[0.02] border-none opacity-40 grayscale cursor-not-allowed font-medium italic"
+                className="sds-input w-full bg-black/[0.02] border-none opacity-40 grayscale cursor-not-allowed font-medium italic"
               />
             </div>
-            <div className="space-y-3">
-              <Label htmlFor="permanentState" className="sds-label ml-1">State</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="permanentState" className="sds-label">State</Label>
               <Input
                 id="permanentState"
                 value={formData.permanentState}
                 readOnly
-                className="sds-input w-full px-6 bg-black/[0.02] border-none opacity-40 grayscale cursor-not-allowed font-medium italic"
+                className="sds-input w-full bg-black/[0.02] border-none opacity-40 grayscale cursor-not-allowed font-medium italic"
               />
             </div>
-            <div className="space-y-3 md:col-span-2">
-              <Label htmlFor="permanentLandmark" className="sds-label ml-1">Landmark</Label>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label htmlFor="permanentLandmark" className="sds-label">Landmark</Label>
               <Input
                 id="permanentLandmark"
                 value={formData.permanentLandmark}
                 onChange={(e) => onChange("permanentLandmark", e.target.value)}
                 placeholder="e.g., Near City Hospital / Opp. Post Office"
-                className="sds-input w-full px-6"
+                className="sds-input w-full"
               />
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Current Address Section */}
-      <div className="space-y-8">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
-              <span className="text-[#3bb9ac] font-black text-xs">03</span>
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Current Location</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Where you live now</h3>
+        <div className={SETUP_SECTION_CARD}>
+          <div className="border-b border-[#f0ebe3]/80 px-3.5 py-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-[14px] font-semibold text-[#1F4068] flex items-center gap-2.5">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#fce8ef]">
+                    <MapPin className="h-3.5 w-3.5 text-[#e87898]" />
+                  </span>
+                  Current location
+                </h3>
+                <p className="text-[12px] text-[#6b7280] mt-1 ml-[38px]">Where you live now</p>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer select-none shrink-0 mt-0.5">
+                <input
+                  type="checkbox"
+                  checked={isCurrentAddressSameAsPermanent}
+                  onChange={(e) => {
+                    const newVal = e.target.checked
+                    setIsCurrentAddressSameAsPermanent(newVal)
+                    if (newVal) {
+                      onChange("currentAddressLine1", formData.permanentAddressLine1)
+                      onChange("currentAddressLine2", formData.permanentAddressLine2)
+                      onChange("currentPincode", formData.permanentPincode)
+                      onChange("currentArea", formData.permanentArea)
+                      onChange("currentTaluk", formData.permanentTaluk)
+                      onChange("currentDistrict", formData.permanentDistrict)
+                      onChange("currentDivision", formData.permanentDivision)
+                      onChange("currentRegion", formData.permanentRegion)
+                      onChange("currentState", formData.permanentState)
+                      onChange("currentCountry", formData.permanentCountry)
+                      onChange("currentLandmark", formData.permanentLandmark)
+                    }
+                  }}
+                  className="h-3.5 w-3.5 rounded border-[#f0ebe3] text-[#e87898] focus:ring-2 focus:ring-[#e87898]/20"
+                />
+                <span className="text-[10px] font-medium uppercase tracking-wide text-[#6b7280]">
+                  Same as Permanent
+                </span>
+              </label>
             </div>
           </div>
-          
-          <div 
-            className="group flex items-center gap-3 cursor-pointer select-none"
-            onClick={() => {
-              const newVal = !isCurrentAddressSameAsPermanent;
-              setIsCurrentAddressSameAsPermanent(newVal);
-              if (newVal) {
-                onChange("currentAddressLine1", formData.permanentAddressLine1);
-                onChange("currentAddressLine2", formData.permanentAddressLine2);
-                onChange("currentPincode", formData.permanentPincode);
-                onChange("currentArea", formData.permanentArea);
-                onChange("currentTaluk", formData.permanentTaluk);
-                onChange("currentDistrict", formData.permanentDistrict);
-                onChange("currentDivision", formData.permanentDivision);
-                onChange("currentRegion", formData.permanentRegion);
-                onChange("currentState", formData.permanentState);
-                onChange("currentCountry", formData.permanentCountry);
-                onChange("currentLandmark", formData.permanentLandmark);
-              }
-            }}
+          <div
+            className={`${SETUP_SECTION_BODY} grid-cols-1 md:grid-cols-2 transition-all duration-700 ${isCurrentAddressSameAsPermanent ? "opacity-30 grayscale pointer-events-none scale-[0.98]" : ""}`}
           >
-            <div className={`w-10 h-5 rounded-full transition-all duration-300 relative ${isCurrentAddressSameAsPermanent ? "bg-[#3bb9ac]" : "bg-gray-200"}`}>
-              <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${isCurrentAddressSameAsPermanent ? "left-6" : "left-1"}`} />
-            </div>
-            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#3bb9ac]/60 group-hover:text-[#3bb9ac] transition-colors">Same as Permanent</span>
-          </div>
-        </div>
-
-        <div className={`sds-glass rounded-[2.5rem] p-10 border-indigo-50/50 space-y-8 transition-all duration-700 ${isCurrentAddressSameAsPermanent ? "opacity-30 grayscale pointer-events-none scale-[0.98]" : ""}`}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3 md:col-span-2">
-              <Label htmlFor="currentAddressLine1" className="sds-label ml-1">Address Line 1 *</Label>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label htmlFor="currentAddressLine1" className="sds-label">Address Line 1 *</Label>
               <Input
                 id="currentAddressLine1"
                 value={formData.currentAddressLine1}
@@ -523,11 +560,11 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                 placeholder="e.g., Plot No. 12, Rose Villa"
                 required
                 disabled={isCurrentAddressSameAsPermanent}
-                className="sds-input w-full px-6"
+                className="sds-input w-full"
               />
             </div>
-            <div className="space-y-3">
-              <Label htmlFor="currentPincode" className="sds-label ml-1">Pincode *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="currentPincode" className="sds-label">Pincode *</Label>
               <div className="relative">
                 <Input
                   id="currentPincode"
@@ -543,28 +580,28 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                   maxLength={6}
                   required
                   disabled={isCurrentAddressSameAsPermanent}
-                  className={`sds-input w-full px-6 font-black tracking-widest ${isLoadingCurrentAddress ? "pr-14" : ""}`}
+                  className={`sds-input w-full font-black tracking-widest ${isLoadingCurrentAddress ? "pr-10" : ""}`}
                 />
                 {isLoadingCurrentAddress && !isCurrentAddressSameAsPermanent && (
-                  <div className="absolute right-5 top-1/2 -translate-y-1/2">
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-amber-400/20 border-t-amber-500"></div>
                   </div>
                 )}
               </div>
             </div>
-            <div className="space-y-3">
-              <Label htmlFor="currentArea" className="sds-label ml-1">Area / Colony *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="currentArea" className="sds-label">Area / Colony *</Label>
               <div className="relative" ref={currentAreaRef}>
                 <button
                   type="button"
                   onClick={() => !isCurrentAddressSameAsPermanent && currentAreas.length > 0 && setIsCurrentAreaOpen(!isCurrentAreaOpen)}
                   disabled={isCurrentAddressSameAsPermanent || isLoadingCurrentAddress || currentAreas.length === 0}
-                  className="sds-input w-full h-14 px-6 flex items-center justify-between text-left disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="sds-input w-full flex items-center justify-between text-left disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <span className={`text-[11px] font-bold tracking-widest uppercase ${formData.currentArea ? "text-gray-900" : "text-gray-300"}`}>
                     {formData.currentArea || (isLoadingCurrentAddress ? "Syncing..." : "Select Area")}
                   </span>
-                  <ChevronDown className={`h-4 w-4 text-[#3bb9ac]/40 transition-transform duration-500 ${isCurrentAreaOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-4 w-4 text-[#e87898]/40 transition-transform duration-500 ${isCurrentAreaOpen ? "rotate-180" : ""}`} />
                 </button>
                 {isCurrentAreaOpen && !isCurrentAddressSameAsPermanent && currentAreas.length > 0 && (
                   <div className="absolute z-50 w-full mt-3 sds-glass rounded-3xl shadow-2xl border-amber-50/50 backdrop-blur-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -575,9 +612,9 @@ export function ContactDetailsStep({ formData, onChange }: ContactDetailsStepPro
                           type="button"
                           onClick={() => handleAreaSelect(postOffice, "current")}
                           className={`w-full px-5 py-3.5 rounded-2xl text-left text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
-                            formData.currentArea === postOffice.Name 
-                            ? "bg-amber-500 text-white shadow-lg shadow-amber-900/20" 
-                            : "hover:bg-amber-50/50 text-gray-500 hover:text-amber-700"
+                            formData.currentArea === postOffice.Name
+                              ? "bg-amber-500 text-white shadow-lg shadow-amber-900/20"
+                              : "hover:bg-amber-50/50 text-gray-500 hover:text-amber-700"
                           }`}
                         >
                           {postOffice.Name}

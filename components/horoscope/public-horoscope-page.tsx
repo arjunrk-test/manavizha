@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Zap,
@@ -13,6 +13,7 @@ import {
   Shield,
   Star,
   Info,
+  Save,
 } from "lucide-react"
 import { generateHoroscope, PLANETS } from "@/lib/astrology"
 import { toast } from "sonner"
@@ -21,18 +22,26 @@ import { GlobalLocationSelector } from "@/components/ui/global-location-selector
 import { PremiumDatePicker } from "@/components/ui/premium-date-picker"
 import { PremiumTimePicker } from "@/components/ui/premium-time-picker"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 import { cn } from "@/lib/utils"
 import { createWorker } from "tesseract.js"
 import tzlookup from "tz-lookup"
+import axios from "axios"
 import { DetailedHoroscopeView } from "@/components/detailed-horoscope-view"
 import { Navbar } from "@/components/navbar"
 import { HoroscopePreviewPanel } from "@/components/horoscope/horoscope-preview-panel"
+import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
+import { supabase } from "@/lib/supabase"
 
 const fieldLabelClass = "text-xs font-medium text-[#1F4068]/70 block"
 
 const fieldInputClass =
-  "w-full h-11 rounded-xl border border-gray-200/90 bg-white px-4 text-sm text-[#1F4068] placeholder:text-gray-400 focus:border-[#3bb9ac] focus:ring-4 focus:ring-[#3bb9ac]/10 shadow-sm outline-none"
+  "w-full h-11 rounded-xl border border-[#f0ebe3] bg-white px-4 text-sm text-[#1F4068] placeholder:text-[#9ca3af] focus:border-[#e87898] focus:ring-4 focus:ring-[#e87898]/10 shadow-sm outline-none"
+
+interface PublicHoroscopePageProps {
+  variant?: "public" | "dashboard"
+  userId?: string | null
+}
 
 const horoscopePrimaryBtn =
   "!bg-[#e87898] !text-white shadow-md hover:!bg-[#d4567a] hover:!text-white"
@@ -59,7 +68,8 @@ function HoroscopeIntro({ className }: { className?: string }) {
   )
 }
 
-export function PublicHoroscopePage() {
+export function PublicHoroscopePage({ variant = "public", userId = null }: PublicHoroscopePageProps) {
+  const isDashboard = variant === "dashboard"
   const [name, setName] = useState("")
   const [entryMode, setEntryMode] = useState<"auto" | "manual">("auto")
   const [dob, setDob] = useState<Date | undefined>(undefined)
@@ -71,6 +81,8 @@ export function PublicHoroscopePage() {
     latitude: 13.0827,
     longitude: 80.2707,
   })
+  const [isLoadingProfile, setIsLoadingProfile] = useState(isDashboard)
+  const [isSaving, setIsSaving] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [thirukanithamResult, setThirukanithamResult] = useState<any>(null)
   const [vakkiyamResult, setVakkiyamResult] = useState<any>(null)
@@ -89,6 +101,117 @@ export function PublicHoroscopePage() {
   const [isOcrLoading, setIsOcrLoading] = useState(false)
   const [, setOcrProgress] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!isDashboard || !userId) {
+      setIsLoadingProfile(false)
+      return
+    }
+
+    const loadProfile = async () => {
+      try {
+        let initDob: string | null = null
+        let initTob: string | null = null
+        let initCity: string | null = null
+        if (typeof window !== "undefined") {
+          const searchParams = new URLSearchParams(window.location.search)
+          initDob = searchParams.get("dob")
+          initTob = searchParams.get("tob")
+          initCity = searchParams.get("city")
+        }
+
+        if (initDob) {
+          setDob(parseISO(initDob))
+        } else {
+          const { data: profile } = await supabase
+            .from("personal_details")
+            .select("name, date_of_birth")
+            .eq("user_id", userId)
+            .maybeSingle()
+          if (profile?.date_of_birth) setDob(parseISO(profile.date_of_birth))
+          if (profile?.name) setName(profile.name)
+        }
+
+        const { data: horo } = await supabase
+          .from("horoscope_details")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (initTob) setTob(initTob)
+        else if (horo?.time_of_birth) setTob(horo.time_of_birth)
+
+        const city = initCity || horo?.place_of_birth || "Chennai"
+        try {
+          const res = await axios.get(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1&addressdetails=1`,
+            { headers: { Accept: "application/json" } }
+          )
+          const data = res.data
+          if (data?.[0]) {
+            setPob({
+              city,
+              state: data[0].address?.state || "Tamil Nadu",
+              country: data[0].address?.country || "India",
+              latitude: parseFloat(data[0].lat),
+              longitude: parseFloat(data[0].lon),
+            })
+          } else {
+            setPob((prev) => ({ ...prev, city }))
+          }
+        } catch {
+          setPob((prev) => ({ ...prev, city }))
+        }
+      } catch (err) {
+        console.error("Error loading profile for horoscope:", err)
+      } finally {
+        setIsLoadingProfile(false)
+      }
+    }
+
+    loadProfile()
+  }, [isDashboard, userId])
+
+  const handleSaveToProfile = async () => {
+    if (!activeResult || !userId) return
+
+    setIsSaving(true)
+    try {
+      const horoscopeData = {
+        user_id: userId,
+        star: activeResult.star,
+        zodiac_sign: activeResult.rashi,
+        lagnam: activeResult.lagnam,
+        time_of_birth: entryMode === "auto" ? tob : null,
+        place_of_birth: entryMode === "auto" ? pob.city : "Manual Entry",
+        birth_state: entryMode === "auto" ? pob.state : null,
+        birth_country: entryMode === "auto" ? pob.country : null,
+        manual_grid: manualPlacements,
+        completion_percentage: 100,
+        updated_at: new Date().toISOString(),
+        dhosham: activeResult.papaPulligal
+          ? [
+              activeResult.papaPulligal.sevvaiDosham === "தோஷம் உள்ளது" ? "செவ்வாய் தோஷம்" : null,
+              activeResult.papaPulligal.rahuDosham === "தோஷம் உள்ளது" ? "ராகு தோஷம்" : null,
+            ]
+              .filter(Boolean)
+              .join(", ") || "தோஷம் இல்லை"
+          : null,
+      }
+
+      const { error } = await supabase
+        .from("horoscope_details")
+        .upsert(horoscopeData, { onConflict: "user_id" })
+
+      if (error) throw error
+      toast.success("Horoscope saved to your profile!")
+    } catch (err: any) {
+      console.error("Error saving horoscope:", err)
+      toast.error(`Failed to save: ${err.message || "Unknown error"}`)
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   const handleOcrUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -203,11 +326,27 @@ export function PublicHoroscopePage() {
     window.print()
   }
 
-  return (
-    <div className="min-h-screen bg-[#faf8f4] flex flex-col [&_*]:not-italic">
-      <Navbar />
+  if (isDashboard && isLoadingProfile) {
+    return <DashboardLoadingScreen />
+  }
 
-      <main className="flex-1 pt-[4.5rem] pb-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+  return (
+    <div
+      className={cn(
+        "flex flex-col [&_*]:not-italic",
+        isDashboard ? "min-h-0" : "min-h-screen bg-[#faf8f4]"
+      )}
+    >
+      {!isDashboard && <Navbar />}
+
+      <main
+        className={cn(
+          "flex-1 relative overflow-hidden",
+          isDashboard
+            ? "px-4 sm:px-6 lg:px-8 py-6 sm:py-8"
+            : "pt-[4.5rem] pb-8 px-4 sm:px-6 lg:px-8"
+        )}
+      >
         {/* Background sparkles */}
         <div className="pointer-events-none absolute inset-0" aria-hidden>
           <div
@@ -240,7 +379,7 @@ export function PublicHoroscopePage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 xl:gap-10 lg:items-stretch">
             {/* Left — form */}
-            <div className="lg:sticky lg:top-[4.5rem] lg:self-start">
+            <div className={cn("lg:sticky lg:self-start", isDashboard ? "lg:top-4" : "lg:top-[4.5rem]")}>
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -350,7 +489,7 @@ export function PublicHoroscopePage() {
                         className="space-y-4"
                       >
                         <div className="rounded-xl bg-[#faf8f4] border border-gray-100/90 p-5 text-center">
-                          <MousePointer2 className="h-8 w-8 text-[#3bb9ac] mx-auto mb-3" />
+                          <MousePointer2 className="h-8 w-8 text-[#e87898] mx-auto mb-3" />
                           <h4 className="text-sm font-semibold text-[#1F4068] mb-1">Grid editor</h4>
                           <p className="text-xs text-gray-600 leading-relaxed">
                             Click on chart boxes to place planets manually.
@@ -366,9 +505,9 @@ export function PublicHoroscopePage() {
                         <Button
                           variant="outline"
                           onClick={() => fileInputRef.current?.click()}
-                          className="w-full h-14 rounded-xl border border-dashed border-gray-200 bg-white hover:bg-[#faf8f4] hover:border-[#3bb9ac]/40 text-[#1F4068] flex flex-col items-center justify-center gap-1.5"
+                          className="w-full h-14 rounded-xl border border-dashed border-[#f0ebe3] bg-white hover:bg-[#faf8f4] hover:border-[#e87898]/40 text-[#1F4068] flex flex-col items-center justify-center gap-1.5"
                         >
-                          <ImageIcon className="h-5 w-5 text-[#3bb9ac]" />
+                          <ImageIcon className="h-5 w-5 text-[#e87898]" />
                           <span className="text-xs font-medium text-gray-600">
                             Upload chart photo to sync
                           </span>
@@ -399,9 +538,11 @@ export function PublicHoroscopePage() {
                 </div>
 
                 <div className="flex items-center gap-2 border-t border-gray-100 bg-[#faf8f4]/60 px-5 py-3">
-                  <Shield className="h-4 w-4 text-[#3bb9ac] shrink-0" strokeWidth={1.75} />
+                  <Shield className="h-4 w-4 text-[#e87898] shrink-0" strokeWidth={1.75} />
                   <p className="text-[11px] sm:text-xs text-gray-500 leading-snug">
-                    Your information is 100% private and secure. We do not store your data.
+                    {isDashboard
+                      ? "Save your chart to update horoscope details on your profile."
+                      : "Your information is 100% private and secure. We do not store your data."}
                   </p>
                 </div>
               </motion.div>
@@ -442,12 +583,33 @@ export function PublicHoroscopePage() {
                         Vakkiyam
                       </button>
                     </div>
-                    <Button
-                      onClick={handleDownloadPdf}
-                      className="h-11 px-6 rounded-xl bg-[#1F4068] hover:bg-[#163352] text-white font-semibold text-sm gap-2 shadow-md shrink-0"
-                    >
-                      <Download className="h-4 w-4" /> Download PDF
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                      {isDashboard && userId && (
+                        <Button
+                          onClick={handleSaveToProfile}
+                          disabled={isSaving}
+                          className={cn(
+                            "h-11 px-6 rounded-xl font-semibold text-sm gap-2 shadow-md",
+                            horoscopePrimaryBtn
+                          )}
+                        >
+                          {isSaving ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Save className="h-4 w-4" />
+                          )}
+                          {isSaving
+                            ? "Saving..."
+                            : `Save ${calculationMethod === "thirukanitham" ? "Thirukanitham" : "Vakkiyam"}`}
+                        </Button>
+                      )}
+                      <Button
+                        onClick={handleDownloadPdf}
+                        className="h-11 px-6 rounded-xl bg-[#1F4068] hover:bg-[#163352] text-white font-semibold text-sm gap-2 shadow-md"
+                      >
+                        <Download className="h-4 w-4" /> Download PDF
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="bg-white rounded-2xl shadow-[0_8px_32px_rgba(31,64,104,0.06)] overflow-hidden border border-gray-100/90 print:border-none print:shadow-none">
