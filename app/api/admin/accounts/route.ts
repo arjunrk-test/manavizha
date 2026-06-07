@@ -38,6 +38,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
   }
 
+  const authHeader = request.headers.get("authorization")
+  const jwt = authHeader!.slice(7)
+
   let body: Record<string, unknown>
   try {
     body = (await request.json()) as Record<string, unknown>
@@ -61,7 +64,7 @@ export async function POST(request: NextRequest) {
         if (!name || !email || !password) {
           return NextResponse.json({ success: false, error: "Name, email, and password are required" }, { status: 400 })
         }
-        const res = await createAdminAccount({ name, email, phone, role, password })
+        const res = await createAdminAccount(jwt, { name, email, phone, role, password })
         if (!res.success) {
           return NextResponse.json({ success: false, error: res.error ?? "Failed" }, { status: 400 })
         }
@@ -73,7 +76,7 @@ export async function POST(request: NextRequest) {
         if (!userId) {
           return NextResponse.json({ success: false, error: "Missing userId" }, { status: 400 })
         }
-        const res = await updateAdminRole(userId, newRole)
+        const res = await updateAdminRole(jwt, userId, newRole)
         if (!res.success) {
           return NextResponse.json({ success: false, error: res.error ?? "Failed" }, { status: 400 })
         }
@@ -84,7 +87,7 @@ export async function POST(request: NextRequest) {
         if (!userId) {
           return NextResponse.json({ success: false, error: "Missing userId" }, { status: 400 })
         }
-        const res = await revokeAdminAccess(userId)
+        const res = await revokeAdminAccess(jwt, userId)
         if (!res.success) {
           return NextResponse.json({ success: false, error: res.error ?? "Failed" }, { status: 400 })
         }
@@ -98,7 +101,7 @@ export async function POST(request: NextRequest) {
         if (!name || !email || !password) {
           return NextResponse.json({ success: false, error: "Name, email, and password are required" }, { status: 400 })
         }
-        const res = await createReferralPartnerAccount({ name, email, phone, password })
+        const res = await createReferralPartnerAccount(jwt, { name, email, phone, password })
         if (!res.success) {
           return NextResponse.json({ success: false, error: res.error ?? "Failed" }, { status: 400 })
         }

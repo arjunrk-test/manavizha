@@ -3,6 +3,10 @@
 import axios from "axios"
 import * as https from "https"
 import * as dns from 'dns'
+import { AdminAuthError, authErrorResult, requireAdminCaller, type AdminRole } from "@/lib/server/admin-auth"
+import { executeTestUserCleanup } from "@/lib/server/admin-cleanup"
+
+export type { AdminRole } from "@/lib/server/admin-auth"
 
 /** Serverless (e.g. Vercel) has a read-only FS — never write debug.txt here; use logs. */
 function adminDebugLog(message: string) {
@@ -11,9 +15,6 @@ function adminDebugLog(message: string) {
 
 // Force Node to prefer IPv4 DNS resolution
 dns.setDefaultResultOrder('ipv4first')
-
-
-export type AdminRole = "super_admin" | "admin" | "editor" | "viewer"
 
 // Resolve Supabase hostname fresh each time to avoid stale DNS cache
 async function resolveHost(): Promise<string> {
@@ -53,16 +54,20 @@ async function getAxios() {
     return instance
 }
 
-export async function createAdminAccount(data: {
+export async function createAdminAccount(
+    accessToken: string,
+    data: {
     name: string
     email: string
     phone: string
     role: AdminRole
     password?: string
-}) {
+}
+) {
     adminDebugLog(`${new Date().toISOString()} createAdminAccount: ${data.email}`)
 
     try {
+        await requireAdminCaller(accessToken, "super_admin")
         const ax = await getAxios()
 
         // Step 1: Create user in Supabase Auth
@@ -108,6 +113,9 @@ export async function createAdminAccount(data: {
         adminDebugLog(`${new Date().toISOString()} createAdminAccount SUCCESS`)
         return { success: true, user: authData }
     } catch (error: any) {
+        if (error instanceof AdminAuthError) {
+            return authErrorResult(error)
+        }
         const errorMsg = error?.response?.data?.message || error?.response?.data || error?.message || "Unknown error"
         adminDebugLog(`${new Date().toISOString()} ERROR: ${JSON.stringify(errorMsg)} STACK: ${error?.stack}`)
         console.error("Error creating admin:", errorMsg)
@@ -115,15 +123,19 @@ export async function createAdminAccount(data: {
     }
 }
 
-export async function createReferralPartnerAccount(data: {
+export async function createReferralPartnerAccount(
+    accessToken: string,
+    data: {
     name: string
     email: string
     phone: string
     password?: string
-}) {
+}
+) {
     adminDebugLog(`${new Date().toISOString()} createReferralPartnerAccount: ${data.email}`)
 
     try {
+        await requireAdminCaller(accessToken, "super_admin")
         const ax = await getAxios()
 
         // Step 1: Create user in Supabase Auth
@@ -169,6 +181,9 @@ export async function createReferralPartnerAccount(data: {
         adminDebugLog(`${new Date().toISOString()} createReferralPartnerAccount SUCCESS`)
         return { success: true, user: authData }
     } catch (error: any) {
+        if (error instanceof AdminAuthError) {
+            return authErrorResult(error)
+        }
         const errorMsg = error?.response?.data?.message || error?.response?.data || error?.message || "Unknown error"
         adminDebugLog(`${new Date().toISOString()} ERROR (Partner): ${JSON.stringify(errorMsg)} STACK: ${error?.stack}`)
         console.error("Error creating partner:", errorMsg)
@@ -176,8 +191,13 @@ export async function createReferralPartnerAccount(data: {
     }
 }
 
-export async function updateAdminRole(userId: string, newRole: AdminRole) {
+export async function updateAdminRole(accessToken: string, userId: string, newRole: AdminRole) {
     try {
+        const caller = await requireAdminCaller(accessToken, "super_admin")
+        if (caller.userId === userId) {
+            return { success: false, error: "You cannot change your own admin role" }
+        }
+
         const ax = await getAxios()
 
         // Update admins table
@@ -194,14 +214,22 @@ export async function updateAdminRole(userId: string, newRole: AdminRole) {
 
         return { success: true }
     } catch (error: any) {
+        if (error instanceof AdminAuthError) {
+            return authErrorResult(error)
+        }
         const errorMsg = error?.response?.data?.message || error?.message
         console.error("Error updating admin role:", errorMsg)
         return { success: false, error: errorMsg }
     }
 }
 
-export async function revokeAdminAccess(userId: string) {
+export async function revokeAdminAccess(accessToken: string, userId: string) {
     try {
+        const caller = await requireAdminCaller(accessToken, "super_admin")
+        if (caller.userId === userId) {
+            return { success: false, error: "You cannot revoke your own admin access" }
+        }
+
         const ax = await getAxios()
 
         // Delete from admins table
@@ -212,15 +240,19 @@ export async function revokeAdminAccess(userId: string) {
 
         return { success: true }
     } catch (error: any) {
+        if (error instanceof AdminAuthError) {
+            return authErrorResult(error)
+        }
         const errorMsg = error?.response?.data?.message || error?.message
         console.error("Error revoking admin access:", errorMsg)
         return { success: false, error: errorMsg }
     }
 }
 
-export async function getAllParentIds() {
+export async function getAllParentIds(accessToken: string) {
     adminDebugLog(`${new Date().toISOString()} getAllParentIds called`)
     try {
+        await requireAdminCaller(accessToken, "viewer")
         const ax = await getAxios()
         const { data } = await ax.get('/rest/v1/parents?select=id')
         const { data: usersData } = await ax.get('/rest/v1/users?select=id,email,name')
@@ -228,6 +260,9 @@ export async function getAllParentIds() {
         adminDebugLog(`${new Date().toISOString()} getAllParentIds SUCCESS: ${data.length} parents`)
         return { success: true, ids: data.map((p: any) => p.id) }
     } catch (error: any) {
+        if (error instanceof AdminAuthError) {
+            return { ...authErrorResult(error), ids: [] as string[] }
+        }
         const errorMsg = error?.response?.data || error?.message
         adminDebugLog(`${new Date().toISOString()} getAllParentIds ERROR: ${JSON.stringify(errorMsg)}`)
         console.error("Error fetching parent IDs:", errorMsg)
@@ -235,34 +270,33 @@ export async function getAllParentIds() {
     }
 }
 
-export async function cleanupData() {
+export async function cleanupData(accessToken: string) {
     try {
-        const ax = await getAxios()
-        const emailsToDelete = ['tls-test2@test.com', 'tls-test@test.com', 'edge2@test.com']
-        // Get users by email from the admin auth API
-        const { data: allUsers } = await ax.get('/auth/v1/admin/users?page=1&per_page=200')
-        const usersToDelete = (allUsers?.users || []).filter((u: any) => emailsToDelete.includes(u.email))
-        adminDebugLog(`${new Date().toISOString()} CLEANUP: Found ${usersToDelete.length} users to delete`)
-        for (const u of usersToDelete) {
-            await ax.delete(`/auth/v1/admin/users/${u.id}`)
-            adminDebugLog(`${new Date().toISOString()} CLEANUP: Deleted ${u.email} (${u.id})`)
-        }
-        return { success: true, deleted: usersToDelete.length }
+        await requireAdminCaller(accessToken, "super_admin")
+        adminDebugLog(`${new Date().toISOString()} CLEANUP: starting test-user cleanup`)
+        return executeTestUserCleanup()
     } catch (e: any) {
+        if (e instanceof AdminAuthError) {
+            return authErrorResult(e)
+        }
         const errorMsg = e?.response?.data || e?.message
         adminDebugLog(`${new Date().toISOString()} CLEANUP ERROR: ${JSON.stringify(errorMsg)}`)
         return { success: false, error: String(errorMsg) }
     }
 }
-export async function updateUserPremiumSubscription(data: {
+export async function updateUserPremiumSubscription(
+    accessToken: string,
+    data: {
     userId: string
     isPremium: boolean
     plan: string | null
     expiresAt: string | null
-}) {
+}
+) {
     adminDebugLog(`${new Date().toISOString()} updateUserPremiumSubscription: ${data.userId} to ${data.plan}`)
 
     try {
+        await requireAdminCaller(accessToken, "editor")
         const ax = await getAxios()
 
         // Check if user_settings exists
@@ -287,6 +321,9 @@ export async function updateUserPremiumSubscription(data: {
         adminDebugLog(`${new Date().toISOString()} updateUserPremiumSubscription SUCCESS`)
         return { success: true }
     } catch (error: any) {
+        if (error instanceof AdminAuthError) {
+            return authErrorResult(error)
+        }
         const errorMsg = error?.response?.data?.message || error?.message || "Unknown error"
         adminDebugLog(`${new Date().toISOString()} updateUserPremiumSubscription ERROR: ${JSON.stringify(errorMsg)}`)
         console.error("Error updating subscription:", errorMsg)

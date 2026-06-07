@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
+import { authFetch } from "@/lib/api-client"
 import {
   User,
   Send,
@@ -133,12 +134,12 @@ export default function MessagesPage() {
 
   const fetchUserStatus = async (uid: string) => {
     const { data } = await supabase.from("user_settings").select("is_premium").eq("user_id", uid).single()
-    setIsPremium(data?.is_premium || true)
+    setIsPremium(!!data?.is_premium)
   }
 
   const fetchConversations = async (uid: string) => {
     try {
-      const res = await fetch(`/api/messages?userId=${uid}`)
+      const res = await authFetch(`/api/messages?userId=${uid}`)
       const data = await res.json()
       if (data.error) throw new Error(data.error)
 
@@ -191,7 +192,7 @@ export default function MessagesPage() {
 
   const loadMessages = async (uid: string, targetId: string) => {
     try {
-      const res = await fetch(`/api/messages?userId=${uid}&targetUserId=${targetId}`)
+      const res = await authFetch(`/api/messages?userId=${uid}&targetUserId=${targetId}`)
       const data = await res.json()
       setMessages(data.messages || [])
 
@@ -228,11 +229,10 @@ export default function MessagesPage() {
 
     setIsSending(true)
     try {
-      const res = await fetch("/api/messages", {
+      const res = await authFetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          senderId: userId,
           receiverId: activeConversation.other_user_id,
           content: newMessage,
         }),

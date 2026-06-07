@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase"
+import { authFetch } from "@/lib/api-client"
 import { calculateLifestyleScore } from "@/lib/matching"
 import { checkTamilPorutham } from "@/lib/astrology"
 import { calculateTrustScore } from "@/lib/utils/profile-utils"
@@ -113,7 +114,7 @@ export async function fetchDailyRecommendations(userId: string) {
             supabase.from("interests").select("*").in("user_id", matchUserIds),
             supabase.from("social_habits").select("*").in("user_id", matchUserIds),
             supabase.from("horoscope_details").select("*").in("user_id", matchUserIds),
-            fetch(`/api/premium-status?userIds=${matchUserIds.join(",")}`).then(r => r.ok ? r.json() : []).catch(() => [])
+            authFetch(`/api/premium-status?userIds=${matchUserIds.join(",")}`).then(r => r.ok ? r.json() : []).catch(() => [])
         ])
 
         const combined = potentialMatches.map(p => {
@@ -172,8 +173,8 @@ export async function fetchDailyRecommendations(userId: string) {
         let filtered = combined
         if (prefs) {
             filtered = combined.filter(p => {
-                if (prefs.min_age && p.age && p.age < prefs.min_age) return false
-                if (prefs.max_age && p.age && p.age > prefs.max_age) return false
+                if (prefs.preferred_age_min && p.age && p.age < prefs.preferred_age_min) return false
+                if (prefs.preferred_age_max && p.age && p.age > prefs.preferred_age_max) return false
                 return true
             })
         }

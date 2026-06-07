@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic'
 
 import { supabase } from "@/lib/supabase"
+import { authFetch } from "@/lib/api-client"
 import { useRouter } from "next/navigation"
 import React, { use, useEffect, useState } from "react"
 import { 
@@ -99,10 +100,12 @@ export default function ProfileViewPage({
         if (!targetUserId) return
 
         const fetchProfile = async () => {
+            setIsLoading(true)
+            setProfile(null)
             try {
                 // Record the view on page load (if not viewing own profile)
                 if (currentUserId && targetUserId && currentUserId !== targetUserId) {
-                    fetch("/api/views", {
+                    authFetch("/api/views", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ viewerId: currentUserId, viewedUserId: targetUserId })
@@ -139,12 +142,10 @@ export default function ProfileViewPage({
                     supabase.from("photos").select("*").eq("user_id", targetUserId).maybeSingle(),
                     supabase.from("users").select("*, name, email, phone, updated_at, is_premium, last_active_at").eq("id", targetUserId).single(),
                     // Use server API to bypass RLS - target user's settings not readable by anon
-                    fetch(`/api/premium-status?userIds=${targetUserId}`).then(r => r.ok ? r.json() : []).catch(() => []),
+                    authFetch(`/api/premium-status?userIds=${targetUserId}`).then(r => r.ok ? r.json() : []).catch(() => []),
                 ])
 
                 if (!personal) {
-                    toast.error("Profile not found")
-                    router.push("/dashboard/browse")
                     return
                 }
 
@@ -182,8 +183,8 @@ export default function ProfileViewPage({
                 // Check initial interaction status & fetch viewer profile for matching
                 if (currentUserId) {
                     const [likesRes, shortRes, viewerRes, settingsRes] = await Promise.all([
-                        fetch(`/api/likes?userId=${currentUserId}`),
-                        fetch(`/api/shortlists?userId=${currentUserId}`),
+                        authFetch(`/api/likes?userId=${currentUserId}`),
+                        authFetch(`/api/shortlists?userId=${currentUserId}`),
                         supabase.from("personal_details").select("*").eq("user_id", currentUserId).maybeSingle(),
                         supabase.from("user_settings").select("is_premium, premium_plan").eq("user_id", currentUserId).maybeSingle()
                     ])
@@ -216,7 +217,7 @@ export default function ProfileViewPage({
                     }
 
                     // Fetch viewed-me date for this specific user
-                    const viewsRes = await fetch(`/api/views?userId=${currentUserId}`)
+                    const viewsRes = await authFetch(`/api/views?userId=${currentUserId}`)
                     if (viewsRes.ok) {
                         const viewsData = await viewsRes.json()
                         const viewMe = (viewsData.viewedMe || []).find((v: any) => v.viewer_user_id === targetUserId)
@@ -368,7 +369,7 @@ export default function ProfileViewPage({
             // If they already liked us, our reciprocal like should be 'accepted' immediately
             const status = (!isLiked && likedMeDate) ? 'accepted' : undefined
             
-            const res = await fetch("/api/likes", {
+            const res = await authFetch("/api/likes", {
                 method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
@@ -406,7 +407,7 @@ export default function ProfileViewPage({
         setIsShortlistProcessing(true)
         try {
             const method = isShortlisted ? "DELETE" : "POST"
-            const res = await fetch("/api/shortlists", {
+            const res = await authFetch("/api/shortlists", {
                 method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId: currentUserId, targetUserId }),
@@ -437,7 +438,7 @@ export default function ProfileViewPage({
         if (!confirm("Are you sure you want to ignore this profile? They will be removed from your feed.")) return
         setIsProcessing(true)
         try {
-            const res = await fetch("/api/ignores", {
+            const res = await authFetch("/api/ignores", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId: currentUserId, targetUserId }),
@@ -460,7 +461,7 @@ export default function ProfileViewPage({
         if (!confirm("Are you sure you want to block this profile permanently? This cannot be undone from here.")) return
         setIsProcessing(true)
         try {
-            const res = await fetch("/api/blocks", {
+            const res = await authFetch("/api/blocks", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId: currentUserId, targetUserId }),
@@ -479,6 +480,26 @@ export default function ProfileViewPage({
     }
 
     if (isLoading) return <DashboardLoadingScreen />
+
+    if (!profile) {
+        return (
+            <div className="min-h-screen bg-[#faf8f4] flex flex-col items-center justify-center px-4">
+                <div className="text-center max-w-md">
+                    <UserX className="h-12 w-12 text-[#9ca3af] mx-auto mb-4" />
+                    <h1 className="text-lg font-semibold text-[#1F4068] mb-2">Profile not found</h1>
+                    <p className="text-sm text-[#6b7280] mb-6">
+                        This profile may have been removed or the link is invalid.
+                    </p>
+                    <Button
+                        onClick={() => router.push("/dashboard/browse")}
+                        className="rounded-xl bg-[#e87898] hover:bg-[#d66686] text-white"
+                    >
+                        Browse profiles
+                    </Button>
+                </div>
+            </div>
+        )
+    }
 
     const calculateDetailedAge = (dobString: string, currentAge: number) => {
         if (!dobString) return `${currentAge} Years`;

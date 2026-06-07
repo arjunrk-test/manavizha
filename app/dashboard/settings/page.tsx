@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
+import { authFetch } from "@/lib/api-client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
@@ -55,7 +56,7 @@ export default function SettingsPage() {
             setUserEmail(session.user.email || "")
 
             try {
-                const setRes = await fetch(`/api/settings?userId=${session.user.id}`)
+                const setRes = await authFetch(`/api/settings?userId=${session.user.id}`)
                 if (setRes.ok) {
                     const setData = await setRes.json()
                     if (Object.keys(setData).length > 0) {
@@ -63,7 +64,7 @@ export default function SettingsPage() {
                     }
                 }
 
-                const blockRes = await fetch(`/api/blocks?userId=${session.user.id}`)
+                const blockRes = await authFetch(`/api/blocks?userId=${session.user.id}`)
                 if (blockRes.ok) {
                     const blockData = await blockRes.json()
                     if (blockData.blockedIds?.length > 0) {
@@ -72,7 +73,7 @@ export default function SettingsPage() {
                     }
                 }
 
-                const ignRes = await fetch(`/api/ignores?userId=${session.user.id}`)
+                const ignRes = await authFetch(`/api/ignores?userId=${session.user.id}`)
                 if (ignRes.ok) {
                     const ignData = await ignRes.json()
                     if (ignData.ignoredIds?.length > 0) {
@@ -93,10 +94,10 @@ export default function SettingsPage() {
         if (!userId) return
         setIsSaving(true)
         try {
-            const res = await fetch("/api/settings", {
+            const res = await authFetch("/api/settings", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId, updates: { ...settings, ...updates } })
+                body: JSON.stringify({ updates })
             })
             if (res.ok) {
                 setSettings((prev: any) => ({ ...prev, ...updates }))
@@ -118,10 +119,10 @@ export default function SettingsPage() {
             const until = new Date()
             until.setDate(until.getDate() + parseInt(deactivateDays))
             const updates = { is_deactivated: true, deactivated_until: until.toISOString() }
-            const res = await fetch("/api/settings", {
+            const res = await authFetch("/api/settings", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId, updates })
+                body: JSON.stringify({ updates })
             })
             if (res.ok) {
                 setSettings((prev: any) => ({ ...prev, ...updates }))
@@ -141,10 +142,10 @@ export default function SettingsPage() {
         setIsReactivating(true)
         try {
             const updates = { is_deactivated: false, deactivated_until: null }
-            const res = await fetch("/api/settings", {
+            const res = await authFetch("/api/settings", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId, updates })
+                body: JSON.stringify({ updates })
             })
             if (res.ok) {
                 setSettings((prev: any) => ({ ...prev, ...updates }))
@@ -173,10 +174,10 @@ export default function SettingsPage() {
                 is_deactivated: true,
                 deactivated_until: new Date(Date.now() + 365 * 10 * 24 * 60 * 60 * 1000).toISOString(),
             }
-            await fetch("/api/settings", {
+            await authFetch("/api/settings", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId, updates })
+                body: JSON.stringify({ updates })
             })
 
             setSettings((prev: any) => ({ ...prev, ...updates }))
@@ -191,7 +192,7 @@ export default function SettingsPage() {
 
     const unblockProfile = async (targetId: string) => {
         try {
-            const res = await fetch("/api/blocks", {
+            const res = await authFetch("/api/blocks", {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId, targetUserId: targetId })
@@ -207,7 +208,7 @@ export default function SettingsPage() {
 
     const unignoreProfile = async (targetId: string) => {
         try {
-            const res = await fetch("/api/ignores", {
+            const res = await authFetch("/api/ignores", {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId, targetUserId: targetId })

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import https from 'https'
 import fetch from 'node-fetch'
+import { authErrorResponse, requireAuthenticatedUser } from '@/lib/server/api-auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -32,15 +33,9 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
     global: { fetch: customFetch }
 })
 
-// GET /api/shortlists?userId=xxx — fetch all shortlisted IDs for a user
 export async function GET(request: Request) {
     try {
-        const { searchParams } = new URL(request.url)
-        const userId = searchParams.get('userId')
-
-        if (!userId) {
-            return NextResponse.json({ error: 'userId is required' }, { status: 400 })
-        }
+        const { userId } = await requireAuthenticatedUser(request)
 
         const [{ data: myShortlistData, error: e1 }, { data: shortlistedMeData, error: e2 }] = await Promise.all([
             supabaseAdmin.from('shortlists').select('shortlisted_user_id, created_at').eq('user_id', userId),
@@ -61,18 +56,18 @@ export async function GET(request: Request) {
             shortlisted: (myShortlistData || []).map((r: any) => ({ id: r.shortlisted_user_id, created_at: r.created_at })),
             shortlistedMe: (shortlistedMeData || []).map((r: any) => ({ id: r.user_id, created_at: r.created_at })),
         })
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+    } catch (error) {
+        return authErrorResponse(error)
     }
 }
 
-// POST /api/shortlists — shortlist a profile
 export async function POST(request: Request) {
     try {
-        const { userId, targetUserId } = await request.json()
+        const { userId } = await requireAuthenticatedUser(request)
+        const { targetUserId } = await request.json()
 
-        if (!userId || !targetUserId) {
-            return NextResponse.json({ error: 'userId and targetUserId are required' }, { status: 400 })
+        if (!targetUserId) {
+            return NextResponse.json({ error: 'targetUserId is required' }, { status: 400 })
         }
 
         const { error } = await supabaseAdmin
@@ -91,17 +86,20 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true })
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        if (error instanceof SyntaxError) {
+            return NextResponse.json({ error: error.message }, { status: 400 })
+        }
+        return authErrorResponse(error)
     }
 }
 
-// DELETE /api/shortlists — remove a profile from shortlist
 export async function DELETE(request: Request) {
     try {
-        const { userId, targetUserId } = await request.json()
+        const { userId } = await requireAuthenticatedUser(request)
+        const { targetUserId } = await request.json()
 
-        if (!userId || !targetUserId) {
-            return NextResponse.json({ error: 'userId and targetUserId are required' }, { status: 400 })
+        if (!targetUserId) {
+            return NextResponse.json({ error: 'targetUserId is required' }, { status: 400 })
         }
 
         const { error } = await supabaseAdmin
@@ -116,6 +114,9 @@ export async function DELETE(request: Request) {
 
         return NextResponse.json({ success: true })
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        if (error instanceof SyntaxError) {
+            return NextResponse.json({ error: error.message }, { status: 400 })
+        }
+        return authErrorResponse(error)
     }
 }

@@ -2,16 +2,14 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import fetch from 'node-fetch'
 import https from 'https'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost'
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
+import { authErrorResponse, requireAuthenticatedUser, ApiAuthError } from '@/lib/server/api-auth'
 
 const customFetch = (url: any, options: any = {}) => {
     try {
         const u = new URL(url)
         if (u.hostname === 'olktibxfpgfjkcppqbqd.supabase.co') {
             const originalHost = u.hostname
-            u.hostname = '104.18.38.10' // Real Cloudflare IP for Supabase
+            u.hostname = '104.18.38.10'
 
             options.headers = options.headers || {}
             if (typeof options.headers.set === 'function') {
@@ -43,13 +41,49 @@ const getSupabaseAdmin = () => {
     })
 }
 
+async function verifyChildCanLinkParents(
+    admin: ReturnType<typeof getSupabaseAdmin>,
+    childUserId: string
+) {
+    const { data: asParent, error: parentError } = await admin
+        .from('parents')
+        .select('id')
+        .eq('id', childUserId)
+        .maybeSingle()
+
+    if (parentError) {
+        throw new Error(`Error verifying caller: ${parentError.message}`)
+    }
+
+    if (asParent) {
+        throw new ApiAuthError(403, 'Only member accounts can link parent profiles')
+    }
+}
+
 export async function POST(request: Request) {
     try {
-        const { email, password, name, phone, role, child_user_id } = await request.json()
+        const { userId: childUserId } = await requireAuthenticatedUser(request)
+        const body = await request.json()
+        const { email, password, name, phone, role, child_user_id: clientChildId } = body
 
-        if (!email || !password || !name || !role || !child_user_id) {
+        if (clientChildId && clientChildId !== childUserId) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        }
+
+        if (!email || !password || !name || !role) {
             return NextResponse.json(
                 { error: 'Missing required fields' },
+                { status: 400 }
+            )
+        }
+
+        if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
+        }
+
+        if (typeof password !== 'string' || password.length < 6) {
+            return NextResponse.json(
+                { error: 'Password must be at least 6 characters' },
                 { status: 400 }
             )
         }
@@ -62,11 +96,12 @@ export async function POST(request: Request) {
         }
 
         const admin = getSupabaseAdmin()
-        // 1. Check if parent already exists for this child with this role
+        await verifyChildCanLinkParents(admin, childUserId)
+
         const { data: existingParent, error: existingParentError } = await admin
             .from('parents')
             .select('id')
-            .eq('child_user_id', child_user_id)
+            .eq('child_user_id', childUserId)
             .eq('role', role)
             .maybeSingle()
 
@@ -81,7 +116,6 @@ export async function POST(request: Request) {
             )
         }
 
-        // 2. Create the user in Supabase Auth using the Admin API
         const { data: authData, error: authError } = await admin.auth.admin.createUser({
             email,
             password,
@@ -105,7 +139,6 @@ export async function POST(request: Request) {
 
         const parentUserId = authData.user.id
 
-        // 3. Upsert into public.users so they can technically login and be recognized
         const { error: usersError } = await admin
             .from('users')
             .upsert({
@@ -116,17 +149,15 @@ export async function POST(request: Request) {
             }, { onConflict: 'id' })
 
         if (usersError) {
-            // Cleanup auth user if profile creation fails
             await admin.auth.admin.deleteUser(parentUserId)
             throw new Error(`Error creating public user record: ${usersError.message}`)
         }
 
-        // 4. Create the specific parents record linking them to the child
         const { data: parentRecord, error: parentError } = await admin
             .from('parents')
             .insert({
                 id: parentUserId,
-                child_user_id,
+                child_user_id: childUserId,
                 name,
                 email,
                 phone: phone || null,
@@ -136,7 +167,6 @@ export async function POST(request: Request) {
             .single()
 
         if (parentError) {
-            // Cleanup
             await admin.auth.admin.deleteUser(parentUserId)
             throw new Error(`Error creating parent profile: ${parentError.message}`)
         }
@@ -148,6 +178,12 @@ export async function POST(request: Request) {
         })
 
     } catch (error: any) {
+        if (error instanceof SyntaxError) {
+            return NextResponse.json({ error: error.message }, { status: 400 })
+        }
+        if (error instanceof ApiAuthError) {
+            return authErrorResponse(error)
+        }
         console.error('Error in /api/parents:', error)
         return NextResponse.json(
             { error: error.message || 'Internal server error' },

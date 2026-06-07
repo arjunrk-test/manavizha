@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
+import { authFetch } from "@/lib/api-client"
 import { MessageDialog } from "@/components/message-dialog"
 import { formatToDDMMYYYY, formatActivityTime } from "@/lib/utils/date-utils"
 import { cn } from "@/lib/utils"
@@ -119,7 +120,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
 
     const fetchShortlists = async () => {
         if (!userId) return
-        const res = await fetch(`/api/shortlists?userId=${userId}`)
+        const res = await authFetch(`/api/shortlists?userId=${userId}`)
         if (res.ok) {
             const data = await res.json()
             setShortlistedIds(data.shortlistedIds || [])
@@ -135,7 +136,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
         const method = isCurrentlyShortlisted ? "DELETE" : "POST"
 
         try {
-            const res = await fetch("/api/shortlists", {
+            const res = await authFetch("/api/shortlists", {
                 method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId, targetUserId: targetId }),
@@ -166,9 +167,9 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
         setIsLoading(true)
         try {
             const [likeRes, viewRes, shortRes] = await Promise.all([
-                fetch(`/api/likes?userId=${userId}`),
-                fetch(`/api/views?userId=${userId}`),
-                fetch(`/api/shortlists?userId=${userId}`)
+                authFetch(`/api/likes?userId=${userId}`),
+                authFetch(`/api/views?userId=${userId}`),
+                authFetch(`/api/shortlists?userId=${userId}`)
             ]);
             
             const data = await likeRes.json()
@@ -292,7 +293,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
     const handleUpdateStatus = async (targetId: string, status: string, isReceived: boolean) => {
         setActionLoadingId(targetId)
         try {
-            const res = await fetch("/api/likes", {
+            const res = await authFetch("/api/likes", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
@@ -314,12 +315,12 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
 
             // Reciprocal like for mutual logic
             if (isReceived && status === 'accepted') {
-                await fetch("/api/likes", {
+                await authFetch("/api/likes", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ userId, likedUserId: targetId, status: 'accepted' }),
                 })
-                const res = await fetch(`/api/likes?userId=${userId}`)
+                const res = await authFetch(`/api/likes?userId=${userId}`)
                 const data = await res.json()
                 if (res.ok) setILikedData(data.iLiked || [])
             }
@@ -333,7 +334,7 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
     const handleOpenProfile = async (profile: ProfileCard) => {
         // Record the view
         if (userId && profile.user_id && userId !== profile.user_id) {
-            fetch("/api/views", {
+            authFetch("/api/views", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ viewerId: userId, viewedUserId: profile.user_id })

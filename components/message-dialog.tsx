@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
+import { authFetch } from "@/lib/api-client"
 import { MessageCircle, Send, Crown } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -42,11 +43,10 @@ export function MessageDialog({
 
         setIsSending(true)
         try {
-            const res = await fetch("/api/messages", {
+            const res = await authFetch("/api/messages", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    senderId,
                     receiverId,
                     content: message
                 })

@@ -2,6 +2,7 @@
 
 import { updateUserPremiumSubscription } from "@/app/actions/admin"
 import { DashboardJourneyPatterns } from "@/components/dashboard/dashboard-journey-patterns"
+import { getAccessToken } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
@@ -420,7 +421,14 @@ export function AdminProfilesPanel({
       expiresAt = date.toISOString()
     }
 
-    const { success, error } = await updateUserPremiumSubscription({
+    const accessToken = await getAccessToken()
+    if (!accessToken) {
+      toast.error("Not authenticated")
+      setIsUpdatingPremium(null)
+      return
+    }
+
+    const { success, error } = await updateUserPremiumSubscription(accessToken, {
       userId: manageSubUserId,
       isPremium,
       plan,

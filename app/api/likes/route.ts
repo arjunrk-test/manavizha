@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import fetch from 'node-fetch'
 import https from 'https'
+import { authErrorResponse, requireAuthenticatedUser } from '@/lib/server/api-auth'
 
 
 const customFetch = (url: any, options: any = {}) => {
@@ -39,16 +40,20 @@ const getSupabaseAdmin = () => {
     })
 }
 
-// GET /api/likes?userId=xxx — fetch all likes data for a user
+function resolveLikeParticipants(authUserId: string, userId?: string, likedUserId?: string) {
+    if (!userId || !likedUserId) return null
+    if (userId === authUserId) {
+        return { likerId: authUserId, likedId: likedUserId }
+    }
+    if (likedUserId === authUserId) {
+        return { likerId: userId, likedId: authUserId }
+    }
+    return null
+}
+
 export async function GET(request: Request) {
     try {
-        const { searchParams } = new URL(request.url)
-        const userId = searchParams.get('userId')
-
-        if (!userId) {
-            return NextResponse.json({ error: 'userId is required' }, { status: 400 })
-        }
-
+        const { userId } = await requireAuthenticatedUser(request)
         const admin = getSupabaseAdmin()
         const [{ data: iLikedData, error: e1 }, { data: likedMeData, error: e2 }] = await Promise.all([
             admin.from('likes').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
@@ -73,18 +78,19 @@ export async function GET(request: Request) {
                 status: r.status || 'pending'
             })),
         })
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+    } catch (error) {
+        return authErrorResponse(error)
     }
 }
 
-// PATCH /api/likes — update status (accept/decline) or mark as read
 export async function PATCH(request: Request) {
     try {
+        const { userId: authUserId } = await requireAuthenticatedUser(request)
         const { userId, likedUserId, status, is_read } = await request.json()
 
-        if (!userId || !likedUserId) {
-            return NextResponse.json({ error: 'userId and likedUserId are required' }, { status: 400 })
+        const participants = resolveLikeParticipants(authUserId, userId, likedUserId)
+        if (!participants) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
 
         const admin = getSupabaseAdmin()
@@ -95,8 +101,8 @@ export async function PATCH(request: Request) {
         const { error } = await admin
             .from('likes')
             .update(updateData)
-            .eq('user_id', userId)
-            .eq('liked_user_id', likedUserId)
+            .eq('user_id', participants.likerId)
+            .eq('liked_user_id', participants.likedId)
 
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 500 })
@@ -104,26 +110,27 @@ export async function PATCH(request: Request) {
 
         return NextResponse.json({ success: true })
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        if (error instanceof SyntaxError) {
+            return NextResponse.json({ error: error.message }, { status: 400 })
+        }
+        return authErrorResponse(error)
     }
 }
 
-// POST /api/likes — like a profile
 export async function POST(request: Request) {
     try {
-        const { userId, likedUserId, status } = await request.json()
+        const { userId: authUserId } = await requireAuthenticatedUser(request)
+        const { likedUserId, status } = await request.json()
 
-        if (!userId || !likedUserId) {
-            return NextResponse.json({ error: 'userId and likedUserId are required' }, { status: 400 })
+        if (!likedUserId) {
+            return NextResponse.json({ error: 'likedUserId is required' }, { status: 400 })
         }
 
         const admin = getSupabaseAdmin()
-        const insertData: any = { user_id: userId, liked_user_id: likedUserId }
+        const insertData: any = { user_id: authUserId, liked_user_id: likedUserId }
         if (status) insertData.status = status
 
-        const { error } = await admin
-            .from('likes')
-            .insert(insertData)
+        const { error } = await admin.from('likes').insert(insertData)
 
         if (error) {
             if (error.code === '23505') {
@@ -134,24 +141,27 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true })
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        if (error instanceof SyntaxError) {
+            return NextResponse.json({ error: error.message }, { status: 400 })
+        }
+        return authErrorResponse(error)
     }
 }
 
-// DELETE /api/likes — unlike a profile
 export async function DELETE(request: Request) {
     try {
-        const { userId, likedUserId } = await request.json()
+        const { userId: authUserId } = await requireAuthenticatedUser(request)
+        const { likedUserId } = await request.json()
 
-        if (!userId || !likedUserId) {
-            return NextResponse.json({ error: 'userId and likedUserId are required' }, { status: 400 })
+        if (!likedUserId) {
+            return NextResponse.json({ error: 'likedUserId is required' }, { status: 400 })
         }
 
         const admin = getSupabaseAdmin()
         const { error } = await admin
             .from('likes')
             .delete()
-            .eq('user_id', userId)
+            .eq('user_id', authUserId)
             .eq('liked_user_id', likedUserId)
 
         if (error) {
@@ -160,6 +170,9 @@ export async function DELETE(request: Request) {
 
         return NextResponse.json({ success: true })
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        if (error instanceof SyntaxError) {
+            return NextResponse.json({ error: error.message }, { status: 400 })
+        }
+        return authErrorResponse(error)
     }
 }

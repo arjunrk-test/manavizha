@@ -56,6 +56,7 @@ import { DashboardStatsRow } from "./dashboard/dashboard-stats-row"
 import { DashboardDailyRecommendations } from "./dashboard/dashboard-daily-recommendations"
 import { DashboardJourneyPanel } from "./dashboard/dashboard-journey-panel"
 import { supabase } from "@/lib/supabase"
+import { authFetch } from "@/lib/api-client"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { getDailySeed, seededShuffle } from "@/lib/utils/match-utils"
@@ -451,8 +452,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
         // 3. Fetch activity data (views & likes for counts)
         const [viewsRes, likesRes] = await Promise.all([
-          fetch(`/api/views?userId=${userId}`),
-          fetch(`/api/likes?userId=${userId}`)
+          authFetch(`/api/views?userId=${userId}`),
+          authFetch(`/api/likes?userId=${userId}`)
         ])
         const viewsData = await viewsRes.json()
         const likesData = await likesRes.json()
@@ -506,7 +507,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           supabase.from("interests").select("*").in("user_id", matchUserIds),
           supabase.from("social_habits").select("*").in("user_id", matchUserIds),
           supabase.from("horoscope_details").select("*").in("user_id", matchUserIds),
-          fetch(`/api/premium-status?userIds=${matchUserIds.join(",")}`).then(r => r.ok ? r.json() : []).catch(() => [])
+          authFetch(`/api/premium-status?userIds=${matchUserIds.join(",")}`).then(r => r.ok ? r.json() : []).catch(() => [])
         ])
 
         const combined = potentialMatches.map(p => {
@@ -570,8 +571,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
         let filtered = combined
         if (prefs) {
             filtered = combined.filter(p => {
-                if (prefs.min_age && p.age && p.age < prefs.min_age) return false
-                if (prefs.max_age && p.age && p.age > prefs.max_age) return false
+                if (prefs.preferred_age_min && p.age && p.age < prefs.preferred_age_min) return false
+                if (prefs.preferred_age_max && p.age && p.age > prefs.preferred_age_max) return false
                 return true
             })
         }
@@ -619,7 +620,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
   useEffect(() => {
     const fetchShortlists = async () => {
       if (!userId) return
-      const res = await fetch(`/api/shortlists?userId=${userId}`)
+      const res = await authFetch(`/api/shortlists?userId=${userId}`)
       if (res.ok) {
         const data = await res.json()
         setShortlistedIds(data.shortlistedIds || [])
@@ -636,7 +637,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
     const method = isCurrentlyShortlisted ? "DELETE" : "POST"
 
     try {
-      const res = await fetch("/api/shortlists", {
+      const res = await authFetch("/api/shortlists", {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, targetUserId: targetId }),
@@ -671,11 +672,10 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
       if (error) throw error
 
       // Also deactivate the profile permanently (10 years)
-      await fetch('/api/settings', {
+      await authFetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId,
           updates: { is_deactivated: true, deactivated_until: new Date(Date.now() + 365 * 10 * 24 * 60 * 60 * 1000).toISOString() }
         })
       })
@@ -689,24 +689,30 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
   }
 
   const handleNotificationClick = async (type: 'view' | 'interest', targetId: string) => {
-    // Optimistic Update
     if (type === 'view') {
-        setWhoViewedMe(prev => prev.filter(p => p.user_id !== targetId))
-        fetch('/api/views', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ viewerId: targetId, viewedUserId: userId })
-        })
+      setWhoViewedMe(prev => prev.filter(p => p.user_id !== targetId))
     } else {
-        setWhoExpressedInterest(prev => prev.filter(p => p.user_id !== targetId))
-        fetch('/api/likes', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: targetId, likedUserId: userId })
-        })
+      setWhoExpressedInterest(prev => prev.filter(p => p.user_id !== targetId))
     }
-    // Navigate
-    onNavigateToBrowse()
+
+    try {
+      const res = await authFetch(`/api/${type === 'view' ? 'views' : 'likes'}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(
+          type === 'view'
+            ? { viewerId: targetId, viewedUserId: userId }
+            : { userId: targetId, likedUserId: userId, is_read: true }
+        ),
+      })
+      if (!res.ok) {
+        throw new Error(`Failed to mark notification as read (${res.status})`)
+      }
+    } catch (err) {
+      console.error("Error marking notification as read:", err)
+    }
+
+    router.push(`/dashboard/profile/${targetId}`)
   }
 
   const isMarried = profile?.maritalStatus === "Married"

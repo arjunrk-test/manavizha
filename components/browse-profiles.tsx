@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { supabase } from "@/lib/supabase"
+import { authFetch } from "@/lib/api-client"
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, ArrowRight, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Bookmark, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle, MoreVertical, UserX, UserMinus, Crown, Gem, Shield, X, Star, Eye } from "lucide-react"
@@ -98,7 +99,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
         if (!parentViewer?.isParent) {
             try {
                 // Wait for the view to be recorded so it doesn't get cancelled by navigation
-                await fetch("/api/views", {
+                await authFetch("/api/views", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ viewerId: userId, viewedUserId: profile.user_id })
@@ -317,7 +318,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
 
     const handleIgnore = async (e: React.MouseEvent, profileId: string) => {
         e.stopPropagation()
-        const res = await fetch("/api/ignores", {
+        const res = await authFetch("/api/ignores", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId, targetUserId: profileId }),
@@ -332,7 +333,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
 
     const handleBlock = async (e: React.MouseEvent, profileId: string) => {
         e.stopPropagation()
-        const res = await fetch("/api/blocks", {
+        const res = await authFetch("/api/blocks", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId, targetUserId: profileId }),
@@ -384,7 +385,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
         const isCurrentlyShortlisted = shortlistedIds.includes(profileId)
         const method = isCurrentlyShortlisted ? "DELETE" : "POST"
 
-        const res = await fetch("/api/shortlists", {
+        const res = await authFetch("/api/shortlists", {
             method,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId, targetUserId: profileId }),
@@ -419,7 +420,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
         try {
             // If accepting interest, we need to PATCH the other side first
             if (!isCurrentlyLiked && isReceivedPending) {
-                await fetch("/api/likes", {
+                await authFetch("/api/likes", {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
@@ -431,7 +432,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                 setLikedMeStatusMap(prev => ({ ...prev, [profileId]: 'accepted' }))
             }
 
-            const res = await fetch("/api/likes", {
+            const res = await authFetch("/api/likes", {
                 method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
@@ -578,11 +579,11 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
 
                 try {
                     const [likeRes, shortRes, viewsRes, blockRes, ignoreRes] = await Promise.all([
-                        fetch(`/api/likes?userId=${userId}`),
-                        fetch(`/api/shortlists?userId=${userId}`),
-                        fetch(`/api/views?userId=${userId}`),
-                        fetch(`/api/blocks?userId=${userId}`),
-                        fetch(`/api/ignores?userId=${userId}`)
+                        authFetch(`/api/likes?userId=${userId}`),
+                        authFetch(`/api/shortlists?userId=${userId}`),
+                        authFetch(`/api/views?userId=${userId}`),
+                        authFetch(`/api/blocks?userId=${userId}`),
+                        authFetch(`/api/ignores?userId=${userId}`)
                     ])
                     
                     if (likeRes.ok) {
@@ -613,10 +614,10 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                     }
                     
                     // Fetch premium status
-                    const settingsRes = await fetch(`/api/settings?userId=${userId}`)
+                    const settingsRes = await authFetch(`/api/settings?userId=${userId}`)
                     if (settingsRes.ok) {
                         const settingsData = await settingsRes.json()
-                        setIsPremium(settingsData.is_premium || true)
+                        setIsPremium(!!settingsData.is_premium)
                     }
                     
                     if (shortRes.ok) {
@@ -758,7 +759,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                     supabase.from("social_habits").select("*").in("user_id", targetUserIds),
                     supabase.from("horoscope_details").select("user_id, zodiac_sign, star, lagnam, dhosham, time_of_birth, place_of_birth").in("user_id", targetUserIds),
                     // Use server API to bypass RLS on user_settings
-                    fetch(`/api/premium-status?userIds=${targetUserIds.join(",")}`).then(r => r.ok ? r.json() : []).catch(() => []),
+                    authFetch(`/api/premium-status?userIds=${targetUserIds.join(",")}`).then(r => r.ok ? r.json() : []).catch(() => []),
                 ])
 
                 const settingsData: any[] = Array.isArray(settingsApiRes) ? settingsApiRes : []
@@ -855,22 +856,22 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
         if (userPreferences && applyPreferences && !isActivityCategory) {
             dataset = profiles.filter((profile: any) => {
                 // Age filtering (lenient Case: if profile.age is missing, we don't hide)
-                if (userPreferences.min_age != null || userPreferences.max_age != null) {
+                if (userPreferences.preferred_age_min != null || userPreferences.preferred_age_max != null) {
                     const rawAge = (profile.age || "").toString().replace(/[^0-9]/g, "")
                     const profileAge = rawAge ? parseInt(rawAge) : null
                     if (profileAge !== null) {
-                        if (userPreferences.min_age != null && profileAge < userPreferences.min_age) return false
-                        if (userPreferences.max_age != null && profileAge > userPreferences.max_age) return false
+                        if (userPreferences.preferred_age_min != null && profileAge < userPreferences.preferred_age_min) return false
+                        if (userPreferences.preferred_age_max != null && profileAge > userPreferences.preferred_age_max) return false
                     }
                 }
 
                 // Height filtering (lenient Case: if profile.height is missing, we don't hide)
-                if (userPreferences.min_height != null || userPreferences.max_height != null) {
+                if (userPreferences.preferred_height_min != null || userPreferences.preferred_height_max != null) {
                     const rawHeight = (profile.height || "").toString().replace(/[^0-9]/g, "")
                     const profileHeight = rawHeight ? parseInt(rawHeight) : null
                     if (profileHeight !== null) {
-                        if (userPreferences.min_height != null && profileHeight < userPreferences.min_height) return false
-                        if (userPreferences.max_height != null && profileHeight > userPreferences.max_height) return false
+                        if (userPreferences.preferred_height_min != null && profileHeight < userPreferences.preferred_height_min) return false
+                        if (userPreferences.preferred_height_max != null && profileHeight > userPreferences.preferred_height_max) return false
                     }
                 }
 
