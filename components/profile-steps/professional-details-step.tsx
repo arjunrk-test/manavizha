@@ -4,10 +4,15 @@ import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Upload, X } from "lucide-react"
+import { Briefcase, Building2, GraduationCap, Store, Upload, X } from "lucide-react"
 import { FormData } from "@/types/profile"
 import { useMasterData } from "@/hooks/use-master-data"
 import { CustomSelectDropdown } from "@/components/ui/custom-select-dropdown"
+import {
+  SETUP_SECTION_BODY,
+  SETUP_SECTION_CARD,
+  SetupSectionHeader,
+} from "@/components/profile-steps/setup-section-header"
 import { EMPLOYMENT_TYPES } from "@/lib/profile-data"
 
 interface ProfessionalDetailsStepProps {
@@ -132,63 +137,68 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
   ]
 
   return (
-    <div className="space-y-12">
-      {/* Employment Type Selection */}
-      <CustomSelectDropdown
-        id="employmentType"
-        label="Employment Type *"
-        value={formData.employmentType || ""}
-        onChange={(value) => onChange("employmentType", value)}
-        options={employmentTypeOptions}
-        required
-      />
-
-      {/* Employee-specific fields */}
-      {(isEmployee || isStudent) && (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="setup-section-stack">
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={Briefcase}
+            title="Employment type"
+            description="Select your current employment status"
+          />
+          <div className={`${SETUP_SECTION_BODY} grid-cols-1`}>
             <CustomSelectDropdown
-              id="sector"
-              label={isStudent ? "Current Sector" : "Industry *"}
-              value={formData.sector || ""}
-              onChange={(value) => onChange("sector", value)}
-              options={sectorOptions}
-              required={!isStudent}
-              showOtherInput={sectorOptions.some(opt => opt.value.toLowerCase() === "other")}
-              otherValue={formData.sectorOther || ""}
-              onOtherChange={(value) => onChange("sectorOther", value)}
-              otherPlaceholder="Enter Industry Name"
+              id="employmentType"
+              label="Employment Type *"
+              value={formData.employmentType || ""}
+              onChange={(value) => onChange("employmentType", value)}
+              options={employmentTypeOptions}
+              required
             />
-            <div className="space-y-2">
-              <Label htmlFor="company" className="sds-label">{isStudent ? "Institution Name *" : "Company Name *"}</Label>
-              <Input
-                id="company"
-                value={(isStudent ? formData.institution : formData.company) || ""}
-                onChange={(e) => {
-                  if (isStudent) {
-                    onChange("institution", e.target.value)
-                  } else {
-                    onChange("company", e.target.value)
-                  }
-                }}
-                placeholder={isStudent ? "e.g., IIT Madras" : "e.g., Google India / TCS"}
+          </div>
+        </div>
+
+        {isEmployee && (
+          <div className={SETUP_SECTION_CARD}>
+            <SetupSectionHeader
+              icon={Building2}
+              title="Work details"
+              description="Industry, company, role, salary, and location"
+            />
+            <div className={`${SETUP_SECTION_BODY} grid-cols-1 md:grid-cols-2`}>
+              <CustomSelectDropdown
+                id="sector"
+                label="Industry *"
+                value={formData.sector || ""}
+                onChange={(value) => onChange("sector", value)}
+                options={sectorOptions}
                 required
-                className="sds-input w-full"
+                showOtherInput={sectorOptions.some(opt => opt.value.toLowerCase() === "other")}
+                otherValue={formData.sectorOther || ""}
+                onOtherChange={(value) => onChange("sectorOther", value)}
+                otherPlaceholder="Enter Industry Name"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="designation" className="sds-label">Role / Designation *</Label>
-              <Input
-                id="designation"
-                value={formData.designation || (isStudent ? "Student" : "")}
-                onChange={(e) => onChange("designation", e.target.value)}
-                placeholder={isStudent ? "e.g., Student" : "e.g., Senior Software Engineer"}
-                required
-                className="sds-input w-full"
-              />
-            </div>
-            
-            {!isStudent ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="company" className="sds-label">Company Name *</Label>
+                <Input
+                  id="company"
+                  value={formData.company || ""}
+                  onChange={(e) => onChange("company", e.target.value)}
+                  placeholder="e.g., Google India / TCS"
+                  required
+                  className="sds-input w-full"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="designation" className="sds-label">Role / Designation *</Label>
+                <Input
+                  id="designation"
+                  value={formData.designation || ""}
+                  onChange={(e) => onChange("designation", e.target.value)}
+                  placeholder="e.g., Senior Software Engineer"
+                  required
+                  className="sds-input w-full"
+                />
+              </div>
               <CustomSelectDropdown
                 id="salaryRange"
                 label="Annual Salary Range *"
@@ -197,8 +207,63 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                 options={salaryRanges}
                 required
               />
-            ) : (
-              <div className="space-y-2">
+              <div className="space-y-1.5 md:col-span-2">
+                <Label htmlFor="workLocation" className="sds-label">Work Location *</Label>
+                <Input
+                  id="workLocation"
+                  value={formData.workLocation || ""}
+                  onChange={(e) => onChange("workLocation", e.target.value)}
+                  placeholder="e.g., Bengaluru, Karnataka"
+                  required
+                  className="sds-input w-full"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isStudent && (
+          <div className={SETUP_SECTION_CARD}>
+            <SetupSectionHeader
+              icon={GraduationCap}
+              title="Student details"
+              description="Institution, sector, graduation year, and location"
+            />
+            <div className={`${SETUP_SECTION_BODY} grid-cols-1 md:grid-cols-2`}>
+              <CustomSelectDropdown
+                id="sector"
+                label="Current Sector"
+                value={formData.sector || ""}
+                onChange={(value) => onChange("sector", value)}
+                options={sectorOptions}
+                showOtherInput={sectorOptions.some(opt => opt.value.toLowerCase() === "other")}
+                otherValue={formData.sectorOther || ""}
+                onOtherChange={(value) => onChange("sectorOther", value)}
+                otherPlaceholder="Enter Industry Name"
+              />
+              <div className="space-y-1.5">
+                <Label htmlFor="company" className="sds-label">Institution Name *</Label>
+                <Input
+                  id="company"
+                  value={formData.institution || ""}
+                  onChange={(e) => onChange("institution", e.target.value)}
+                  placeholder="e.g., IIT Madras"
+                  required
+                  className="sds-input w-full"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="designation" className="sds-label">Role / Designation *</Label>
+                <Input
+                  id="designation"
+                  value={formData.designation || "Student"}
+                  onChange={(e) => onChange("designation", e.target.value)}
+                  placeholder="e.g., Student"
+                  required
+                  className="sds-input w-full"
+                />
+              </div>
+              <div className="space-y-1.5">
                 <Label htmlFor="expectedGraduationYear" className="sds-label">Expected Graduation Year *</Label>
                 <Input
                   id="expectedGraduationYear"
@@ -210,98 +275,98 @@ export function ProfessionalDetailsStep({ formData, onChange }: ProfessionalDeta
                   className="sds-input w-full"
                 />
               </div>
-            )}
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="workLocation" className="sds-label">{isStudent ? "Current Location *" : "Work Location *"}</Label>
-              <Input
-                id="workLocation"
-                value={formData.workLocation || ""}
-                onChange={(e) => onChange("workLocation", e.target.value)}
-                placeholder="e.g., Bengaluru, Karnataka"
-                required
-                className="sds-input w-full"
-              />
+              <div className="space-y-1.5 md:col-span-2">
+                <Label htmlFor="workLocation" className="sds-label">Current Location *</Label>
+                <Input
+                  id="workLocation"
+                  value={formData.workLocation || ""}
+                  onChange={(e) => onChange("workLocation", e.target.value)}
+                  placeholder="e.g., Bengaluru, Karnataka"
+                  required
+                  className="sds-input w-full"
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Business/Self-Employed specific fields */}
-      {isBusiness && (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <CustomSelectDropdown
-              id="sector"
-              label="Business Sector *"
-              value={formData.sector || ""}
-              onChange={(value) => onChange("sector", value)}
-              options={sectorOptions}
-              required
-              showOtherInput={sectorOptions.some(opt => opt.value.toLowerCase() === "other")}
-              otherValue={formData.sectorOther || ""}
-              onOtherChange={(value) => onChange("sectorOther", value)}
-              otherPlaceholder="Enter Sector Name"
+        {isBusiness && (
+          <div className={SETUP_SECTION_CARD}>
+            <SetupSectionHeader
+              icon={Store}
+              title="Business details"
+              description="Sector, business name, type, revenue, and location"
             />
-            <div className="space-y-2">
-              <Label htmlFor="businessName" className="sds-label">Business Name *</Label>
-              <Input
-                id="businessName"
-                value={formData.businessName || ""}
-                onChange={(e) => onChange("businessName", e.target.value)}
-                placeholder="e.g., Green Earth Solutions"
+            <div className={`${SETUP_SECTION_BODY} grid-cols-1 md:grid-cols-2`}>
+              <CustomSelectDropdown
+                id="sector"
+                label="Business Sector *"
+                value={formData.sector || ""}
+                onChange={(value) => onChange("sector", value)}
+                options={sectorOptions}
                 required
-                className="sds-input w-full"
+                showOtherInput={sectorOptions.some(opt => opt.value.toLowerCase() === "other")}
+                otherValue={formData.sectorOther || ""}
+                onOtherChange={(value) => onChange("sectorOther", value)}
+                otherPlaceholder="Enter Sector Name"
               />
-            </div>
-            <CustomSelectDropdown
-              id="businessType"
-              label="Business Type *"
-              value={formData.businessType || ""}
-              onChange={(value) => onChange("businessType", value)}
-              options={businessTypeOptions}
-              required
-              showOtherInput={businessTypeOptions.some(opt => opt.value.toLowerCase() === "other")}
-              otherValue={formData.businessTypeOther || ""}
-              onOtherChange={(value) => onChange("businessTypeOther", value)}
-              otherPlaceholder="Enter Business Type"
-            />
-            <div className="space-y-2">
-              <Label htmlFor="designation" className="sds-label">Role in Business *</Label>
-              <Input
-                id="designation"
-                value={formData.designation || ""}
-                onChange={(e) => onChange("designation", e.target.value)}
-                placeholder="e.g., Founder & CEO"
+              <div className="space-y-1.5">
+                <Label htmlFor="businessName" className="sds-label">Business Name *</Label>
+                <Input
+                  id="businessName"
+                  value={formData.businessName || ""}
+                  onChange={(e) => onChange("businessName", e.target.value)}
+                  placeholder="e.g., Green Earth Solutions"
+                  required
+                  className="sds-input w-full"
+                />
+              </div>
+              <CustomSelectDropdown
+                id="businessType"
+                label="Business Type *"
+                value={formData.businessType || ""}
+                onChange={(value) => onChange("businessType", value)}
+                options={businessTypeOptions}
                 required
-                className="sds-input w-full"
+                showOtherInput={businessTypeOptions.some(opt => opt.value.toLowerCase() === "other")}
+                otherValue={formData.businessTypeOther || ""}
+                onOtherChange={(value) => onChange("businessTypeOther", value)}
+                otherPlaceholder="Enter Business Type"
               />
-            </div>
-
-            <CustomSelectDropdown
-              id="revenueRange"
-              label="Annual Business Revenue *"
-              value={formData.revenueRange || ""}
-              onChange={(value) => onChange("revenueRange", value)}
-              options={revenueRanges}
-              required
-            />
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="businessLocation" className="sds-label">Business Location *</Label>
-              <Input
-                id="businessLocation"
-                value={formData.businessLocation || ""}
-                onChange={(e) => onChange("businessLocation", e.target.value)}
-                placeholder="e.g., Coimbatore, Tamil Nadu"
+              <div className="space-y-1.5">
+                <Label htmlFor="designation" className="sds-label">Role in Business *</Label>
+                <Input
+                  id="designation"
+                  value={formData.designation || ""}
+                  onChange={(e) => onChange("designation", e.target.value)}
+                  placeholder="e.g., Founder & CEO"
+                  required
+                  className="sds-input w-full"
+                />
+              </div>
+              <CustomSelectDropdown
+                id="revenueRange"
+                label="Annual Business Revenue *"
+                value={formData.revenueRange || ""}
+                onChange={(value) => onChange("revenueRange", value)}
+                options={revenueRanges}
                 required
-                className="sds-input w-full"
               />
+              <div className="space-y-1.5 md:col-span-2">
+                <Label htmlFor="businessLocation" className="sds-label">Business Location *</Label>
+                <Input
+                  id="businessLocation"
+                  value={formData.businessLocation || ""}
+                  onChange={(e) => onChange("businessLocation", e.target.value)}
+                  placeholder="e.g., Coimbatore, Tamil Nadu"
+                  required
+                  className="sds-input w-full"
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
-

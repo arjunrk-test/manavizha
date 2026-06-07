@@ -2,6 +2,10 @@
 
 import type { LucideIcon } from "lucide-react"
 
+export const SETUP_SECTION_CARD =
+  "sds-glass setup-section-card rounded-[2.5rem] border-[#f0ebe3]"
+export const SETUP_SECTION_BODY = "setup-section-card-body grid gap-4"
+
 interface SetupSectionHeaderProps {
   title: string
   description?: string

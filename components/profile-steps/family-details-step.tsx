@@ -3,7 +3,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FormData, SiblingDetail } from "@/types/profile"
 import { Textarea } from "@/components/ui/textarea"
-import { ChevronDown, Plus, Trash2, UserPlus } from "lucide-react"
+import {
+  SETUP_SECTION_BODY,
+  SETUP_SECTION_CARD,
+  SetupSectionHeader,
+} from "@/components/profile-steps/setup-section-header"
+import { ChevronDown, FileText, Home, Landmark, Plus, Trash2, UserPlus, Users } from "lucide-react"
 import { useMasterData } from "@/hooks/use-master-data"
 import { SelectDropdown } from "@/components/ui/select-dropdown"
 import { useClickOutside } from "@/hooks/use-click-outside"
@@ -154,22 +159,15 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
   }
 
   return (
-    <div className="space-y-12">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Parental Identity Section */}
-        <div className="space-y-8 md:col-span-2">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
-              <span className="text-[#3bb9ac] font-black text-xs">P1</span>
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Family</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Parents' Details</h3>
-            </div>
-            <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="setup-section-stack">
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={Users}
+            title="Parents' details"
+            description="Father and mother names and professions"
+          />
+          <div className={`${SETUP_SECTION_BODY} grid-cols-1 md:grid-cols-2`}>
             <div className="space-y-2">
               <Label htmlFor="fatherName" className="sds-label">Father's Name *</Label>
               <Input
@@ -217,20 +215,13 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
           </div>
         </div>
 
-        {/* Parental Residence Section */}
-        <div className="space-y-8 md:col-span-2">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
-              <span className="text-[#3bb9ac] font-black text-xs">P2</span>
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Location</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Parents' Address</h3>
-            </div>
-            <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50">
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={Home}
+            title="Parents' address"
+            description="Family residence and location details"
+          />
+          <div className={`${SETUP_SECTION_BODY} grid-cols-1 md:grid-cols-2`}>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="parentsAddressLine1" className="sds-label">Address Line 1 *</Label>
               <Input
@@ -272,7 +263,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                 />
                 {isLoadingParentsAddress && (
                   <div className="absolute right-5 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#3bb9ac]/20 border-t-[#3bb9ac]"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#e87898]/20 border-t-[#e87898]"></div>
                   </div>
                 )}
               </div>
@@ -284,15 +275,15 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                   type="button"
                   onClick={() => parentsAreas.length > 0 && setIsParentsAreaOpen(!isParentsAreaOpen)}
                   disabled={isLoadingParentsAddress || parentsAreas.length === 0}
-                  className={`sds-input w-full flex items-center justify-between text-left transition-all duration-300 active:scale-[0.98] ${isParentsAreaOpen ? "border-[#3bb9ac] bg-white" : ""} disabled:opacity-40 disabled:cursor-not-allowed`}
+                  className={`sds-input w-full flex items-center justify-between text-left transition-all duration-300 active:scale-[0.98] ${isParentsAreaOpen ? "border-[#e87898] bg-white" : ""} disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
                   <span className={`flex-1 truncate ${formData.parentsArea ? "text-gray-900 font-bold" : "text-gray-300"}`}>
                     {formData.parentsArea || (isLoadingParentsAddress ? "Scanning..." : parentsAreas.length === 0 ? "Pending PIN" : "Select Area")}
                   </span>
-                  <ChevronDown className={`h-4 w-4 text-[#3bb9ac]/40 transition-transform duration-500 ml-2 flex-shrink-0 ${isParentsAreaOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-4 w-4 text-[#e87898]/40 transition-transform duration-500 ml-2 flex-shrink-0 ${isParentsAreaOpen ? "rotate-180" : ""}`} />
                 </button>
                 {isParentsAreaOpen && parentsAreas.length > 0 && (
-                  <div className="absolute z-50 w-full mt-3 sds-glass rounded-3xl shadow-2xl border-indigo-50/50 backdrop-blur-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                  <div className="absolute z-50 w-full mt-3 sds-glass rounded-3xl shadow-2xl border-[#f0ebe3] backdrop-blur-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                     <div className="overflow-y-auto max-h-60 p-2 space-y-1 custom-scrollbar">
                       {parentsAreas.map((postOffice, index) => (
                         <button
@@ -301,8 +292,8 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                           onClick={() => handleAreaSelect(postOffice)}
                           className={`w-full px-5 py-3.5 rounded-2xl text-left text-xs font-bold transition-all duration-300 ${
                             formData.parentsArea === postOffice.Name 
-                            ? "bg-[#3bb9ac] text-white shadow-lg shadow-indigo-900/20" 
-                            : "hover:bg-indigo-50/50 text-gray-500 hover:text-[#3bb9ac]"
+                            ? "bg-[#e87898] text-white shadow-lg shadow-[#e87898]/15" 
+                            : "hover:bg-[#fce8ef]/80 text-gray-500 hover:text-[#e87898]"
                           }`}
                         >
                           {postOffice.Name}
@@ -319,7 +310,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                 id="parentsTaluk"
                 value={formData.parentsTaluk || ""}
                 readOnly
-                className="sds-input w-full bg-black/[0.02] border-indigo-50/30 opacity-60 cursor-not-allowed font-medium text-gray-500"
+                className="sds-input w-full bg-black/[0.02] border-[#f0ebe3] opacity-60 cursor-not-allowed font-medium text-gray-500"
               />
             </div>
             <div className="space-y-2">
@@ -328,7 +319,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                 id="parentsDistrict"
                 value={formData.parentsDistrict || ""}
                 readOnly
-                className="sds-input w-full bg-black/[0.02] border-indigo-50/30 opacity-60 cursor-not-allowed font-medium text-gray-500"
+                className="sds-input w-full bg-black/[0.02] border-[#f0ebe3] opacity-60 cursor-not-allowed font-medium text-gray-500"
               />
             </div>
             <div className="space-y-2 md:col-span-2">
@@ -344,20 +335,13 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
           </div>
         </div>
 
-        {/* Heritage Matrix Section */}
-        <div className="space-y-8 md:col-span-2">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
-              <span className="text-[#3bb9ac] font-black text-xs">H3</span>
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Background</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Caste & Heritage</h3>
-            </div>
-            <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sds-glass rounded-[2.5rem] p-10 border-indigo-50/50">
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={Landmark}
+            title="Caste & heritage"
+            description="Community background, kulam, gotram, and family status"
+          />
+          <div className={`${SETUP_SECTION_BODY} grid-cols-1 md:grid-cols-2`}>
             <SelectDropdown
               id="caste"
               label="Caste *"
@@ -424,26 +408,19 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
           </div>
         </div>
 
-        {/* Structured Siblings Section */}
-        <div className="space-y-8 md:col-span-2">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
-              <span className="text-[#3bb9ac] font-black text-xs">S4</span>
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Siblings</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Brothers & Sisters</h3>
-            </div>
-            <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
-          </div>
-
-          <div className="space-y-6">
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={UserPlus}
+            title="Brothers & sisters"
+            description="Add siblings with their occupation and marital status"
+          />
+          <div className="setup-section-card-body space-y-6">
             <div className="flex gap-4">
               <Button 
                 type="button" 
                 onClick={() => addSibling('brother')}
                 variant="outline"
-                className="flex-1 h-16 rounded-2xl border-dashed border-indigo-200 hover:border-[#3bb9ac] hover:bg-indigo-50/30 text-[#3bb9ac] font-black text-[10px] uppercase tracking-widest gap-3"
+                className="flex-1 h-16 rounded-2xl border-dashed border-[#eadfce] hover:border-[#e87898] hover:bg-[#fce8ef]/50 text-[#e87898] font-black text-[10px] uppercase tracking-widest gap-3"
               >
                 <Plus className="h-4 w-4" /> Add Brother
               </Button>
@@ -451,7 +428,7 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
                 type="button" 
                 onClick={() => addSibling('sister')}
                 variant="outline"
-                className="flex-1 h-16 rounded-2xl border-dashed border-indigo-200 hover:border-[#3bb9ac] hover:bg-indigo-50/30 text-[#3bb9ac] font-black text-[10px] uppercase tracking-widest gap-3"
+                className="flex-1 h-16 rounded-2xl border-dashed border-[#eadfce] hover:border-[#e87898] hover:bg-[#fce8ef]/50 text-[#e87898] font-black text-[10px] uppercase tracking-widest gap-3"
               >
                 <Plus className="h-4 w-4" /> Add Sister
               </Button>
@@ -461,12 +438,12 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
               {(formData.siblingDetails || []).map((sibling, index) => (
                 <div 
                   key={sibling.id} 
-                  className="sds-glass rounded-3xl p-8 border-indigo-50/50 shadow-xl space-y-6 animate-in slide-in-from-left-4 duration-300"
+                  className="sds-glass rounded-3xl p-8 border-[#f0ebe3] shadow-xl space-y-6 animate-in slide-in-from-left-4 duration-300"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${sibling.type === 'brother' ? 'bg-indigo-100 text-indigo-600' : 'bg-primary text-primary'}`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${sibling.type === 'brother' ? 'bg-[#fce8ef] text-[#e87898]' : 'bg-primary text-primary'}`}>
                         <span className="font-black text-[10px] uppercase">{sibling.type[0]}</span>
                       </div>
                       <div>
@@ -499,18 +476,18 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
 
                     <div className="space-y-2">
                       <Label className="sds-label">Status</Label>
-                      <div className="flex bg-black/[0.03] p-1 rounded-2xl border border-indigo-50/50 h-14">
+                      <div className="flex bg-black/[0.03] p-1 rounded-2xl border border-[#f0ebe3] h-14">
                         <button
                           type="button"
                           onClick={() => updateSibling(sibling.id, 'isWorking', false)}
-                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${!sibling.isWorking ? 'bg-white shadow-sm text-[#3bb9ac]' : 'text-gray-400 hover:text-[#3bb9ac]/60'}`}
+                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${!sibling.isWorking ? 'bg-white shadow-sm text-[#e87898]' : 'text-gray-400 hover:text-[#e87898]/60'}`}
                         >
                           Studying
                         </button>
                         <button
                           type="button"
                           onClick={() => updateSibling(sibling.id, 'isWorking', true)}
-                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${sibling.isWorking ? 'bg-white shadow-sm text-[#3bb9ac]' : 'text-gray-400 hover:text-[#3bb9ac]/60'}`}
+                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${sibling.isWorking ? 'bg-white shadow-sm text-[#e87898]' : 'text-gray-400 hover:text-[#e87898]/60'}`}
                         >
                           Working
                         </button>
@@ -529,18 +506,18 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
 
                     <div className="space-y-2">
                       <Label className="sds-label">Marital Status</Label>
-                      <div className="flex bg-black/[0.03] p-1 rounded-2xl border border-indigo-50/50 h-14">
+                      <div className="flex bg-black/[0.03] p-1 rounded-2xl border border-[#f0ebe3] h-14">
                         <button
                           type="button"
                           onClick={() => updateSibling(sibling.id, 'isMarried', false)}
-                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${!sibling.isMarried ? 'bg-white shadow-sm text-[#3bb9ac]' : 'text-gray-400 hover:text-[#3bb9ac]/60'}`}
+                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${!sibling.isMarried ? 'bg-white shadow-sm text-[#e87898]' : 'text-gray-400 hover:text-[#e87898]/60'}`}
                         >
                           Unmarried
                         </button>
                         <button
                           type="button"
                           onClick={() => updateSibling(sibling.id, 'isMarried', true)}
-                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${sibling.isMarried ? 'bg-white shadow-sm text-[#3bb9ac]' : 'text-gray-400 hover:text-[#3bb9ac]/60'}`}
+                          className={`flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${sibling.isMarried ? 'bg-white shadow-sm text-[#e87898]' : 'text-gray-400 hover:text-[#e87898]/60'}`}
                         >
                           Married
                         </button>
@@ -551,27 +528,33 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
               ))}
 
               {(formData.siblingDetails || []).length === 0 && (
-                <div className="text-center py-12 px-6 sds-glass rounded-3xl border-dashed border-indigo-100">
-                  <UserPlus className="h-10 w-10 text-indigo-400/30 mx-auto mb-4" />
-                  <p className="text-indigo-900/40 text-sm font-medium">No siblings added yet. Use the buttons above to add brothers or sisters.</p>
+                <div className="text-center py-12 px-6 sds-glass rounded-3xl border-dashed border-[#f0ebe3]">
+                  <UserPlus className="h-10 w-10 text-[#e87898]/50/30 mx-auto mb-4" />
+                  <p className="text-[#6b7280] text-sm font-medium">No siblings added yet. Use the buttons above to add brothers or sisters.</p>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Narrative Section */}
-        <div className="space-y-4 md:col-span-2">
-          <Label htmlFor="familyDescription" className="sds-label">About Family *</Label>
-          <Textarea
-            id="familyDescription"
-            value={formData.familyDescription || ""}
-            onChange={(e) => onChange("familyDescription", e.target.value)}
-            placeholder="Example: We are a traditional middle-class family from Madurai. My father is retired, and my mother is a homemaker. We value education and family unity..."
-            rows={4}
-            className="sds-input w-full resize-none min-h-[160px] py-6 px-6 leading-relaxed"
-            required
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={FileText}
+            title="About family"
+            description="Describe your family background and values"
           />
+          <div className="setup-section-card-body space-y-3">
+            <Label htmlFor="familyDescription" className="sds-label">About family *</Label>
+            <Textarea
+              id="familyDescription"
+              value={formData.familyDescription || ""}
+              onChange={(e) => onChange("familyDescription", e.target.value)}
+              placeholder="Example: We are a traditional middle-class family from Madurai. My father is retired, and my mother is a homemaker. We value education and family unity..."
+              rows={4}
+              className="sds-input w-full resize-none min-h-[160px] py-6 px-6 leading-relaxed"
+              required
+            />
+          </div>
         </div>
       </div>
     </div>

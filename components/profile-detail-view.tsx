@@ -2,12 +2,10 @@
 
 import { supabase } from "@/lib/supabase"
 import React, { useEffect, useState } from "react"
-import { 
-    MapPin, Briefcase, User, GraduationCap,
-    Heart, CheckCircle2, Phone, MessageCircle, Lock,
-    Calendar, Coffee, Eye, Info, Users, Shield, Sparkles, XCircle,
-    Target, Award, HeartHandshake, MoreVertical, UserX, UserMinus, Crown, Gem, Bookmark, ShieldCheck,
-    ChevronLeft, ChevronRight, Bookmark as BookmarkIcon
+import {
+    User, GraduationCap, Heart, CheckCircle2, Phone, MessageCircle, Lock,
+    Eye, Info, Users, Sparkles, Target, HeartHandshake, MoreVertical, UserX, UserMinus, Crown, Gem, Bookmark, ShieldCheck,
+    ChevronLeft, ChevronRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -242,6 +240,8 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
         } catch (e) { toast.error("Action failed") } finally { setIsShortlistProcessing(false) }
     }
 
+    const handleSendMessage = () => setIsMessageDialogOpen(true)
+
     const calculateDetailedAge = (dobString: string, currentAge: number) => {
         if (!dobString) return `${currentAge} Years`;
         const dob = new Date(dobString); const now = new Date();
@@ -256,14 +256,17 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
         return `${cm} cm (${feet}'${inches}")`;
     };
 
-    if (isLoading) return (
-        <div className="h-full flex flex-col items-center justify-center space-y-4 py-20">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-100 border-t-[#3bb9ac]" />
-            <p className="text-gray-400 text-sm font-medium animate-pulse">Loading Profile...</p>
-        </div>
-    )
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#f0ebe3] border-t-[#e87898]" />
+            </div>
+        )
+    }
 
-    if (!profile) return <div className="p-10 text-center text-gray-400">Profile not found</div>
+    if (!profile) {
+        return <div className="p-8 text-center text-sm text-[#6b7280]">Profile not found</div>
+    }
 
     const detailedAge = calculateDetailedAge(profile.date_of_birth, profile.age);
     const detailedHeight = convertToFtIn(profile.height);
@@ -273,123 +276,236 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
         return `${count || details.length} Siblings`;
     };
 
-    const isMale = profile.sex?.toLowerCase() === 'male' || profile.gender?.toLowerCase() === 'male';
+    const isMale = profile.sex?.toLowerCase() === "male" || profile.gender?.toLowerCase() === "male"
 
     return (
-        <div className="min-h-screen pb-24 relative w-full h-full overflow-y-auto no-scrollbar">
-            {/* Background Orbs */}
-            <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#1A3060]/40 via-[#3bb9ac]/40 via-[#3bb9ac]/40 to-[#FFA500]/40 bg-[length:200%_auto] animate-gradient" />
-                <div className="absolute inset-0 bg-[#FAFAFA]/40" />
-                <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-[#3bb9ac]/20 rounded-full blur-[140px] animate-float" />
-                <div className="absolute top-1/2 -right-32 w-[700px] h-[700px] bg-amber-500/10 rounded-full blur-[140px] animate-float" style={{ animationDelay: '-10s' }} />
-                <div className="absolute -bottom-32 left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-indigo-500/10 rounded-full blur-[150px]" />
+        <div className="relative min-h-0 pb-6 bg-[#faf8f4]">
+            <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+                <div
+                    className="absolute inset-0 opacity-40"
+                    style={{
+                        backgroundImage: "radial-gradient(circle at 1px 1px, #eadfce 1px, transparent 0)",
+                        backgroundSize: "22px 22px",
+                    }}
+                />
+                <div className="absolute -top-16 right-0 w-48 h-48 rounded-full bg-[#fce8ef]/50 blur-3xl" />
+                <div className="absolute bottom-0 left-0 w-40 h-40 rounded-full bg-[#fdf6e3]/60 blur-3xl" />
             </div>
 
-            {/* Header: Identity & Interaction Labels */}
-            <div className="relative z-10 max-w-7xl mx-auto px-6 pt-14 pb-12">
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr,auto] items-end gap-16">
-                    <div className="space-y-6 min-w-0">
-                        <div className="space-y-6">
-                            <div className="flex flex-wrap items-center gap-4">
-                                {profile.last_active && (
-                                    <Badge className={cn(
-                                        "backdrop-blur-xl border px-5 py-2 rounded-full text-[11px] font-black tracking-[0.15em] uppercase shadow-2xl flex items-center gap-2.5 transition-all duration-700", 
-                                        formatActivityTime(profile.last_active) === "Online" ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-400 shadow-emerald-500/20 ring-1 ring-emerald-500/20" : "bg-black/20 border-white/10 text-white/70"
-                                    )}>
-                                        <div className="relative flex h-2.5 w-2.5">
-                                            {formatActivityTime(profile.last_active) === "Online" && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
-                                            <span className={cn("relative inline-flex rounded-full h-2.5 w-2.5", formatActivityTime(profile.last_active) === "Online" ? "bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,1)]" : "bg-white/30")}></span>
-                                        </div>
-                                        {formatActivityTime(profile.last_active) === "Online" ? "Online Now" : formatActivityTime(profile.last_active)}
-                                    </Badge>
-                                )}
-                                <div className="h-7 px-3 rounded-full bg-[#F3F4FF] text-[#3bb9ac] text-[9px] font-black flex items-center tracking-widest uppercase border border-[#E0E2FF]">
-                                    <ShieldCheck className="h-3.5 w-3.5 mr-2" /> Verified
-                                </div>
-                                {profile.isPremium && (
-                                    <div className={cn("h-7 px-3 rounded-full text-white text-[9px] font-black flex items-center tracking-widest uppercase shadow-md", profile.premiumPlan === 'elite' ? 'bg-[#3bb9ac]' : profile.premiumPlan === 'prime_gold' ? 'bg-amber-500' : 'bg-primary')}>
-                                        <Gem className="h-3.5 w-3.5 mr-2" /> {profile.premiumPlan?.replace(/_/g, ' ')}
-                                    </div>
-                                )}
-                            </div>
-                            <div className="space-y-2">
-                                <h1 className="text-4xl sm:text-[4.2rem] font-black text-[#1A1A1A] tracking-tighter leading-[0.9] break-words">
-                                    {profile.name || profile.userName || "Unknown"}
-                                </h1>
-                                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-gray-900/40 text-lg font-bold tracking-tight">
-                                    <span className="text-gray-900">{detailedAge}</span>
-                                    <span className="w-1.5 h-1.5 rounded-full bg-[#3bb9ac]/10" />
-                                    <span className="text-gray-900">{detailedHeight}</span>
-                                    <span className="w-1.5 h-1.5 rounded-full bg-[#3bb9ac]/10" />
-                                    <span className="text-gray-900">{profile.marital_status}</span>
-                                    <span className="w-1.5 h-1.5 rounded-full bg-[#3bb9ac]/10" />
-                                    <span className="text-gray-900 lowercase font-medium">Created by <span className="text-indigo-900 font-black uppercase text-xs tracking-widest">{profile.created_by}</span></span>
-                                </div>
+            <div className="relative z-10 px-4 sm:px-5 pt-4 pb-2">
+                <div className="grid grid-cols-1 xl:grid-cols-[1fr,auto] items-start gap-4">
+                    <div className="space-y-3 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                            {profile.last_active && (
+                                <Badge
+                                    className={cn(
+                                        "border px-3 py-1 rounded-full text-[11px] font-medium flex items-center gap-1.5",
+                                        formatActivityTime(profile.last_active) === "Online"
+                                            ? "bg-[#ecfdf5] border-[#bbf7d0] text-[#16a34a]"
+                                            : "bg-white border-[#f0ebe3] text-[#6b7280]"
+                                    )}
+                                >
+                                    <span
+                                        className={cn(
+                                            "w-1.5 h-1.5 rounded-full",
+                                            formatActivityTime(profile.last_active) === "Online"
+                                                ? "bg-[#22c55e] animate-pulse"
+                                                : "bg-[#9ca3af]"
+                                        )}
+                                    />
+                                    {formatActivityTime(profile.last_active) === "Online"
+                                        ? "Online"
+                                        : formatActivityTime(profile.last_active)}
+                                </Badge>
+                            )}
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#fce8ef] text-[#e87898] text-[11px] font-medium border border-[#f0ebe3]">
+                                <ShieldCheck className="h-3 w-3" /> Verified
+                            </span>
+                            {profile.isPremium && (
+                                <span
+                                    className={cn(
+                                        "inline-flex items-center gap-1 px-3 py-1 rounded-full text-white text-[11px] font-medium",
+                                        profile.premiumPlan === "prime_gold" ? "bg-amber-500" : "bg-[#1F4068]"
+                                    )}
+                                >
+                                    <Gem className="h-3 w-3" />
+                                    {profile.premiumPlan?.replace(/_/g, " ") || "Premium"}
+                                </span>
+                            )}
+                        </div>
+
+                        <div>
+                            <h1 className="text-xl sm:text-2xl font-semibold text-[#1F4068] leading-tight break-words">
+                                {profile.name || profile.userName || "Unknown"}
+                            </h1>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 text-xs sm:text-sm text-[#6b7280]">
+                                <span>{detailedAge}</span>
+                                <span className="text-[#e87898]">·</span>
+                                <span>{detailedHeight}</span>
+                                <span className="text-[#e87898]">·</span>
+                                <span>{profile.marital_status}</span>
+                                <span className="text-[#e87898]">·</span>
+                                <span>Created by {profile.created_by || "Self"}</span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex flex-col items-end gap-10">
-                        <div className="space-y-4 text-right">
-                            {shortlistedMeDate && <div className="flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest text-indigo-600"><HeartHandshake className="h-4 w-4 shadow-sm" /> <span>{profile.sex?.toLowerCase() === 'male' ? 'He' : 'She'} shortlisted you on {formatToDDMMYYYY(shortlistedMeDate).replace(/-/g, '.')}</span></div>}
-                            {iLikedDate && iLikedStatus !== 'accepted' && likedMeStatus !== 'accepted' && !isMutual && <div className="flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest text-primary"><Heart className="h-4 w-4" /> <span>You sent {isMale ? 'him' : 'her'} an interest — {formatToDDMMYYYY(iLikedDate).replace(/-/g, '.')}</span></div>}
-                            {(isMutual || iLikedStatus === 'accepted' || likedMeStatus === 'accepted') && <div className="flex items-center justify-end gap-3 text-[10.5px] font-black uppercase tracking-widest text-emerald-600"><CheckCircle2 className="h-4 w-4" /> <span>{isMale ? 'He' : 'She'} accepted your interest on {formatToDDMMYYYY(likedMeDate || iLikedDate).replace(/-/g, '.')}</span></div>}
-                            {lastViewedMeDate && <div className="flex items-center justify-end gap-3 text-[10.5px] font-bold uppercase tracking-widest text-sky-600"><Eye className="h-4 w-4" /> <span>{isMale ? 'He' : 'She'} viewed your profile {formatToDDMMYYYY(lastViewedMeDate).replace(/-/g, '.')}</span></div>}
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <Button onClick={handleShortlist} className={cn("h-[3.5rem] px-8 rounded-full font-bold text-[10px] uppercase tracking-[0.2em] shadow-xl transition-all group", isShortlisted ? 'bg-[#3bb9ac] text-white hover:bg-[#2fa085] shadow-[#3bb9ac]/20' : 'bg-white text-gray-400 border border-gray-100 hover:bg-gray-50')}>
-                                <BookmarkIcon className={cn("h-4 w-4 mr-2 transition-transform group-hover:scale-110", isShortlisted && "fill-current")} />
-                                {isShortlisted ? 'Shortlisted' : 'Shortlist'}
-                            </Button>
-                            {iLikedStatus === 'declined' || likedMeStatus === 'declined' ? (
-                                <Button disabled className="h-[3.5rem] px-10 rounded-full bg-gray-100 text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] cursor-not-allowed shadow-none border border-gray-200">
-                                    Declined
+                    {!isOwnProfile && (
+                        <div className="flex flex-col items-stretch xl:items-end gap-3">
+                            <div className="space-y-1 xl:text-right text-xs text-[#6b7280]">
+                                {shortlistedMeDate && (
+                                    <p className="flex items-center xl:justify-end gap-1.5 text-[#e87898]">
+                                        <HeartHandshake className="h-3.5 w-3.5" />
+                                        {isMale ? "He" : "She"} shortlisted you on {formatToDDMMYYYY(shortlistedMeDate)}
+                                    </p>
+                                )}
+                                {iLikedDate && iLikedStatus !== "accepted" && likedMeStatus !== "accepted" && !isMutual && (
+                                    <p className="flex items-center xl:justify-end gap-1.5">
+                                        <Heart className="h-3.5 w-3.5 text-[#e87898]" />
+                                        You sent interest on {formatToDDMMYYYY(iLikedDate)}
+                                    </p>
+                                )}
+                                {(isMutual || iLikedStatus === "accepted" || likedMeStatus === "accepted") && (
+                                    <p className="flex items-center xl:justify-end gap-1.5 text-[#e87898] font-medium">
+                                        <CheckCircle2 className="h-3.5 w-3.5" />
+                                        Mutual interest
+                                    </p>
+                                )}
+                                {lastViewedMeDate && (
+                                    <p className="flex items-center xl:justify-end gap-1.5">
+                                        <Eye className="h-3.5 w-3.5 text-[#9ca3af]" />
+                                        Viewed you on {formatToDDMMYYYY(lastViewedMeDate)}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+                                <Button
+                                    onClick={handleShortlist}
+                                    disabled={isShortlistProcessing}
+                                    variant="outline"
+                                    className={cn(
+                                        "h-9 px-3.5 rounded-xl text-xs font-medium border-[#f0ebe3]",
+                                        isShortlisted
+                                            ? "bg-[#fce8ef] text-[#e87898] border-[#e87898]"
+                                            : "bg-white text-[#6b7280] hover:bg-[#faf8f4]"
+                                    )}
+                                >
+                                    <Bookmark className={cn("h-3.5 w-3.5 mr-1.5", isShortlisted && "fill-current")} />
+                                    {isShortlisted ? "Shortlisted" : "Shortlist"}
                                 </Button>
-                            ) : (
-                                <Button onClick={() => (isLiked || iLikedStatus === 'accepted' || isMutual) ? setIsMessageDialogOpen(true) : handleLike()} className="h-[3.5rem] px-10 rounded-full bg-[#FF4500] text-white font-bold text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-orange-100 hover:scale-[1.02] active:scale-95 transition-all">
-                                    <MessageCircle className="h-4 w-4 mr-3" /> {(isLiked || iLikedStatus === 'accepted' || isMutual) ? 'Send Message' : 'Send Interest'}
-                                </Button>
-                            )}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-[3.5rem] w-[3.5rem] rounded-full bg-white border-gray-100 shadow-lg hover:bg-gray-50 transition-all text-gray-900"><MoreVertical className="h-5 w-5" /></Button></DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-64 rounded-[2rem] p-3 z-50 shadow-2xl bg-white border border-gray-100 overflow-hidden">
-                                    <DropdownMenuItem className="rounded-2xl p-4 text-gray-500 font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:bg-gray-50 transition-colors"><UserMinus className="h-5 w-5 mr-3" /> Skip Profile</DropdownMenuItem>
-                                    <DropdownMenuItem className="rounded-2xl p-4 text-primary font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:bg-primary transition-colors"><UserX className="h-5 w-5 mr-3" /> Block Member</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                {iLikedStatus === "declined" || likedMeStatus === "declined" ? (
+                                    <Button disabled className="h-9 px-4 rounded-xl bg-[#f3f4f6] text-[#9ca3af] text-xs cursor-not-allowed">
+                                        Declined
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={() =>
+                                            isLiked || iLikedStatus === "accepted" || isMutual
+                                                ? handleSendMessage()
+                                                : handleLike()
+                                        }
+                                        disabled={isLikeProcessing}
+                                        className="h-9 px-4 rounded-xl bg-[#e87898] hover:bg-[#d66686] text-white text-xs font-medium"
+                                    >
+                                        <MessageCircle className="h-3.5 w-3.5 mr-1.5" />
+                                        {isLiked || iLikedStatus === "accepted" || isMutual ? "Message" : "Send interest"}
+                                    </Button>
+                                )}
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-9 w-9 rounded-xl border-[#f0ebe3] bg-white text-[#6b7280] hover:bg-[#faf8f4]"
+                                        >
+                                            <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-44 rounded-xl p-1 border-[#f0ebe3]">
+                                        <DropdownMenuItem className="rounded-lg text-xs text-[#4b5563] cursor-pointer">
+                                            <UserMinus className="h-3.5 w-3.5 mr-2" /> Skip profile
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="rounded-lg text-xs text-red-600 cursor-pointer">
+                                            <UserX className="h-3.5 w-3.5 mr-2" /> Block member
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
 
-            {/* Main Content Sections */}
-            <div className="relative z-10 max-w-7xl mx-auto px-6">
-                <div className="flex flex-col lg:flex-row gap-12 items-start shrink-0">
-                    {/* Photo Sidebar */}
-                    <div className="w-full lg:w-[380px] space-y-10 shrink-0 lg:sticky lg:top-24">
-                        <div className="bg-white rounded-[3.5rem] p-4 shadow-2xl border border-gray-100 overflow-hidden space-y-6">
-                            <div className="relative aspect-[4/5] rounded-[2.5rem] overflow-hidden bg-gray-100 group">
-                                <div className="absolute top-6 inset-x-8 flex gap-2 z-20">
-                                    {photos.map((_, i) => <div key={i} className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden"><div className={cn("h-full bg-white transition-all duration-300", i === currentPhotoIndex ? 'w-full' : 'w-0')} /></div>)}
+            <div className="relative z-10 px-4 sm:px-5 pb-4">
+                <div className="flex flex-col lg:flex-row gap-4 items-start">
+                    <div className="w-full lg:w-[240px] xl:w-[260px] shrink-0 lg:sticky lg:top-2">
+                        <div className="bg-white rounded-[16px] p-2.5 border border-[#f0ebe3] shadow-[0_2px_12px_rgba(31,64,104,0.05)] overflow-hidden space-y-2.5">
+                            <div className="relative aspect-[4/5] rounded-[12px] overflow-hidden bg-[#faf8f4] group">
+                                <div className="absolute top-3 inset-x-4 flex gap-1.5 z-20">
+                                    {photos.map((_, i) => (
+                                        <div key={i} className="flex-1 h-0.5 bg-white/30 rounded-full overflow-hidden">
+                                            <div
+                                                className={cn(
+                                                    "h-full bg-white transition-all duration-300",
+                                                    i === currentPhotoIndex ? "w-full" : "w-0"
+                                                )}
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
                                 {photos.length > 0 ? (
-                                    <motion.img key={currentPhotoIndex} src={photos[currentPhotoIndex]} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full h-full object-cover" />
+                                    <AnimatePresence mode="wait">
+                                        <motion.img
+                                            key={currentPhotoIndex}
+                                            src={photos[currentPhotoIndex]}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </AnimatePresence>
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-gray-50"><User className="h-20 w-20 text-gray-200" /></div>
+                                    <div className="w-full h-full flex items-center justify-center bg-[#fce8ef]/30">
+                                        <User className="h-12 w-12 text-[#e87898]/30" />
+                                    </div>
                                 )}
                                 {photos.length > 1 && (
-                                    <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex items-center justify-between z-30 pointer-events-none">
-                                        <button onClick={() => setCurrentPhotoIndex(p => (p - 1 + photos.length) % photos.length)} className="h-12 w-12 rounded-full bg-white/30 backdrop-blur-xl border border-white/40 text-white flex items-center justify-center hover:bg-white/50 transition-all pointer-events-auto shadow-lg"><ChevronLeft className="h-6 w-6" /></button>
-                                        <button onClick={() => setCurrentPhotoIndex(p => (p + 1) % photos.length)} className="h-12 w-12 rounded-full bg-white/30 backdrop-blur-xl border border-white/40 text-white flex items-center justify-center hover:bg-white/50 transition-all pointer-events-auto shadow-lg"><ChevronRight className="h-6 w-6" /></button>
+                                    <div className="absolute inset-x-2 top-1/2 -translate-y-1/2 flex items-center justify-between z-30 pointer-events-none">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setCurrentPhotoIndex((p) => (p - 1 + photos.length) % photos.length)
+                                            }
+                                            className="h-8 w-8 rounded-full bg-white/40 backdrop-blur-md border border-white/50 text-white flex items-center justify-center hover:bg-white/60 transition-all pointer-events-auto"
+                                        >
+                                            <ChevronLeft className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setCurrentPhotoIndex((p) => (p + 1) % photos.length)}
+                                            className="h-8 w-8 rounded-full bg-white/40 backdrop-blur-md border border-white/50 text-white flex items-center justify-center hover:bg-white/60 transition-all pointer-events-auto"
+                                        >
+                                            <ChevronRight className="h-4 w-4" />
+                                        </button>
                                     </div>
                                 )}
                             </div>
                             {photos.length > 1 && (
-                                <div className="flex gap-4 px-2 pb-2 overflow-x-auto no-scrollbar">
+                                <div className="flex gap-2 px-1 pb-1 overflow-x-auto no-scrollbar">
                                     {photos.map((p, i) => (
-                                        <button key={i} onClick={() => setCurrentPhotoIndex(i)} className={cn("w-16 h-16 rounded-2xl overflow-hidden border-[3px] shrink-0 transition-all", i === currentPhotoIndex ? "border-[#3bb9ac] scale-105 shadow-md" : "border-transparent opacity-50 hover:opacity-100")}>
-                                            <img src={p} className="w-full h-full object-cover" />
+                                        <button
+                                            key={i}
+                                            type="button"
+                                            onClick={() => setCurrentPhotoIndex(i)}
+                                            className={cn(
+                                                "w-11 h-11 rounded-lg overflow-hidden border-2 transition-all shrink-0",
+                                                i === currentPhotoIndex
+                                                    ? "border-[#e87898] scale-105"
+                                                    : "border-transparent opacity-50 hover:opacity-100"
+                                            )}
+                                        >
+                                            <img src={p} alt="" className="w-full h-full object-cover" />
                                         </button>
                                     ))}
                                 </div>
@@ -397,9 +513,8 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                         </div>
                     </div>
 
-                    {/* Info Columns */}
-                    <div className="flex-1 min-w-0 space-y-12 pb-24 shrink-0">
-                        <Section title="Personal Profile" icon={<User className="h-5 w-5" />} theme="indigo">
+                    <div className="flex-1 min-w-0 space-y-3 pb-4">
+                        <ProfileCard title="Personal Profile" icon={<User className="h-4 w-4" />} iconTint="pink">
                             <DetailRow label="Date of Birth" value={formatToDDMMYYYY(profile.date_of_birth)} />
                             <DetailRow label="Marital Status" value={profile.marital_status} />
                             <DetailRow label="Mother Tongue" value={profile.languages?.[0] || profile.mother_tongue} />
@@ -409,13 +524,13 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                             <DetailRow label="Complexion" value={profile.skin_color} />
                             <DetailRow label="Build" value={profile.body_type} />
                             <DetailRow label="Food Preference" value={profile.food_preference} />
-                        </Section>
+                        </ProfileCard>
 
-                        <Section title="Family Details" icon={<Users className="h-5 w-5" />} theme="amber">
+                        <ProfileCard title="Family Details" icon={<Users className="h-4 w-4" />} iconTint="navy">
                             <DetailRow label="Religion" value={profile.religion || "Hindu"} />
                             <DetailRow label="Caste" value={profile.caste} />
                             <DetailRow label="Subcaste" value={profile.family?.subcaste} />
-                            <DetailRow label="Kilai / Kulam" value={`${profile.family?.kilai || profile.family?.kulam || 'None'}`} />
+                            <DetailRow label="Kilai / Kulam" value={`${profile.family?.kilai || profile.family?.kulam || "None"}`} />
                             <DetailRow label="Gotram" value={profile.family?.gotram} />
                             <DetailRow label="Family Status" value={profile.family_status} />
                             <DetailRow label="Family Type" value={profile.family_type} />
@@ -423,113 +538,141 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                             <DetailRow label="Father Occupation" value={profile.family?.father_occupation} />
                             <DetailRow label="Mother Occupation" value={profile.family?.mother_occupation} />
                             <DetailRow label="Siblings Info" value={formatSiblings()} />
-                        </Section>
+                        </ProfileCard>
 
-                        <div className="space-y-12">
-                            {profile.about && (
-                                <div className="bg-white rounded-[3rem] p-8 space-y-4 border border-gray-50 shadow-sm relative overflow-hidden group">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/5 rounded-full -mr-16 -mt-16 blur-2xl" />
-                                    <div className="flex items-center gap-6 mb-4">
-                                        <div className="h-10 w-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600"><User className="h-5 w-5" /></div>
-                                        <h3 className="text-xl font-black uppercase tracking-widest text-[#1A1A1A]">About Myself</h3>
+                        {profile.about && (
+                            <div className="bg-white rounded-[16px] p-4 sm:p-5 border border-[#f0ebe3] shadow-[0_2px_12px_rgba(31,64,104,0.05)]">
+                                <div className="flex items-center gap-2.5 mb-2.5">
+                                    <div className="h-8 w-8 rounded-lg bg-[#fce8ef] flex items-center justify-center text-[#e87898]">
+                                        <User className="h-3.5 w-3.5" />
                                     </div>
-                                    <p className="text-lg font-light leading-relaxed text-gray-900 italic border-l-4 border-indigo-50 pl-6">"{profile.about}"</p>
+                                    <h3 className="text-sm font-semibold text-[#1F4068]">About Myself</h3>
                                 </div>
-                            )}
-                            {profile.family?.family_description && (
-                                <div className="bg-white rounded-[3rem] p-8 space-y-4 border border-gray-50 shadow-sm relative overflow-hidden group">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50 rounded-full -mr-16 -mt-16 blur-2xl" />
-                                    <div className="flex items-center gap-6 mb-4">
-                                        <div className="h-10 w-10 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600"><Users className="h-5 w-5" /></div>
-                                        <h3 className="text-xl font-black uppercase tracking-widest text-[#1A1A1A]">About My Family</h3>
+                                <p className="text-sm leading-relaxed text-[#4b5563] border-l-2 border-[#e87898] pl-3">
+                                    {profile.about}
+                                </p>
+                            </div>
+                        )}
+                        {profile.family?.family_description && (
+                            <div className="bg-white rounded-[16px] p-4 sm:p-5 border border-[#f0ebe3] shadow-[0_2px_12px_rgba(31,64,104,0.05)]">
+                                <div className="flex items-center gap-2.5 mb-2.5">
+                                    <div className="h-8 w-8 rounded-lg bg-[#faf8f4] flex items-center justify-center text-[#1F4068]">
+                                        <Users className="h-3.5 w-3.5" />
                                     </div>
-                                    <p className="text-lg font-light leading-relaxed text-gray-900 border-l-4 border-amber-50 pl-6">{profile.family.family_description}</p>
+                                    <h3 className="text-sm font-semibold text-[#1F4068]">About My Family</h3>
                                 </div>
-                            )}
-                        </div>
+                                <p className="text-sm leading-relaxed text-[#4b5563] border-l-2 border-[#f0ebe3] pl-3">
+                                    {profile.family.family_description}
+                                </p>
+                            </div>
+                        )}
 
-                        <Section title="Education & Career" icon={<GraduationCap className="h-5 w-5" />} theme="emerald">
-                            {profile.education?.map((e: any, i: number) => <DetailRow key={i} label={`Education ${i + 1}`} value={`${e.education}${e.institution ? ` at ${e.institution}` : ''}`} />)}
-                            <DetailRow label="Current Occupation" value={profile.profession?.designation || profile.professionType} isLocked={true} isPremiumViewer={isViewerPremium} />
-                            <DetailRow label={profile.professionType === 'employee' ? "Sector" : "Business Type"} value={profile.profession?.sector || profile.profession?.business_type} />
-                            <DetailRow label={profile.professionType === 'business' ? "Business Name" : "Company Name"} value={profile.profession?.business_name || profile.profession?.company} isLocked={true} isPremiumViewer={isViewerPremium} />
-                            <DetailRow label={profile.professionType === 'business' ? "Annual Revenue" : "Annual Salary"} value={profile.profession?.revenue_range || profile.profession?.salary_range || profile.profession?.annual_returns || profile.profession?.salary} isLocked={true} isPremiumViewer={isViewerPremium} />
+                        <ProfileCard title="Education & Career" icon={<GraduationCap className="h-4 w-4" />} iconTint="navy">
+                            {profile.education?.map((e: any, i: number) => (
+                                <DetailRow key={i} label={`Education ${i + 1}`} value={`${e.education}${e.institution ? ` at ${e.institution}` : ""}`} />
+                            ))}
+                            <DetailRow label="Current Occupation" value={profile.profession?.designation || profile.professionType} isLocked isPremiumViewer={isViewerPremium} />
+                            <DetailRow label={profile.professionType === "employee" ? "Sector" : "Business Type"} value={profile.profession?.sector || profile.profession?.business_type} />
+                            <DetailRow label={profile.professionType === "business" ? "Business Name" : "Company Name"} value={profile.profession?.business_name || profile.profession?.company} isLocked isPremiumViewer={isViewerPremium} />
+                            <DetailRow label={profile.professionType === "business" ? "Annual Revenue" : "Annual Salary"} value={profile.profession?.revenue_range || profile.profession?.salary_range || profile.profession?.annual_returns || profile.profession?.salary} isLocked isPremiumViewer={isViewerPremium} />
                             <DetailRow label="Work Location" value={profile.profession?.work_location || profile.profession?.business_location} />
-                        </Section>
+                        </ProfileCard>
 
-                        <Section title="Horoscope & Astrology" icon={<Sparkles className="h-5 w-5" />} theme="amber">
-                            <DetailRow label="Star" value={profile.horoscope?.star} isLocked={true} isPremiumViewer={isViewerPremium} />
-                            <DetailRow label="Raasi" value={profile.horoscope?.zodiac_sign} isLocked={true} isPremiumViewer={isViewerPremium} />
-                            <DetailRow label="Lagnam" value={profile.horoscope?.lagnam} isLocked={true} isPremiumViewer={isViewerPremium} />
-                            <DetailRow label="Dosha(m)" value={profile.horoscope?.dhosham || "No Dosham"} isLocked={true} isPremiumViewer={isViewerPremium} />
-                            {profile.horoscope?.jaadhagam_url && <DetailRow label="Horoscope Chart (Jaadhagam)" value={<a href={profile.horoscope.jaadhagam_url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">View Chart</a>} isLocked={true} isPremiumViewer={isViewerPremium} />}
-                            <DetailRow label="Place of Birth" value={profile.horoscope?.place_of_birth} isLocked={true} isPremiumViewer={isViewerPremium} />
-                            <DetailRow label="Time of Birth" value={profile.horoscope?.time_of_birth} isLocked={true} isPremiumViewer={isViewerPremium} />
-                        </Section>
+                        <ProfileCard title="Horoscope & Astrology" icon={<Sparkles className="h-4 w-4" />} iconTint="amber">
+                            <DetailRow label="Star" value={profile.horoscope?.star} isLocked isPremiumViewer={isViewerPremium} />
+                            <DetailRow label="Raasi" value={profile.horoscope?.zodiac_sign} isLocked isPremiumViewer={isViewerPremium} />
+                            <DetailRow label="Lagnam" value={profile.horoscope?.lagnam} isLocked isPremiumViewer={isViewerPremium} />
+                            <DetailRow label="Dosha(m)" value={profile.horoscope?.dhosham || "No Dosham"} isLocked isPremiumViewer={isViewerPremium} />
+                            {profile.horoscope?.jaadhagam_url && (
+                                <DetailRow
+                                    label="Horoscope Chart (Jaadhagam)"
+                                    value={
+                                        <a href={profile.horoscope.jaadhagam_url} target="_blank" rel="noopener noreferrer" className="text-[#e87898] hover:underline">
+                                            View Chart
+                                        </a>
+                                    }
+                                    isLocked
+                                    isPremiumViewer={isViewerPremium}
+                                />
+                            )}
+                            <DetailRow label="Place of Birth" value={profile.horoscope?.place_of_birth} isLocked isPremiumViewer={isViewerPremium} />
+                            <DetailRow label="Time of Birth" value={profile.horoscope?.time_of_birth} isLocked isPremiumViewer={isViewerPremium} />
+                        </ProfileCard>
 
-                        <Section title="Lifestyle & Habits" icon={<HeartHandshake className="h-5 w-5" />} theme="rose">
+                        <ProfileCard title="Lifestyle & Habits" icon={<HeartHandshake className="h-4 w-4" />} iconTint="pink">
                             <DetailRow label="Diet" value={profile.social?.diet || profile.food_preference} />
                             <DetailRow label="Smoking" value={profile.social?.smoking || "No"} />
                             <DetailRow label="Drinking" value={profile.social?.drinking || "No"} />
                             <DetailRow label="Parties" value={profile.social?.parties} />
                             <DetailRow label="Pubs" value={profile.social?.pubs} />
-                            <div className="py-8 px-2">
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Interests</p>
-                                <div className="flex flex-wrap gap-2">
+                            <div className="py-3 px-1">
+                                <p className="text-xs font-medium text-[#9ca3af] mb-2">Interests</p>
+                                <div className="flex flex-wrap gap-1.5">
                                     {Array.isArray(profile.interests?.interests) && profile.interests.interests.length > 0 ? (
                                         profile.interests.interests.map((int: string, i: number) => (
-                                            <span key={i} className="px-5 py-2.5 bg-gray-50 text-gray-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-gray-100">{int}</span>
+                                            <span key={i} className="px-2.5 py-1 bg-[#faf8f4] text-[#4b5563] rounded-md text-[11px] font-medium border border-[#f0ebe3]">
+                                                {int}
+                                            </span>
                                         ))
-                                    ) : <p className="text-gray-300 text-[10px] font-bold uppercase italic">No interests shared</p>}
+                                    ) : (
+                                        <p className="text-[#9ca3af] text-sm italic">No interests shared</p>
+                                    )}
                                 </div>
                             </div>
-                        </Section>
+                        </ProfileCard>
 
-                        <Section title="Contact & Location" icon={<Phone className="h-5 w-5" />} theme="sky">
-                            <DetailRow label="Phone Number" value={profile.contact?.phone || profile.phone} isLocked={true} isPremiumViewer={isViewerPremium} />
-                            <DetailRow label="WhatsApp" value={profile.contact?.whatsapp_number || profile.phone} isLocked={true} isPremiumViewer={isViewerPremium} />
-                            <DetailRow 
-                                label="Address" 
+                        <ProfileCard title="Contact & Location" icon={<Phone className="h-4 w-4" />} iconTint="navy">
+                            <DetailRow label="Phone Number" value={profile.contact?.phone || profile.phone} isLocked isPremiumViewer={isViewerPremium} />
+                            <DetailRow label="WhatsApp" value={profile.contact?.whatsapp_number || profile.phone} isLocked isPremiumViewer={isViewerPremium} />
+                            <DetailRow
+                                label="Address"
                                 value={[
-                                    profile.contact?.current_address_line1, 
+                                    profile.contact?.current_address_line1,
                                     profile.contact?.current_address_line2,
-                                    profile.contact?.current_area, 
-                                    profile.contact?.current_district, 
-                                    profile.contact?.current_state
-                                ].filter(Boolean).join(", ")} 
-                                isLocked={true} 
-                                isPremiumViewer={isViewerPremium} 
+                                    profile.contact?.current_area,
+                                    profile.contact?.current_district,
+                                    profile.contact?.current_state,
+                                ]
+                                    .filter(Boolean)
+                                    .join(", ")}
+                                isLocked
+                                isPremiumViewer={isViewerPremium}
                             />
-                        </Section>
+                        </ProfileCard>
 
                         {profile.partner_preferences && (
-                            <div className="bg-white rounded-[3rem] p-8 shadow-sm border border-gray-50 relative overflow-hidden group space-y-10">
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50/10 rounded-full -mr-20 -mt-20 blur-3xl group-hover:bg-indigo-50/20 transition-all duration-1000" />
-                                <div className="relative z-10 space-y-10">
-                                    <div className="flex flex-col md:flex-row gap-8 items-start md:items-center justify-between">
-                                        <div className="flex items-center gap-6">
-                                            <div className="h-10 w-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600"><Target className="h-5 w-5" /></div>
-                                            <h2 className="text-xl font-black uppercase tracking-widest text-[#1A1A1A]">Partner Preferences</h2>
+                            <div className="bg-white rounded-[16px] p-4 sm:p-5 border border-[#f0ebe3] shadow-[0_2px_12px_rgba(31,64,104,0.05)] space-y-3">
+                                <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="h-8 w-8 rounded-lg bg-[#fce8ef] flex items-center justify-center text-[#e87898]">
+                                            <Target className="h-3.5 w-3.5" />
                                         </div>
-                                        {!isOwnProfile && (
-                                            <div className="flex items-center gap-4 bg-gray-50 px-6 py-3 rounded-full border border-gray-100 shadow-sm">
-                                                <div className="text-right">
-                                                    <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400 opacity-60">Match Score</p>
-                                                    <p className="text-2xl font-black text-gray-900">{matchScore.matches}<span className="text-gray-200">/</span>{matchScore.total}</p>
-                                                </div>
-                                                <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center shadow-lg shadow-emerald-500/20"><Heart className="h-5 w-5 fill-current text-white" /></div>
+                                        <h2 className="text-sm font-semibold text-[#1F4068]">Partner Preferences</h2>
+                                    </div>
+                                    {!isOwnProfile && (
+                                        <div className="flex items-center gap-2.5 bg-[#fce8ef] px-3 py-1.5 rounded-xl border border-[#f0ebe3]">
+                                            <div className="text-right">
+                                                <p className="text-[10px] font-medium text-[#9ca3af]">Match score</p>
+                                                <p className="text-base font-semibold text-[#1F4068]">
+                                                    {matchScore.matches}
+                                                    <span className="text-[#d1d5db]">/</span>
+                                                    {matchScore.total}
+                                                </p>
                                             </div>
-                                        )}
-                                    </div>
-                                    <div className="space-y-1">
-                                        <PrefRow label="Preferred Age" value={`${profile.partner_preferences.preferred_age_min || 18} to ${profile.partner_preferences.preferred_age_max || 70} years`} isMatch={matchResults.age} />
-                                        <PrefRow label="Preferred Height" value={`${profile.partner_preferences.preferred_height_min ? Math.floor(parseInt(profile.partner_preferences.preferred_height_min)/30.48)+"'"+Math.round((parseInt(profile.partner_preferences.preferred_height_min)/2.54)%12)+"\"" : 'Any'} - ${profile.partner_preferences.preferred_height_max ? Math.floor(parseInt(profile.partner_preferences.preferred_height_max)/30.48)+"'"+Math.round((parseInt(profile.partner_preferences.preferred_height_max)/2.54)%12)+"\"" : 'Any'}`} isMatch={matchResults.height} />
-                                        <PrefRow label="Marital Status" value={profile.partner_preferences.preferred_marital_status || 'Any'} isMatch={matchResults.marital} />
-                                        <PrefRow label="Religion / Caste" value={profile.partner_preferences.preferred_religion === 'Any' || !profile.partner_preferences.preferred_religion ? 'Open / Any' : `${profile.partner_preferences.preferred_religion} / ${profile.partner_preferences.preferred_caste || 'Any'}`} isMatch={matchResults.religion} />
-                                        <PrefRow label="Education" value={Array.isArray(profile.partner_preferences.preferred_education) ? profile.partner_preferences.preferred_education.join(", ") : (profile.partner_preferences.preferred_education || "Any")} isMatch={matchResults.education} />
-                                        <PrefRow label="Occupation" value={Array.isArray(profile.partner_preferences.preferred_occupation) ? profile.partner_preferences.preferred_occupation.join(", ") : (profile.partner_preferences.preferred_occupation || "Any")} isMatch={matchResults.occupation} />
-                                        <PrefRow label="Location" value={profile.partner_preferences.preferred_location || "Any Location"} isMatch={matchResults.location} />
-                                    </div>
+                                            <div className="w-8 h-8 rounded-full bg-[#e87898] flex items-center justify-center">
+                                                <Heart className="h-3.5 w-3.5 fill-current text-white" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="space-y-0.5">
+                                    <PrefRow label="Preferred Age" value={`${profile.partner_preferences.preferred_age_min || 18} to ${profile.partner_preferences.preferred_age_max || 70} years`} isMatch={matchResults.age} />
+                                    <PrefRow label="Preferred Height" value={`${profile.partner_preferences.preferred_height_min ? Math.floor(parseInt(profile.partner_preferences.preferred_height_min)/30.48)+"'"+Math.round((parseInt(profile.partner_preferences.preferred_height_min)/2.54)%12)+"\"" : "Any"} - ${profile.partner_preferences.preferred_height_max ? Math.floor(parseInt(profile.partner_preferences.preferred_height_max)/30.48)+"'"+Math.round((parseInt(profile.partner_preferences.preferred_height_max)/2.54)%12)+"\"" : "Any"}`} isMatch={matchResults.height} />
+                                    <PrefRow label="Marital Status" value={profile.partner_preferences.preferred_marital_status || "Any"} isMatch={matchResults.marital} />
+                                    <PrefRow label="Religion / Caste" value={profile.partner_preferences.preferred_religion === "Any" || !profile.partner_preferences.preferred_religion ? "Open / Any" : `${profile.partner_preferences.preferred_religion} / ${profile.partner_preferences.preferred_caste || "Any"}`} isMatch={matchResults.religion} />
+                                    <PrefRow label="Education" value={Array.isArray(profile.partner_preferences.preferred_education) ? profile.partner_preferences.preferred_education.join(", ") : (profile.partner_preferences.preferred_education || "Any")} isMatch={matchResults.education} />
+                                    <PrefRow label="Occupation" value={Array.isArray(profile.partner_preferences.preferred_occupation) ? profile.partner_preferences.preferred_occupation.join(", ") : (profile.partner_preferences.preferred_occupation || "Any")} isMatch={matchResults.occupation} />
+                                    <PrefRow label="Location" value={profile.partner_preferences.preferred_location || "Any Location"} isMatch={matchResults.location} />
                                 </div>
                             </div>
                         )}
@@ -546,58 +689,115 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
     )
 }
 
-function Section({ title, icon, theme, children }: { title: string, icon: React.ReactNode, theme: string, children: React.ReactNode }) {
-    const bgColor = theme === 'indigo' ? 'bg-indigo-50' : theme === 'amber' ? 'bg-amber-50' : theme === 'emerald' ? 'bg-emerald-50' : theme === 'rose' ? 'bg-primary' : 'bg-sky-50';
-    const textColor = theme === 'indigo' ? 'text-indigo-600' : theme === 'amber' ? 'text-amber-600' : theme === 'emerald' ? 'text-emerald-600' : theme === 'rose' ? 'text-primary' : 'text-sky-600';
-    
+function ProfileCard({
+    title,
+    icon,
+    iconTint,
+    children,
+}: {
+    title: string
+    icon: React.ReactNode
+    iconTint: "pink" | "navy" | "amber"
+    children: React.ReactNode
+}) {
+    const iconStyles =
+        iconTint === "pink"
+            ? "bg-[#fce8ef] text-[#e87898]"
+            : iconTint === "amber"
+              ? "bg-amber-50 text-amber-600"
+              : "bg-[#faf8f4] text-[#1F4068]"
+
     return (
-        <div className="bg-white rounded-[3rem] p-8 shadow-sm border border-gray-50 space-y-10">
-            <div className="flex items-center gap-6">
-                <div className={cn("h-10 w-10 rounded-2xl flex items-center justify-center", bgColor, textColor)}>{icon}</div>
-                <h2 className="text-xl font-black uppercase tracking-widest text-[#1A1A1A]">{title}</h2>
+        <div className="bg-white rounded-[16px] p-4 sm:p-5 border border-[#f0ebe3] shadow-[0_2px_12px_rgba(31,64,104,0.05)] space-y-3">
+            <div className="flex items-center gap-2.5">
+                <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center", iconStyles)}>{icon}</div>
+                <h2 className="text-sm font-semibold text-[#1F4068]">{title}</h2>
             </div>
-            <div className="grid grid-cols-1 gap-1">{children}</div>
+            <div className="grid grid-cols-1 gap-0.5">{children}</div>
         </div>
     )
 }
 
-function DetailRow({ label, value, isLocked, isPremiumViewer }: { label: string, value?: any, isLocked?: boolean, isPremiumViewer?: boolean }) {
+function DetailRow({
+    label,
+    value,
+    isLocked,
+    isPremiumViewer,
+}: {
+    label: string
+    value?: React.ReactNode
+    isLocked?: boolean
+    isPremiumViewer?: boolean
+}) {
     const [revealed, setRevealed] = useState(false)
-    
+
     const renderValue = () => {
-        if (!value) return <span className="text-gray-300 italic font-medium">Not specified</span>
+        if (!value) return <span className="text-[#9ca3af] italic text-sm">Not specified</span>
+
         if (isLocked) {
-            if (isPremiumViewer && revealed) return (
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                    <span className="text-sm font-bold text-[#1A1A1A] break-words">{value}</span>
-                    <button onClick={() => setRevealed(false)} className="shrink-0 text-[11px] text-[#3bb9ac] hover:underline uppercase tracking-widest font-black bg-indigo-50 px-2 py-0.5 rounded">Hide</button>
+            if (isPremiumViewer && revealed) {
+                return (
+                    <span className="text-sm font-medium text-[#1F4068] break-words flex items-center gap-2 justify-end">
+                        {value}
+                        <button onClick={() => setRevealed(false)} className="text-xs text-[#e87898] hover:underline font-medium">
+                            Hide
+                        </button>
+                    </span>
+                )
+            }
+            if (isPremiumViewer && !revealed) {
+                return (
+                    <button
+                        onClick={() => setRevealed(true)}
+                        className="flex items-center gap-1.5 px-2.5 py-1 bg-[#fce8ef] rounded-lg border border-[#f0ebe3] text-[#e87898] text-xs font-medium hover:bg-[#f0ebe3] transition-colors"
+                    >
+                        <Crown className="h-3 w-3" />
+                        Reveal
+                    </button>
+                )
+            }
+            return (
+                <div className="flex items-center gap-1.5 text-[#9ca3af] text-xs font-medium justify-end">
+                    <Lock className="h-3 w-3" /> Locked
                 </div>
             )
-            if (isPremiumViewer && !revealed) return <button onClick={() => setRevealed(true)} className="flex items-center gap-2 px-3 py-1 bg-[#F3F4FF] rounded-lg border border-[#E0E2FF] text-[#3bb9ac] text-[9px] font-black uppercase tracking-widest shadow-sm hover:bg-[#E0E2FF] transition-all"><Crown className="h-3 w-3" /> Reveal</button>
-            return <div className="flex items-center gap-2 text-gray-300 text-[10px] font-black uppercase tracking-widest"><Lock className="h-3 w-3" /> Locked</div>
         }
-        return <span className="text-sm font-bold text-[#1A1A1A] tracking-tight">{value}</span>
+
+        return <span className="text-sm font-medium text-[#1F4068] whitespace-normal break-words">{value}</span>
     }
 
     return (
-        <div className="flex items-start justify-between py-6 border-b border-gray-50 last:border-0 hover:bg-gray-50/20 transition-colors px-1 -mx-1 rounded-lg group/item">
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] shrink-0 pt-1 w-24">{label}</span>
-            <div className="flex-1 min-w-0 text-right pl-4">{renderValue()}</div>
+        <div className="flex items-center justify-between py-2 border-b border-[#f0ebe3] last:border-0 gap-4">
+            <span className="text-xs text-[#9ca3af] shrink-0">{label}</span>
+            <div className="text-right min-w-0">{renderValue()}</div>
         </div>
     )
 }
 
-function PrefRow({ label, value, isMatch }: { label: string, value?: string, isMatch?: boolean }) {
-    const isUnspecified = !value || value === "Open / Any" || value === "Any" || value.includes("Any") || value.includes("Open");
+function PrefRow({ label, value, isMatch }: { label: string; value?: string | number | null; isMatch?: boolean }) {
+    const isUnspecified =
+        !value ||
+        value === "Open / Any" ||
+        value === "Any" ||
+        value === "Any / Any" ||
+        value === "Any, Any" ||
+        value.toString().includes("Any") ||
+        value.toString().includes("Open")
+
     return (
-        <div className="flex items-center justify-between py-3 px-2 rounded-xl hover:bg-gray-50 transition-colors group/row">
-            <div className="flex items-center gap-4">
-                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center shrink-0", isUnspecified ? 'bg-gray-100 text-gray-300' : isMatch ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-primary text-white shadow-lg shadow-primary')}>
-                    {isUnspecified ? <Info className="h-4 w-4" /> : isMatch ? <CheckCircle2 className="h-4 w-4" /> : <UserX className="h-4 w-4" />}
+        <div className="flex items-center justify-between py-2 px-1 rounded-lg hover:bg-[#faf8f4] transition-colors gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+                <div
+                    className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center shrink-0",
+                        isUnspecified ? "bg-[#f3f4f6] text-[#9ca3af]" : isMatch ? "bg-[#e87898] text-white" : "bg-[#1F4068] text-white"
+                    )}
+                >
+                    {isUnspecified ? <Info className="h-3 w-3" /> : isMatch ? <CheckCircle2 className="h-3 w-3" /> : <UserX className="h-3 w-3" />}
                 </div>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hoverRow:text-gray-900 transition-colors">{label}</span>
+                <span className="text-xs text-[#9ca3af]">{label}</span>
             </div>
-            <span className="text-[13px] font-bold text-gray-900 ml-4 text-right">{value || "Open / Any"}</span>
+            <span className="text-sm font-medium text-[#1F4068] text-right ml-2 truncate">{value || "Open / Any"}</span>
         </div>
     )
 }

@@ -1,8 +1,12 @@
 "use client"
 
-import { Label } from "@/components/ui/label"
 import { FormData } from "@/types/profile"
 import { useMasterData } from "@/hooks/use-master-data"
+import {
+  SETUP_SECTION_CARD,
+  SetupSectionHeader,
+} from "@/components/profile-steps/setup-section-header"
+import { Heart, Palette } from "lucide-react"
 
 interface InterestsStepProps {
   formData: FormData
@@ -10,11 +14,9 @@ interface InterestsStepProps {
 }
 
 export function InterestsStep({ formData, onChange }: InterestsStepProps) {
-  // Fetch hobbies and interests from master tables using the common hook
   const { data: hobbiesData } = useMasterData({ tableName: "master_hobbies" })
   const { data: interestsData } = useMasterData({ tableName: "master_interests" })
 
-  // Transform data to arrays of values
   const hobbiesList = hobbiesData.map((item) => item.value)
   const interestsList = interestsData.map((item) => item.value)
 
@@ -35,83 +37,74 @@ export function InterestsStep({ formData, onChange }: InterestsStepProps) {
   }
 
   return (
-    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="space-y-10">
-        <div className="space-y-6">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
-              <span className="text-[#3bb9ac] font-black text-xs">H1</span>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="setup-section-stack">
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={Palette}
+            title="Hobbies"
+            description="Activities you enjoy in your free time"
+          />
+          <div className="setup-section-card-body">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {hobbiesList.map((hobby) => {
+                const isSelected = formData.hobbies.includes(hobby)
+                return (
+                  <label
+                    key={hobby}
+                    className={`relative group cursor-pointer h-11 flex items-center justify-center px-3 rounded-xl border-2 transition-all duration-300 font-semibold text-[10px] uppercase tracking-wide text-center ${
+                      isSelected
+                        ? "bg-[#e87898] border-[#e87898] text-white shadow-sm active:scale-95"
+                        : "sds-glass border-[#f0ebe3] text-gray-500 hover:border-[#e87898]/30 hover:text-[#e87898]"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={(e) => handleHobbyToggle(hobby, e.target.checked)}
+                      className="hidden"
+                    />
+                    {hobby}
+                  </label>
+                )
+              })}
             </div>
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Activities</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Hobbies</h3>
-            </div>
-            <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {hobbiesList.map((hobby) => {
-              const isSelected = formData.hobbies.includes(hobby)
-              return (
-                <label 
-                  key={hobby} 
-                  className={`relative group cursor-pointer h-14 flex items-center justify-center px-4 rounded-2xl border-2 transition-all duration-300 font-bold text-[10px] uppercase tracking-widest text-center ${
-                    isSelected 
-                    ? "bg-[#3bb9ac] border-[#3bb9ac] text-white shadow-lg shadow-indigo-900/20 active:scale-95" 
-                    : "sds-glass border-indigo-50/50 text-gray-500 hover:border-[#3bb9ac]/30 hover:text-[#3bb9ac] hover:-translate-y-1"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={(e) => handleHobbyToggle(hobby, e.target.checked)}
-                    className="hidden"
-                  />
-                  {hobby}
-                </label>
-              )
-            })}
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
-              <span className="text-[#3bb9ac] font-black text-xs">I2</span>
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={Heart}
+            title="Interests"
+            description="Topics and passions that matter to you"
+          />
+          <div className="setup-section-card-body">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {interestsList.map((interest) => {
+                const isSelected = formData.interests.includes(interest)
+                return (
+                  <label
+                    key={interest}
+                    className={`relative group cursor-pointer h-11 flex items-center justify-center px-3 rounded-xl border-2 transition-all duration-300 font-semibold text-[10px] uppercase tracking-wide text-center ${
+                      isSelected
+                        ? "bg-[#e87898] border-[#e87898] text-white shadow-sm active:scale-95"
+                        : "sds-glass border-[#f0ebe3] text-gray-500 hover:border-[#e87898]/30 hover:text-[#e87898]"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={(e) => handleInterestToggle(interest, e.target.checked)}
+                      className="hidden"
+                    />
+                    {interest}
+                  </label>
+                )
+              })}
             </div>
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Passions</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Interests</h3>
-            </div>
-            <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {interestsList.map((interest) => {
-              const isSelected = formData.interests.includes(interest)
-              return (
-                <label 
-                  key={interest} 
-                  className={`relative group cursor-pointer h-14 flex items-center justify-center px-4 rounded-2xl border-2 transition-all duration-300 font-bold text-[10px] uppercase tracking-widest text-center ${
-                    isSelected 
-                    ? "bg-[#3bb9ac] border-[#3bb9ac] text-white shadow-lg shadow-indigo-900/20 active:scale-95" 
-                    : "sds-glass border-indigo-50/50 text-gray-500 hover:border-[#3bb9ac]/30 hover:text-[#3bb9ac] hover:-translate-y-1"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={(e) => handleInterestToggle(interest, e.target.checked)}
-                    className="hidden"
-                  />
-                  {interest}
-                </label>
-              )
-            })}
           </div>
         </div>
       </div>
     </div>
   )
 }
-

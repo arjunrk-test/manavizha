@@ -17,7 +17,12 @@ import { DetailedHoroscopeView } from "@/components/detailed-horoscope-view"
 import { generateHoroscope, PLANETS, Location } from "@/lib/astrology"
 import { supabase } from "@/lib/supabase"
 import axios from "axios"
-import { Eye, Upload, X, Zap, Loader2 } from "lucide-react"
+import {
+  SETUP_SECTION_BODY,
+  SETUP_SECTION_CARD,
+  SetupSectionHeader,
+} from "@/components/profile-steps/setup-section-header"
+import { Clock, Eye, Image, Loader2, Star, Upload, X, Zap } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -184,24 +189,18 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
   }
 
   return (
-    <div className="space-y-12">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        <div className="space-y-6 md:col-span-2">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[#3bb9ac]/5 flex items-center justify-center border border-[#3bb9ac]/10">
-              <span className="text-[#3bb9ac] font-black text-xs">A1</span>
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3bb9ac]/30 mb-0.5">Horoscope</h4>
-              <h3 className="text-xl font-light text-gray-900 tracking-tight">Jaadhagam / Photo</h3>
-            </div>
-            <div className="h-px flex-1 bg-gradient-to-r from-black/[0.05] to-transparent ml-4" />
-          </div>
-
-          <div className="space-y-4 flex justify-center w-full">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="setup-section-stack">
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={Image}
+            title="Jaadhagam / photo"
+            description="Upload your horoscope chart image"
+          />
+          <div className="setup-section-card-body flex justify-center w-full">
             {preview ? (
               <div className="relative w-full max-w-lg mx-auto group">
-                <div className="absolute -inset-4 bg-gradient-to-br from-[#3bb9ac]/5 to-transparent rounded-[3rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                <div className="absolute -inset-4 bg-gradient-to-br from-[#e87898]/5 to-transparent rounded-[3rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                 <img
                   src={preview}
                   alt="Jaadhagam preview"
@@ -218,16 +217,16 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
                 </Button>
               </div>
             ) : (
-              <div className="sds-glass border-2 border-dashed border-indigo-100 rounded-[3rem] p-16 text-center w-full max-w-xl mx-auto group hover:border-[#3bb9ac]/30 transition-all duration-700 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#3bb9ac]/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                <div className="h-24 w-24 rounded-[2rem] bg-[#3bb9ac]/5 flex items-center justify-center text-[#3bb9ac]/20 mx-auto mb-8 group-hover:scale-110 group-hover:bg-[#3bb9ac]/10 group-hover:rotate-6 transition-all duration-700">
+              <div className="sds-glass border-2 border-dashed border-[#f0ebe3] rounded-[3rem] p-16 text-center w-full max-w-xl mx-auto group hover:border-[#e87898]/30 transition-all duration-700 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#e87898]/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                <div className="h-24 w-24 rounded-[2rem] bg-[#e87898]/5 flex items-center justify-center text-[#e87898]/20 mx-auto mb-8 group-hover:scale-110 group-hover:bg-[#e87898]/10 group-hover:rotate-6 transition-all duration-700">
                   <Upload className="h-10 w-10" />
                 </div>
                 <Label htmlFor="jaadhagam-upload" className="cursor-pointer flex flex-col gap-4 relative z-10">
-                  <span className="text-[14px] font-black uppercase tracking-[0.4em] text-[#3bb9ac] group-hover:tracking-[0.5em] transition-all duration-700">
+                  <span className="text-[14px] font-black uppercase tracking-[0.4em] text-[#e87898] group-hover:tracking-[0.5em] transition-all duration-700">
                     Upload Horoscope Image
                   </span>
-                  <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest bg-white/40 px-4 py-2 rounded-full border border-indigo-50/50 w-fit mx-auto">
+                  <p className="text-[10px] text-[#9ca3af] font-bold uppercase tracking-widest bg-white/40 px-4 py-2 rounded-full border border-[#f0ebe3] w-fit mx-auto">
                     PNG, JPG, BMP / Max 5MB
                   </p>
                 </Label>
@@ -245,8 +244,14 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
           </div>
         </div>
 
-        {/* Computation Engine Banner */}
-        <div className="md:col-span-2 sds-glass p-8 rounded-[3rem] border-2 border-amber-100/50 bg-gradient-to-br from-amber-50/30 to-white/40 flex flex-col md:flex-row items-center justify-between gap-8 overflow-hidden relative group shadow-[0_20px_40px_-10px_rgba(251,191,36,0.1)]">
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={Zap}
+            title="Calculate details"
+            description="Instant details from birth time using traditional methods"
+          />
+          <div className="setup-section-card-body">
+            <div className="p-8 rounded-[3rem] border-2 border-amber-100/50 bg-gradient-to-br from-amber-50/30 to-white/40 flex flex-col md:flex-row items-center justify-between gap-8 overflow-hidden relative group shadow-[0_20px_40px_-10px_rgba(251,191,36,0.1)]">
           <div className="absolute -top-10 -right-10 p-12 opacity-5 group-hover:opacity-10 transition-all duration-1000 group-hover:rotate-45 group-hover:scale-150">
             <Zap className="h-48 w-48 text-amber-500" />
           </div>
@@ -266,7 +271,7 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
                 onClick={() => handleViewDetailed('thirukanitham')}
                 disabled={isFetchingDetailed}
                 variant="outline"
-                className="h-14 px-6 rounded-2xl border-indigo-500/30 text-indigo-700 bg-white/50 backdrop-blur-sm font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:bg-indigo-50 active:scale-95 disabled:opacity-50"
+                className="h-14 px-6 rounded-2xl border-[#e87898]/30 text-[#1F4068] bg-white/50 backdrop-blur-sm font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:bg-[#fce8ef] active:scale-95 disabled:opacity-50"
             >
                 {isFetchingDetailed ? <Loader2 className="h-5 w-5 animate-spin mr-3" /> : <Eye className="h-5 w-5 mr-3" />}
                 Thirukanitham
@@ -291,6 +296,8 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
                 {isGenerating ? "Calculate" : "Calculate"}
             </Button>
           </div>
+            </div>
+          </div>
         </div>
 
         <Dialog open={isViewingDetailed} onOpenChange={setIsViewingDetailed}>
@@ -306,35 +313,48 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
           </DialogContent>
         </Dialog>
 
-        {/* Input Fields Pair */}
-        <div className="space-y-2">
-          <Label htmlFor="timeOfBirth" className="sds-label">Time of Birth *</Label>
-          <Input
-            id="timeOfBirth"
-            type="time"
-            value={formData.timeOfBirth || ""}
-            onChange={(e) => onChange("timeOfBirth", e.target.value)}
-            required
-            className="sds-input w-full"
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={Clock}
+            title="Birth time & place"
+            description="Required for horoscope calculation"
           />
+          <div className={`${SETUP_SECTION_BODY} grid-cols-1 md:grid-cols-2`}>
+            <div className="space-y-2">
+              <Label htmlFor="timeOfBirth" className="sds-label">Time of Birth *</Label>
+              <Input
+                id="timeOfBirth"
+                type="time"
+                value={formData.timeOfBirth || ""}
+                onChange={(e) => onChange("timeOfBirth", e.target.value)}
+                required
+                className="sds-input w-full"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <Label className="sds-label text-[#1F4068] border-[#f0ebe3] flex items-center gap-2">Place of Birth *</Label>
+              <GlobalLocationSelector 
+                initialCity={formData.placeOfBirth || ""}
+                initialState={formData.birthState || ""}
+                initialCountry={formData.birthCountry || ""}
+                onLocationChange={(loc) => {
+                  onChange("placeOfBirth", loc.city)
+                  onChange("birthState", loc.state)
+                  onChange("birthCountry", loc.country)
+                }}
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-4">
-          <Label className="sds-label text-indigo-900 border-indigo-100 flex items-center gap-2">Place of Birth *</Label>
-          <GlobalLocationSelector 
-            initialCity={formData.placeOfBirth || ""}
-            initialState={formData.birthState || ""}
-            initialCountry={formData.birthCountry || ""}
-            onLocationChange={(loc) => {
-              onChange("placeOfBirth", loc.city)
-              onChange("birthState", loc.state)
-              onChange("birthCountry", loc.country)
-            }}
+        <div className={SETUP_SECTION_CARD}>
+          <SetupSectionHeader
+            icon={Star}
+            title="Rashi, star & lagnam"
+            description="Zodiac sign, nakshatra, lagnam, and dhosham details"
           />
-        </div>
-
-        {/* Selection Matrix */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:col-span-2">
+          <div className={`${SETUP_SECTION_BODY} grid-cols-1 md:grid-cols-2`}>
           <SelectDropdown
             id="zodiacSign"
             label="Zodiac (Rashi) *"
@@ -372,6 +392,7 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
               required
               className="sds-input w-full"
             />
+          </div>
           </div>
         </div>
       </div>

@@ -8,7 +8,7 @@ import { useMasterData } from "@/hooks/use-master-data"
 import { SelectDropdown } from "@/components/ui/select-dropdown"
 import { LanguageDropdown } from "@/components/ui/language-dropdown"
 import { SkinColorDropdown } from "@/components/ui/skin-color-dropdown"
-import { SetupSectionHeader } from "@/components/profile-steps/setup-section-header"
+import { SetupSectionHeader, SETUP_SECTION_CARD, SETUP_SECTION_BODY } from "@/components/profile-steps/setup-section-header"
 import { INDIAN_LANGUAGES, INTERNATIONAL_LANGUAGES } from "@/lib/profile-data"
 import { FileText, Globe, User, UserRound } from "lucide-react"
 
@@ -17,8 +17,8 @@ interface PersonalDetailsStepProps {
   onChange: (field: keyof FormData, value: any) => void
 }
 
-const SECTION_CARD = "sds-glass setup-section-card rounded-[2.5rem] border-indigo-50/50"
-const SECTION_BODY = "setup-section-card-body grid gap-4"
+const SECTION_CARD = SETUP_SECTION_CARD
+const SECTION_BODY = SETUP_SECTION_BODY
 
 export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepProps) {
   const { data: genderOptions } = useMasterData({ tableName: "master_gender" })
@@ -117,22 +117,22 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
                 readOnly
                 disabled
                 placeholder="Calculated"
-                className="sds-input w-full bg-black/[0.02] border-indigo-50/30 opacity-60 cursor-not-allowed font-medium text-gray-500"
+                className="sds-input w-full bg-black/[0.02] border-[#f0ebe3] opacity-60 cursor-not-allowed font-medium text-gray-500"
               />
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="createdBy" className="sds-label">Created By *</Label>
               <Select value={formData.createdBy} onValueChange={(value) => onChange("createdBy", value)}>
-                <SelectTrigger id="createdBy" className="sds-input w-full border-indigo-50/50">
+                <SelectTrigger id="createdBy" className="sds-input w-full border-[#f0ebe3]">
                   <SelectValue placeholder="Select Creator" />
                 </SelectTrigger>
-                <SelectContent className="sds-glass rounded-2xl border-indigo-50/50 shadow-2xl p-2 z-[100] backdrop-blur-2xl">
+                <SelectContent className="sds-glass rounded-2xl border-[#f0ebe3] shadow-2xl p-2 z-[100] backdrop-blur-2xl">
                   {["Self", "Parents", "Sibling", "Relative", "Friend"].map((val) => (
                     <SelectItem
                       key={val}
                       value={val}
-                      className="rounded-xl p-3 focus:bg-[#3bb9ac] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest"
+                      className="rounded-xl p-3 focus:bg-[#e87898] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest"
                     >
                       {val}
                     </SelectItem>
@@ -234,19 +234,19 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
             <div className="space-y-1.5 md:col-span-4">
               <Label htmlFor="physicalStatus" className="sds-label">Physical Status *</Label>
               <Select value={formData.physicalStatus} onValueChange={(value) => onChange("physicalStatus", value)}>
-                <SelectTrigger id="physicalStatus" className="sds-input w-full border-indigo-50/50">
+                <SelectTrigger id="physicalStatus" className="sds-input w-full border-[#f0ebe3]">
                   <SelectValue placeholder="Are you physically challenged?" />
                 </SelectTrigger>
-                <SelectContent className="sds-glass rounded-2xl border-indigo-50/50 shadow-2xl p-2 z-[100] backdrop-blur-2xl">
+                <SelectContent className="sds-glass rounded-2xl border-[#f0ebe3] shadow-2xl p-2 z-[100] backdrop-blur-2xl">
                   <SelectItem
                     value="Normal"
-                    className="rounded-xl p-3 focus:bg-[#3bb9ac] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest"
+                    className="rounded-xl p-3 focus:bg-[#e87898] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest"
                   >
                     No
                   </SelectItem>
                   <SelectItem
                     value="Physically Challenged"
-                    className="rounded-xl p-3 focus:bg-[#3bb9ac] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest"
+                    className="rounded-xl p-3 focus:bg-[#e87898] focus:text-white transition-all text-[10px] font-black uppercase tracking-widest"
                   >
                     Yes
                   </SelectItem>
@@ -309,7 +309,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
                     ? "text-[#9ca3af] border-[#f0ebe3] bg-[#faf8f4]"
                     : formData.about.length > 550
                       ? "text-[#e87898] border-[#fce8ef] bg-[#fce8ef]"
-                      : "text-[#3bb9ac] border-[#e6f7f5] bg-[#e6f7f5]"
+                      : "text-[#e87898] border-[#fce8ef] bg-[#fce8ef]"
                 }`}
               >
                 {formData.about.length} / 600
@@ -328,7 +328,7 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
               maxLength={600}
               required
               className={`sds-input w-full resize-none leading-relaxed transition-all duration-500 ${
-                formData.about.length < 100 && formData.about.length > 0 ? "border-[#3bb9ac]/20" : ""
+                formData.about.length < 100 && formData.about.length > 0 ? "border-[#e87898]/20" : ""
               }`}
             />
           </div>

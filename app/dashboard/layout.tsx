@@ -231,6 +231,7 @@ export default function DashboardLayout({
     if (pathname.includes("/selections")) return "Parent Selections"
     if (pathname.includes("/preferences")) return "Partner Preferences"
     if (pathname.includes("/likes")) return "My Likes"
+    if (pathname.includes("/daily-recommendations")) return "Daily Recommendations"
     if (pathname.includes("/horoscope")) return "Horoscope Generator"
     if (pathname.includes("/messages")) return "Messages"
     if (pathname.includes("/settings")) return "Profile Settings"
