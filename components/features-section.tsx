@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { Shield, Search, Heart, Users, MessageCircle, Sparkles, Check } from "lucide-react"
+import TiltedCard from "@/components/ui/tilted-card"
 
 const features = [
   {
@@ -9,36 +10,42 @@ const features = [
     title: "Verified profiles",
     description: "Identity, education, and background reviewed before a profile goes live.",
     iconColor: "text-[#3bb9ac]",
+    iconBg: "bg-[#3bb9ac]/10",
   },
   {
     icon: Heart,
     title: "Privacy you control",
     description: "Choose who sees your photos and contact details, on your terms.",
-    iconColor: "text-[#c97a7a]",
+    iconColor: "text-[#e87898]",
+    iconBg: "bg-[#fce8ef]",
   },
   {
     icon: Search,
     title: "Thoughtful matching",
     description: "Recommendations based on preferences, values, and lifestyle.",
     iconColor: "text-[#c9a227]",
+    iconBg: "bg-[#fdf6e3]",
   },
   {
     icon: Sparkles,
     title: "Horoscope compatibility",
     description: "Thirukanitham and Vakkiyam calculations for astrological alignment.",
     iconColor: "text-[#3bb9ac]",
+    iconBg: "bg-[#3bb9ac]/10",
   },
   {
     icon: Users,
     title: "Family dashboard",
     description: "Parents can browse, shortlist, and discuss profiles with you.",
     iconColor: "text-[#c9a227]",
+    iconBg: "bg-[#fdf6e3]",
   },
   {
     icon: MessageCircle,
     title: "Secure messaging",
     description: "Express interest privately without sharing contacts too early.",
-    iconColor: "text-[#c97a7a]",
+    iconColor: "text-[#e87898]",
+    iconBg: "bg-[#fce8ef]",
   },
 ]
 
@@ -108,7 +115,7 @@ export function FeaturesSection() {
               const Icon = feature.icon
 
               return (
-                <motion.article
+                <motion.div
                   key={feature.title}
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -118,21 +125,33 @@ export function FeaturesSection() {
                     delay: index * 0.05,
                     ease: [0.16, 1, 0.3, 1],
                   }}
-                  className="group flex gap-4 items-start rounded-xl border border-gray-100/90 bg-white p-5 sm:p-6 shadow-[0_8px_32px_rgba(31,64,104,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(31,64,104,0.1)] min-h-[7.5rem] sm:min-h-[8rem]"
                 >
-                  <div className="shrink-0 w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center">
-                    <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${feature.iconColor}`} strokeWidth={1.75} />
-                  </div>
+                  <TiltedCard
+                    containerHeight="auto"
+                    containerWidth="100%"
+                    rotateAmplitude={15}
+                    scaleOnHover={1.1}
+                    showMobileWarning={false}
+                    showTooltip={false}
+                  >
+                    <article className="flex min-h-[7.5rem] gap-4 rounded-xl border border-gray-100/90 bg-white p-5 shadow-[0_8px_32px_rgba(31,64,104,0.06)] sm:min-h-[8rem] sm:p-6">
+                      <div
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12 ${feature.iconBg}`}
+                      >
+                        <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${feature.iconColor}`} strokeWidth={1.75} />
+                      </div>
 
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-semibold text-[#1F4068] mb-1.5 leading-tight">
-                      {feature.title}
-                    </h3>
-                    <p className="text-sm sm:text-[15px] text-gray-500 leading-relaxed">
-                      {feature.description}
-                    </p>
-                  </div>
-                </motion.article>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="mb-1.5 text-base font-semibold leading-tight text-[#1F4068]">
+                          {feature.title}
+                        </h3>
+                        <p className="text-sm leading-relaxed text-gray-500 sm:text-[15px]">
+                          {feature.description}
+                        </p>
+                      </div>
+                    </article>
+                  </TiltedCard>
+                </motion.div>
               )
             })}
           </div>

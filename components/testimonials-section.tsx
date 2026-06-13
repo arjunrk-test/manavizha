@@ -1,6 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
+import TiltedCard from "@/components/ui/tilted-card"
 
 const featuredStory = {
   name: "Arjun & Priya",
@@ -62,11 +63,20 @@ export function TestimonialsSection() {
           {/* Featured story */}
           <article className="mb-16 sm:mb-20 lg:mb-24">
             <div className="flex flex-col sm:flex-row gap-8 sm:gap-10 lg:gap-14 items-start">
-              <div className="w-full sm:w-48 lg:w-56 shrink-0">
-                <img
-                  src={featuredStory.image}
-                  alt={featuredStory.name}
-                  className="w-full aspect-[4/5] object-cover rounded-xl"
+              <div className="w-full sm:w-48 lg:w-56 shrink-0 aspect-[4/5]">
+                <TiltedCard
+                  imageSrc={featuredStory.image}
+                  altText={featuredStory.name}
+                  containerWidth="100%"
+                  containerHeight="100%"
+                  imageWidth="100%"
+                  imageHeight="100%"
+                  rotateAmplitude={15}
+                  scaleOnHover={1.1}
+                  showMobileWarning={false}
+                  showTooltip={false}
+                  className="h-full w-full"
+                  innerClassName="h-full w-full overflow-hidden rounded-xl"
                 />
               </div>
 
