@@ -46,6 +46,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Food Preference",
     dialogDescription: "Enter a new food preference value to add to the list.",
     inputPlaceholder: "e.g., Vegetarian, Non-Vegetarian, Vegan",
+    importEnabled: true,
   },
   "indian-languages": {
     tableName: "master_indian_languages",
