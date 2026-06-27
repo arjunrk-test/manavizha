@@ -90,17 +90,16 @@ export default function MessagesPage() {
             setMessages((prev) => [...prev, msg])
 
             if (msg.receiver_id === userId) {
-              supabase
-                .from("messages")
-                .update({ is_read: true })
-                .eq("id", msg.id)
-                .then(({ error }) => {
-                  if (error) console.error("Error marking message as read:", error)
-                  else {
-                    fetchConversations(userId)
-                    window.dispatchEvent(new CustomEvent("messagesRead"))
-                  }
-                })
+              authFetch("/api/messages", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ messageId: msg.id }),
+              }).then((res) => {
+                if (res.ok) {
+                  fetchConversations(userId)
+                  window.dispatchEvent(new CustomEvent("messagesRead"))
+                }
+              })
             }
           } else {
             fetchConversations(userId)
@@ -210,16 +209,13 @@ export default function MessagesPage() {
       const data = await res.json()
       setMessages(data.messages || [])
 
-      const { error } = await supabase
-        .from("messages")
-        .update({ is_read: true })
-        .eq("receiver_id", uid)
-        .eq("sender_id", targetId)
-        .eq("is_read", false)
+      const res = await authFetch("/api/messages", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ senderId: targetId }),
+      })
 
-      if (error) {
-        console.error("Supabase Update Error (Mark as Read):", error)
-      } else {
+      if (res.ok) {
         setConversations((prev) =>
           prev.map((c) => (c.other_user_id === targetId ? { ...c, unread_count: 0 } : c))
         )

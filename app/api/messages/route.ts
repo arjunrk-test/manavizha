@@ -76,6 +76,46 @@ export async function GET(request: Request) {
     }
 }
 
+export async function PATCH(request: Request) {
+    try {
+        const { userId } = await requireAuthenticatedUser(request)
+        const body = await request.json()
+        const admin = getSupabaseAdmin()
+
+        if (body.messageId) {
+            // Mark a single message as read — only allowed if the caller is the receiver
+            const { error } = await admin
+                .from('messages')
+                .update({ is_read: true })
+                .eq('id', body.messageId)
+                .eq('receiver_id', userId)
+
+            if (error) throw error
+            return NextResponse.json({ success: true })
+        }
+
+        if (body.senderId) {
+            // Mark all unread messages from senderId to the auth user as read
+            const { error } = await admin
+                .from('messages')
+                .update({ is_read: true })
+                .eq('sender_id', body.senderId)
+                .eq('receiver_id', userId)
+                .eq('is_read', false)
+
+            if (error) throw error
+            return NextResponse.json({ success: true })
+        }
+
+        return NextResponse.json({ error: 'messageId or senderId is required' }, { status: 400 })
+    } catch (error: any) {
+        if (error instanceof ApiAuthError) {
+            return authErrorResponse(error)
+        }
+        return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+}
+
 export async function POST(request: Request) {
     try {
         const { userId: senderId } = await requireAuthenticatedUser(request)
