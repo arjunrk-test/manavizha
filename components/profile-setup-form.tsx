@@ -1167,6 +1167,26 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       return false
     }
 
+    if (formData.dateOfBirth) {
+      const dob = new Date(formData.dateOfBirth)
+      const today = new Date()
+      let years = today.getFullYear() - dob.getFullYear()
+      const monthDiff = today.getMonth() - dob.getMonth()
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) years--
+      if (years < 18) {
+        toast.error("You must be at least 18 years old to register.", {
+          style: { background: "#fee2e2", border: "1px solid #ef4444", color: "#991b1b" },
+        })
+        return false
+      }
+      if (years > 100) {
+        toast.error("Please enter a valid date of birth.", {
+          style: { background: "#fee2e2", border: "1px solid #ef4444", color: "#991b1b" },
+        })
+        return false
+      }
+    }
+
     return true
   }
 
@@ -2193,6 +2213,20 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         if (!validatePersonalDetails()) {
           setIsSaving(false)
           return
+        }
+
+        if (formData.dateOfBirth) {
+          const dob = new Date(formData.dateOfBirth)
+          const now = new Date()
+          const ageYears = (now.getTime() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000)
+          if (ageYears < 18) {
+            toast.error("You must be at least 18 years old to register.")
+            return
+          }
+          if (ageYears > 100) {
+            toast.error("Please enter a valid date of birth.")
+            return
+          }
         }
 
         // Calculate completion percentage for personal details
