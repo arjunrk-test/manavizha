@@ -34,11 +34,24 @@ export default function ReferralPartnerProfileDetailPage({
         return
       }
 
+      // Verify this partner actually referred the requested userId
+      const { data: referral } = await supabase
+        .from("referral_details")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("referral_partner_id", user.id)
+        .maybeSingle()
+
+      if (!referral) {
+        finishAuthRedirect(router, "/referral-partner/dashboard", setIsAuthLoading)
+        return
+      }
+
       setIsAuthLoading(false)
     }
 
     checkUser()
-  }, [router])
+  }, [router, userId])
 
   if (isAuthLoading) {
     return <DashboardLoadingScreen />
