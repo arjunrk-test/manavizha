@@ -74,8 +74,8 @@ export function ManageParents({ userId }: ManageParentsProps) {
       return
     }
 
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters")
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters")
       return
     }
 
@@ -241,9 +241,9 @@ export function ManageParents({ userId }: ManageParentsProps) {
                         onChange={(e) => setPassword(e.target.value)}
                         className={fieldClass}
                         required
-                        minLength={6}
-                      />
-                      <p className="text-[11px] text-[#9ca3af]">Must be at least 6 characters.</p>
+                        minLength={8}
+/>
+                      <p className="text-[11px] text-[#9ca3af]">Must be at least 8 characters.</p>
                     </div>
                   </div>
 
