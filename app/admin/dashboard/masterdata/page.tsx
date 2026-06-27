@@ -484,6 +484,7 @@ export default function AdminMasterDataPage() {
           onOpenChange={setIsImportDialogOpen}
           tableName={stepConfig.tableName}
           title={stepConfig.title}
+          importProfile={stepConfig.importProfile}
           onImported={() => setRefreshKey((key) => key + 1)}
         />
       )}

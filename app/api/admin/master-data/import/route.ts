@@ -3,12 +3,14 @@ import { NextResponse } from "next/server"
 import { authErrorResponse, requireSuperAdmin } from "@/lib/server/api-auth"
 import {
   chunkArray,
+  getMasterDataImportProfile,
   isAllowedMasterDataTable,
   isXlsxBuffer,
   isXlsxFile,
   parseStartRow,
-  parseXlsxValues,
-  partitionImportValues,
+  parseXlsxImportRows,
+  partitionImportRows,
+  toDatabaseRows,
 } from "@/lib/server/master-data-import"
 import {
   MASTER_DATA_IMPORT_BATCH_SIZE,
@@ -49,13 +51,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid .xlsx file" }, { status: 400 })
     }
 
-    const { values: sheetValues, skippedEmpty } = parseXlsxValues(buffer, { startRow })
+    const profile = getMasterDataImportProfile(tableName)
+    const { rows: sheetRows, skippedEmpty, skippedInvalid } = parseXlsxImportRows(buffer, {
+      startRow,
+      profile,
+    })
 
-    if (sheetValues.length === 0) {
+    if (sheetRows.length === 0) {
+      const emptyMessage =
+        profile === "value-colour-code"
+          ? "No valid rows found. Each row needs a skin colour in column A and a HEX colour code in column B."
+          : "No values found in the sheet from the selected start row"
+
       return NextResponse.json(
         {
-          error: "No values found in the sheet from the selected start row",
+          error: emptyMessage,
           skippedEmpty,
+          skippedInvalid,
         },
         { status: 400 }
       )
@@ -70,13 +82,13 @@ export async function POST(request: Request) {
     }
 
     const existingValues = (existingRows ?? []).map((row) => String(row.value ?? ""))
-    const partition = partitionImportValues(sheetValues, existingValues)
+    const partition = partitionImportRows(sheetRows, existingValues)
 
     if (partition.toInsert.length > 0) {
-      const batches = chunkArray(partition.toInsert, MASTER_DATA_IMPORT_BATCH_SIZE)
+      const dbRows = toDatabaseRows(partition.toInsert, profile)
+      const batches = chunkArray(dbRows, MASTER_DATA_IMPORT_BATCH_SIZE)
       for (const batch of batches) {
-        const rows = batch.map((value) => ({ value }))
-        const { error: insertError } = await supabaseAdmin.from(tableName).insert(rows)
+        const { error: insertError } = await supabaseAdmin.from(tableName).insert(batch)
         if (insertError) {
           return NextResponse.json({ error: insertError.message }, { status: 500 })
         }
@@ -88,6 +100,7 @@ export async function POST(request: Request) {
       skippedExisting: partition.skippedExisting,
       skippedDuplicateInSheet: partition.skippedDuplicateInSheet,
       skippedEmpty,
+      skippedInvalid,
       totalRowsRead: partition.totalRowsRead,
     }
 

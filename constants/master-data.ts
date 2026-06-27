@@ -1,3 +1,5 @@
+import type { MasterDataImportProfile } from "@/lib/master-data-import"
+
 export const masterDataConfig: Record<string, {
   tableName: string
   title: string
@@ -6,6 +8,7 @@ export const masterDataConfig: Record<string, {
   dialogDescription: string
   inputPlaceholder?: string
   importEnabled?: boolean
+  importProfile?: MasterDataImportProfile
 }> = {
   "gender": {
     tableName: "master_gender",
@@ -14,6 +17,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Gender",
     dialogDescription: "Enter a new gender value to add to the list.",
     inputPlaceholder: "e.g., Male, Female, Other",
+    importEnabled: true,
   },
   "skin-colour": {
     tableName: "master_skin_colour",
@@ -22,6 +26,8 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Skin Colour",
     dialogDescription: "Enter a new skin colour value to add to the list.",
     inputPlaceholder: "e.g., Fair, Medium, Dark",
+    importEnabled: true,
+    importProfile: "value-colour-code",
   },
   "body-type": {
     tableName: "master_body_type",
@@ -30,6 +36,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Body Type",
     dialogDescription: "Enter a new body type value to add to the list.",
     inputPlaceholder: "e.g., Slim, Average, Athletic",
+    importEnabled: true,
   },
   "marital-status": {
     tableName: "master_marital_status",
@@ -38,6 +45,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Marital Status",
     dialogDescription: "Enter a new marital status value to add to the list.",
     inputPlaceholder: "e.g., Single, Married, Divorced",
+    importEnabled: true,
   },
   "food-preferences": {
     tableName: "master_food_preferences",

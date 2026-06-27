@@ -4,7 +4,9 @@ import { masterDataConfig } from "@/constants/master-data"
 import {
   MASTER_DATA_IMPORT_DEFAULT_START_ROW,
   MASTER_DATA_IMPORT_MAX_ROWS,
+  type MasterDataImportProfile,
   type MasterDataImportResult,
+  normalizeHexColourCode,
   normalizeMasterDataValue,
 } from "@/lib/master-data-import"
 
@@ -14,8 +16,18 @@ const ALLOWED_TABLES = new Set(
 
 const XLSX_EXTENSION = ".xlsx"
 
+export type MasterDataImportRow = {
+  value: string
+  colourCode?: string
+}
+
 export function isAllowedMasterDataTable(tableName: string): boolean {
   return ALLOWED_TABLES.has(tableName)
+}
+
+export function getMasterDataImportProfile(tableName: string): MasterDataImportProfile {
+  const config = Object.values(masterDataConfig).find((entry) => entry.tableName === tableName)
+  return config?.importProfile ?? "value"
 }
 
 export function isXlsxFile(file: File): boolean {
@@ -40,66 +52,76 @@ export function parseStartRow(value: FormDataEntryValue | null): number {
   return parsed
 }
 
-export function parseXlsxValues(
-  buffer: ArrayBuffer,
-  options: { startRow: number; columnIndex?: number }
-): { values: string[]; skippedEmpty: number } {
+function readSheetRows(buffer: ArrayBuffer): unknown[][] {
   const workbook = XLSX.read(buffer, { type: "array", cellDates: false })
   const sheetName = workbook.SheetNames[0]
-  if (!sheetName) {
-    return { values: [], skippedEmpty: 0 }
-  }
+  if (!sheetName) return []
 
   const sheet = workbook.Sheets[sheetName]
-  const rows = XLSX.utils.sheet_to_json(sheet, {
+  return XLSX.utils.sheet_to_json(sheet, {
     header: 1,
     defval: "",
     raw: false,
   }) as unknown[][]
+}
 
+export function parseXlsxImportRows(
+  buffer: ArrayBuffer,
+  options: { startRow: number; profile: MasterDataImportProfile }
+): { rows: MasterDataImportRow[]; skippedEmpty: number; skippedInvalid: number } {
+  const sheetRows = readSheetRows(buffer)
   const startIndex = Math.max(0, options.startRow - 1)
-  const columnIndex = options.columnIndex ?? 0
-  const values: string[] = []
+  const parsedRows: MasterDataImportRow[] = []
   let skippedEmpty = 0
+  let skippedInvalid = 0
 
-  for (let rowIndex = startIndex; rowIndex < rows.length; rowIndex++) {
-    if (values.length + skippedEmpty >= MASTER_DATA_IMPORT_MAX_ROWS) {
+  for (let rowIndex = startIndex; rowIndex < sheetRows.length; rowIndex++) {
+    if (parsedRows.length + skippedEmpty + skippedInvalid >= MASTER_DATA_IMPORT_MAX_ROWS) {
       break
     }
 
-    const cell = rows[rowIndex]?.[columnIndex]
-    if (cell == null) {
+    const row = sheetRows[rowIndex] ?? []
+    const rawValue = row[0]
+    const valueText = rawValue == null ? "" : String(rawValue).trim()
+
+    if (!valueText) {
       skippedEmpty++
       continue
     }
 
-    const text = String(cell).trim()
-    if (!text) {
-      skippedEmpty++
+    if (options.profile === "value-colour-code") {
+      const rawColour = row[1]
+      const colourText = rawColour == null ? "" : String(rawColour).trim()
+      const colourCode = normalizeHexColourCode(colourText)
+      if (!colourCode) {
+        skippedInvalid++
+        continue
+      }
+      parsedRows.push({ value: valueText, colourCode })
       continue
     }
 
-    values.push(text)
+    parsedRows.push({ value: valueText })
   }
 
-  return { values, skippedEmpty }
+  return { rows: parsedRows, skippedEmpty, skippedInvalid }
 }
 
-export function partitionImportValues(
-  sheetValues: string[],
+export function partitionImportRows(
+  sheetRows: MasterDataImportRow[],
   existingValues: string[]
 ): Pick<
   MasterDataImportResult,
   "imported" | "skippedExisting" | "skippedDuplicateInSheet" | "totalRowsRead"
-> & { toInsert: string[] } {
+> & { toInsert: MasterDataImportRow[] } {
   const existingSet = new Set(existingValues.map(normalizeMasterDataValue))
   const seenInSheet = new Set<string>()
-  const toInsert: string[] = []
+  const toInsert: MasterDataImportRow[] = []
   let skippedExisting = 0
   let skippedDuplicateInSheet = 0
 
-  for (const value of sheetValues) {
-    const normalized = normalizeMasterDataValue(value)
+  for (const row of sheetRows) {
+    const normalized = normalizeMasterDataValue(row.value)
     if (existingSet.has(normalized)) {
       skippedExisting++
       continue
@@ -109,7 +131,10 @@ export function partitionImportValues(
       continue
     }
     seenInSheet.add(normalized)
-    toInsert.push(value.trim())
+    toInsert.push({
+      value: row.value.trim(),
+      ...(row.colourCode ? { colourCode: row.colourCode } : {}),
+    })
   }
 
   return {
@@ -117,7 +142,7 @@ export function partitionImportValues(
     imported: toInsert.length,
     skippedExisting,
     skippedDuplicateInSheet,
-    totalRowsRead: sheetValues.length,
+    totalRowsRead: sheetRows.length,
   }
 }
 
@@ -127,4 +152,17 @@ export function chunkArray<T>(items: T[], size: number): T[][] {
     chunks.push(items.slice(i, i + size))
   }
   return chunks
+}
+
+export function toDatabaseRows(
+  toInsert: MasterDataImportRow[],
+  profile: MasterDataImportProfile
+): Record<string, string>[] {
+  if (profile === "value-colour-code") {
+    return toInsert.map((row) => ({
+      value: row.value,
+      colour_code: row.colourCode ?? "",
+    }))
+  }
+  return toInsert.map((row) => ({ value: row.value }))
 }

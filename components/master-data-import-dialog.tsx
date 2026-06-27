@@ -5,7 +5,7 @@ import { FileSpreadsheet, Upload, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { authFetch } from "@/lib/api-client"
-import { MASTER_DATA_IMPORT_DEFAULT_START_ROW } from "@/lib/master-data-import"
+import { MASTER_DATA_IMPORT_DEFAULT_START_ROW, type MasterDataImportProfile } from "@/lib/master-data-import"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -23,6 +23,7 @@ interface MasterDataImportDialogProps {
   onOpenChange: (open: boolean) => void
   tableName: string
   title: string
+  importProfile?: MasterDataImportProfile
   onImported?: () => void
 }
 
@@ -31,7 +32,15 @@ type ImportSummary = {
   skippedExisting: number
   skippedDuplicateInSheet: number
   skippedEmpty: number
+  skippedInvalid: number
   totalRowsRead: number
+}
+
+const IMPORT_DESCRIPTIONS: Record<MasterDataImportProfile, string> = {
+  value:
+    "Upload an Excel file (.xlsx). Values are read from column A. Only new values not already in the table will be added.",
+  "value-colour-code":
+    "Upload an Excel file (.xlsx). Column A is the skin colour name and column B is the HEX colour code (e.g. #FF5733). Only new names not already in the table will be added.",
 }
 
 export function MasterDataImportDialog({
@@ -39,6 +48,7 @@ export function MasterDataImportDialog({
   onOpenChange,
   tableName,
   title,
+  importProfile = "value",
   onImported,
 }: MasterDataImportDialogProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -117,6 +127,7 @@ export function MasterDataImportDialog({
         skippedExisting: payload.skippedExisting ?? 0,
         skippedDuplicateInSheet: payload.skippedDuplicateInSheet ?? 0,
         skippedEmpty: payload.skippedEmpty ?? 0,
+        skippedInvalid: payload.skippedInvalid ?? 0,
         totalRowsRead: payload.totalRowsRead ?? 0,
       }
 
@@ -143,10 +154,7 @@ export function MasterDataImportDialog({
       <DialogContent className="rounded-xl border-[#f0ebe3] sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>Import {title}</DialogTitle>
-          <DialogDescription>
-            Upload an Excel file (.xlsx). Values are read from column A. Only new values not already
-            in the table will be added.
-          </DialogDescription>
+          <DialogDescription>{IMPORT_DESCRIPTIONS[importProfile]}</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
@@ -163,6 +171,9 @@ export function MasterDataImportDialog({
             />
             <p className="text-xs text-gray-500">
               Row 1 is usually the header. Default is row 2 so data starts below the header.
+              {importProfile === "value-colour-code" && (
+                <> Use columns A (name) and B (HEX code, with or without #).</>
+              )}
             </p>
           </div>
 
@@ -219,6 +230,9 @@ export function MasterDataImportDialog({
                 <li>{summary.skippedExisting} skipped (already in table)</li>
                 <li>{summary.skippedDuplicateInSheet} skipped (duplicate in sheet)</li>
                 {summary.skippedEmpty > 0 && <li>{summary.skippedEmpty} empty rows skipped</li>}
+                {summary.skippedInvalid > 0 && (
+                  <li>{summary.skippedInvalid} skipped (missing or invalid HEX code)</li>
+                )}
               </ul>
             </div>
           )}
