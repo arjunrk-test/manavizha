@@ -1047,14 +1047,6 @@ function DetailRow({ label, value, isLocked, isPremiumViewer, compact }: { label
     )
 }
 
-function SummaryRow({ label, value }: { label: string, value?: string | null }) {
-    return (
-        <div className="space-y-0.5">
-            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{label}</p>
-            <p className="text-[13px] font-bold text-gray-900">{value || "Not specified"}</p>
-        </div>
-    )
-}
 
 function PrefRow({ label, value, isMatch }: { label: string, value?: string | number | null, isMatch?: boolean }) {
     const isUnspecified = !value || value === "Open / Any" || value === "Any" || value === "Any / Any" || value === "Any, Any" || value.toString().includes("Any") || value.toString().includes("Open");
