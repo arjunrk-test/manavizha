@@ -9,20 +9,27 @@ import { useEffect, useState } from "react"
 export default function PreferencesPage() {
   const router = useRouter()
   const [userId, setUserId] = useState<string | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (user) setUserId(user.id)
+      if (user) {
+        setUserId(user.id)
+      } else {
+        router.replace("/")
+      }
+      setIsInitialized(true)
     }
     fetchUser()
-  }, [])
+  }, [router])
 
-  if (!userId) return <DashboardLoadingScreen />
+  if (!isInitialized) return <DashboardLoadingScreen />
+  if (!userId) return null
 
   return (
-    <PartnerPreferencesForm 
-      userId={userId} 
+    <PartnerPreferencesForm
+      userId={userId}
       onBack={() => router.push("/dashboard")}
     />
   )

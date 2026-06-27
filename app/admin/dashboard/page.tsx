@@ -24,6 +24,7 @@ import { motion } from "framer-motion"
 export default function AdminDashboardPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
+  const [statsError, setStatsError] = useState(false)
   const [adminRole, setAdminRole] = useState<string | null>(null)
   const [stats, setStats] = useState({
     total: 0,
@@ -61,68 +62,53 @@ export default function AdminDashboardPage() {
       setIsLoading(false)
     }
 
-    const fetchStats = async () => {
-      const { data: profiles, error } = await supabase
-        .from("personal_details")
-        .select("sex, marital_status")
+    const fetchAllStats = async () => {
+      // All queries run in parallel; personal_details is fetched once (shared pdCount)
+      const [
+        { count: totalCount, error: e1 },
+        { count: menCount, error: e2 },
+        { count: womenCount, error: e3 },
+        { count: pendingCount, error: e4 },
+        pdCount, cdCount, edCount,
+        empCount, busCount, stuCount,
+        fdCount, hdCount, inCount, shCount, phCount,
+      ] = await Promise.all([
+        supabase.from("personal_details").select("*", { count: "exact", head: true }).not("marital_status", "ilike", "married"),
+        supabase.from("personal_details").select("*", { count: "exact", head: true }).ilike("sex", "%male%").not("sex", "ilike", "%female%").not("marital_status", "ilike", "married"),
+        supabase.from("personal_details").select("*", { count: "exact", head: true }).ilike("sex", "%female%").not("marital_status", "ilike", "married"),
+        supabase.from("photos").select("*", { count: "exact", head: true }).eq("verification_status", "pending"),
+        supabase.from("personal_details").select("*", { count: "exact", head: true }),
+        supabase.from("contact_details").select("*", { count: "exact", head: true }),
+        supabase.from("education_details").select("*", { count: "exact", head: true }),
+        supabase.from("profession_employee").select("*", { count: "exact", head: true }),
+        supabase.from("profession_business").select("*", { count: "exact", head: true }),
+        supabase.from("profession_student").select("*", { count: "exact", head: true }),
+        supabase.from("family_details").select("*", { count: "exact", head: true }),
+        supabase.from("horoscope_details").select("*", { count: "exact", head: true }),
+        supabase.from("interests").select("*", { count: "exact", head: true }),
+        supabase.from("social_habits").select("*", { count: "exact", head: true }),
+        supabase.from("photos").select("*", { count: "exact", head: true }),
+      ])
+      if (e1 || e2 || e3 || e4) throw new Error("Stats fetch failed")
 
-      if (!error && profiles) {
-        const activeProfiles = profiles.filter(p => (p.marital_status || "").toLowerCase() !== "married")
-        const men = activeProfiles.filter(p => p.sex && p.sex.toLowerCase().includes("male") && !p.sex.toLowerCase().includes("female")).length
-        const women = activeProfiles.filter(p => p.sex && p.sex.toLowerCase().includes("female")).length
+      setStats({
+        total: totalCount || 0,
+        men: menCount || 0,
+        women: womenCount || 0,
+        pendingVerifications: pendingCount || 0,
+      })
 
-        const { count } = await supabase
-          .from("photos")
-          .select("*", { count: "exact", head: true })
-          .eq("verification_status", "pending")
-
-        setStats({
-          total: activeProfiles.length,
-          men,
-          women,
-          pendingVerifications: count || 0,
-        })
-      }
-    }
-
-    const fetchStageStats = async () => {
-      const tables = [
-        "personal_details",
-        "contact_details",
-        "education_details",
-        "profession_employee",
-        "family_details",
-        "horoscope_details",
-        "interests",
-        "social_habits",
-        "photos",
+      const professionCount = (empCount.count || 0) + (busCount.count || 0) + (stuCount.count || 0)
+      const counts = [
+        pdCount.count || 0, cdCount.count || 0, edCount.count || 0,
+        professionCount, fdCount.count || 0, hdCount.count || 0,
+        inCount.count || 0, shCount.count || 0, phCount.count || 0,
       ]
-
-      const counts = await Promise.all(
-        tables.map(async (table) => {
-          if (table === "profession_employee") {
-            const [empRes, busRes, stuRes] = await Promise.all([
-              supabase.from("profession_employee").select("user_id"),
-              supabase.from("profession_business").select("user_id"),
-              supabase.from("profession_student").select("user_id"),
-            ])
-            return new Set([
-              ...(empRes.data || []).map(r => r.user_id),
-              ...(busRes.data || []).map(r => r.user_id),
-              ...(stuRes.data || []).map(r => r.user_id),
-            ]).size
-          }
-          const { data } = await supabase.from(table).select("user_id")
-          return data ? new Set(data.map(r => r.user_id)).size : 0
-        })
-      )
-
       setStageStats(prev => prev.map((stage, i) => ({ ...stage, count: counts[i] })))
     }
 
     checkUser()
-    fetchStats()
-    fetchStageStats()
+    fetchAllStats().catch(() => setStatsError(true))
   }, [router])
 
   if (isLoading) {
@@ -136,6 +122,11 @@ export default function AdminDashboardPage() {
 
       <main className="relative z-10 flex-1 flex flex-col pt-[4.75rem]">
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10 flex-1">
+          {statsError && (
+            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              Could not load dashboard statistics. Please refresh the page.
+            </div>
+          )}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

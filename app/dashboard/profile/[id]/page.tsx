@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
@@ -33,7 +34,8 @@ export default function ProfileViewPage({
     const router = useRouter()
     const { id: targetUserId } = use(params)
     const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-    const isOwnProfile = currentUserId === targetUserId;
+    // Treat as unknown (not own) while session is loading to avoid false interaction button flash
+    const isOwnProfile = currentUserId !== null && currentUserId === targetUserId;
 
 
     const [isLoading, setIsLoading] = useState(true)
@@ -47,7 +49,7 @@ export default function ProfileViewPage({
     const [isLikeProcessing, setIsLikeProcessing] = useState(false)
     const [isShortlistProcessing, setIsShortlistProcessing] = useState(false)
     const [viewerProfile, setViewerProfile] = useState<any>(null)
-    const [matchScore, setMatchScore] = useState<{ matches: number, total: number }>({ matches: 0, total: 21 })
+    const [matchScore, setMatchScore] = useState<{ matches: number, total: number }>({ matches: 0, total: 19 })
     const [matchResults, setMatchResults] = useState<Record<string, boolean>>({})
     
     // Premium & Messaging states
@@ -68,6 +70,9 @@ export default function ProfileViewPage({
     // Navigation sequence states
     const [prevProfileId, setPrevProfileId] = useState<string | null>(null)
     const [nextProfileId, setNextProfileId] = useState<string | null>(null)
+
+    // Confirm dialog state
+    const [confirmAction, setConfirmAction] = useState<"ignore" | "block" | null>(null)
 
     useEffect(() => {
         const getSession = async () => {
@@ -98,20 +103,23 @@ export default function ProfileViewPage({
     }, [targetUserId]);
 
     useEffect(() => {
+        if (!targetUserId || !currentUserId) return
+        if (currentUserId === targetUserId) return
+        // Track the view once both IDs are known and it's not the user's own profile
+        authFetch("/api/views", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ viewerId: currentUserId, viewedUserId: targetUserId })
+        }).catch(e => console.error("Error logging view", e))
+    }, [targetUserId, currentUserId])
+
+    useEffect(() => {
         if (!targetUserId) return
 
         const fetchProfile = async () => {
             setIsLoading(true)
             setProfile(null)
             try {
-                // Record the view on page load (if not viewing own profile)
-                if (currentUserId && targetUserId && currentUserId !== targetUserId) {
-                    authFetch("/api/views", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ viewerId: currentUserId, viewedUserId: targetUserId })
-                    }).catch(e => console.error("Error logging view", e))
-                }
 
                 const [
                     { data: personal },
@@ -229,9 +237,9 @@ export default function ProfileViewPage({
                         setViewerProfile(viewerRes.data)
                         
                         if (prefs) {
-                            // Calculate match score based on 21 categories
+                            // Calculate match score based on 19 categories
                             let matches = 0
-                            const total = 21
+                            const total = 19
                             
                             // 1. Age
                             if (viewerRes.data.age >= (prefs.preferred_age_min || 18) && 
@@ -306,19 +314,14 @@ export default function ProfileViewPage({
                             if (!prefs.preferred_annual_income || 
                                 (emp?.salary && parseInt(emp.salary.replace(/[^\d]/g, '')) >= parseInt(prefs.preferred_annual_income))) matches++
                                 
-                            // 18. Country
-                            if (!prefs.preferred_country || prefs.preferred_country === "Any" || 
-                                contact?.current_country === prefs.preferred_country) matches++
-                                
-                            // 19. State
-                            if (!prefs.preferred_state || prefs.preferred_state === "Any" || 
-                                contact?.current_state === prefs.preferred_state) matches++
-                                
-                            // 20. City
-                            if (!prefs.preferred_city || prefs.preferred_city === "Any" || 
-                                contact?.current_district === prefs.preferred_city) matches++
-                                
-                            // 21. Citizenship
+                            // 18. Location (country + state + city combined into one criterion)
+                            if (
+                                (!prefs.preferred_country || prefs.preferred_country === "Any" || contact?.current_country === prefs.preferred_country) &&
+                                (!prefs.preferred_state || prefs.preferred_state === "Any" || contact?.current_state === prefs.preferred_state) &&
+                                (!prefs.preferred_city || prefs.preferred_city === "Any" || contact?.current_district === prefs.preferred_city)
+                            ) matches++
+
+                            // 19. Citizenship
                             if (!prefs.preferred_citizenship || prefs.preferred_citizenship === "Any" || 
                                 contact?.citizenship === prefs.preferred_citizenship) matches++
 
@@ -342,11 +345,15 @@ export default function ProfileViewPage({
                                 employment: !!(prefs.preferred_employment_type === "Any" || (emp && prefs.preferred_employment_type === "employee") || (bus && prefs.preferred_employment_type === "business") || (stu && prefs.preferred_employment_type === "student")),
                                 occupation: occAny || !!(emp?.designation && prefOccArr.some((o: string) => o.toLowerCase() === emp.designation?.toLowerCase())) || !!(bus?.designation && prefOccArr.some((o: string) => o.toLowerCase() === bus.designation?.toLowerCase())),
                                 income: !!(!prefs.preferred_annual_income || (emp?.salary && parseInt(emp.salary.replace(/[^\d]/g, '')) >= parseInt(prefs.preferred_annual_income))),
-                                location: !!((!prefs.preferred_city || prefs.preferred_city === "Any") && (!prefs.preferred_state || prefs.preferred_state === "Any")),
+                                location: !!(
+                                    (!prefs.preferred_country || prefs.preferred_country === "Any" || contact?.current_country === prefs.preferred_country) &&
+                                    (!prefs.preferred_state || prefs.preferred_state === "Any" || contact?.current_state === prefs.preferred_state) &&
+                                    (!prefs.preferred_city || prefs.preferred_city === "Any" || contact?.current_district === prefs.preferred_city)
+                                ),
                                 citizenship: !!(!prefs.preferred_citizenship || prefs.preferred_citizenship === "Any" || contact?.citizenship === prefs.preferred_citizenship)
                             })
                         } else {
-                            setMatchScore({ matches: 0, total: 21 })
+                            setMatchScore({ matches: 0, total: 19 })
                         }
                     }
                 }
@@ -359,7 +366,7 @@ export default function ProfileViewPage({
         }
 
         fetchProfile()
-    }, [targetUserId, currentUserId, router])
+    }, [targetUserId])
 
     const handleLike = async () => {
         if (!currentUserId || isLikeProcessing) return
@@ -434,49 +441,37 @@ export default function ProfileViewPage({
         setIsMessageDialogOpen(true)
     }
 
-    const handleIgnore = async () => {
+    const handleIgnore = () => {
         if (!currentUserId || isLikeProcessing) return
-        if (!confirm("Are you sure you want to ignore this profile? They will be removed from your feed.")) return
-        setIsProcessing(true)
-        try {
-            const res = await authFetch("/api/ignores", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: currentUserId, targetUserId }),
-            })
-            if (res.ok) {
-                toast.success("Profile has been ignored.")
-                router.push("/dashboard/browse")
-            } else {
-                toast.error("Failed to ignore profile")
-            }
-        } catch (e) {
-            toast.error("Something went wrong")
-        } finally {
-            setIsProcessing(false)
-        }
+        setConfirmAction("ignore")
     }
 
-    const handleBlock = async () => {
+    const handleBlock = () => {
         if (!currentUserId || isLikeProcessing) return
-        if (!confirm("Are you sure you want to block this profile permanently? This cannot be undone from here.")) return
+        setConfirmAction("block")
+    }
+
+    const executeConfirmedAction = async () => {
+        if (!confirmAction || !currentUserId) return
         setIsProcessing(true)
         try {
-            const res = await authFetch("/api/blocks", {
+            const endpoint = confirmAction === "ignore" ? "/api/ignores" : "/api/blocks"
+            const res = await authFetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: currentUserId, targetUserId }),
+                body: JSON.stringify({ targetUserId }),
             })
             if (res.ok) {
-                toast.success("Profile has been blocked.")
+                toast.success(confirmAction === "ignore" ? "Profile has been ignored." : "Profile has been blocked.")
                 router.push("/dashboard/browse")
             } else {
-                toast.error("Failed to block profile")
+                toast.error(`Failed to ${confirmAction} profile`)
             }
-        } catch (e) {
+        } catch {
             toast.error("Something went wrong")
         } finally {
             setIsProcessing(false)
+            setConfirmAction(null)
         }
     }
 
@@ -754,14 +749,16 @@ export default function ProfileViewPage({
                                 {/* Persistent Arrows */}
                                 {photos.length > 1 && (
                                     <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex items-center justify-between z-30 pointer-events-none">
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); setCurrentPhotoIndex(prev => (prev - 1 + photos.length) % photos.length); }} 
+                                        <button
+                                            aria-label="Previous photo"
+                                            onClick={(e) => { e.stopPropagation(); setCurrentPhotoIndex(prev => (prev - 1 + photos.length) % photos.length); }}
                                             className="h-12 w-12 rounded-full bg-white/30 backdrop-blur-xl border border-white/40 text-white flex items-center justify-center hover:bg-white/50 transition-all pointer-events-auto shadow-lg"
                                         >
                                             <ChevronLeft className="h-6 w-6" />
                                         </button>
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); setCurrentPhotoIndex(prev => (prev + 1) % photos.length); }} 
+                                        <button
+                                            aria-label="Next photo"
+                                            onClick={(e) => { e.stopPropagation(); setCurrentPhotoIndex(prev => (prev + 1) % photos.length); }}
                                             className="h-12 w-12 rounded-full bg-white/30 backdrop-blur-xl border border-white/40 text-white flex items-center justify-center hover:bg-white/50 transition-all pointer-events-auto shadow-lg"
                                         >
                                             <ChevronRight className="h-6 w-6" />
@@ -779,7 +776,7 @@ export default function ProfileViewPage({
                                             onClick={() => setCurrentPhotoIndex(i)} 
                                             className={cn("w-14 h-14 rounded-xl overflow-hidden border-2 transition-all shrink-0", i === currentPhotoIndex ? "border-[#e87898] scale-105" : "border-transparent opacity-50 hover:opacity-100")}
                                         >
-                                            <img src={p} className="w-full h-full object-cover" />
+                                            <img src={p} alt="" className="w-full h-full object-cover" />
                                         </button>
                                     ))}
                                 </div>
@@ -816,7 +813,7 @@ export default function ProfileViewPage({
                                 <h2 className="text-base font-semibold text-[#1F4068]">Family Details</h2>
                             </div>
                             <div className="grid grid-cols-1 gap-1">
-                                <DetailRow label="Religion" value={profile.religion || "Hindu"} />
+                                <DetailRow label="Religion" value={profile.religion} />
                                 <DetailRow label="Caste" value={profile.caste} />
                                 <DetailRow label="Subcaste" value={profile.family?.subcaste} />
                                 <DetailRow label="Kilai / Kulam" value={`${profile.family?.kilai || profile.family?.kulam || 'None'}`} />
@@ -927,7 +924,7 @@ export default function ProfileViewPage({
                             </div>
                             <div className="grid grid-cols-1 gap-1">
                                 <DetailRow label="Phone Number" value={profile.contact?.phone || profile.phone} isLocked={true} isPremiumViewer={isViewerPremium} />
-                                <DetailRow label="WhatsApp" value={profile.contact?.whatsapp_number || profile.phone} isLocked={true} isPremiumViewer={isViewerPremium} />
+                                <DetailRow label="WhatsApp" value={profile.contact?.whatsapp_number} isLocked={true} isPremiumViewer={isViewerPremium} />
                                 <DetailRow 
                                     label="Address" 
                                     value={[profile.contact?.current_address_line1, profile.contact?.current_area, profile.contact?.current_district, profile.contact?.current_state].filter(Boolean).join(", ")} 
@@ -988,6 +985,26 @@ export default function ProfileViewPage({
                 </div>
             </div>
 
+        <AlertDialog open={confirmAction !== null} onOpenChange={(open) => { if (!open) setConfirmAction(null) }}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>
+                        {confirmAction === "ignore" ? "Ignore this profile?" : "Block this profile?"}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                        {confirmAction === "ignore"
+                            ? "This profile will be removed from your feed. You can undo this from your Settings."
+                            : "This profile will be blocked permanently. You can unblock from your Settings."}
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={executeConfirmedAction} className="bg-red-500 hover:bg-red-600">
+                        {confirmAction === "ignore" ? "Ignore" : "Block"}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
         </div>
     )
 }
@@ -1047,14 +1064,6 @@ function DetailRow({ label, value, isLocked, isPremiumViewer, compact }: { label
     )
 }
 
-function SummaryRow({ label, value }: { label: string, value?: string | null }) {
-    return (
-        <div className="space-y-0.5">
-            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{label}</p>
-            <p className="text-[13px] font-bold text-gray-900">{value || "Not specified"}</p>
-        </div>
-    )
-}
 
 function PrefRow({ label, value, isMatch }: { label: string, value?: string | number | null, isMatch?: boolean }) {
     const isUnspecified = !value || value === "Open / Any" || value === "Any" || value === "Any / Any" || value === "Any, Any" || value.toString().includes("Any") || value.toString().includes("Open");

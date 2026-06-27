@@ -1,16 +1,15 @@
 "use client"
 
+import Image from "next/image"
 import { useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js"
 import { authFetch } from "@/lib/api-client"
 import {
   User,
   Send,
   MessageSquare,
   ArrowLeft,
-  MoreVertical,
-  Phone,
-  Video,
   Search,
   CheckCheck,
   Crown,
@@ -19,7 +18,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import { formatActivityTime } from "@/lib/utils/date-utils"
+import { formatActivityTime, formatMessageTime } from "@/lib/utils/date-utils"
 import { cn } from "@/lib/utils"
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { useRouter } from "next/navigation"
@@ -78,50 +77,64 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (userId) {
-      const channel = supabase
-        .channel("realtime:messages")
-        .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, (payload) => {
-          const msg = payload.new as Message
+      const handlePayload = (payload: RealtimePostgresChangesPayload<Message>) => {
+        const msg = payload.new as Message | undefined
+        if (!msg) return
 
-          if (payload.eventType === "INSERT") {
-            if (msg.sender_id === userId || msg.receiver_id === userId) {
-              if (
-                activeConversation &&
-                (msg.sender_id === activeConversation.other_user_id ||
-                  msg.receiver_id === activeConversation.other_user_id)
-              ) {
-                setMessages((prev) => [...prev, msg])
+        if (payload.eventType === "INSERT") {
+          if (
+            activeConversation &&
+            (msg.sender_id === activeConversation.other_user_id ||
+              msg.receiver_id === activeConversation.other_user_id)
+          ) {
+            setMessages((prev) => [...prev, msg])
 
-                if (msg.receiver_id === userId) {
-                  supabase
-                    .from("messages")
-                    .update({ is_read: true })
-                    .eq("id", msg.id)
-                    .then(({ error }) => {
-                      if (error) console.error("Error marking message as read:", error)
-                      else {
-                        fetchConversations(userId)
-                        window.dispatchEvent(new CustomEvent("messagesRead"))
-                      }
-                    })
+            if (msg.receiver_id === userId) {
+              authFetch("/api/messages", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ messageId: msg.id }),
+              }).then((res) => {
+                if (res.ok) {
+                  fetchConversations(userId)
+                  window.dispatchEvent(new CustomEvent("messagesRead"))
                 }
-              } else {
-                fetchConversations(userId)
-              }
+              })
             }
+          } else {
+            fetchConversations(userId)
           }
+        }
 
-          if (payload.eventType === "UPDATE") {
-            if (msg.sender_id === userId || msg.receiver_id === userId) {
-              setMessages((prev) => prev.map((m) => (m.id === msg.id ? msg : m)))
-              fetchConversations(userId)
-            }
-          }
-        })
+        if (payload.eventType === "UPDATE") {
+          setMessages((prev) => prev.map((m) => (m.id === msg.id ? msg : m)))
+          fetchConversations(userId)
+        }
+      }
+
+      // Two filtered channels — one per user role — so only this user's messages
+      // are broadcast over the WebSocket rather than the entire messages table.
+      const inbound = supabase
+        .channel("realtime:messages:inbound")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "messages", filter: `receiver_id=eq.${userId}` },
+          handlePayload,
+        )
+        .subscribe()
+
+      const outbound = supabase
+        .channel("realtime:messages:outbound")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "messages", filter: `sender_id=eq.${userId}` },
+          handlePayload,
+        )
         .subscribe()
 
       return () => {
-        supabase.removeChannel(channel)
+        supabase.removeChannel(inbound)
+        supabase.removeChannel(outbound)
       }
     }
   }, [userId, activeConversation])
@@ -196,16 +209,13 @@ export default function MessagesPage() {
       const data = await res.json()
       setMessages(data.messages || [])
 
-      const { error } = await supabase
-        .from("messages")
-        .update({ is_read: true })
-        .eq("receiver_id", uid)
-        .eq("sender_id", targetId)
-        .eq("is_read", false)
+      const patchRes = await authFetch("/api/messages", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ senderId: targetId }),
+      })
 
-      if (error) {
-        console.error("Supabase Update Error (Mark as Read):", error)
-      } else {
+      if (patchRes.ok) {
         setConversations((prev) =>
           prev.map((c) => (c.other_user_id === targetId ? { ...c, unread_count: 0 } : c))
         )
@@ -337,14 +347,15 @@ export default function MessagesPage() {
                     )}
                   >
                     <div className="relative shrink-0">
-                      <img
-                        src={conv.other_user_photo || avatarFallback(conv.other_user_name)}
-                        alt=""
-                        className="w-11 h-11 rounded-xl object-cover ring-2 ring-white"
-                        onError={(e) => {
-                          ;(e.target as HTMLImageElement).src = avatarFallback(conv.other_user_name)
-                        }}
-                      />
+                      <div className="relative w-11 h-11 rounded-xl overflow-hidden ring-2 ring-white">
+                        <Image
+                          src={conv.other_user_photo || avatarFallback(conv.other_user_name)}
+                          alt={`${conv.other_user_name || "Member"}'s profile photo`}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
                       <div
                         className={cn(
                           "absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white",
@@ -368,10 +379,7 @@ export default function MessagesPage() {
                           {conv.other_user_name}
                         </h3>
                         <span className="text-[10px] text-[#9ca3af] whitespace-nowrap shrink-0">
-                          {new Date(conv.last_message_at).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {formatMessageTime(conv.last_message_at)}
                         </span>
                       </div>
                       <p
@@ -410,14 +418,15 @@ export default function MessagesPage() {
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
                   <div className="relative shrink-0">
-                    <img
-                      src={activeConversation.other_user_photo || avatarFallback(activeConversation.other_user_name)}
-                      alt=""
-                      className="w-10 h-10 rounded-xl object-cover"
-                      onError={(e) => {
-                        ;(e.target as HTMLImageElement).src = avatarFallback(activeConversation.other_user_name)
-                      }}
-                    />
+                    <div className="relative w-10 h-10 rounded-xl overflow-hidden">
+                      <Image
+                        src={activeConversation.other_user_photo || avatarFallback(activeConversation.other_user_name)}
+                        alt={`${activeConversation.other_user_name || "Member"}'s profile photo`}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
                     <div
                       className={cn(
                         "absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white",
@@ -442,29 +451,6 @@ export default function MessagesPage() {
                       {formatActivityTime(activeConversation.last_active_at) || "Offline"}
                     </p>
                   </div>
-                </div>
-                <div className="flex items-center gap-0.5 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-[#9ca3af] hover:text-[#1F4068] hover:bg-[#faf8f4] rounded-xl"
-                  >
-                    <Phone className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-[#9ca3af] hover:text-[#1F4068] hover:bg-[#faf8f4] rounded-xl"
-                  >
-                    <Video className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-[#9ca3af] hover:text-[#1F4068] hover:bg-[#faf8f4] rounded-xl"
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
 
@@ -497,10 +483,7 @@ export default function MessagesPage() {
                               isMe ? "text-white/75" : "text-[#9ca3af]"
                             )}
                           >
-                            {new Date(m.created_at).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                            {formatMessageTime(m.created_at)}
                           </p>
                           {isMe && (
                             <CheckCheck

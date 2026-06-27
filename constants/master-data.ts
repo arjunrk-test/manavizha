@@ -81,6 +81,8 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Education Level",
     dialogDescription: "Enter a new education level value to add to the list.",
     inputPlaceholder: "e.g., High School, Bachelor's, Master's",
+    importEnabled: true,
+    importProfile: "value-category",
   },
   "degree-qualification": {
     tableName: "master_degree_qualification",
@@ -97,6 +99,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Status",
     dialogDescription: "Enter a new status value to add to the list.",
     inputPlaceholder: "e.g., Active, Inactive, Pending",
+    importEnabled: true,
   },
   "employment-type": {
     tableName: "master_employment_type",
@@ -105,6 +108,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Employment Type",
     dialogDescription: "Enter a new employment type value to add to the list.",
     inputPlaceholder: "e.g., Employee, Business, Student",
+    importEnabled: true,
   },
   "sector": {
     tableName: "master_sector",
@@ -113,6 +117,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Sector",
     dialogDescription: "Enter a new sector value to add to the list.",
     inputPlaceholder: "e.g., IT, Finance, Healthcare",
+    importEnabled: true,
   },
   "type-of-business": {
     tableName: "master_type_of_business",
@@ -121,6 +126,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Type of Business",
     dialogDescription: "Enter a new type of business value to add to the list.",
     inputPlaceholder: "e.g., Retail, Manufacturing, Services",
+    importEnabled: true,
   },
   "course-degree": {
     tableName: "master_course_degree",
@@ -137,6 +143,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Year of Study",
     dialogDescription: "Enter a new year of study value to add to the list.",
     inputPlaceholder: "e.g., First Year, Second Year, Final Year",
+    importEnabled: true,
   },
   "caste": {
     tableName: "master_caste",
@@ -145,6 +152,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Caste",
     dialogDescription: "Enter a new caste value to add to the list.",
     inputPlaceholder: "e.g., Brahmin, Kshatriya, Vaishya",
+    importEnabled: true,
   },
   "subcaste": {
     tableName: "master_subcaste",
@@ -153,6 +161,8 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Subcaste",
     dialogDescription: "Enter a subcaste value. Under 'Category', enter the EXACT Parent Caste name (e.g. 'Vanniyar').",
     inputPlaceholder: "Enter subcaste value",
+    importEnabled: true,
+    importProfile: "value-category",
   },
   "kulam": {
     tableName: "master_kulam",
@@ -161,6 +171,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Kulam",
     dialogDescription: "Enter a new kulam value to add to the list.",
     inputPlaceholder: "Enter kulam value",
+    importEnabled: true,
   },
   "gotram": {
     tableName: "master_gotram",
@@ -169,6 +180,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Gotram",
     dialogDescription: "Enter a new gotram value to add to the list.",
     inputPlaceholder: "Enter gotram value",
+    importEnabled: true,
   },
   "family-type": {
     tableName: "master_family_type",
@@ -177,6 +189,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Family Type",
     dialogDescription: "Enter a new family type value to add to the list.",
     inputPlaceholder: "e.g., Nuclear, Joint, Extended",
+    importEnabled: true,
   },
   "family-status": {
     tableName: "master_family_status",
@@ -185,6 +198,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Family Status",
     dialogDescription: "Enter a new family status value to add to the list.",
     inputPlaceholder: "e.g., Middle Class, Upper Middle Class",
+    importEnabled: true,
   },
   "zodiac-moon-sign": {
     tableName: "master_zodiac_moon_sign",
@@ -193,6 +207,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Zodiac or Moon Sign",
     dialogDescription: "Enter a new zodiac or moon sign value to add to the list.",
     inputPlaceholder: "e.g., Aries, Taurus, Gemini",
+    importEnabled: true,
   },
   "star": {
     tableName: "master_star",
@@ -201,6 +216,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Star",
     dialogDescription: "Enter a new star value to add to the list.",
     inputPlaceholder: "e.g., Ashwini, Bharani, Krittika",
+    importEnabled: true,
   },
   "lagnam": {
     tableName: "master_lagnam",
@@ -209,6 +225,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Lagnam",
     dialogDescription: "Enter a new lagnam value to add to the list.",
     inputPlaceholder: "Enter lagnam value",
+    importEnabled: true,
   },
   "hobbies": {
     tableName: "master_hobbies",
@@ -217,6 +234,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Hobby",
     dialogDescription: "Enter a new hobby value to add to the list.",
     inputPlaceholder: "e.g., Reading, Cooking, Traveling",
+    importEnabled: true,
   },
   "interests": {
     tableName: "master_interests",
@@ -225,6 +243,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Interest",
     dialogDescription: "Enter a new interest value to add to the list.",
     inputPlaceholder: "e.g., Music, Sports, Art",
+    importEnabled: true,
   },
   "smoking": {
     tableName: "master_smoking",
@@ -233,6 +252,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Smoking",
     dialogDescription: "Enter a new smoking value to add to the list.",
     inputPlaceholder: "e.g., Never, Occasionally, Regularly",
+    importEnabled: true,
   },
   "drinking": {
     tableName: "master_drinking",
@@ -241,6 +261,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Drinking",
     dialogDescription: "Enter a new drinking value to add to the list.",
     inputPlaceholder: "e.g., Never, Occasionally, Socially",
+    importEnabled: true,
   },
   "parties": {
     tableName: "master_parties",
@@ -249,6 +270,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Parties",
     dialogDescription: "Enter a new parties value to add to the list.",
     inputPlaceholder: "e.g., Never, Occasionally, Regularly",
+    importEnabled: true,
   },
   "pubs": {
     tableName: "master_pubs",
@@ -257,6 +279,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Pubs",
     dialogDescription: "Enter a new pubs value to add to the list.",
     inputPlaceholder: "e.g., Never, Occasionally, Regularly",
+    importEnabled: true,
   },
 }
 

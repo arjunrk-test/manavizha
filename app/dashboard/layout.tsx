@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/api-client"
@@ -58,8 +59,22 @@ export default function DashboardLayout({
           const settingsRes = await authFetch(`/api/settings?userId=${authUser.id}`)
           if (settingsRes.ok) {
             const settingsData = await settingsRes.json()
-            if (settingsData.is_deactivated) {
-              // Reactivate automatically on login
+            const deactivatedUntil = settingsData.deactivated_until
+              ? new Date(settingsData.deactivated_until)
+              : null
+            // Skip auto-reactivation when deactivated_until is more than 1 year away
+            // — that signals a "married" deactivation set to 10 years, not a temp pause
+            const isMarriedDeactivation =
+              deactivatedUntil &&
+              deactivatedUntil.getTime() - Date.now() > 365 * 24 * 60 * 60 * 1000
+            const deactivationExpired =
+              settingsData.is_deactivated &&
+              deactivatedUntil &&
+              deactivatedUntil <= new Date() &&
+              !isMarriedDeactivation
+
+            if (deactivationExpired) {
+              // Only auto-reactivate once the deactivation period has naturally elapsed
               await authFetch('/api/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -231,16 +246,17 @@ export default function DashboardLayout({
   }
 
   const getViewName = () => {
-    if (pathname.includes("/setup")) return "Profile Setup"
-    if (pathname.includes("/browse")) return "Browse Profiles"
-    if (pathname.includes("/parents")) return "Manage Parents"
-    if (pathname.includes("/selections")) return "Parent Selections"
-    if (pathname.includes("/preferences")) return "Partner Preferences"
-    if (pathname.includes("/likes")) return "My Likes"
-    if (pathname.includes("/daily-recommendations")) return "Daily Recommendations"
-    if (pathname.includes("/horoscope")) return "Horoscope Generator"
-    if (pathname.includes("/messages")) return "Messages"
-    if (pathname.includes("/settings")) return "Profile Settings"
+    if (pathname === "/dashboard/setup") return "Profile Setup"
+    if (pathname === "/dashboard/browse") return "Browse Profiles"
+    if (pathname === "/dashboard/parents") return "Manage Parents"
+    if (pathname === "/dashboard/selections") return "Parent Selections"
+    if (pathname === "/dashboard/preferences") return "Partner Preferences"
+    if (pathname === "/dashboard/interests") return "My Interests"
+    if (pathname === "/dashboard/daily-recommendations") return "Daily Recommendations"
+    if (pathname === "/dashboard/horoscope") return "Horoscope Generator"
+    if (pathname === "/dashboard/messages") return "Messages"
+    if (pathname === "/dashboard/settings") return "Profile Settings"
+    if (pathname.startsWith("/dashboard/profile/")) return "View Profile"
     return ""
   }
 
@@ -311,7 +327,7 @@ export default function DashboardLayout({
               variant="ghost"
               size="icon"
               className="h-9 w-9 text-gray-600 hover:text-[#1F4068] hover:bg-gray-50 relative rounded-xl"
-              title="Messages"
+              aria-label="Messages"
             >
               <MessageSquare className="h-4 w-4" />
               {unreadCount > 0 && (
@@ -327,7 +343,7 @@ export default function DashboardLayout({
                   variant="ghost"
                   size="icon"
                   className="h-9 w-9 text-gray-600 hover:text-[#1F4068] hover:bg-gray-50 relative rounded-xl"
-                  title="Notifications"
+                  aria-label="Notifications"
                 >
                   <Bell className="h-4 w-4" />
                   {notificationCount > 0 && (
@@ -394,16 +410,18 @@ export default function DashboardLayout({
                             </span>
                           </div>
                           {whoExpressedInterest.slice(0, 5).map((p) => (
-                            <div
+                            <button
                               key={p.user_id}
-                              className="group flex cursor-pointer items-center gap-3 rounded-xl border border-[#f0ebe3]/80 bg-white/75 p-2.5 transition-all hover:border-[#e87898]/25 hover:bg-white hover:shadow-[0_2px_10px_rgba(232,120,152,0.08)]"
+                              className="group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-[#f0ebe3]/80 bg-white/75 p-2.5 text-left transition-all hover:border-[#e87898]/25 hover:bg-white hover:shadow-[0_2px_10px_rgba(232,120,152,0.08)]"
                               onClick={() => handleNotificationClick("interest", p.user_id)}
                             >
                               <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#fce8ef] ring-2 ring-white">
-                                <img
+                                <Image
                                   src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=fce8ef&color=e87898`}
-                                  alt=""
-                                  className="h-full w-full object-cover"
+                                  alt={`${p.name || "Member"}'s profile photo`}
+                                  fill
+                                  className="object-cover"
+                                  unoptimized
                                 />
                               </div>
                               <div className="min-w-0 flex-1">
@@ -420,7 +438,7 @@ export default function DashboardLayout({
                                 </p>
                               </div>
                               <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[#d1d5db] transition-colors group-hover:text-[#e87898]" />
-                            </div>
+                            </button>
                           ))}
                         </div>
                       )}
@@ -434,16 +452,18 @@ export default function DashboardLayout({
                             </span>
                           </div>
                           {whoViewedMe.slice(0, 5).map((p) => (
-                            <div
+                            <button
                               key={p.user_id}
-                              className="group flex cursor-pointer items-center gap-3 rounded-xl border border-[#f0ebe3]/80 bg-white/75 p-2.5 transition-all hover:border-[#3bb9ac]/25 hover:bg-white hover:shadow-[0_2px_10px_rgba(59,185,172,0.08)]"
+                              className="group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-[#f0ebe3]/80 bg-white/75 p-2.5 text-left transition-all hover:border-[#3bb9ac]/25 hover:bg-white hover:shadow-[0_2px_10px_rgba(59,185,172,0.08)]"
                               onClick={() => handleNotificationClick("view", p.user_id)}
                             >
                               <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#e6f7f5] ring-2 ring-white">
-                                <img
+                                <Image
                                   src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=e6f7f5&color=3bb9ac`}
-                                  alt=""
-                                  className="h-full w-full object-cover"
+                                  alt={`${p.name || "Member"}'s profile photo`}
+                                  fill
+                                  className="object-cover"
+                                  unoptimized
                                 />
                               </div>
                               <div className="min-w-0 flex-1">
@@ -460,7 +480,7 @@ export default function DashboardLayout({
                                 </p>
                               </div>
                               <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[#d1d5db] transition-colors group-hover:text-[#3bb9ac]" />
-                            </div>
+                            </button>
                           ))}
                         </div>
                       )}
@@ -483,7 +503,7 @@ export default function DashboardLayout({
                     variant="ghost"
                     size="sm"
                     className="h-9 w-full rounded-[10px] bg-[#fce8ef]/60 text-[13px] font-medium text-[#e87898] hover:bg-[#fce8ef] hover:text-[#d66686]"
-                    onClick={() => router.push("/dashboard/browse")}
+                    onClick={() => router.push("/dashboard/interests")}
                   >
                     See all activity
                     <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
@@ -497,7 +517,7 @@ export default function DashboardLayout({
               size="icon"
               variant="ghost"
               className="h-9 w-9 text-gray-600 hover:text-[#1F4068] hover:bg-gray-50 rounded-xl"
-              title="Settings"
+              aria-label="Settings"
             >
               <Settings className="h-4 w-4" />
             </Button>

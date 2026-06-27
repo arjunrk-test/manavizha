@@ -255,8 +255,6 @@ export async function getAllParentIds(accessToken: string) {
         await requireAdminCaller(accessToken, "viewer")
         const ax = await getAxios()
         const { data } = await ax.get('/rest/v1/parents?select=id')
-        const { data: usersData } = await ax.get('/rest/v1/users?select=id,email,name')
-        adminDebugLog(`${new Date().toISOString()} getAllParentIds USERS/PARENT dump (truncated in prod logs)`)
         adminDebugLog(`${new Date().toISOString()} getAllParentIds SUCCESS: ${data.length} parents`)
         return { success: true, ids: data.map((p: any) => p.id) }
     } catch (error: any) {

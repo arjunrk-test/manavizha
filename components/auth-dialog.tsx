@@ -24,20 +24,20 @@ const coupleStories = [
       "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80",
   },
   {
-    name: "Rahul & Meera",
+    name: "Karthik & Divya",
     location: "Coimbatore • Married 2023",
     image:
       "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
   },
   {
-    name: "Vikram & Aditi",
-    location: "Hyderabad • Married 2022",
+    name: "Senthil & Kavitha",
+    location: "Madurai • Married 2022",
     image:
       "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
   },
   {
-    name: "Naveen & Kavya",
-    location: "Bengaluru • Married 2024",
+    name: "Murugan & Meenakshi",
+    location: "Trichy • Married 2024",
     image:
       "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
   },

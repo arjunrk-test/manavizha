@@ -7,7 +7,7 @@ import { authFetch } from "@/lib/api-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { UserPlus, UserCircle2, Loader2, Trash2, Users2, Mail, Phone, Shield } from "lucide-react"
+import { UserPlus, UserCircle2, Loader2, Trash2, Users2, Mail, Phone, Shield, Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
 import { SelectDropdown } from "@/components/ui/select-dropdown"
 import { cn } from "@/lib/utils"
@@ -35,6 +35,7 @@ export function ManageParents({ userId }: ManageParentsProps) {
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [showForm, setShowForm] = useState(false)
 
   const fetchParents = async () => {
@@ -64,6 +65,7 @@ export function ManageParents({ userId }: ManageParentsProps) {
     setEmail("")
     setPhone("")
     setPassword("")
+    setShowPassword(false)
   }
 
   const handleCreateParent = async (e: React.FormEvent) => {
@@ -74,8 +76,8 @@ export function ManageParents({ userId }: ManageParentsProps) {
       return
     }
 
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters")
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters")
       return
     }
 
@@ -233,17 +235,27 @@ export function ManageParents({ userId }: ManageParentsProps) {
                       <Label htmlFor="password" className="text-xs font-medium text-[#1F4068]/70">
                         Login password *
                       </Label>
-                      <Input
-                        id="password"
-                        type="text"
-                        placeholder="Create a password for them"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className={fieldClass}
-                        required
-                        minLength={6}
-                      />
-                      <p className="text-[11px] text-[#9ca3af]">Must be at least 6 characters.</p>
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Create a password for them"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className={`${fieldClass} pr-11`}
+                          required
+                          minLength={8}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-[#9ca3af] hover:text-[#1F4068]"
+                          aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-[#9ca3af]">Must be at least 8 characters.</p>
                     </div>
                   </div>
 

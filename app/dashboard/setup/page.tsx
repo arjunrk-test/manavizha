@@ -3,8 +3,10 @@
 import { ProfileSetupForm } from "@/components/profile-setup-form"
 import { supabase } from "@/lib/supabase"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 
 export default function SetupPage() {
+  const router = useRouter()
   const [userId, setUserId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -13,11 +15,15 @@ export default function SetupPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      if (user) setUserId(user.id)
+      if (user) {
+        setUserId(user.id)
+      } else {
+        router.push("/")
+      }
       setIsLoading(false)
     }
     fetchUser()
-  }, [])
+  }, [router])
 
   if (isLoading) {
     return (
