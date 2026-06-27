@@ -317,7 +317,7 @@ export default function DashboardLayout({
               variant="ghost"
               size="icon"
               className="h-9 w-9 text-gray-600 hover:text-[#1F4068] hover:bg-gray-50 relative rounded-xl"
-              title="Messages"
+              aria-label="Messages"
             >
               <MessageSquare className="h-4 w-4" />
               {unreadCount > 0 && (
@@ -333,7 +333,7 @@ export default function DashboardLayout({
                   variant="ghost"
                   size="icon"
                   className="h-9 w-9 text-gray-600 hover:text-[#1F4068] hover:bg-gray-50 relative rounded-xl"
-                  title="Notifications"
+                  aria-label="Notifications"
                 >
                   <Bell className="h-4 w-4" />
                   {notificationCount > 0 && (
@@ -400,9 +400,9 @@ export default function DashboardLayout({
                             </span>
                           </div>
                           {whoExpressedInterest.slice(0, 5).map((p) => (
-                            <div
+                            <button
                               key={p.user_id}
-                              className="group flex cursor-pointer items-center gap-3 rounded-xl border border-[#f0ebe3]/80 bg-white/75 p-2.5 transition-all hover:border-[#e87898]/25 hover:bg-white hover:shadow-[0_2px_10px_rgba(232,120,152,0.08)]"
+                              className="group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-[#f0ebe3]/80 bg-white/75 p-2.5 text-left transition-all hover:border-[#e87898]/25 hover:bg-white hover:shadow-[0_2px_10px_rgba(232,120,152,0.08)]"
                               onClick={() => handleNotificationClick("interest", p.user_id)}
                             >
                               <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#fce8ef] ring-2 ring-white">
@@ -426,7 +426,7 @@ export default function DashboardLayout({
                                 </p>
                               </div>
                               <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[#d1d5db] transition-colors group-hover:text-[#e87898]" />
-                            </div>
+                            </button>
                           ))}
                         </div>
                       )}
@@ -440,9 +440,9 @@ export default function DashboardLayout({
                             </span>
                           </div>
                           {whoViewedMe.slice(0, 5).map((p) => (
-                            <div
+                            <button
                               key={p.user_id}
-                              className="group flex cursor-pointer items-center gap-3 rounded-xl border border-[#f0ebe3]/80 bg-white/75 p-2.5 transition-all hover:border-[#3bb9ac]/25 hover:bg-white hover:shadow-[0_2px_10px_rgba(59,185,172,0.08)]"
+                              className="group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-[#f0ebe3]/80 bg-white/75 p-2.5 text-left transition-all hover:border-[#3bb9ac]/25 hover:bg-white hover:shadow-[0_2px_10px_rgba(59,185,172,0.08)]"
                               onClick={() => handleNotificationClick("view", p.user_id)}
                             >
                               <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#e6f7f5] ring-2 ring-white">
@@ -466,7 +466,7 @@ export default function DashboardLayout({
                                 </p>
                               </div>
                               <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[#d1d5db] transition-colors group-hover:text-[#3bb9ac]" />
-                            </div>
+                            </button>
                           ))}
                         </div>
                       )}
@@ -503,7 +503,7 @@ export default function DashboardLayout({
               size="icon"
               variant="ghost"
               className="h-9 w-9 text-gray-600 hover:text-[#1F4068] hover:bg-gray-50 rounded-xl"
-              title="Settings"
+              aria-label="Settings"
             >
               <Settings className="h-4 w-4" />
             </Button>
