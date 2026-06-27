@@ -62,60 +62,53 @@ export default function AdminDashboardPage() {
     }
 
     const fetchStats = async () => {
-      const { data: profiles, error } = await supabase
-        .from("personal_details")
-        .select("sex, marital_status")
+      // Use server-side aggregate counts to avoid full table scans
+      const [
+        { count: totalCount },
+        { count: menCount },
+        { count: womenCount },
+        { count: pendingCount },
+      ] = await Promise.all([
+        supabase.from("personal_details").select("*", { count: "exact", head: true }).not("marital_status", "ilike", "married"),
+        supabase.from("personal_details").select("*", { count: "exact", head: true }).ilike("sex", "%male%").not("sex", "ilike", "%female%").not("marital_status", "ilike", "married"),
+        supabase.from("personal_details").select("*", { count: "exact", head: true }).ilike("sex", "%female%").not("marital_status", "ilike", "married"),
+        supabase.from("photos").select("*", { count: "exact", head: true }).eq("verification_status", "pending"),
+      ])
 
-      if (!error && profiles) {
-        const activeProfiles = profiles.filter(p => (p.marital_status || "").toLowerCase() !== "married")
-        const men = activeProfiles.filter(p => p.sex && p.sex.toLowerCase().includes("male") && !p.sex.toLowerCase().includes("female")).length
-        const women = activeProfiles.filter(p => p.sex && p.sex.toLowerCase().includes("female")).length
-
-        const { count } = await supabase
-          .from("photos")
-          .select("*", { count: "exact", head: true })
-          .eq("verification_status", "pending")
-
-        setStats({
-          total: activeProfiles.length,
-          men,
-          women,
-          pendingVerifications: count || 0,
-        })
-      }
+      setStats({
+        total: totalCount || 0,
+        men: menCount || 0,
+        women: womenCount || 0,
+        pendingVerifications: pendingCount || 0,
+      })
     }
 
     const fetchStageStats = async () => {
-      const tables = [
-        "personal_details",
-        "contact_details",
-        "education_details",
-        "profession_employee",
-        "family_details",
-        "horoscope_details",
-        "interests",
-        "social_habits",
-        "photos",
-      ]
+      // Use count-only queries — no row data fetched to the client
+      const [
+        pdCount, cdCount, edCount,
+        empCount, busCount, stuCount,
+        fdCount, hdCount, inCount, shCount, phCount,
+      ] = await Promise.all([
+        supabase.from("personal_details").select("*", { count: "exact", head: true }),
+        supabase.from("contact_details").select("*", { count: "exact", head: true }),
+        supabase.from("education_details").select("*", { count: "exact", head: true }),
+        supabase.from("profession_employee").select("*", { count: "exact", head: true }),
+        supabase.from("profession_business").select("*", { count: "exact", head: true }),
+        supabase.from("profession_student").select("*", { count: "exact", head: true }),
+        supabase.from("family_details").select("*", { count: "exact", head: true }),
+        supabase.from("horoscope_details").select("*", { count: "exact", head: true }),
+        supabase.from("interests").select("*", { count: "exact", head: true }),
+        supabase.from("social_habits").select("*", { count: "exact", head: true }),
+        supabase.from("photos").select("*", { count: "exact", head: true }),
+      ])
 
-      const counts = await Promise.all(
-        tables.map(async (table) => {
-          if (table === "profession_employee") {
-            const [empRes, busRes, stuRes] = await Promise.all([
-              supabase.from("profession_employee").select("user_id"),
-              supabase.from("profession_business").select("user_id"),
-              supabase.from("profession_student").select("user_id"),
-            ])
-            return new Set([
-              ...(empRes.data || []).map(r => r.user_id),
-              ...(busRes.data || []).map(r => r.user_id),
-              ...(stuRes.data || []).map(r => r.user_id),
-            ]).size
-          }
-          const { data } = await supabase.from(table).select("user_id")
-          return data ? new Set(data.map(r => r.user_id)).size : 0
-        })
-      )
+      const professionCount = (empCount.count || 0) + (busCount.count || 0) + (stuCount.count || 0)
+      const counts = [
+        pdCount.count || 0, cdCount.count || 0, edCount.count || 0,
+        professionCount, fdCount.count || 0, hdCount.count || 0,
+        inCount.count || 0, shCount.count || 0, phCount.count || 0,
+      ]
 
       setStageStats(prev => prev.map((stage, i) => ({ ...stage, count: counts[i] })))
     }
