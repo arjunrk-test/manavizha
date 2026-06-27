@@ -69,3 +69,27 @@ export function formatActivityTime(dateStr: string | null | undefined): string {
 
   return "Online";
 }
+
+/**
+ * Formats a message timestamp for conversation lists:
+ * - Today → "HH:MM AM/PM"
+ * - This year → "DD MMM"
+ * - Older → "DD MMM YY"
+ */
+export function formatMessageTime(dateStr: string | null | undefined): string {
+  if (!dateStr) return ""
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return ""
+  const now = new Date()
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear()
+  if (isToday) {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  }
+  if (date.getFullYear() === now.getFullYear()) {
+    return date.toLocaleDateString([], { day: "2-digit", month: "short" })
+  }
+  return date.toLocaleDateString([], { day: "2-digit", month: "short", year: "2-digit" })
+}

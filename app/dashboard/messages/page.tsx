@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import { formatActivityTime } from "@/lib/utils/date-utils"
+import { formatActivityTime, formatMessageTime } from "@/lib/utils/date-utils"
 import { cn } from "@/lib/utils"
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { useRouter } from "next/navigation"
@@ -375,10 +375,7 @@ export default function MessagesPage() {
                           {conv.other_user_name}
                         </h3>
                         <span className="text-[10px] text-[#9ca3af] whitespace-nowrap shrink-0">
-                          {new Date(conv.last_message_at).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {formatMessageTime(conv.last_message_at)}
                         </span>
                       </div>
                       <p
@@ -481,10 +478,7 @@ export default function MessagesPage() {
                               isMe ? "text-white/75" : "text-[#9ca3af]"
                             )}
                           >
-                            {new Date(m.created_at).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                            {formatMessageTime(m.created_at)}
                           </p>
                           {isMe && (
                             <CheckCheck
