@@ -41,6 +41,8 @@ const IMPORT_DESCRIPTIONS: Record<MasterDataImportProfile, string> = {
     "Upload an Excel file (.xlsx). Values are read from column A. Only new values not already in the table will be added.",
   "value-colour-code":
     "Upload an Excel file (.xlsx). Column A is the skin colour name and column B is the HEX colour code (e.g. #FF5733). Only new names not already in the table will be added.",
+  "value-category":
+    "Upload an Excel file (.xlsx). Column A is the value and column B is the category. Only new value + category pairs not already in the table will be added.",
 }
 
 export function MasterDataImportDialog({
@@ -174,6 +176,9 @@ export function MasterDataImportDialog({
               {importProfile === "value-colour-code" && (
                 <> Use columns A (name) and B (HEX code, with or without #).</>
               )}
+              {importProfile === "value-category" && (
+                <> Use columns A (value) and B (category).</>
+              )}
             </p>
           </div>
 
@@ -231,7 +236,15 @@ export function MasterDataImportDialog({
                 <li>{summary.skippedDuplicateInSheet} skipped (duplicate in sheet)</li>
                 {summary.skippedEmpty > 0 && <li>{summary.skippedEmpty} empty rows skipped</li>}
                 {summary.skippedInvalid > 0 && (
-                  <li>{summary.skippedInvalid} skipped (missing or invalid HEX code)</li>
+                  <li>
+                    {summary.skippedInvalid} skipped (
+                    {importProfile === "value-colour-code"
+                      ? "missing or invalid HEX code"
+                      : importProfile === "value-category"
+                        ? "missing category"
+                        : "invalid row"}
+                    )
+                  </li>
                 )}
               </ul>
             </div>

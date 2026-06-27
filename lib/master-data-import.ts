@@ -12,7 +12,7 @@ export type MasterDataImportResult = {
   totalRowsRead: number
 }
 
-export type MasterDataImportProfile = "value" | "value-colour-code"
+export type MasterDataImportProfile = "value" | "value-colour-code" | "value-category"
 
 export const HEX_COLOUR_PATTERN = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/
 

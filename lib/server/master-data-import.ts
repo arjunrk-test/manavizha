@@ -19,6 +19,7 @@ const XLSX_EXTENSION = ".xlsx"
 export type MasterDataImportRow = {
   value: string
   colourCode?: string
+  category?: string
 }
 
 export function isAllowedMasterDataTable(tableName: string): boolean {
@@ -101,39 +102,69 @@ export function parseXlsxImportRows(
       continue
     }
 
+    if (options.profile === "value-category") {
+      const rawCategory = row[1]
+      const categoryText = rawCategory == null ? "" : String(rawCategory).trim()
+      if (!categoryText) {
+        skippedInvalid++
+        continue
+      }
+      parsedRows.push({ value: valueText, category: categoryText })
+      continue
+    }
+
     parsedRows.push({ value: valueText })
   }
 
   return { rows: parsedRows, skippedEmpty, skippedInvalid }
 }
 
+function importRowKey(row: MasterDataImportRow, profile: MasterDataImportProfile): string {
+  if (profile === "value-category") {
+    return `${normalizeMasterDataValue(row.value)}\0${normalizeMasterDataValue(row.category ?? "")}`
+  }
+  return normalizeMasterDataValue(row.value)
+}
+
+function existingRowKey(
+  row: { value: string; category?: string | null },
+  profile: MasterDataImportProfile
+): string {
+  if (profile === "value-category") {
+    return `${normalizeMasterDataValue(row.value)}\0${normalizeMasterDataValue(row.category ?? "")}`
+  }
+  return normalizeMasterDataValue(row.value)
+}
+
 export function partitionImportRows(
   sheetRows: MasterDataImportRow[],
-  existingValues: string[]
+  existingRows: { value: string; category?: string | null }[],
+  profile: MasterDataImportProfile
 ): Pick<
   MasterDataImportResult,
   "imported" | "skippedExisting" | "skippedDuplicateInSheet" | "totalRowsRead"
 > & { toInsert: MasterDataImportRow[] } {
-  const existingSet = new Set(existingValues.map(normalizeMasterDataValue))
+  const existingSet = new Set(existingRows.map((row) => existingRowKey(row, profile)))
   const seenInSheet = new Set<string>()
   const toInsert: MasterDataImportRow[] = []
   let skippedExisting = 0
   let skippedDuplicateInSheet = 0
 
   for (const row of sheetRows) {
-    const normalized = normalizeMasterDataValue(row.value)
-    if (existingSet.has(normalized)) {
+    const key = importRowKey(row, profile)
+    if (existingSet.has(key)) {
       skippedExisting++
       continue
     }
-    if (seenInSheet.has(normalized)) {
+    if (seenInSheet.has(key)) {
       skippedDuplicateInSheet++
       continue
     }
-    seenInSheet.add(normalized)
+    seenInSheet.add(key)
     toInsert.push({
       value: row.value.trim(),
       ...(row.colourCode ? { colourCode: row.colourCode } : {}),
+      ...(row.category ? { category: row.category.trim() } : {}),
     })
   }
 
@@ -162,6 +193,12 @@ export function toDatabaseRows(
     return toInsert.map((row) => ({
       value: row.value,
       colour_code: row.colourCode ?? "",
+    }))
+  }
+  if (profile === "value-category") {
+    return toInsert.map((row) => ({
+      value: row.value,
+      category: row.category ?? "",
     }))
   }
   return toInsert.map((row) => ({ value: row.value }))

@@ -61,7 +61,9 @@ export async function POST(request: Request) {
       const emptyMessage =
         profile === "value-colour-code"
           ? "No valid rows found. Each row needs a skin colour in column A and a HEX colour code in column B."
-          : "No values found in the sheet from the selected start row"
+          : profile === "value-category"
+            ? "No valid rows found. Each row needs a value in column A and a category in column B."
+            : "No values found in the sheet from the selected start row"
 
       return NextResponse.json(
         {
@@ -73,16 +75,28 @@ export async function POST(request: Request) {
       )
     }
 
-    const { data: existingRows, error: fetchError } = await supabaseAdmin
-      .from(tableName)
-      .select("value")
+    let existingForPartition: { value: string; category?: string | null }[]
 
-    if (fetchError) {
-      return NextResponse.json({ error: fetchError.message }, { status: 500 })
+    if (profile === "value-category") {
+      const { data, error } = await supabaseAdmin.from(tableName).select("value, category")
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 })
+      }
+      existingForPartition = (data ?? []).map((row) => ({
+        value: String(row.value ?? ""),
+        category: row.category != null ? String(row.category) : null,
+      }))
+    } else {
+      const { data, error } = await supabaseAdmin.from(tableName).select("value")
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 })
+      }
+      existingForPartition = (data ?? []).map((row) => ({
+        value: String(row.value ?? ""),
+      }))
     }
 
-    const existingValues = (existingRows ?? []).map((row) => String(row.value ?? ""))
-    const partition = partitionImportRows(sheetRows, existingValues)
+    const partition = partitionImportRows(sheetRows, existingForPartition, profile)
 
     if (partition.toInsert.length > 0) {
       const dbRows = toDatabaseRows(partition.toInsert, profile)
