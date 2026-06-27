@@ -226,7 +226,7 @@ export default function SettingsPage() {
         if (!userEmail) return
         try {
             const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
-                redirectTo: `${window.location.origin}/dashboard`
+                redirectTo: `${window.location.origin}/account/update-password`
             })
             if (error) {
                 toast.error(error.message)
@@ -587,7 +587,7 @@ export default function SettingsPage() {
                                     className="h-11 px-8 mt-4 bg-[#e87898] hover:bg-[#d66686] text-white rounded-[10px] text-[13px] font-medium shadow-none"
                                 >
                                     <Mail className="h-4 w-4 mr-2" />
-                                    Send Identity Reset Link
+                                    Send Password Reset Email
                                 </Button>
                             </div>
                         )}
