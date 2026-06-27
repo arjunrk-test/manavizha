@@ -58,8 +58,13 @@ export default function DashboardLayout({
           const settingsRes = await authFetch(`/api/settings?userId=${authUser.id}`)
           if (settingsRes.ok) {
             const settingsData = await settingsRes.json()
-            if (settingsData.is_deactivated) {
-              // Reactivate automatically on login
+            const deactivationExpired =
+              settingsData.is_deactivated &&
+              settingsData.deactivated_until &&
+              new Date(settingsData.deactivated_until) <= new Date()
+
+            if (deactivationExpired) {
+              // Only auto-reactivate once the deactivation period has naturally elapsed
               await authFetch('/api/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
