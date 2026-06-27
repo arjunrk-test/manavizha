@@ -488,7 +488,7 @@ export default function DashboardLayout({
                     variant="ghost"
                     size="sm"
                     className="h-9 w-full rounded-[10px] bg-[#fce8ef]/60 text-[13px] font-medium text-[#e87898] hover:bg-[#fce8ef] hover:text-[#d66686]"
-                    onClick={() => router.push("/dashboard/browse")}
+                    onClick={() => router.push("/dashboard/interests")}
                   >
                     See all activity
                     <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
