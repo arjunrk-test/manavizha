@@ -128,8 +128,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
             }
         }
 
-        // Navigate to the dedicated profile page using window.location for reliability
-        window.location.href = `/dashboard/profile/${profile.user_id}`
+        router.push(`/dashboard/profile/${profile.user_id}`)
     }
 
     // Fetch full profile data when a mutual match modal opens
@@ -1432,7 +1431,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                     To find and view matches, please verify your personal, contact, education, professional, and family details first.
                                 </p>
                                 <Button
-                                    onClick={() => window.location.href = "/dashboard/setup"}
+                                    onClick={() => router.push("/dashboard/setup")}
                                     className="mt-6 bg-[#e87898] hover:bg-[#d66686] rounded-[10px] px-6 h-10 text-[13px] font-medium shadow-none"
                                 >
                                     Update profile
