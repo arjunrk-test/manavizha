@@ -2233,7 +2233,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             })
           error = retry.error
           if (!error) {
-            toast.warning("Personal details saved. Religion requires a database update — ask your admin to run migrations/personal_details_religion_migration.sql.")
+            toast.warning("Personal details saved. Religion requires a database update — ask your admin to apply the religion column migration in Supabase.")
           }
         }
 
