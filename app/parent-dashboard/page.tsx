@@ -7,11 +7,12 @@ import { useEffect, useState } from "react"
 import { BrowseProfiles } from "@/components/browse-profiles"
 import { LogOut, ArrowLeft } from "lucide-react"
 import { finishAuthRedirect, getUserDashboard } from "@/lib/auth"
+import { authFetch } from "@/lib/api-client"
 
 export default function ParentDashboardPage() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(true)
-    const [parentRecord, setParentRecord] = useState<any>(null)
+    const [parentRecord, setParentRecord] = useState<{ id: string; child_user_id: string; name: string; email: string; role: string } | null>(null)
 
     useEffect(() => {
         const checkParent = async () => {
@@ -27,19 +28,16 @@ export default function ParentDashboardPage() {
                 return
             }
 
-            // Verify user exists in the parents table
-            const { data: parentData, error: parentError } = await supabase
-                .from("parents")
-                .select("*")
-                .eq("id", authUser.id)
-                .single()
-
-            if (parentError || !parentData) {
+            // Fetch parent record server-side — child_user_id is derived from the
+            // authenticated session, never trusted from client-supplied data.
+            const res = await authFetch("/api/parents")
+            if (!res.ok) {
                 finishAuthRedirect(router, "/", setIsLoading)
                 return
             }
 
-            setParentRecord(parentData)
+            const { parent } = await res.json()
+            setParentRecord(parent)
             setIsLoading(false)
         }
 

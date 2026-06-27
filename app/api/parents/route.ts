@@ -60,6 +60,30 @@ async function verifyChildCanLinkParents(
     }
 }
 
+export async function GET(request: Request) {
+    try {
+        const { userId } = await requireAuthenticatedUser(request)
+        const admin = getSupabaseAdmin()
+
+        const { data: parentRecord, error } = await admin
+            .from('parents')
+            .select('id, child_user_id, name, email, role')
+            .eq('id', userId)
+            .single()
+
+        if (error || !parentRecord) {
+            return NextResponse.json({ error: 'Parent record not found' }, { status: 404 })
+        }
+
+        return NextResponse.json({ parent: parentRecord })
+    } catch (error: any) {
+        if (error instanceof ApiAuthError) {
+            return authErrorResponse(error)
+        }
+        return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+}
+
 export async function POST(request: Request) {
     try {
         const { userId: childUserId } = await requireAuthenticatedUser(request)
