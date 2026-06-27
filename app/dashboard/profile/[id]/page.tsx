@@ -985,8 +985,6 @@ export default function ProfileViewPage({
                 </div>
             </div>
 
-        </div>
-
         <AlertDialog open={confirmAction !== null} onOpenChange={(open) => { if (!open) setConfirmAction(null) }}>
             <AlertDialogContent>
                 <AlertDialogHeader>
@@ -1007,6 +1005,7 @@ export default function ProfileViewPage({
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+        </div>
     )
 }
 

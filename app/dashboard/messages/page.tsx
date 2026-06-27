@@ -3,6 +3,7 @@
 import Image from "next/image"
 import { useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js"
 import { authFetch } from "@/lib/api-client"
 import {
   User,
@@ -76,8 +77,9 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (userId) {
-      const handlePayload = (payload: { eventType: string; new: Message }) => {
-        const msg = payload.new as Message
+      const handlePayload = (payload: RealtimePostgresChangesPayload<Message>) => {
+        const msg = payload.new as Message | undefined
+        if (!msg) return
 
         if (payload.eventType === "INSERT") {
           if (
@@ -207,13 +209,13 @@ export default function MessagesPage() {
       const data = await res.json()
       setMessages(data.messages || [])
 
-      const res = await authFetch("/api/messages", {
+      const patchRes = await authFetch("/api/messages", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ senderId: targetId }),
       })
 
-      if (res.ok) {
+      if (patchRes.ok) {
         setConversations((prev) =>
           prev.map((c) => (c.other_user_id === targetId ? { ...c, unread_count: 0 } : c))
         )
