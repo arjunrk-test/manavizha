@@ -63,6 +63,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add International Language",
     dialogDescription: "Enter a new international language value to add to the list.",
     inputPlaceholder: "e.g., English, French, Spanish",
+    importEnabled: true,
   },
   "education-level": {
     tableName: "master_education_level",
