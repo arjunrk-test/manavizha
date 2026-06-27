@@ -60,6 +60,7 @@ import { authFetch } from "@/lib/api-client"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { getDailySeed, seededShuffle } from "@/lib/utils/match-utils"
+import { filterProfilesByPartnerPreferences } from "@/lib/utils/partner-preference-filter"
 import { cn } from "@/lib/utils"
 
 interface UserLandingPageProps {
@@ -497,6 +498,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           { data: targetInterestsData },
           { data: targetSocialData },
           { data: targetHoroData },
+          { data: familyData },
           premiumApiRes
         ] = await Promise.all([
           supabase.from("photos").select("user_id, user_photos").in("user_id", matchUserIds),
@@ -507,6 +509,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           supabase.from("interests").select("*").in("user_id", matchUserIds),
           supabase.from("social_habits").select("*").in("user_id", matchUserIds),
           supabase.from("horoscope_details").select("*").in("user_id", matchUserIds),
+          supabase.from("family_details").select("user_id, caste, subcaste").in("user_id", matchUserIds),
           authFetch(`/api/premium-status?userIds=${matchUserIds.join(",")}`).then(r => r.ok ? r.json() : []).catch(() => [])
         ])
 
@@ -525,6 +528,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             const targetInterests = targetInterestsData?.find(x => x.user_id === p.user_id)
             const targetSocial = targetSocialData?.find(x => x.user_id === p.user_id)
             const targetHoro = targetHoroData?.find(x => x.user_id === p.user_id)
+            const targetFamily = familyData?.find(x => x.user_id === p.user_id)
 
             const targetProfileData = {
                 ...p,
@@ -545,6 +549,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
             return {
                 ...p,
+                caste: targetFamily?.caste ?? p.caste ?? null,
+                subcaste: targetFamily?.subcaste ?? p.subcaste ?? null,
+                family: targetFamily ?? null,
                 photos,
                 location: contact?.current_district ? `${contact.current_district}${contact.current_state ? `, ${contact.current_state}` : ""}` : "Location hidden",
                 profession,
@@ -567,14 +574,10 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             }
         })
 
-        // -- Apply Preference Filtering for "All Matches" --
+        // Apply partner preferences (age always; caste/subcaste when compulsory)
         let filtered = combined
         if (prefs) {
-            filtered = combined.filter(p => {
-                if (prefs.preferred_age_min && p.age && p.age < prefs.preferred_age_min) return false
-                if (prefs.preferred_age_max && p.age && p.age > prefs.preferred_age_max) return false
-                return true
-            })
+            filtered = filterProfilesByPartnerPreferences(combined, prefs)
         }
 
         // -- Section 1: Daily Recommendations (Seeded Shuffle) --

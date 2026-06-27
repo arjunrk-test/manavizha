@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import { motion } from "framer-motion"
 import { INDIAN_LANGUAGES, EMPLOYMENT_TYPES, OCCUPATIONS as OCCUPATIONS_FROM_LIB, EDUCATION_LEVELS } from "@/lib/profile-data"
 import { useMasterData } from "@/hooks/use-master-data"
+import { Switch } from "@/components/ui/switch"
 import {
   SETUP_SECTION_BODY,
   SETUP_SECTION_CARD,
@@ -142,7 +143,7 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
     preferredPhysicalStatus: "", preferredEatingHabits: "",
     preferredSmokingHabits: "", preferredDrinkingHabits: "",
     preferredReligion: "", preferredCaste: "",
-    preferredSubcaste: "", preferredStar: "", preferredRaasi: "", preferredDosham: "",
+    preferredSubcaste: "", casteCompulsory: false, preferredStar: "", preferredRaasi: "", preferredDosham: "",
     preferredEducation: [] as string[],
     preferredDegrees: [] as string[],
     preferredBranches: [] as string[],
@@ -242,6 +243,7 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
             preferredReligion: prefData.preferred_religion || "",
             preferredCaste: prefData.preferred_caste || "",
             preferredSubcaste: prefData.preferred_subcaste || "",
+            casteCompulsory: !!prefData.caste_compulsory,
             preferredStar: prefData.preferred_star || "",
             preferredRaasi: prefData.preferred_raasi || "",
             preferredDosham: prefData.preferred_dosham || "",
@@ -309,6 +311,7 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
         preferred_religion: fd.preferredReligion || null,
         preferred_caste: fd.preferredCaste || null,
         preferred_subcaste: fd.preferredSubcaste || null,
+        caste_compulsory: fd.casteCompulsory,
         preferred_star: fd.preferredStar || null,
         preferred_raasi: fd.preferredRaasi || null,
         preferred_dosham: fd.preferredDosham || null,
@@ -398,11 +401,27 @@ export function PartnerPreferencesForm({ userId, onBack }: PartnerPreferencesFor
             <PrefSelect label="Religion" value={fd.preferredReligion} options={religionOptions} onChange={(v) => set("preferredReligion", v)} />
             <PrefSelect label="Caste" value={fd.preferredCaste} options={casteOptions} onChange={(v) => {
               set("preferredCaste", v)
-              set("preferredSubcaste", "Any") // Reset subcaste when caste changes
+              set("preferredSubcaste", "Any")
+              if (v === "Any") set("casteCompulsory", false)
             }} />
             <PrefSelect label="Subcaste" value={fd.preferredSubcaste} options={filteredSubcastes} 
               disabled={!fd.preferredCaste || fd.preferredCaste === "Any"}
               onChange={(v) => set("preferredSubcaste", v)} />
+
+            <div className="md:col-span-2 flex items-center justify-between gap-4 rounded-xl border border-[#f0ebe3] bg-white/70 px-4 py-3">
+              <div>
+                <p className="text-sm font-medium text-[#1F4068]">Caste is compulsory for matches</p>
+                <p className="mt-0.5 text-xs text-gray-500">
+                  When enabled, only profiles matching your caste and subcaste preferences are shown.
+                </p>
+              </div>
+              <Switch
+                checked={fd.casteCompulsory}
+                onCheckedChange={(checked) => set("casteCompulsory", checked)}
+                disabled={!fd.preferredCaste || fd.preferredCaste === "Any"}
+              />
+            </div>
+
             <PrefSelect label="Star (Nakshatra)" value={fd.preferredStar} options={STARS} onChange={(v) => set("preferredStar", v)} />
             <PrefSelect label="Raasi / Zodiac Sign" value={fd.preferredRaasi} options={RAASI} onChange={(v) => set("preferredRaasi", v)} />
             <PrefSelect label="Dosham" value={fd.preferredDosham} options={["Any", "No", "Yes", "Doesn't Matter"]} onChange={(v) => set("preferredDosham", v)} />

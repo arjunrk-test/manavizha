@@ -24,6 +24,13 @@ import { calculateLifestyleScore } from "@/lib/matching"
 import { CompatibilitySheet } from "./compatibility-sheet"
 import { MatchScoreBadge } from "@/components/match-score-badge"
 import { formatToDDMMYYYY, formatActivityTime } from "@/lib/utils/date-utils"
+import { filterProfilesByPartnerPreferences } from "@/lib/utils/partner-preference-filter"
+import {
+  EMPTY_BROWSE_MANUAL_FILTERS,
+  filterProfilesByBrowseManualFilters,
+  type BrowseManualFilters,
+} from "@/lib/utils/browse-manual-filter"
+import { BrowseManualFiltersPanel } from "@/components/browse/browse-manual-filters-panel"
 
 interface BrowseProfilesProps {
     userId: string
@@ -46,6 +53,9 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
     const [hasPreferences, setHasPreferences] = useState(false)
     const [userPreferences, setUserPreferences] = useState<any>(null)
     const [applyPreferences, setApplyPreferences] = useState(true)
+    const [browseManualFilters, setBrowseManualFilters] = useState<BrowseManualFilters>(
+        EMPTY_BROWSE_MANUAL_FILTERS
+    )
     const [selectedProfileIds, setSelectedProfileIds] = useState<Set<string>>(new Set())
     const [shortlistedIds, setShortlistedIds] = useState<string[]>([])
     const [likedIds, setLikedIds] = useState<string[]>([])
@@ -747,6 +757,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                     { data: interestsData },
                     { data: socialHabitsData },
                     { data: horoscopeData },
+                    { data: familyData },
                     settingsApiRes,
                 ] = await Promise.all([
                     supabase.from("photos").select("user_id, user_photos, family_photo").in("user_id", targetUserIds),
@@ -754,10 +765,11 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                     supabase.from("profession_employee").select("user_id, designation, company, sector, salary, work_location").in("user_id", targetUserIds),
                     supabase.from("profession_business").select("user_id, designation, business_name, business_type, annual_returns, business_location").in("user_id", targetUserIds),
                     supabase.from("profession_student").select("user_id, course, institution").in("user_id", targetUserIds),
-                    supabase.from("education_details").select("user_id, education, institution").in("user_id", targetUserIds),
+                    supabase.from("education_details").select("user_id, education, education_other, degree, degree_other, branch, institution, year_of_graduation, status").in("user_id", targetUserIds),
                     supabase.from("interests").select("*").in("user_id", targetUserIds),
                     supabase.from("social_habits").select("*").in("user_id", targetUserIds),
                     supabase.from("horoscope_details").select("user_id, zodiac_sign, star, lagnam, dhosham, time_of_birth, place_of_birth").in("user_id", targetUserIds),
+                    supabase.from("family_details").select("user_id, caste, subcaste").in("user_id", targetUserIds),
                     // Use server API to bypass RLS on user_settings
                     authFetch(`/api/premium-status?userIds=${targetUserIds.join(",")}`).then(r => r.ok ? r.json() : []).catch(() => []),
                 ])
@@ -773,6 +785,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                     const myInterests = interestsData?.find(x => x.user_id === p.user_id)
                     const mySocial = socialHabitsData?.find(x => x.user_id === p.user_id)
                     const myHoro = horoscopeData?.find(x => x.user_id === p.user_id)
+                    const myFamily = familyData?.find(x => x.user_id === p.user_id)
                     const mySettings = settingsData?.find(x => x.user_id === p.user_id)
 
                     let profession = "Not specified"
@@ -798,6 +811,9 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
 
                     return {
                         ...p,
+                        caste: myFamily?.caste ?? p.caste ?? null,
+                        subcaste: myFamily?.subcaste ?? p.subcaste ?? null,
+                        family: myFamily ?? null,
                         photos: myPhotos?.user_photos || [],
                         family_photo: myPhotos?.family_photo,
                         location,
@@ -851,132 +867,18 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
 
         const isActivityCategory = ["shortlisted-by-you", "shortlisted-you", "viewed-you", "viewed-by-you"].includes(activeCategory)
 
-        // 1. Primary Preference Filter (bypass for activity categories)
+        // 1. Partner preference filter (age always; caste/subcaste when compulsory)
         let dataset = profiles
         if (userPreferences && applyPreferences && !isActivityCategory) {
-            dataset = profiles.filter((profile: any) => {
-                // Age filtering (lenient Case: if profile.age is missing, we don't hide)
-                if (userPreferences.preferred_age_min != null || userPreferences.preferred_age_max != null) {
-                    const rawAge = (profile.age || "").toString().replace(/[^0-9]/g, "")
-                    const profileAge = rawAge ? parseInt(rawAge) : null
-                    if (profileAge !== null) {
-                        if (userPreferences.preferred_age_min != null && profileAge < userPreferences.preferred_age_min) return false
-                        if (userPreferences.preferred_age_max != null && profileAge > userPreferences.preferred_age_max) return false
-                    }
-                }
-
-                // Height filtering (lenient Case: if profile.height is missing, we don't hide)
-                if (userPreferences.preferred_height_min != null || userPreferences.preferred_height_max != null) {
-                    const rawHeight = (profile.height || "").toString().replace(/[^0-9]/g, "")
-                    const profileHeight = rawHeight ? parseInt(rawHeight) : null
-                    if (profileHeight !== null) {
-                        if (userPreferences.preferred_height_min != null && profileHeight < userPreferences.preferred_height_min) return false
-                        if (userPreferences.preferred_height_max != null && profileHeight > userPreferences.preferred_height_max) return false
-                    }
-                }
-
-                if (userPreferences.diet && userPreferences.diet.length > 0) {
-                    if (profile.food_preference) {
-                        const isMatch = userPreferences.diet.some((d: string) =>
-                            (profile.food_preference?.toLowerCase() || "").includes(d.toLowerCase())
-                        )
-                        if (!isMatch) return false
-                    }
-                }
-
-                if (userPreferences.location && userPreferences.location.length > 0) {
-                    if (profile.location && profile.location !== "Location not specified" && profile.location !== "Location hidden (Requires mutual interest)") {
-                        const locMatches = userPreferences.location.some((loc: string) =>
-                            profile.location.toLowerCase().includes(loc.toLowerCase())
-                        )
-                        if (!locMatches) return false
-                    }
-                }
-
-                // Education filtering
-                const prefLevels = userPreferences.education || []
-                const prefDegrees = userPreferences.preferred_degrees || []
-                const prefBranches = userPreferences.preferred_branches || []
-
-                const hasLevelPref = prefLevels.length > 0 && !prefLevels.includes("Any")
-                const hasDegreePref = prefDegrees.length > 0 && !prefDegrees.includes("Any")
-                const hasBranchPref = prefBranches.length > 0 && !prefBranches.includes("Any")
-
-                if (hasLevelPref || hasDegreePref || hasBranchPref) {
-                    // Lenient check: if profile has NO education data, we SKIP this filter instead of returning false
-                    if (profile.education && profile.education.length > 0) {
-                        const hasAnyMatchingEdu = profile.education.some((edu: any) => {
-                            let levelMatch = true
-                            let degreeMatch = true
-                            let branchMatch = true
-
-                            if (hasLevelPref) {
-                                levelMatch = prefLevels.some((pref: string) => 
-                                    (edu.education?.toLowerCase() || "").includes(pref.toLowerCase())
-                                )
-                            }
-
-                            if (hasDegreePref) {
-                                degreeMatch = prefDegrees.some((pref: string) => 
-                                    (edu.degree?.toLowerCase() || "").includes(pref.toLowerCase()) || 
-                                    (edu.degree_other?.toLowerCase() || "").includes(pref.toLowerCase())
-                                )
-                            }
-
-                            if (hasBranchPref) {
-                                branchMatch = prefBranches.some((pref: string) => 
-                                    (edu.branch?.toLowerCase() || "").includes(pref.toLowerCase())
-                                )
-                            }
-
-                            return levelMatch && degreeMatch && branchMatch
-                        })
-
-                        if (!hasAnyMatchingEdu) return false
-                    }
-                }
-
-                if (userPreferences.employment_type && userPreferences.employment_type.length > 0) {
-                    if (profile.professionType) {
-                        const empMatches = userPreferences.employment_type.some((emp: string) =>
-                            profile.professionType.toLowerCase().includes(emp.toLowerCase())
-                        )
-                        if (!empMatches) return false
-                    }
-                }
-
-                if (userPreferences.sector && userPreferences.sector.length > 0) {
-                    if (profile.professionDetails?.sector) {
-                        const sectorMatches = userPreferences.sector.some((sec: string) =>
-                            (profile.professionDetails.sector.toLowerCase() || "").includes(sec.toLowerCase())
-                        )
-                        if (!sectorMatches) return false
-                    }
-                }
-
-                if (userPreferences.smoking && userPreferences.smoking.length > 0) {
-                    if (profile.socialHabits?.smoking) {
-                        const isMatch = userPreferences.smoking.some((s: string) =>
-                            (profile.socialHabits?.smoking?.toLowerCase() || "").includes(s.toLowerCase())
-                        )
-                        if (!isMatch) return false
-                    }
-                }
-
-                if (userPreferences.drinking && userPreferences.drinking.length > 0) {
-                    if (profile.socialHabits?.drinking) {
-                        const isMatch = userPreferences.drinking.some((d: string) =>
-                            (profile.socialHabits?.drinking?.toLowerCase() || "").includes(d.toLowerCase())
-                        )
-                        if (!isMatch) return false
-                    }
-                }
-
-                return true
-            })
+            dataset = filterProfilesByPartnerPreferences(dataset, userPreferences)
         }
 
-        // 2. Sorting (by lifestyle match if premium)
+        // 2. Manual browse filters (combine with partner preferences)
+        if (!isActivityCategory) {
+            dataset = filterProfilesByBrowseManualFilters(dataset, browseManualFilters)
+        }
+
+        // 3. Sorting (by lifestyle match if premium)
         if (isPremium) {
             dataset = [...dataset].sort((a, b) => {
                 const scoreA = a.lifestyleMatch?.totalScore || 0
@@ -985,7 +887,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
             })
         }
 
-        // 3. Category Filter
+        // 4. Category Filter
         switch (activeCategory) {
             case "newly-joined":
                 return dataset.filter(p => new Date(p.created_at) > thirtyDaysAgo)
@@ -1028,7 +930,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
             default:
                 return dataset
         }
-    }, [profiles, activeCategory, shortlistedIds, shortlistedMeIds, viewedMeIds, iViewedIds, currentUserLocation, userPreferences, applyPreferences, isPremium])
+    }, [profiles, activeCategory, shortlistedIds, shortlistedMeIds, viewedMeIds, iViewedIds, currentUserLocation, userPreferences, applyPreferences, browseManualFilters, isPremium])
 
     const getAgeHeightCasteEducationProfessionCityStr = (profile: any) => {
         return getProfileSummaryStr(profile)
@@ -1494,6 +1396,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                     {menuGroups.flatMap(g => g.items).find(i => i.id === activeCategory)?.description || "Profiles curated for you"}
                                 </p>
                             </div>
+                            <div className="flex flex-wrap items-center gap-2 shrink-0">
                             {hasPreferences && (
                                 <Button
                                     variant="outline"
@@ -1513,6 +1416,11 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                     {applyPreferences ? "Partner prefs: on" : "Partner prefs: off"}
                                 </Button>
                             )}
+                            <BrowseManualFiltersPanel
+                                filters={browseManualFilters}
+                                onChange={setBrowseManualFilters}
+                            />
+                            </div>
                         </div>
                         {isProfileIncomplete ? (
                             <div className="rounded-[20px] border border-dashed border-[#eadfce] bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] p-10 text-center">

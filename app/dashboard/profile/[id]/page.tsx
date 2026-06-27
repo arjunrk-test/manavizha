@@ -22,6 +22,7 @@ import { MessageDialog } from "@/components/message-dialog"
 import { formatToDDMMYYYY, formatActivityTime } from "@/lib/utils/date-utils"
 import { Badge } from "@/components/ui/badge"
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
+import { ProfileEducationCareerSection } from "@/components/profile/profile-education-career-section"
 import { cn } from "@/lib/utils"
 
 export default function ProfileViewPage({
@@ -855,29 +856,12 @@ export default function ProfileViewPage({
                             </div>
                         )}
 
-                        <div className="bg-white rounded-[18px] p-5 sm:p-6 border border-[#f0ebe3] shadow-[0_2px_12px_rgba(31,64,104,0.05)] space-y-4">
-                            <div className="flex items-center gap-3">
-                                <div className="h-9 w-9 rounded-xl bg-[#faf8f4] flex items-center justify-center text-[#1F4068]">
-                                    <GraduationCap className="h-4 w-4" />
-                                </div>
-                                <h2 className="text-base font-semibold text-[#1F4068]">Education & Career</h2>
-                            </div>
-                            <div className="grid grid-cols-1 gap-1">
-                                {profile.education?.map((edu: any, idx: number) => (
-                                    <DetailRow key={idx} label={`Education ${idx + 1}`} value={`${edu.education}${edu.institution ? ` at ${edu.institution}` : ''}`} />
-                                ))}
-                                <DetailRow label="Current Occupation" value={profile.profession?.designation || profile.professionType} isLocked={true} isPremiumViewer={isViewerPremium} />
-                                <DetailRow label={profile.professionType === 'employee' ? "Sector" : "Business Type"} value={profile.profession?.sector || profile.profession?.business_type} />
-                                <DetailRow label={profile.professionType === 'business' ? "Business Name" : "Company Name"} value={profile.profession?.business_name || profile.profession?.company} isLocked={true} isPremiumViewer={isViewerPremium} />
-                                <DetailRow 
-                                    label={profile.professionType === 'business' ? "Annual Revenue" : "Annual Salary"} 
-                                    value={profile.profession?.revenue_range || profile.profession?.salary_range || profile.profession?.annual_returns || profile.profession?.salary} 
-                                    isLocked={true} 
-                                    isPremiumViewer={isViewerPremium} 
-                                />
-                                <DetailRow label="Work Location" value={profile.profession?.work_location || profile.profession?.business_location} />
-                            </div>
-                        </div>
+                        <ProfileEducationCareerSection
+                            education={profile.education}
+                            profession={profile.profession}
+                            professionType={profile.professionType}
+                            isPremiumViewer={isViewerPremium}
+                        />
 
                         <div className="bg-white rounded-[18px] p-5 sm:p-6 border border-[#f0ebe3] shadow-[0_2px_12px_rgba(31,64,104,0.05)] space-y-4">
                             <div className="flex items-center gap-3">

@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { MessageDialog } from "@/components/message-dialog"
 import { formatToDDMMYYYY, formatActivityTime } from "@/lib/utils/date-utils"
 import { Badge } from "@/components/ui/badge"
+import { ProfileEducationCareerSection } from "@/components/profile/profile-education-career-section"
 import { cn } from "@/lib/utils"
 
 interface ProfileDetailViewProps {
@@ -568,16 +569,14 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                             </div>
                         )}
 
-                        <ProfileCard title="Education & Career" icon={<GraduationCap className="h-4 w-4" />} iconTint="navy">
-                            {profile.education?.map((e: any, i: number) => (
-                                <DetailRow key={i} label={`Education ${i + 1}`} value={`${e.education}${e.institution ? ` at ${e.institution}` : ""}`} />
-                            ))}
-                            <DetailRow label="Current Occupation" value={profile.profession?.designation || profile.professionType} isLocked isPremiumViewer={isViewerPremium} />
-                            <DetailRow label={profile.professionType === "employee" ? "Sector" : "Business Type"} value={profile.profession?.sector || profile.profession?.business_type} />
-                            <DetailRow label={profile.professionType === "business" ? "Business Name" : "Company Name"} value={profile.profession?.business_name || profile.profession?.company} isLocked isPremiumViewer={isViewerPremium} />
-                            <DetailRow label={profile.professionType === "business" ? "Annual Revenue" : "Annual Salary"} value={profile.profession?.revenue_range || profile.profession?.salary_range || profile.profession?.annual_returns || profile.profession?.salary} isLocked isPremiumViewer={isViewerPremium} />
-                            <DetailRow label="Work Location" value={profile.profession?.work_location || profile.profession?.business_location} />
-                        </ProfileCard>
+                        <ProfileEducationCareerSection
+                            education={profile.education}
+                            profession={profile.profession}
+                            professionType={profile.professionType}
+                            isPremiumViewer={isViewerPremium}
+                            compact
+                            className="shadow-none"
+                        />
 
                         <ProfileCard title="Horoscope & Astrology" icon={<Sparkles className="h-4 w-4" />} iconTint="amber">
                             <DetailRow label="Star" value={profile.horoscope?.star} isLocked isPremiumViewer={isViewerPremium} />

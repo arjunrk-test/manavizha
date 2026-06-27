@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/api-client"
 import { calculateLifestyleScore } from "@/lib/matching"
 import { checkTamilPorutham } from "@/lib/astrology"
-import { calculateTrustScore } from "@/lib/utils/profile-utils"
+import { filterProfilesByPartnerPreferences } from "@/lib/utils/partner-preference-filter"
 
 /**
  * Generates a stable seeded shuffle of an array based on a string seed (e.g., Date + UserID).
@@ -104,6 +104,7 @@ export async function fetchDailyRecommendations(userId: string) {
             { data: targetInterestsData },
             { data: targetSocialData },
             { data: targetHoroData },
+            { data: familyData },
             premiumApiRes
         ] = await Promise.all([
             supabase.from("photos").select("user_id, user_photos").in("user_id", matchUserIds),
@@ -114,6 +115,7 @@ export async function fetchDailyRecommendations(userId: string) {
             supabase.from("interests").select("*").in("user_id", matchUserIds),
             supabase.from("social_habits").select("*").in("user_id", matchUserIds),
             supabase.from("horoscope_details").select("*").in("user_id", matchUserIds),
+            supabase.from("family_details").select("user_id, caste, subcaste").in("user_id", matchUserIds),
             authFetch(`/api/premium-status?userIds=${matchUserIds.join(",")}`).then(r => r.ok ? r.json() : []).catch(() => [])
         ])
 
@@ -132,6 +134,7 @@ export async function fetchDailyRecommendations(userId: string) {
             const targetInterests = targetInterestsData?.find(x => x.user_id === p.user_id)
             const targetSocial = targetSocialData?.find(x => x.user_id === p.user_id)
             const targetHoro = targetHoroData?.find(x => x.user_id === p.user_id)
+            const targetFamily = familyData?.find(x => x.user_id === p.user_id)
 
             const targetProfileData = {
                 ...p,
@@ -152,6 +155,9 @@ export async function fetchDailyRecommendations(userId: string) {
 
             return {
                 ...p,
+                caste: targetFamily?.caste ?? p.caste ?? null,
+                subcaste: targetFamily?.subcaste ?? p.subcaste ?? null,
+                family: targetFamily ?? null,
                 photos,
                 location: contact?.current_district ? `${contact.current_district}${contact.current_state ? `, ${contact.current_state}` : ""}` : "Location hidden",
                 profession,
@@ -169,14 +175,10 @@ export async function fetchDailyRecommendations(userId: string) {
             }
         })
 
-        // Filter by simple age preference for recommendations
+        // Filter by partner preferences (age always; caste/subcaste when compulsory)
         let filtered = combined
         if (prefs) {
-            filtered = combined.filter(p => {
-                if (prefs.preferred_age_min && p.age && p.age < prefs.preferred_age_min) return false
-                if (prefs.preferred_age_max && p.age && p.age > prefs.preferred_age_max) return false
-                return true
-            })
+            filtered = filterProfilesByPartnerPreferences(combined, prefs)
         }
 
         // Shuffle and slice
