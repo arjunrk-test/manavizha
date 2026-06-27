@@ -24,6 +24,7 @@ import { motion } from "framer-motion"
 export default function AdminDashboardPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
+  const [statsError, setStatsError] = useState(false)
   const [adminRole, setAdminRole] = useState<string | null>(null)
   const [stats, setStats] = useState({
     total: 0,
@@ -62,18 +63,18 @@ export default function AdminDashboardPage() {
     }
 
     const fetchStats = async () => {
-      // Use server-side aggregate counts to avoid full table scans
       const [
-        { count: totalCount },
-        { count: menCount },
-        { count: womenCount },
-        { count: pendingCount },
+        { count: totalCount, error: e1 },
+        { count: menCount, error: e2 },
+        { count: womenCount, error: e3 },
+        { count: pendingCount, error: e4 },
       ] = await Promise.all([
         supabase.from("personal_details").select("*", { count: "exact", head: true }).not("marital_status", "ilike", "married"),
         supabase.from("personal_details").select("*", { count: "exact", head: true }).ilike("sex", "%male%").not("sex", "ilike", "%female%").not("marital_status", "ilike", "married"),
         supabase.from("personal_details").select("*", { count: "exact", head: true }).ilike("sex", "%female%").not("marital_status", "ilike", "married"),
         supabase.from("photos").select("*", { count: "exact", head: true }).eq("verification_status", "pending"),
       ])
+      if (e1 || e2 || e3 || e4) throw new Error("Stats fetch failed")
 
       setStats({
         total: totalCount || 0,
@@ -114,8 +115,7 @@ export default function AdminDashboardPage() {
     }
 
     checkUser()
-    fetchStats()
-    fetchStageStats()
+    Promise.all([fetchStats(), fetchStageStats()]).catch(() => setStatsError(true))
   }, [router])
 
   if (isLoading) {
@@ -129,6 +129,11 @@ export default function AdminDashboardPage() {
 
       <main className="relative z-10 flex-1 flex flex-col pt-[4.75rem]">
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10 flex-1">
+          {statsError && (
+            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              Could not load dashboard statistics. Please refresh the page.
+            </div>
+          )}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
