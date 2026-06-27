@@ -78,50 +78,64 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (userId) {
-      const channel = supabase
-        .channel("realtime:messages")
-        .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, (payload) => {
-          const msg = payload.new as Message
+      const handlePayload = (payload: { eventType: string; new: Message }) => {
+        const msg = payload.new as Message
 
-          if (payload.eventType === "INSERT") {
-            if (msg.sender_id === userId || msg.receiver_id === userId) {
-              if (
-                activeConversation &&
-                (msg.sender_id === activeConversation.other_user_id ||
-                  msg.receiver_id === activeConversation.other_user_id)
-              ) {
-                setMessages((prev) => [...prev, msg])
+        if (payload.eventType === "INSERT") {
+          if (
+            activeConversation &&
+            (msg.sender_id === activeConversation.other_user_id ||
+              msg.receiver_id === activeConversation.other_user_id)
+          ) {
+            setMessages((prev) => [...prev, msg])
 
-                if (msg.receiver_id === userId) {
-                  supabase
-                    .from("messages")
-                    .update({ is_read: true })
-                    .eq("id", msg.id)
-                    .then(({ error }) => {
-                      if (error) console.error("Error marking message as read:", error)
-                      else {
-                        fetchConversations(userId)
-                        window.dispatchEvent(new CustomEvent("messagesRead"))
-                      }
-                    })
-                }
-              } else {
-                fetchConversations(userId)
-              }
+            if (msg.receiver_id === userId) {
+              supabase
+                .from("messages")
+                .update({ is_read: true })
+                .eq("id", msg.id)
+                .then(({ error }) => {
+                  if (error) console.error("Error marking message as read:", error)
+                  else {
+                    fetchConversations(userId)
+                    window.dispatchEvent(new CustomEvent("messagesRead"))
+                  }
+                })
             }
+          } else {
+            fetchConversations(userId)
           }
+        }
 
-          if (payload.eventType === "UPDATE") {
-            if (msg.sender_id === userId || msg.receiver_id === userId) {
-              setMessages((prev) => prev.map((m) => (m.id === msg.id ? msg : m)))
-              fetchConversations(userId)
-            }
-          }
-        })
+        if (payload.eventType === "UPDATE") {
+          setMessages((prev) => prev.map((m) => (m.id === msg.id ? msg : m)))
+          fetchConversations(userId)
+        }
+      }
+
+      // Two filtered channels — one per user role — so only this user's messages
+      // are broadcast over the WebSocket rather than the entire messages table.
+      const inbound = supabase
+        .channel("realtime:messages:inbound")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "messages", filter: `receiver_id=eq.${userId}` },
+          handlePayload,
+        )
+        .subscribe()
+
+      const outbound = supabase
+        .channel("realtime:messages:outbound")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "messages", filter: `sender_id=eq.${userId}` },
+          handlePayload,
+        )
         .subscribe()
 
       return () => {
-        supabase.removeChannel(channel)
+        supabase.removeChannel(inbound)
+        supabase.removeChannel(outbound)
       }
     }
   }, [userId, activeConversation])
