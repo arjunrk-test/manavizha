@@ -3,6 +3,7 @@ import { authFetch } from "@/lib/api-client"
 import { calculateLifestyleScore } from "@/lib/matching"
 import { checkTamilPorutham } from "@/lib/astrology"
 import { filterProfilesByPartnerPreferences } from "@/lib/utils/partner-preference-filter"
+import { calculateTrustScore } from "@/lib/utils/profile-utils"
 
 /**
  * Generates a stable seeded shuffle of an array based on a string seed (e.g., Date + UserID).

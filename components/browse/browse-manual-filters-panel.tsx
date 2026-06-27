@@ -58,7 +58,11 @@ export function BrowseManualFiltersPanel({ filters, onChange }: BrowseManualFilt
           Filters{active ? " active" : ""}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-4 space-y-4">
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="w-80 p-4 space-y-4 rounded-[16px] border border-[#f0ebe3] bg-white text-[#374151] shadow-[0_12px_40px_rgba(31,64,104,0.14)] z-[60]"
+      >
         <div>
           <p className="text-sm font-semibold text-[#1F4068]">Browse filters</p>
           <p className="text-xs text-gray-500 mt-0.5">Combine with your saved partner preferences.</p>
