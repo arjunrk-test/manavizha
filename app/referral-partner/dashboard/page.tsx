@@ -64,21 +64,16 @@ export default function ReferralPartnerDashboardPage() {
 
   const fetchStats = async (id: string) => {
     try {
-      let referralPercentage = 10
-      const { data: partnerSettingsData } = await supabase
-        .from("referral_partners")
-        .select("referral_percentage")
-        .eq("partner_id", id)
-        .single()
+      const [{ data: partnerSettingsData }, { data: referralData, error: referralError }] =
+        await Promise.all([
+          supabase.from("referral_partners").select("referral_percentage").eq("partner_id", id).single(),
+          supabase.from("referral_details").select("user_id").eq("referral_partner_id", id),
+        ])
 
-      if (partnerSettingsData?.referral_percentage != null) {
-        referralPercentage = Number(partnerSettingsData.referral_percentage)
-      }
-
-      const { data: referralData, error: referralError } = await supabase
-        .from("referral_details")
-        .select("user_id")
-        .eq("referral_partner_id", id)
+      const referralPercentage =
+        partnerSettingsData?.referral_percentage != null
+          ? Number(partnerSettingsData.referral_percentage)
+          : 10
 
       if (referralError || !referralData || referralData.length === 0) {
         setStats({ total: 0, men: 0, women: 0, earnings: 0 })
@@ -87,10 +82,10 @@ export default function ReferralPartnerDashboardPage() {
 
       const userIds = referralData.map((r: { user_id: string }) => r.user_id).filter(Boolean)
 
-      const { data: profiles } = await supabase
-        .from("personal_details")
-        .select("user_id, sex, marital_status")
-        .in("user_id", userIds)
+      const [{ data: profiles }, { data: subscriptions }] = await Promise.all([
+        supabase.from("personal_details").select("user_id, sex, marital_status").in("user_id", userIds),
+        supabase.from("subscriptions").select("amount").in("user_id", userIds),
+      ])
 
       const activeProfiles = (profiles || []).filter(
         (p) => (p.marital_status || "").toLowerCase() !== "married"
@@ -106,21 +101,11 @@ export default function ReferralPartnerDashboardPage() {
         (p) => p.sex && p.sex.toLowerCase().includes("female")
       ).length
 
-      let totalEarnings = 0
-      if (userIds.length > 0) {
-        const { data: subscriptions } = await supabase
-          .from("subscriptions")
-          .select("amount")
-          .in("user_id", userIds)
-
-        if (subscriptions) {
-          const totalSubscriptionAmount = subscriptions.reduce(
-            (sum, sub) => sum + (Number(sub.amount) || 0),
-            0
-          )
-          totalEarnings = totalSubscriptionAmount * (referralPercentage / 100)
-        }
-      }
+      const totalSubscriptionAmount = (subscriptions || []).reduce(
+        (sum, sub) => sum + (Number(sub.amount) || 0),
+        0
+      )
+      const totalEarnings = totalSubscriptionAmount * (referralPercentage / 100)
 
       setStats({
         total: activeProfiles.length,
