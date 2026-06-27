@@ -58,10 +58,19 @@ export default function DashboardLayout({
           const settingsRes = await authFetch(`/api/settings?userId=${authUser.id}`)
           if (settingsRes.ok) {
             const settingsData = await settingsRes.json()
+            const deactivatedUntil = settingsData.deactivated_until
+              ? new Date(settingsData.deactivated_until)
+              : null
+            // Skip auto-reactivation when deactivated_until is more than 1 year away
+            // — that signals a "married" deactivation set to 10 years, not a temp pause
+            const isMarriedDeactivation =
+              deactivatedUntil &&
+              deactivatedUntil.getTime() - Date.now() > 365 * 24 * 60 * 60 * 1000
             const deactivationExpired =
               settingsData.is_deactivated &&
-              settingsData.deactivated_until &&
-              new Date(settingsData.deactivated_until) <= new Date()
+              deactivatedUntil &&
+              deactivatedUntil <= new Date() &&
+              !isMarriedDeactivation
 
             if (deactivationExpired) {
               // Only auto-reactivate once the deactivation period has naturally elapsed
