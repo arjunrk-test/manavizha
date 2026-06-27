@@ -236,16 +236,17 @@ export default function DashboardLayout({
   }
 
   const getViewName = () => {
-    if (pathname.includes("/setup")) return "Profile Setup"
-    if (pathname.includes("/browse")) return "Browse Profiles"
-    if (pathname.includes("/parents")) return "Manage Parents"
-    if (pathname.includes("/selections")) return "Parent Selections"
-    if (pathname.includes("/preferences")) return "Partner Preferences"
-    if (pathname.includes("/likes")) return "My Likes"
-    if (pathname.includes("/daily-recommendations")) return "Daily Recommendations"
-    if (pathname.includes("/horoscope")) return "Horoscope Generator"
-    if (pathname.includes("/messages")) return "Messages"
-    if (pathname.includes("/settings")) return "Profile Settings"
+    if (pathname === "/dashboard/setup") return "Profile Setup"
+    if (pathname === "/dashboard/browse") return "Browse Profiles"
+    if (pathname === "/dashboard/parents") return "Manage Parents"
+    if (pathname === "/dashboard/selections") return "Parent Selections"
+    if (pathname === "/dashboard/preferences") return "Partner Preferences"
+    if (pathname === "/dashboard/interests") return "My Interests"
+    if (pathname === "/dashboard/daily-recommendations") return "Daily Recommendations"
+    if (pathname === "/dashboard/horoscope") return "Horoscope Generator"
+    if (pathname === "/dashboard/messages") return "Messages"
+    if (pathname === "/dashboard/settings") return "Profile Settings"
+    if (pathname.startsWith("/dashboard/profile/")) return "View Profile"
     return ""
   }
 
