@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/api-client"
@@ -415,10 +416,12 @@ export default function DashboardLayout({
                               onClick={() => handleNotificationClick("interest", p.user_id)}
                             >
                               <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#fce8ef] ring-2 ring-white">
-                                <img
+                                <Image
                                   src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=fce8ef&color=e87898`}
-                                  alt=""
-                                  className="h-full w-full object-cover"
+                                  alt={`${p.name || "Member"}'s profile photo`}
+                                  fill
+                                  className="object-cover"
+                                  unoptimized
                                 />
                               </div>
                               <div className="min-w-0 flex-1">
@@ -455,10 +458,12 @@ export default function DashboardLayout({
                               onClick={() => handleNotificationClick("view", p.user_id)}
                             >
                               <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#e6f7f5] ring-2 ring-white">
-                                <img
+                                <Image
                                   src={p.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=e6f7f5&color=3bb9ac`}
-                                  alt=""
-                                  className="h-full w-full object-cover"
+                                  alt={`${p.name || "Member"}'s profile photo`}
+                                  fill
+                                  className="object-cover"
+                                  unoptimized
                                 />
                               </div>
                               <div className="min-w-0 flex-1">

@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/api-client"
@@ -344,14 +345,15 @@ export default function MessagesPage() {
                     )}
                   >
                     <div className="relative shrink-0">
-                      <img
-                        src={conv.other_user_photo || avatarFallback(conv.other_user_name)}
-                        alt=""
-                        className="w-11 h-11 rounded-xl object-cover ring-2 ring-white"
-                        onError={(e) => {
-                          ;(e.target as HTMLImageElement).src = avatarFallback(conv.other_user_name)
-                        }}
-                      />
+                      <div className="relative w-11 h-11 rounded-xl overflow-hidden ring-2 ring-white">
+                        <Image
+                          src={conv.other_user_photo || avatarFallback(conv.other_user_name)}
+                          alt={`${conv.other_user_name || "Member"}'s profile photo`}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
                       <div
                         className={cn(
                           "absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white",
@@ -414,14 +416,15 @@ export default function MessagesPage() {
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
                   <div className="relative shrink-0">
-                    <img
-                      src={activeConversation.other_user_photo || avatarFallback(activeConversation.other_user_name)}
-                      alt=""
-                      className="w-10 h-10 rounded-xl object-cover"
-                      onError={(e) => {
-                        ;(e.target as HTMLImageElement).src = avatarFallback(activeConversation.other_user_name)
-                      }}
-                    />
+                    <div className="relative w-10 h-10 rounded-xl overflow-hidden">
+                      <Image
+                        src={activeConversation.other_user_photo || avatarFallback(activeConversation.other_user_name)}
+                        alt={`${activeConversation.other_user_name || "Member"}'s profile photo`}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
                     <div
                       className={cn(
                         "absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white",
