@@ -1,50 +1,13 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import fetch from 'node-fetch'
-import https from 'https'
 import { authErrorResponse, requireAuthenticatedUser, ApiAuthError } from '@/lib/server/api-auth'
-
-const customFetch = (url: any, options: any = {}) => {
-    try {
-        const u = new URL(url)
-        if (u.hostname === 'olktibxfpgfjkcppqbqd.supabase.co') {
-            const originalHost = u.hostname
-            u.hostname = '104.18.38.10'
-            options.headers = options.headers || {}
-            if (typeof options.headers.set === 'function') {
-                options.headers.set('Host', originalHost)
-            } else {
-                options.headers['Host'] = originalHost
-            }
-            options.agent = new https.Agent({ servername: originalHost })
-            return (fetch as any)(u.toString(), options)
-        }
-        return (fetch as any)(url, options)
-    } catch (e) {
-        return (fetch as any)(url, options)
-    }
-}
-
-const getSupabaseAdmin = () => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-
-    if (!supabaseUrl || !supabaseServiceRoleKey) {
-        throw new Error('Supabase URL and Service Role Key are required')
-    }
-
-    return createClient(supabaseUrl, supabaseServiceRoleKey, {
-        auth: { autoRefreshToken: false, persistSession: false },
-        global: { fetch: customFetch }
-    })
-}
+import { getSupabaseAdmin } from '@/lib/server/supabase-admin-client'
 
 export async function GET(request: Request) {
     try {
         const { userId } = await requireAuthenticatedUser(request)
         const { searchParams } = new URL(request.url)
         const targetUserId = searchParams.get('targetUserId')
-        const admin = getSupabaseAdmin()
+        const admin = await getSupabaseAdmin()
 
         if (targetUserId) {
             const { data, error } = await admin
@@ -80,7 +43,7 @@ export async function PATCH(request: Request) {
     try {
         const { userId } = await requireAuthenticatedUser(request)
         const body = await request.json()
-        const admin = getSupabaseAdmin()
+        const admin = await getSupabaseAdmin()
 
         if (body.messageId) {
             // Mark a single message as read — only allowed if the caller is the receiver
@@ -138,7 +101,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Message is too long' }, { status: 400 })
         }
 
-        const admin = getSupabaseAdmin()
+        const admin = await getSupabaseAdmin()
 
         const [{ data: like1 }, { data: like2 }, { data: settings }] = await Promise.all([
             admin.from('likes').select('status').eq('user_id', senderId).eq('liked_user_id', receiverId).maybeSingle(),

@@ -1,50 +1,9 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import fetch from 'node-fetch'
-import https from 'https'
 import { authErrorResponse, requireAuthenticatedUser, ApiAuthError } from '@/lib/server/api-auth'
+import { getSupabaseAdmin } from '@/lib/server/supabase-admin-client'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
-const customFetch = (url: any, options: any = {}) => {
-    try {
-        const u = new URL(url)
-        if (u.hostname === 'olktibxfpgfjkcppqbqd.supabase.co') {
-            const originalHost = u.hostname
-            u.hostname = '104.18.38.10'
-
-            options.headers = options.headers || {}
-            if (typeof options.headers.set === 'function') {
-                options.headers.set('Host', originalHost)
-            } else {
-                options.headers['Host'] = originalHost
-            }
-
-            options.agent = new https.Agent({ servername: originalHost })
-            return (fetch as any)(u.toString(), options)
-        }
-        return (fetch as any)(url, options)
-    } catch (e) {
-        return (fetch as any)(url, options)
-    }
-}
-
-const getSupabaseAdmin = () => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-
-    if (!supabaseUrl || !supabaseServiceRoleKey) {
-        throw new Error('Supabase URL and Service Role Key are required')
-    }
-
-    return createClient(supabaseUrl, supabaseServiceRoleKey, {
-        auth: { autoRefreshToken: false, persistSession: false },
-        global: { fetch: customFetch }
-    })
-}
-
-async function verifyChildCanLinkParents(
-    admin: ReturnType<typeof getSupabaseAdmin>,
-    childUserId: string
-) {
+async function verifyChildCanLinkParents(admin: SupabaseClient, childUserId: string) {
     const { data: asParent, error: parentError } = await admin
         .from('parents')
         .select('id')
@@ -63,7 +22,7 @@ async function verifyChildCanLinkParents(
 export async function GET(request: Request) {
     try {
         const { userId } = await requireAuthenticatedUser(request)
-        const admin = getSupabaseAdmin()
+        const admin = await getSupabaseAdmin()
 
         const { data: parentRecord, error } = await admin
             .from('parents')
@@ -119,7 +78,7 @@ export async function POST(request: Request) {
             )
         }
 
-        const admin = getSupabaseAdmin()
+        const admin = await getSupabaseAdmin()
         await verifyChildCanLinkParents(admin, childUserId)
 
         const { data: existingParent, error: existingParentError } = await admin

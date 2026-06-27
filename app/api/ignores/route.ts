@@ -1,43 +1,13 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import https from 'https'
-import fetch from 'node-fetch'
 import { authErrorResponse, requireAuthenticatedUser } from '@/lib/server/api-auth'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-
-const customFetch = (url: any, options: any = {}) => {
-    try {
-        const u = new URL(url)
-        if (u.hostname === 'olktibxfpgfjkcppqbqd.supabase.co') {
-            const originalHost = u.hostname
-            u.hostname = '104.18.38.10'
-            options.headers = options.headers || {}
-            if (typeof options.headers.set === 'function') {
-                options.headers.set('Host', originalHost)
-            } else {
-                options.headers['Host'] = originalHost
-            }
-            options.agent = new https.Agent({ servername: originalHost })
-            return (fetch as any)(u.toString(), options)
-        }
-        return (fetch as any)(url, options)
-    } catch (e) {
-        return (fetch as any)(url, options)
-    }
-}
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-    global: { fetch: customFetch }
-})
+import { getSupabaseAdmin } from '@/lib/server/supabase-admin-client'
 
 export async function GET(request: Request) {
     try {
         const { userId } = await requireAuthenticatedUser(request)
+        const admin = await getSupabaseAdmin()
 
-        const { data, error } = await supabaseAdmin.from('ignored_profiles').select('ignored_user_id').eq('user_id', userId)
+        const { data, error } = await admin.from('ignored_profiles').select('ignored_user_id').eq('user_id', userId)
 
         if (error) {
             if (error.code === 'PGRST116' || error.code === '42P01') {
@@ -58,7 +28,8 @@ export async function POST(request: Request) {
         const { targetUserId } = await request.json()
         if (!targetUserId) return NextResponse.json({ error: 'targetUserId required' }, { status: 400 })
 
-        const { error } = await supabaseAdmin.from('ignored_profiles').insert({
+        const admin = await getSupabaseAdmin()
+        const { error } = await admin.from('ignored_profiles').insert({
             user_id: userId,
             ignored_user_id: targetUserId
         })
@@ -80,7 +51,8 @@ export async function DELETE(request: Request) {
         const { targetUserId } = await request.json()
         if (!targetUserId) return NextResponse.json({ error: 'targetUserId required' }, { status: 400 })
 
-        const { error } = await supabaseAdmin.from('ignored_profiles').delete().eq('user_id', userId).eq('ignored_user_id', targetUserId)
+        const admin = await getSupabaseAdmin()
+        const { error } = await admin.from('ignored_profiles').delete().eq('user_id', userId).eq('ignored_user_id', targetUserId)
 
         if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

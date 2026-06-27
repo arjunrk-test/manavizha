@@ -1,49 +1,14 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import https from 'https'
-import fetch from 'node-fetch'
 import { authErrorResponse, requireAuthenticatedUser } from '@/lib/server/api-auth'
 import { sanitizeUserSettingsUpdates } from '@/lib/server/user-settings-validation'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-
-const customFetch = (url: any, options: any = {}) => {
-    try {
-        const u = new URL(url)
-        if (u.hostname === 'olktibxfpgfjkcppqbqd.supabase.co') {
-            const originalHost = u.hostname
-            u.hostname = '104.18.38.10'
-            options.headers = options.headers || {}
-            if (typeof options.headers.set === 'function') {
-                options.headers.set('Host', originalHost)
-            } else {
-                options.headers['Host'] = originalHost
-            }
-            options.agent = new https.Agent({ servername: originalHost })
-            return (fetch as any)(u.toString(), options)
-        }
-        return (fetch as any)(url, options)
-    } catch (e) {
-        try {
-            return (fetch as any)(url, options)
-        } catch (err) {
-            console.error("Critical fetch error in customFetch:", err)
-            throw err
-        }
-    }
-}
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-    global: { fetch: customFetch }
-})
+import { getSupabaseAdmin } from '@/lib/server/supabase-admin-client'
 
 export async function GET(request: Request) {
     try {
         const { userId } = await requireAuthenticatedUser(request)
+        const admin = await getSupabaseAdmin()
 
-        const { data, error } = await supabaseAdmin.from('user_settings').select('*').eq('user_id', userId).maybeSingle()
+        const { data, error } = await admin.from('user_settings').select('*').eq('user_id', userId).maybeSingle()
         if (error) {
             if (error.code === 'PGRST116' || error.code === '42P01') {
                 return NextResponse.json({})
@@ -66,7 +31,8 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: parsed.error }, { status: 400 })
         }
 
-        const { error } = await supabaseAdmin.from('user_settings').upsert({
+        const admin = await getSupabaseAdmin()
+        const { error } = await admin.from('user_settings').upsert({
             user_id: userId,
             ...parsed.data,
             updated_at: new Date().toISOString()
