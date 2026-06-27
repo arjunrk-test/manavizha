@@ -1,6 +1,7 @@
 "use client"
 
 import { supabase } from "@/lib/supabase"
+import { authFetch } from "@/lib/api-client"
 import React, { useEffect, useState } from "react"
 import {
     User, GraduationCap, Heart, CheckCircle2, Phone, MessageCircle, Lock,
@@ -14,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { MessageDialog } from "@/components/message-dialog"
 import { formatToDDMMYYYY, formatActivityTime } from "@/lib/utils/date-utils"
 import { Badge } from "@/components/ui/badge"
+import { ProfileEducationCareerSection } from "@/components/profile/profile-education-career-section"
 import { cn } from "@/lib/utils"
 
 interface ProfileDetailViewProps {
@@ -62,7 +64,7 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
             try {
                 // Record the view on load (if not viewing own profile)
                 if (currentUserId && targetUserId && currentUserId !== targetUserId) {
-                    fetch("/api/views", {
+                    authFetch("/api/views", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ viewerId: currentUserId, viewedUserId: targetUserId })
@@ -98,7 +100,7 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                     supabase.from("partner_preferences").select("*").eq("user_id", targetUserId).maybeSingle(),
                     supabase.from("photos").select("*").eq("user_id", targetUserId).maybeSingle(),
                     supabase.from("users").select("*, name, email, phone, updated_at, is_premium, last_active_at").eq("id", targetUserId).single(),
-                    fetch(`/api/premium-status?userIds=${targetUserId}`).then(r => r.ok ? r.json() : []).catch(() => []),
+                    authFetch(`/api/premium-status?userIds=${targetUserId}`).then(r => r.ok ? r.json() : []).catch(() => []),
                 ])
 
                 if (!personal) {
@@ -140,8 +142,8 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
 
                 if (currentUserId) {
                     const [likesRes, shortRes, viewerRes, settingsRes] = await Promise.all([
-                        fetch(`/api/likes?userId=${currentUserId}`),
-                        fetch(`/api/shortlists?userId=${currentUserId}`),
+                        authFetch(`/api/likes?userId=${currentUserId}`),
+                        authFetch(`/api/shortlists?userId=${currentUserId}`),
                         supabase.from("personal_details").select("*").eq("user_id", currentUserId).maybeSingle(),
                         supabase.from("user_settings").select("is_premium, premium_plan").eq("user_id", currentUserId).maybeSingle()
                     ])
@@ -167,7 +169,7 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                     }
                     if (settingsRes.data) setIsViewerPremium(settingsRes.data.is_premium)
                     
-                    const viewsRes = await fetch(`/api/views?userId=${currentUserId}`)
+                    const viewsRes = await authFetch(`/api/views?userId=${currentUserId}`)
                     if (viewsRes.ok) {
                         const viewsData = await viewsRes.json()
                         const viewMe = (viewsData.viewedMe || []).find((v: any) => v.viewer_user_id === targetUserId)
@@ -212,7 +214,7 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
         try {
             const method = isLiked ? "DELETE" : "POST"
             const status = (!isLiked && likedMeDate) ? 'accepted' : undefined
-            const res = await fetch("/api/likes", {
+            const res = await authFetch("/api/likes", {
                 method, headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId: currentUserId, likedUserId: targetUserId, status }),
             })
@@ -232,7 +234,7 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
         setIsShortlistProcessing(true)
         try {
             const method = isShortlisted ? "DELETE" : "POST"
-            const res = await fetch("/api/shortlists", {
+            const res = await authFetch("/api/shortlists", {
                 method, headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId: currentUserId, targetUserId }),
             })
@@ -567,16 +569,14 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                             </div>
                         )}
 
-                        <ProfileCard title="Education & Career" icon={<GraduationCap className="h-4 w-4" />} iconTint="navy">
-                            {profile.education?.map((e: any, i: number) => (
-                                <DetailRow key={i} label={`Education ${i + 1}`} value={`${e.education}${e.institution ? ` at ${e.institution}` : ""}`} />
-                            ))}
-                            <DetailRow label="Current Occupation" value={profile.profession?.designation || profile.professionType} isLocked isPremiumViewer={isViewerPremium} />
-                            <DetailRow label={profile.professionType === "employee" ? "Sector" : "Business Type"} value={profile.profession?.sector || profile.profession?.business_type} />
-                            <DetailRow label={profile.professionType === "business" ? "Business Name" : "Company Name"} value={profile.profession?.business_name || profile.profession?.company} isLocked isPremiumViewer={isViewerPremium} />
-                            <DetailRow label={profile.professionType === "business" ? "Annual Revenue" : "Annual Salary"} value={profile.profession?.revenue_range || profile.profession?.salary_range || profile.profession?.annual_returns || profile.profession?.salary} isLocked isPremiumViewer={isViewerPremium} />
-                            <DetailRow label="Work Location" value={profile.profession?.work_location || profile.profession?.business_location} />
-                        </ProfileCard>
+                        <ProfileEducationCareerSection
+                            education={profile.education}
+                            profession={profile.profession}
+                            professionType={profile.professionType}
+                            isPremiumViewer={isViewerPremium}
+                            compact
+                            className="shadow-none"
+                        />
 
                         <ProfileCard title="Horoscope & Astrology" icon={<Sparkles className="h-4 w-4" />} iconTint="amber">
                             <DetailRow label="Star" value={profile.horoscope?.star} isLocked isPremiumViewer={isViewerPremium} />

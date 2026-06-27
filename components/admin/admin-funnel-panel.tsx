@@ -2,6 +2,7 @@
 
 import { getAllParentIds } from "@/app/actions/admin"
 import { DashboardJourneyPatterns } from "@/components/dashboard/dashboard-journey-patterns"
+import { getAccessToken } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
@@ -203,7 +204,10 @@ export function AdminFunnelPanel({ stage }: { stage: string }) {
         if (data) data.forEach((r) => absentIds.add(r.user_id))
       }
 
-      const parentDataRes = await getAllParentIds()
+      const accessToken = await getAccessToken()
+      const parentDataRes = accessToken
+        ? await getAllParentIds(accessToken)
+        : { success: false, ids: [] as string[] }
       if (parentDataRes.success && parentDataRes.ids) {
         parentDataRes.ids.forEach((id: string) => absentIds.add(id))
       }

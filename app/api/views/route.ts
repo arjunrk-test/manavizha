@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import fetch from 'node-fetch'
 import https from 'https'
+import { authErrorResponse, requireAuthenticatedUser } from '@/lib/server/api-auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -32,16 +33,9 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
     global: { fetch: customFetch }
 })
 
-// GET /api/views?userId=xxx — fetch all view data for a user
 export async function GET(request: Request) {
     try {
-        const { searchParams } = new URL(request.url)
-        const userId = searchParams.get('userId')
-
-        if (!userId) {
-            return NextResponse.json({ error: 'userId is required' }, { status: 400 })
-        }
-
+        const { userId } = await requireAuthenticatedUser(request)
         const [{ data: iViewedData, error: e1 }, { data: viewedMeData, error: e2 }] = await Promise.all([
             supabaseAdmin.from('profile_views').select('viewed_user_id, created_at, is_read').eq('viewer_user_id', userId).order('created_at', { ascending: false }),
             supabaseAdmin.from('profile_views').select('viewer_user_id, created_at, is_read').eq('viewed_user_id', userId).order('created_at', { ascending: false }),
@@ -51,7 +45,6 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: e1?.message || e2?.message }, { status: 500 })
         }
 
-        // De-duplicate: keep only the latest view for each user
         const uniqueIViewed: any[] = []
         const iViewedMap = new Set()
         for (const v of (iViewedData || [])) {
@@ -74,30 +67,31 @@ export async function GET(request: Request) {
             iViewed: uniqueIViewed,
             viewedMe: uniqueViewedMe,
         })
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+    } catch (error) {
+        return authErrorResponse(error)
     }
 }
 
-// PATCH /api/views — mark a profile view as read
 export async function PATCH(request: Request) {
     try {
+        const { userId: authUserId } = await requireAuthenticatedUser(request)
         const { viewerId, viewedUserId } = await request.json()
 
         if (!viewerId || !viewedUserId) {
             return NextResponse.json({ error: 'viewerId and viewedUserId are required' }, { status: 400 })
         }
 
-        // Attempt to mark as read (if is_read column exists)
+        if (viewedUserId !== authUserId) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        }
+
         const { error } = await supabaseAdmin
             .from('profile_views')
             .update({ is_read: true })
             .eq('viewer_user_id', viewerId)
-            .eq('viewed_user_id', viewedUserId)
+            .eq('viewed_user_id', authUserId)
 
         if (error) {
-            // Silently ignore if column doesn't exist to prevent crash, 
-            // but return error if it's something else
             if (error.message.includes('column "is_read" of relation "profile_views" does not exist')) {
                 return NextResponse.json({ success: false, error: 'column_missing' })
             }
@@ -106,30 +100,31 @@ export async function PATCH(request: Request) {
 
         return NextResponse.json({ success: true })
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        if (error instanceof SyntaxError) {
+            return NextResponse.json({ error: error.message }, { status: 400 })
+        }
+        return authErrorResponse(error)
     }
 }
 
-// POST /api/views — record a profile view
 export async function POST(request: Request) {
     try {
-        const { viewerId, viewedUserId } = await request.json()
+        const { userId: authUserId } = await requireAuthenticatedUser(request)
+        const { viewedUserId } = await request.json()
 
-        if (!viewerId || !viewedUserId) {
-            return NextResponse.json({ error: 'viewerId and viewedUserId are required' }, { status: 400 })
+        if (!viewedUserId) {
+            return NextResponse.json({ error: 'viewedUserId is required' }, { status: 400 })
         }
 
-        // Don't record self-views
-        if (viewerId === viewedUserId) {
+        if (authUserId === viewedUserId) {
             return NextResponse.json({ success: true, message: 'Self-view ignored' })
         }
 
-        // Optional: Check if a duplicate view was recorded recently (e.g., last 1 hour) to avoid spamming
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
         const { data: recentView } = await supabaseAdmin
             .from('profile_views')
             .select('id')
-            .eq('viewer_user_id', viewerId)
+            .eq('viewer_user_id', authUserId)
             .eq('viewed_user_id', viewedUserId)
             .gt('created_at', oneHourAgo)
             .maybeSingle()
@@ -140,7 +135,7 @@ export async function POST(request: Request) {
 
         const { error } = await supabaseAdmin
             .from('profile_views')
-            .insert({ viewer_user_id: viewerId, viewed_user_id: viewedUserId })
+            .insert({ viewer_user_id: authUserId, viewed_user_id: viewedUserId })
 
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 500 })
@@ -148,6 +143,9 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true })
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        if (error instanceof SyntaxError) {
+            return NextResponse.json({ error: error.message }, { status: 400 })
+        }
+        return authErrorResponse(error)
     }
 }

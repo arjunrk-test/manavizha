@@ -178,6 +178,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     preferredReligion: "",
     preferredCaste: "",
     preferredSubcaste: "",
+    casteCompulsory: false,
     preferredStar: "",
     preferredRaasi: "",
     preferredDosham: "",
@@ -297,6 +298,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             preferredReligion: data.preferred_religion || "",
             preferredCaste: data.preferred_caste || "",
             preferredSubcaste: data.preferred_subcaste || "",
+            casteCompulsory: !!data.caste_compulsory,
             preferredStar: data.preferred_star || "",
             preferredRaasi: data.preferred_raasi || "",
             preferredDosham: data.preferred_dosham || "Any",
@@ -982,7 +984,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       interests: ["hobbies", "interests"],
       social: ["smoking", "drinking", "parties", "pubs"],
       photos: ["userPhotos", "familyPhoto", "aadharFront", "aadharBack"],
-      preferences: ["preferredAgeMin", "preferredAgeMax", "preferredHeightMin", "preferredHeightMax", "preferredMaritalStatus", "preferredMotherTongue", "preferredPhysicalStatus", "preferredEatingHabits", "preferredSmokingHabits", "preferredDrinkingHabits", "preferredReligion", "preferredCaste", "preferredSubcaste", "preferredStar", "preferredRaasi", "preferredDosham", "preferredEducation", "preferredEmployedIn", "preferredOccupation", "preferredAnnualIncomeMin", "preferredCountry", "preferredState", "preferredCity", "preferredLanguages"],
+      preferences: ["preferredAgeMin", "preferredAgeMax", "preferredHeightMin", "preferredHeightMax", "preferredMaritalStatus", "preferredMotherTongue", "preferredPhysicalStatus", "preferredEatingHabits", "preferredSmokingHabits", "preferredDrinkingHabits", "preferredReligion", "preferredCaste", "preferredSubcaste", "casteCompulsory", "preferredStar", "preferredRaasi", "preferredDosham", "preferredEducation", "preferredEmployedIn", "preferredOccupation", "preferredAnnualIncomeMin", "preferredCountry", "preferredState", "preferredCity", "preferredLanguages"],
       referral: ["referralPartnerId"],
     }
 
@@ -2231,7 +2233,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             })
           error = retry.error
           if (!error) {
-            toast.warning("Personal details saved. Religion requires a database update — ask your admin to run migrations/personal_details_religion_migration.sql.")
+            toast.warning("Personal details saved. Religion requires a database update — ask your admin to apply the religion column migration in Supabase.")
           }
         }
 
@@ -3455,6 +3457,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           preferred_religion: formData.preferredReligion || null,
           preferred_caste: formData.preferredCaste || null,
           preferred_subcaste: formData.preferredSubcaste || null,
+          caste_compulsory: formData.casteCompulsory,
           preferred_star: formData.preferredStar || null,
           preferred_raasi: formData.preferredRaasi || null,
           preferred_dosham: formData.preferredDosham || "Any",

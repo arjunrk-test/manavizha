@@ -18,6 +18,7 @@ import {
   MessageCircle,
   Plus,
   Star,
+  Upload,
   User,
   Users,
   type LucideIcon,
@@ -25,6 +26,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
 import { MasterDataManager } from "@/components/master-data-manager"
+import { MasterDataImportDialog } from "@/components/master-data-import-dialog"
 import { masterDataConfig } from "@/constants/master-data"
 
 type MasterDataItem = { id: string; title: string }
@@ -201,7 +203,8 @@ export default function AdminMasterDataPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [currentStep, setCurrentStep] = useState<string | null>(null)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [refreshKey] = useState(0)
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const activeCategory = useMemo(
     () => MASTER_DATA_CATEGORIES.find((category) => category.id === selectedCategoryId) ?? null,
@@ -246,17 +249,20 @@ export default function AdminMasterDataPage() {
     setSelectedCategoryId(categoryId)
     setCurrentStep(category.items[0].id)
     setIsAddDialogOpen(false)
+    setIsImportDialogOpen(false)
   }
 
   const handleBackToCategories = () => {
     setSelectedCategoryId(null)
     setCurrentStep(null)
     setIsAddDialogOpen(false)
+    setIsImportDialogOpen(false)
   }
 
   const handleItemSelect = (itemId: string) => {
     setCurrentStep(itemId)
     setIsAddDialogOpen(false)
+    setIsImportDialogOpen(false)
   }
 
   if (isLoading) {
@@ -400,14 +406,27 @@ export default function AdminMasterDataPage() {
                           </p>
                         </div>
                         {stepConfig && (
-                          <Button
-                            onClick={() => setIsAddDialogOpen(true)}
-                            size="sm"
-                            className="rounded-lg bg-[#c9a227] text-white hover:bg-[#b8921f] shadow-sm"
-                          >
-                            <Plus className="mr-1.5 h-4 w-4" />
-                            {stepConfig.addButtonText}
-                          </Button>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {stepConfig.importEnabled && (
+                              <Button
+                                onClick={() => setIsImportDialogOpen(true)}
+                                size="sm"
+                                variant="outline"
+                                className="rounded-lg border-[#f0ebe3] bg-white text-[#1F4068] hover:bg-[#faf8f4] shadow-sm"
+                              >
+                                <Upload className="mr-1.5 h-4 w-4" />
+                                Import
+                              </Button>
+                            )}
+                            <Button
+                              onClick={() => setIsAddDialogOpen(true)}
+                              size="sm"
+                              className="rounded-lg bg-[#c9a227] text-white hover:bg-[#b8921f] shadow-sm"
+                            >
+                              <Plus className="mr-1.5 h-4 w-4" />
+                              {stepConfig.addButtonText}
+                            </Button>
+                          </div>
                         )}
                       </div>
                     )}
@@ -458,6 +477,17 @@ export default function AdminMasterDataPage() {
           </ThemedPanel>
         </div>
       </main>
+
+      {stepConfig?.importEnabled && (
+        <MasterDataImportDialog
+          open={isImportDialogOpen}
+          onOpenChange={setIsImportDialogOpen}
+          tableName={stepConfig.tableName}
+          title={stepConfig.title}
+          importProfile={stepConfig.importProfile}
+          onImported={() => setRefreshKey((key) => key + 1)}
+        />
+      )}
     </div>
   )
 }

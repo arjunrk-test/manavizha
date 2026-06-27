@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
+import { authFetch } from "@/lib/api-client"
 import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { finishAuthRedirect, getUserDashboard } from "@/lib/auth"
@@ -54,18 +55,15 @@ export default function DashboardLayout({
 
         // Check if account was deactivated — auto-reactivate on login and notify
         try {
-          const settingsRes = await fetch(`/api/settings?userId=${authUser.id}`)
+          const settingsRes = await authFetch(`/api/settings?userId=${authUser.id}`)
           if (settingsRes.ok) {
             const settingsData = await settingsRes.json()
             if (settingsData.is_deactivated) {
               // Reactivate automatically on login
-              await fetch('/api/settings', {
+              await authFetch('/api/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  userId: authUser.id,
-                  updates: { is_deactivated: false, deactivated_until: null }
-                })
+                body: JSON.stringify({ updates: { is_deactivated: false, deactivated_until: null } })
               })
               // Short delay so the toast is visible after page load
               setTimeout(() => {
@@ -122,8 +120,8 @@ export default function DashboardLayout({
       setIsNotificationsLoading(true)
       try {
         const [vRes, lRes] = await Promise.all([
-          fetch(`/api/views?userId=${user.id}`).catch(() => ({ ok: false, json: async () => ({}) } as any)),
-          fetch(`/api/likes?userId=${user.id}`).catch(() => ({ ok: false, json: async () => ({}) } as any))
+          authFetch(`/api/views?userId=${user.id}`).catch(() => ({ ok: false, json: async () => ({}) } as any)),
+          authFetch(`/api/likes?userId=${user.id}`).catch(() => ({ ok: false, json: async () => ({}) } as any))
         ])
 
         if (vRes.ok && lRes.ok) {
@@ -132,11 +130,11 @@ export default function DashboardLayout({
           
           const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
           const recentViews = (viewsData.viewedMe || []).filter((v: any) => !v.is_read && new Date(v.created_at) > thirtyDaysAgo)
-          const recentLikes = (likesData.received || []).filter((l: any) => !l.is_read && new Date(l.created_at) > thirtyDaysAgo)
+          const recentLikes = (likesData.likedMe || []).filter((l: any) => !l.is_read && new Date(l.created_at) > thirtyDaysAgo)
 
           // Collect unique user IDs to fetch profiles for
           const viewerUserIds = recentViews.map((v: any) => v.viewer_user_id)
-          const likerUserIds = recentLikes.map((l: any) => l.user_id)
+          const likerUserIds = recentLikes.map((l: any) => l.id)
           const uniqueUserIds = [...new Set([...viewerUserIds, ...likerUserIds])]
 
           if (uniqueUserIds.length > 0) {
@@ -153,7 +151,7 @@ export default function DashboardLayout({
               }).filter(Boolean))
 
               setWhoExpressedInterest(recentLikes.map((rl: any) => {
-                const p = profiles.find((c: any) => c.user_id === rl.user_id)
+                const p = profiles.find((c: any) => c.user_id === rl.id)
                 return p ? { ...p, interaction_at: rl.created_at, interaction_type: 'interest' } : null
               }).filter(Boolean))
             }
@@ -207,15 +205,23 @@ export default function DashboardLayout({
     }
 
     try {
-      await fetch(`/api/${type === 'view' ? 'views' : 'likes'}`, {
+      const res = await authFetch(`/api/${type === 'view' ? 'views' : 'likes'}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, targetUserId, isRead: true })
+        body: JSON.stringify(
+          type === 'view'
+            ? { viewerId: targetUserId, viewedUserId: user.id }
+            : { userId: targetUserId, likedUserId: user.id, is_read: true }
+        )
       })
-      router.push(`/dashboard/browse?userId=${targetUserId}`)
+      if (!res.ok) {
+        throw new Error(`Failed to mark notification as read (${res.status})`)
+      }
     } catch (err) {
       console.error("Error marking notification as read:", err)
     }
+
+    router.push(`/dashboard/profile/${targetUserId}`)
   }
 
   const handleLogout = async () => {

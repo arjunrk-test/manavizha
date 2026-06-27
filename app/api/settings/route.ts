@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import https from 'https'
 import fetch from 'node-fetch'
+import { authErrorResponse, requireAuthenticatedUser } from '@/lib/server/api-auth'
+import { sanitizeUserSettingsUpdates } from '@/lib/server/user-settings-validation'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -39,14 +41,10 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
 
 export async function GET(request: Request) {
     try {
-        const { searchParams } = new URL(request.url)
-        const userId = searchParams.get('userId')
-
-        if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })
+        const { userId } = await requireAuthenticatedUser(request)
 
         const { data, error } = await supabaseAdmin.from('user_settings').select('*').eq('user_id', userId).maybeSingle()
         if (error) {
-            // Table doesn't exist yet, return defaults
             if (error.code === 'PGRST116' || error.code === '42P01') {
                 return NextResponse.json({})
             }
@@ -54,26 +52,33 @@ export async function GET(request: Request) {
         }
 
         return NextResponse.json(data || {})
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 })
+    } catch (error) {
+        return authErrorResponse(error)
     }
 }
 
 export async function POST(request: Request) {
     try {
-        const { userId, updates } = await request.json()
-        if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })
+        const { userId } = await requireAuthenticatedUser(request)
+        const { updates } = await request.json()
+        const parsed = sanitizeUserSettingsUpdates(updates)
+        if (!parsed.ok) {
+            return NextResponse.json({ error: parsed.error }, { status: 400 })
+        }
 
         const { error } = await supabaseAdmin.from('user_settings').upsert({
             user_id: userId,
-            ...updates,
+            ...parsed.data,
             updated_at: new Date().toISOString()
         }, { onConflict: 'user_id' })
 
         if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
         return NextResponse.json({ success: true })
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 })
+    } catch (error: any) {
+        if (error instanceof SyntaxError) {
+            return NextResponse.json({ error: error.message }, { status: 400 })
+        }
+        return authErrorResponse(error)
     }
 }

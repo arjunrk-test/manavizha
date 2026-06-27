@@ -154,6 +154,7 @@ export interface FormData {
   preferredReligion: string
   preferredCaste: string
   preferredSubcaste: string
+  casteCompulsory: boolean
   preferredStar: string
   preferredRaasi: string
   preferredDosham: string

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { supabase } from "@/lib/supabase"
+import { authFetch } from "@/lib/api-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -81,7 +82,7 @@ export function ManageParents({ userId }: ManageParentsProps) {
     setIsCreating(true)
 
     try {
-      const response = await fetch("/api/parents", {
+      const response = await authFetch("/api/parents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -90,7 +91,6 @@ export function ManageParents({ userId }: ManageParentsProps) {
           email,
           phone,
           password,
-          child_user_id: userId,
         }),
       })
 

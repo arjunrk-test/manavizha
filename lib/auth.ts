@@ -90,3 +90,11 @@ export async function canAccessAdminEmail(userId: string): Promise<boolean> {
   const role = await getAdminRole(userId)
   return role === "super_admin" || role === "admin"
 }
+
+/** Returns the current Supabase access token for authenticated server action calls. */
+export async function getAccessToken(): Promise<string | null> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  return session?.access_token ?? null
+}

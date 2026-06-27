@@ -1,7 +1,12 @@
 "use client"
 
 import { DashboardJourneyPatterns } from "@/components/dashboard/dashboard-journey-patterns"
-import { supabase } from "@/lib/supabase"
+import {
+  loadReferralPartnerProfile,
+  updateReferralPartnerProfileSection,
+  updateReferralPartnerProfileUser,
+} from "@/app/actions/referral-partner-profiles"
+import { getAccessToken } from "@/lib/auth"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { ArrowLeft, Check, Lock, Pencil, X } from "lucide-react"
@@ -187,6 +192,7 @@ export function ReferralPartnerProfileDetailPanel({ userId }: { userId: string }
   const router = useRouter()
 
   const [isLoading, setIsLoading] = useState(true)
+  const [accessDenied, setAccessDenied] = useState(false)
   const [canEdit, setCanEdit] = useState(false)
   const [raw, setRaw] = useState<any>({})
 
@@ -219,106 +225,28 @@ export function ReferralPartnerProfileDetailPanel({ userId }: { userId: string }
 
   useEffect(() => {
     const load = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) {
+      const accessToken = await getAccessToken()
+      if (!accessToken) {
         router.push("/referral-partner")
         return
       }
 
-      const { data: partnerData, error: partnerError } = await supabase
-        .from("referral_partners")
-        .select("partner_id, can_edit_profile")
-        .eq("user_id", user.id)
-        .single()
-
-      if (partnerError || !partnerData) {
-        await supabase.auth.signOut()
-        router.push("/referral-partner")
+      const result = await loadReferralPartnerProfile(accessToken, userId)
+      if (!result.success) {
+        setAccessDenied(true)
+        setIsLoading(false)
         return
       }
 
-      setCanEdit(!!partnerData.can_edit_profile)
-
-      const [
-        { data: p },
-        { data: c },
-        { data: edu },
-        { data: fam },
-        { data: horo },
-        { data: int },
-        { data: soc },
-        { data: photos },
-        { data: ref },
-        { data: emp },
-        { data: bus },
-        { data: stu },
-        { data: ur },
-      ] = await Promise.all([
-        supabase.from("personal_details").select("*").eq("user_id", userId).single(),
-        supabase.from("contact_details").select("*").eq("user_id", userId).single(),
-        supabase.from("education_details").select("*").eq("user_id", userId),
-        supabase.from("family_details").select("*").eq("user_id", userId).single(),
-        supabase.from("horoscope_details").select("*").eq("user_id", userId).single(),
-        supabase.from("interests").select("*").eq("user_id", userId).single(),
-        supabase.from("social_habits").select("*").eq("user_id", userId).single(),
-        supabase.from("photos").select("*").eq("user_id", userId).maybeSingle(),
-        supabase.from("referral_details").select("*, referral_partners(name)").eq("user_id", userId).single(),
-        supabase.from("profession_employee").select("*").eq("user_id", userId).single(),
-        supabase.from("profession_business").select("*").eq("user_id", userId).single(),
-        supabase.from("profession_student").select("*").eq("user_id", userId).single(),
-        supabase.from("users").select("email, name, phone").eq("id", userId).single(),
-      ])
-
-      let processedPhotos: any = null
-      if (photos) {
-        const getPhotoUrl = async (url: string | null, bucket: string): Promise<string> => {
-          if (!url) return ""
-          if (url.startsWith("http")) return url
-          try {
-            const filePath = url.includes("/") ? url : `${userId}/${url}`
-            const { data: urlData } = await supabase.storage
-              .from(bucket)
-              .createSignedUrl(filePath, 31536000)
-            return urlData?.signedUrl || url
-          } catch {
-            return url
-          }
-        }
-
-        const userPhotos = photos.user_photos || []
-        const userPhotoUrls = await Promise.all(
-          userPhotos.map(async (photo: string, index: number) => {
-            if (photo.startsWith("http")) return photo
-            try {
-              const filePath = photo.includes("/") ? photo : `${userId}/photo_${index + 1}.jpg`
-              const { data: urlData } = await supabase.storage
-                .from("user-photos")
-                .createSignedUrl(filePath, 31536000)
-              return urlData?.signedUrl || photo
-            } catch {
-              return photo
-            }
-          })
-        )
-
-        processedPhotos = {
-          userPhotos: userPhotoUrls,
-          familyPhoto: await getPhotoUrl(photos.family_photo, "family-photos"),
-          aadharFront: await getPhotoUrl(photos.aadhar_front, "aadhar-photos"),
-          aadharBack: await getPhotoUrl(photos.aadhar_back, "aadhar-photos"),
-        }
-      }
-
-      setRaw({ edu, photos: processedPhotos, ref, emp, bus, stu })
-      setPersonal(p || {})
-      setContact(c || {})
-      setFamily(fam || {})
-      setHoroscope(horo || {})
-      setInterests(int || {})
-      setSocial(soc || {})
-      setUserRow(ur || {})
+      setCanEdit(result.canEdit)
+      setRaw(result.raw)
+      setPersonal(result.personal)
+      setContact(result.contact)
+      setFamily(result.family)
+      setHoroscope(result.horoscope)
+      setInterests(result.interests)
+      setSocial(result.social)
+      setUserRow(result.userRow)
       setIsLoading(false)
     }
 
@@ -330,31 +258,45 @@ export function ReferralPartnerProfileDetailPanel({ userId }: { userId: string }
 
   const saveSection = async (section: string, table: string, data: any) => {
     setSaving((p) => ({ ...p, [section]: true }))
-    const { id, user_id, created_at, updated_at, ...rest } = data
-    const fields = Object.fromEntries(
-      Object.entries(rest).filter(([, v]) => v !== null && v !== undefined && v !== "")
-    )
-    const { error } = await supabase.from(table).update(fields).eq("user_id", userId)
-    setSaving((p) => ({ ...p, [section]: false }))
-    if (error) toast.error(`Failed: ${error.message}`)
-    else {
-      toast.success(`${section} saved`)
-      cancelEdit(section)
+    const accessToken = await getAccessToken()
+    if (!accessToken) {
+      setSaving((p) => ({ ...p, [section]: false }))
+      toast.error("Session expired. Please sign in again.")
+      return
     }
+
+    const result = await updateReferralPartnerProfileSection(accessToken, userId, table, data)
+    setSaving((p) => ({ ...p, [section]: false }))
+    if (!result.success) {
+      toast.error(`Failed: ${result.error}`)
+      return
+    }
+
+    toast.success(`${section} saved`)
+    cancelEdit(section)
   }
 
   const saveUser = async () => {
     setSaving((p) => ({ ...p, account: true }))
-    const { error } = await supabase
-      .from("users")
-      .update({ name: userRow.name, phone: userRow.phone })
-      .eq("id", userId)
-    setSaving((p) => ({ ...p, account: false }))
-    if (error) toast.error(`Failed: ${error.message}`)
-    else {
-      toast.success("Account saved")
-      cancelEdit("account")
+    const accessToken = await getAccessToken()
+    if (!accessToken) {
+      setSaving((p) => ({ ...p, account: false }))
+      toast.error("Session expired. Please sign in again.")
+      return
     }
+
+    const result = await updateReferralPartnerProfileUser(accessToken, userId, {
+      name: userRow.name,
+      phone: userRow.phone,
+    })
+    setSaving((p) => ({ ...p, account: false }))
+    if (!result.success) {
+      toast.error(`Failed: ${result.error}`)
+      return
+    }
+
+    toast.success("Account saved")
+    cancelEdit("account")
   }
 
   const ed = (s: string) => !!editing[s]
@@ -368,6 +310,27 @@ export function ReferralPartnerProfileDetailPanel({ userId }: { userId: string }
         <div className="flex flex-col items-center justify-center gap-3 px-4 py-20">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#f0ebe3] border-t-[#1F4068]" />
           <p className="text-[12px] text-gray-500">Loading profile…</p>
+        </div>
+      </ThemedPanel>
+    )
+  }
+
+  if (accessDenied) {
+    return (
+      <ThemedPanel>
+        <div className="flex flex-col items-center justify-center gap-4 px-4 py-20 text-center">
+          <p className="text-sm font-medium text-[#1F4068]">You do not have access to this profile.</p>
+          <p className="text-[12px] text-gray-500">
+            Referral partners can only view profiles linked to their own referral code.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push("/referral-partner/profiles")}
+            className="rounded-lg border-[#f0ebe3] bg-white text-[#1F4068] hover:bg-[#faf8f4]"
+          >
+            Back to profiles
+          </Button>
         </div>
       </ThemedPanel>
     )

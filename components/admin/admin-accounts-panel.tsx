@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react"
 import { toast } from "sonner"
+import { getAccessToken } from "@/lib/auth"
 import {
   createAdminAccount,
   updateAdminRole,
@@ -420,26 +421,32 @@ export function AdminAccountsPanel() {
   const handleAdminSubmit = async () => {
     setIsSubmittingAdmin(true)
     try {
+      const accessToken = await getAccessToken()
+      if (!accessToken) {
+        toast.error("Not authenticated")
+        return
+      }
+
       if (adminDialogMode === "add") {
         if (!adminFormData.name || !adminFormData.email || !adminFormData.password) {
           toast.error("Name, email, and password are required")
           return
         }
-        const res = await createAdminAccount(adminFormData)
+        const res = await createAdminAccount(accessToken, adminFormData)
         if (!res.success) throw new Error(res.error)
         toast.success("Admin account created successfully")
       } else if (adminDialogMode === "edit" && selectedAdmin) {
         const canModify = await assertCanModifyAdmin(selectedAdmin)
         if (!canModify) return
 
-        const res = await updateAdminRole(selectedAdmin.user_id, adminFormData.role)
+        const res = await updateAdminRole(accessToken, selectedAdmin.user_id, adminFormData.role)
         if (!res.success) throw new Error(res.error)
         toast.success("Admin role updated successfully")
       } else if (adminDialogMode === "revoke" && selectedAdmin) {
         const canModify = await assertCanModifyAdmin(selectedAdmin)
         if (!canModify) return
 
-        const res = await revokeAdminAccess(selectedAdmin.user_id)
+        const res = await revokeAdminAccess(accessToken, selectedAdmin.user_id)
         if (!res.success) throw new Error(res.error)
         toast.success("Admin access revoked successfully")
       }
@@ -460,7 +467,12 @@ export function AdminAccountsPanel() {
         toast.error("Name, email, and password are required")
         return
       }
-      const res = await createReferralPartnerAccount(partnerFormData)
+      const accessToken = await getAccessToken()
+      if (!accessToken) {
+        toast.error("Not authenticated")
+        return
+      }
+      const res = await createReferralPartnerAccount(accessToken, partnerFormData)
       if (!res.success) throw new Error(res.error)
       toast.success("Referral partner account created successfully")
       setIsPartnerDialogOpen(false)

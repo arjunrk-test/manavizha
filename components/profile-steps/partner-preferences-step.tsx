@@ -10,6 +10,7 @@ import {
   SetupSectionHeader,
 } from "@/components/profile-steps/setup-section-header"
 import { Briefcase, Check, ChevronDown, ChevronUp, Moon, Search, SlidersHorizontal } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
 import { INDIAN_LANGUAGES, EMPLOYMENT_TYPES, OCCUPATIONS, EDUCATION_LEVELS } from "@/lib/profile-data"
 import { useMasterData } from "@/hooks/use-master-data"
 
@@ -245,11 +246,27 @@ export function PartnerPreferencesStep({ formData, onChange }: PartnerPreference
           <PrefSelect label="Religion" value={formData.preferredReligion} options={religionOptions} onChange={(v) => onChange("preferredReligion", v)} />
           <PrefSelect label="Caste" value={formData.preferredCaste} options={casteOptions} onChange={(v) => {
             onChange("preferredCaste", v)
-            onChange("preferredSubcaste", "Any") // Reset subcaste when caste changes
+            onChange("preferredSubcaste", "Any")
+            if (v === "Any") onChange("casteCompulsory", false)
           }} />
           <PrefSelect label="Subcaste" value={formData.preferredSubcaste} options={filteredSubcastes} 
             disabled={!formData.preferredCaste || formData.preferredCaste === "Any"}
             onChange={(v) => onChange("preferredSubcaste", v)} />
+
+          <div className="md:col-span-2 flex items-center justify-between gap-4 rounded-xl border border-[#f0ebe3] bg-white/70 px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-[#1F4068]">Caste is compulsory for matches</p>
+              <p className="mt-0.5 text-xs text-gray-500">
+                When enabled, only profiles matching your caste and subcaste preferences are shown.
+              </p>
+            </div>
+            <Switch
+              checked={formData.casteCompulsory}
+              onCheckedChange={(checked) => onChange("casteCompulsory", checked)}
+              disabled={!formData.preferredCaste || formData.preferredCaste === "Any"}
+            />
+          </div>
+
           <PrefSelect label="Star (Nakshatra)" value={formData.preferredStar} options={STARS} onChange={(v) => onChange("preferredStar", v)} />
           <PrefSelect label="Raasi / Zodiac Sign" value={formData.preferredRaasi} options={RAASI} onChange={(v) => onChange("preferredRaasi", v)} />
           <PrefSelect label="Dhosham" value={formData.preferredDosham} options={["Any", "No", "Yes", "Doesn't Matter"]} onChange={(v) => onChange("preferredDosham", v)} />
