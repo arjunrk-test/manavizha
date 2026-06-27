@@ -5,6 +5,7 @@ export const masterDataConfig: Record<string, {
   dialogTitle: string
   dialogDescription: string
   inputPlaceholder?: string
+  importEnabled?: boolean
 }> = {
   "gender": {
     tableName: "master_gender",
@@ -53,6 +54,7 @@ export const masterDataConfig: Record<string, {
     dialogTitle: "Add Indian Language",
     dialogDescription: "Enter a new Indian language value to add to the list.",
     inputPlaceholder: "e.g., Hindi, Tamil, Telugu",
+    importEnabled: true,
   },
   "international-languages": {
     tableName: "master_international_languages",

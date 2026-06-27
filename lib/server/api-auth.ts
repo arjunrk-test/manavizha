@@ -40,6 +40,21 @@ export async function requireAuthenticatedUser(request: Request): Promise<Authen
   return { userId: user.id, accessToken }
 }
 
+export async function requireSuperAdmin(request: Request): Promise<AuthenticatedUser> {
+  const auth = await requireAuthenticatedUser(request)
+  const { data: row, error } = await supabaseAdmin
+    .from("admins")
+    .select("role")
+    .eq("user_id", auth.userId)
+    .maybeSingle()
+
+  if (error || row?.role !== "super_admin") {
+    throw new ApiAuthError(403, "Forbidden")
+  }
+
+  return auth
+}
+
 export function authErrorResponse(error: unknown): NextResponse {
   if (error instanceof ApiAuthError) {
     return NextResponse.json({ error: error.message }, { status: error.status })
