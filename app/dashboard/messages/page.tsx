@@ -8,9 +8,6 @@ import {
   Send,
   MessageSquare,
   ArrowLeft,
-  MoreVertical,
-  Phone,
-  Video,
   Search,
   CheckCheck,
   Crown,
@@ -452,29 +449,6 @@ export default function MessagesPage() {
                       {formatActivityTime(activeConversation.last_active_at) || "Offline"}
                     </p>
                   </div>
-                </div>
-                <div className="flex items-center gap-0.5 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-[#9ca3af] hover:text-[#1F4068] hover:bg-[#faf8f4] rounded-xl"
-                  >
-                    <Phone className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-[#9ca3af] hover:text-[#1F4068] hover:bg-[#faf8f4] rounded-xl"
-                  >
-                    <Video className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-[#9ca3af] hover:text-[#1F4068] hover:bg-[#faf8f4] rounded-xl"
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
 
