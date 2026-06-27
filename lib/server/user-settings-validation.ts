@@ -136,12 +136,24 @@ export function sanitizeUserSettingsUpdates(
         }
         sanitized.is_deactivated = value
         break
-      case "deactivated_until":
-        if (value !== null && (typeof value !== "string" || Number.isNaN(Date.parse(value)))) {
+      case "deactivated_until": {
+        if (value === null) {
+          sanitized.deactivated_until = null
+          break
+        }
+        if (typeof value !== "string" || Number.isNaN(Date.parse(value))) {
           return { ok: false, error: "Invalid deactivated_until" }
+        }
+        const until = new Date(value)
+        const now = Date.now()
+        const diffDays = (until.getTime() - now) / (1000 * 60 * 60 * 24)
+        // Allow 1–365 days for temporary deactivation, or ~3650 days for married status
+        if (diffDays < 0.9 || (diffDays > 366 && diffDays < 3640)) {
+          return { ok: false, error: "deactivated_until must be 1–365 days from now" }
         }
         sanitized.deactivated_until = value
         break
+      }
     }
   }
 
