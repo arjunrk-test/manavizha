@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { DashboardJourneyPatterns } from "@/components/dashboard/dashboard-journey-patterns"
 
-function DailyRecommendationsContent({ urlId }: { urlId?: string }) {
+function DailyRecommendationsContent({ urlIdx }: { urlIdx?: number }) {
   const [userId, setUserId] = useState<string | null>(null)
   const [recommendations, setRecommendations] = useState<any[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -28,8 +28,8 @@ function DailyRecommendationsContent({ urlId }: { urlId?: string }) {
         const recs = await fetchDailyRecommendations(data.session.user.id)
         setRecommendations(recs)
 
-        if (urlId) {
-          setSelectedId(urlId)
+        if (urlIdx !== undefined && recs[urlIdx]) {
+          setSelectedId(recs[urlIdx].user_id)
         } else if (recs.length > 0) {
           setSelectedId(recs[0].user_id)
         }
@@ -37,14 +37,15 @@ function DailyRecommendationsContent({ urlId }: { urlId?: string }) {
       setIsLoading(false)
     }
     getSession()
-  }, [urlId])
+  }, [urlIdx])
 
   const selectProfile = (profileId: string) => {
     setSelectedId(profileId)
     setMobileShowList(false)
     const sequenceIds = recommendations.map((r) => r.user_id)
     sessionStorage.setItem("manavizha_browse_sequence", JSON.stringify(sequenceIds))
-    router.replace(`/dashboard/daily-recommendations?id=${profileId}`, { scroll: false })
+    const idx = recommendations.findIndex((r) => r.user_id === profileId)
+    router.replace(`/dashboard/daily-recommendations?idx=${idx}`, { scroll: false })
   }
 
   const avatarFallback = (name: string) =>
@@ -237,13 +238,13 @@ function DailyRecommendationsContent({ urlId }: { urlId?: string }) {
 export default function DailyRecommendationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ id?: string }>
+  searchParams: Promise<{ idx?: string; id?: string }>
 }) {
-  const { id: urlId } = use(searchParams)
+  const { idx: urlIdx } = use(searchParams)
 
   return (
     <Suspense fallback={<DashboardLoadingScreen />}>
-      <DailyRecommendationsContent urlId={urlId} />
+      <DailyRecommendationsContent urlIdx={urlIdx ? parseInt(urlIdx, 10) : undefined} />
     </Suspense>
   )
 }
