@@ -80,7 +80,7 @@ const plans = [
 export default function PricingPage() {
   const handleUpgradeClick = () => {
     // Scroll to contact or modal trigger
-    const phoneNumber = "919876543210" // Replace with actual admin number
+    const phoneNumber = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP ?? "919876543210"
     const message = "Hi, I am interested in upgrading my Manavizha account to a Premium Plan. Please guide me."
     window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, "_blank")
   }
