@@ -12,6 +12,7 @@ interface LegalPageShellProps {
   title: string
   eyebrow?: string
   lastUpdated?: string
+  relatedLink?: { href: string; label: string }
   children: ReactNode
 }
 
@@ -19,6 +20,7 @@ export function LegalPageShell({
   title,
   eyebrow = "Legal",
   lastUpdated,
+  relatedLink = { href: "/terms-of-service", label: "Terms of Service" },
   children,
 }: LegalPageShellProps) {
   const updatedLabel =
@@ -77,10 +79,10 @@ export function LegalPageShell({
             </Link>
             {" · "}
             <Link
-              href="/terms-of-service"
+              href={relatedLink.href}
               className="font-medium text-[#1F4068] hover:text-[#3bb9ac] transition-colors"
             >
-              Terms of Service
+              {relatedLink.label}
             </Link>
           </p>
         </div>

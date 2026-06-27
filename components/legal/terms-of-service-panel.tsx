@@ -1,10 +1,14 @@
 "use client"
 
+import { LegalDocumentLayout } from "@/components/legal/legal-document-layout"
+
 type TermsBlock =
   | { type: "p"; text: string }
   | { type: "ul"; items: string[] }
+  | { type: "contact"; email: string; phones: string[] }
 
 type TermsSection = {
+  id: string
   number: number
   title: string
   blocks: TermsBlock[]
@@ -12,6 +16,7 @@ type TermsSection = {
 
 const TERMS_SECTIONS: TermsSection[] = [
   {
+    id: "acceptance",
     number: 1,
     title: "Acceptance of Terms",
     blocks: [
@@ -22,6 +27,7 @@ const TERMS_SECTIONS: TermsSection[] = [
     ],
   },
   {
+    id: "eligibility",
     number: 2,
     title: "Eligibility",
     blocks: [
@@ -39,6 +45,7 @@ const TERMS_SECTIONS: TermsSection[] = [
     ],
   },
   {
+    id: "user-accounts",
     number: 3,
     title: "User Accounts",
     blocks: [
@@ -58,6 +65,7 @@ const TERMS_SECTIONS: TermsSection[] = [
     ],
   },
   {
+    id: "user-conduct",
     number: 4,
     title: "User Conduct",
     blocks: [
@@ -78,8 +86,9 @@ const TERMS_SECTIONS: TermsSection[] = [
     ],
   },
   {
+    id: "intellectual-property",
     number: 5,
-    title: "Content and Intellectual Property",
+    title: "Intellectual Property",
     blocks: [
       {
         type: "p",
@@ -96,6 +105,7 @@ const TERMS_SECTIONS: TermsSection[] = [
     ],
   },
   {
+    id: "user-content",
     number: 6,
     title: "User-Generated Content",
     blocks: [
@@ -106,6 +116,7 @@ const TERMS_SECTIONS: TermsSection[] = [
     ],
   },
   {
+    id: "prohibited",
     number: 7,
     title: "Prohibited Activities",
     blocks: [
@@ -124,6 +135,7 @@ const TERMS_SECTIONS: TermsSection[] = [
     ],
   },
   {
+    id: "termination",
     number: 8,
     title: "Termination",
     blocks: [
@@ -134,6 +146,7 @@ const TERMS_SECTIONS: TermsSection[] = [
     ],
   },
   {
+    id: "disclaimers",
     number: 9,
     title: "Disclaimers",
     blocks: [
@@ -153,6 +166,7 @@ const TERMS_SECTIONS: TermsSection[] = [
     ],
   },
   {
+    id: "liability",
     number: 10,
     title: "Limitation of Liability",
     blocks: [
@@ -163,6 +177,7 @@ const TERMS_SECTIONS: TermsSection[] = [
     ],
   },
   {
+    id: "indemnification",
     number: 11,
     title: "Indemnification",
     blocks: [
@@ -173,6 +188,7 @@ const TERMS_SECTIONS: TermsSection[] = [
     ],
   },
   {
+    id: "changes",
     number: 12,
     title: "Changes to Terms",
     blocks: [
@@ -183,6 +199,7 @@ const TERMS_SECTIONS: TermsSection[] = [
     ],
   },
   {
+    id: "governing-law",
     number: 13,
     title: "Governing Law",
     blocks: [
@@ -193,41 +210,88 @@ const TERMS_SECTIONS: TermsSection[] = [
     ],
   },
   {
+    id: "contact",
     number: 14,
-    title: "Contact Information",
+    title: "Contact Us",
     blocks: [
       {
         type: "p",
-        text: "If you have any questions about these Terms of Service, please contact us at contact@manavizha.com or call +91 8925554449 / +91 8925554440.",
+        text: "If you have any questions about these Terms of Service, please contact us at:",
+      },
+      {
+        type: "contact",
+        email: "contact@manavizha.com",
+        phones: ["+91 8925554449", "+91 8925554440"],
       },
     ],
   },
 ]
 
-function TermsSectionBlock({ section }: { section: TermsSection }) {
+const TERMS_SUMMARY =
+  "These terms govern your use of Manavizha — eligibility, account responsibilities, acceptable conduct, and the limits of our liability."
+
+function TermsSectionBlock({
+  section,
+  isLast,
+}: {
+  section: TermsSection
+  isLast: boolean
+}) {
   return (
-    <section className="scroll-mt-24">
-      <h2 className="text-base font-semibold text-[#1F4068] mb-2.5">
-        <span className="text-brand-gold mr-1.5">{section.number}.</span>
-        {section.title}
-      </h2>
-      <div className="space-y-2.5">
-        {section.blocks.map((block, index) =>
-          block.type === "p" ? (
-            <p key={index} className="text-[13px] text-gray-600 leading-relaxed">
-              {block.text}
-            </p>
-          ) : (
-            <ul
-              key={index}
-              className="list-disc space-y-1 pl-4 text-[13px] text-gray-600 leading-relaxed marker:text-[#c9a227]/80"
-            >
-              {block.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          )
-        )}
+    <section
+      id={section.id}
+      className="scroll-mt-28"
+      aria-labelledby={`${section.id}-heading`}
+    >
+      <div className={isLast ? "pb-0" : "border-b border-[#f0ebe3]/90 pb-8 mb-8"}>
+        <h2
+          id={`${section.id}-heading`}
+          className="mb-3 text-lg font-semibold leading-snug text-[#1F4068] sm:text-[1.125rem]"
+        >
+          <span className="mr-2 text-brand-gold">{section.number}.</span>
+          {section.title}
+        </h2>
+        <div className="space-y-3">
+          {section.blocks.map((block, index) => {
+            if (block.type === "p") {
+              return (
+                <p key={index} className="text-sm leading-7 text-gray-600 sm:text-[15px]">
+                  {block.text}
+                </p>
+              )
+            }
+
+            if (block.type === "contact") {
+              return (
+                <div
+                  key={index}
+                  className="rounded-xl border border-[#f0ebe3] bg-white/70 px-4 py-3 text-sm text-gray-600"
+                >
+                  <p>
+                    <span className="font-medium text-[#1F4068]">Email:</span>{" "}
+                    <a href={`mailto:${block.email}`} className="text-[#3bb9ac] hover:underline">
+                      {block.email}
+                    </a>
+                  </p>
+                  <p className="mt-1">
+                    <span className="font-medium text-[#1F4068]">Phone:</span> {block.phones.join(", ")}
+                  </p>
+                </div>
+              )
+            }
+
+            return (
+              <ul
+                key={index}
+                className="list-disc space-y-1.5 pl-5 text-sm leading-7 text-gray-600 marker:text-[#c9a227]/80 sm:text-[15px]"
+              >
+                {block.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            )
+          })}
+        </div>
       </div>
     </section>
   )
@@ -235,12 +299,17 @@ function TermsSectionBlock({ section }: { section: TermsSection }) {
 
 export function TermsOfServicePanel() {
   return (
-    <div className="columns-1 lg:columns-2 gap-x-10 [column-fill:balance]">
-      {TERMS_SECTIONS.map((section) => (
-        <div key={section.number} className="break-inside-avoid mb-7">
-          <TermsSectionBlock section={section} />
-        </div>
+    <LegalDocumentLayout
+      sections={TERMS_SECTIONS.map(({ id, number, title }) => ({ id, number, title }))}
+      summary={TERMS_SUMMARY}
+    >
+      {TERMS_SECTIONS.map((section, index) => (
+        <TermsSectionBlock
+          key={section.id}
+          section={section}
+          isLast={index === TERMS_SECTIONS.length - 1}
+        />
       ))}
-    </div>
+    </LegalDocumentLayout>
   )
 }
