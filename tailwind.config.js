@@ -59,6 +59,7 @@ module.exports = {
         ocean: "#1F4068",
         brand: "#3bb9ac",
         brandDark: "#2fa085",
+        "brand-gold": "#c9a227",
         violet: "#3bb9ac",
         pink: "#3bb9ac",
         orange: "#FFA500",
