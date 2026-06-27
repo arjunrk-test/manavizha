@@ -62,35 +62,21 @@ export default function AdminDashboardPage() {
       setIsLoading(false)
     }
 
-    const fetchStats = async () => {
+    const fetchAllStats = async () => {
+      // All queries run in parallel; personal_details is fetched once (shared pdCount)
       const [
         { count: totalCount, error: e1 },
         { count: menCount, error: e2 },
         { count: womenCount, error: e3 },
         { count: pendingCount, error: e4 },
+        pdCount, cdCount, edCount,
+        empCount, busCount, stuCount,
+        fdCount, hdCount, inCount, shCount, phCount,
       ] = await Promise.all([
         supabase.from("personal_details").select("*", { count: "exact", head: true }).not("marital_status", "ilike", "married"),
         supabase.from("personal_details").select("*", { count: "exact", head: true }).ilike("sex", "%male%").not("sex", "ilike", "%female%").not("marital_status", "ilike", "married"),
         supabase.from("personal_details").select("*", { count: "exact", head: true }).ilike("sex", "%female%").not("marital_status", "ilike", "married"),
         supabase.from("photos").select("*", { count: "exact", head: true }).eq("verification_status", "pending"),
-      ])
-      if (e1 || e2 || e3 || e4) throw new Error("Stats fetch failed")
-
-      setStats({
-        total: totalCount || 0,
-        men: menCount || 0,
-        women: womenCount || 0,
-        pendingVerifications: pendingCount || 0,
-      })
-    }
-
-    const fetchStageStats = async () => {
-      // Use count-only queries — no row data fetched to the client
-      const [
-        pdCount, cdCount, edCount,
-        empCount, busCount, stuCount,
-        fdCount, hdCount, inCount, shCount, phCount,
-      ] = await Promise.all([
         supabase.from("personal_details").select("*", { count: "exact", head: true }),
         supabase.from("contact_details").select("*", { count: "exact", head: true }),
         supabase.from("education_details").select("*", { count: "exact", head: true }),
@@ -103,6 +89,14 @@ export default function AdminDashboardPage() {
         supabase.from("social_habits").select("*", { count: "exact", head: true }),
         supabase.from("photos").select("*", { count: "exact", head: true }),
       ])
+      if (e1 || e2 || e3 || e4) throw new Error("Stats fetch failed")
+
+      setStats({
+        total: totalCount || 0,
+        men: menCount || 0,
+        women: womenCount || 0,
+        pendingVerifications: pendingCount || 0,
+      })
 
       const professionCount = (empCount.count || 0) + (busCount.count || 0) + (stuCount.count || 0)
       const counts = [
@@ -110,12 +104,11 @@ export default function AdminDashboardPage() {
         professionCount, fdCount.count || 0, hdCount.count || 0,
         inCount.count || 0, shCount.count || 0, phCount.count || 0,
       ]
-
       setStageStats(prev => prev.map((stage, i) => ({ ...stage, count: counts[i] })))
     }
 
     checkUser()
-    Promise.all([fetchStats(), fetchStageStats()]).catch(() => setStatsError(true))
+    fetchAllStats().catch(() => setStatsError(true))
   }, [router])
 
   if (isLoading) {
