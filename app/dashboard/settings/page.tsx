@@ -114,10 +114,15 @@ export default function SettingsPage() {
 
     const handleDeactivate = async () => {
         if (!userId) return
+        const days = parseInt(deactivateDays, 10)
+        if (!Number.isFinite(days) || days < 1 || days > 365) {
+            toast.error("Invalid deactivation duration")
+            return
+        }
         setIsDeactivating(true)
         try {
             const until = new Date()
-            until.setDate(until.getDate() + parseInt(deactivateDays))
+            until.setDate(until.getDate() + days)
             const updates = { is_deactivated: true, deactivated_until: until.toISOString() }
             const res = await authFetch("/api/settings", {
                 method: "POST",
@@ -195,7 +200,7 @@ export default function SettingsPage() {
             const res = await authFetch("/api/blocks", {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId, targetUserId: targetId })
+                body: JSON.stringify({ targetUserId: targetId })
             })
             if (res.ok) {
                 setBlockedProfiles(prev => prev.filter(p => p.user_id !== targetId))
@@ -211,7 +216,7 @@ export default function SettingsPage() {
             const res = await authFetch("/api/ignores", {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId, targetUserId: targetId })
+                body: JSON.stringify({ targetUserId: targetId })
             })
             if (res.ok) {
                 setIgnoredProfiles(prev => prev.filter(p => p.user_id !== targetId))

@@ -1,6 +1,7 @@
 "use client"
 
 import { BrowseProfiles } from "@/components/browse-profiles"
+import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { use, useEffect, useState } from "react"
@@ -13,26 +14,30 @@ export default function BrowsePage({
   const router = useRouter()
   const { category: initialCategory } = use(searchParams)
   const [userId, setUserId] = useState<string | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (user) setUserId(user.id)
+      if (user) {
+        setUserId(user.id)
+      } else {
+        router.replace("/")
+      }
+      setIsInitialized(true)
     }
     fetchUser()
-  }, [])
+  }, [router])
 
-  if (!userId) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#f0f0f0] border-t-[#e87898]" />
-      </div>
-    )
+  if (!isInitialized) {
+    return <DashboardLoadingScreen />
   }
 
+  if (!userId) return null
+
   return (
-    <BrowseProfiles 
-      userId={userId} 
+    <BrowseProfiles
+      userId={userId}
       initialCategory={initialCategory}
       onBack={() => router.push("/dashboard")}
     />
