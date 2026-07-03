@@ -11,6 +11,7 @@ import {
   MessageSquare,
   ArrowLeft,
   Search,
+  Check,
   CheckCheck,
   Crown,
   Sparkles,
@@ -20,6 +21,7 @@ import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { formatActivityTime, formatMessageTime } from "@/lib/utils/date-utils"
 import { cn } from "@/lib/utils"
+import { getOrCreatePrivateKey, canEncryptFor, encryptMessage, decryptMessage } from "@/lib/e2e"
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { useRouter } from "next/navigation"
 
@@ -30,6 +32,8 @@ interface Message {
   content: string
   created_at: string
   is_read: boolean
+  is_encrypted?: boolean
+  iv?: string | null
 }
 
 interface Conversation {
@@ -53,7 +57,13 @@ export default function MessagesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [otherTyping, setOtherTyping] = useState(false)
+  const [decryptedMap, setDecryptedMap] = useState<Record<string, string>>({})
   const scrollRef = useRef<HTMLDivElement>(null)
+  const typingChannelRef = useRef<any>(null)
+  const typingTimeoutRef = useRef<any>(null)
+  const lastTypingSentRef = useRef<number>(0)
+  const privateKeyRef = useRef<CryptoKey | null>(null)
 
   useEffect(() => {
     const init = async () => {
@@ -63,6 +73,8 @@ export default function MessagesPage() {
       if (user) {
         setUserId(user.id)
         fetchUserStatus(user.id)
+        // Provision this device's E2E keypair (publishes public key on first use)
+        privateKeyRef.current = await getOrCreatePrivateKey(user.id).catch(() => null)
         const convs = await fetchConversations(user.id)
 
         if (convs.length > 0) {
@@ -88,6 +100,9 @@ export default function MessagesPage() {
               msg.receiver_id === activeConversation.other_user_id)
           ) {
             setMessages((prev) => [...prev, msg])
+            if (msg.is_encrypted && msg.iv) {
+              decryptMessages([msg], activeConversation.other_user_id)
+            }
 
             if (msg.receiver_id === userId) {
               authFetch("/api/messages", {
@@ -143,7 +158,49 @@ export default function MessagesPage() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [messages])
+  }, [messages, otherTyping])
+
+  // Typing indicator over a shared broadcast channel (both users derive the
+  // same channel name from the sorted user-id pair).
+  useEffect(() => {
+    if (!userId || !activeConversation) {
+      setOtherTyping(false)
+      return
+    }
+    const pairKey = [userId, activeConversation.other_user_id].sort().join("_")
+    const channel = supabase.channel(`typing:${pairKey}`, { config: { broadcast: { self: false } } })
+
+    channel
+      .on("broadcast", { event: "typing" }, (payload) => {
+        if (payload.payload?.from === activeConversation.other_user_id) {
+          setOtherTyping(true)
+          if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+          typingTimeoutRef.current = setTimeout(() => setOtherTyping(false), 3000)
+        }
+      })
+      .subscribe()
+
+    typingChannelRef.current = channel
+    setOtherTyping(false)
+
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+      supabase.removeChannel(channel)
+      typingChannelRef.current = null
+    }
+  }, [userId, activeConversation])
+
+  const broadcastTyping = () => {
+    const now = Date.now()
+    // Throttle to at most one broadcast per second
+    if (!typingChannelRef.current || now - lastTypingSentRef.current < 1000) return
+    lastTypingSentRef.current = now
+    typingChannelRef.current.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { from: userId },
+    })
+  }
 
   const fetchUserStatus = async (uid: string) => {
     const { data } = await supabase.from("user_settings").select("is_premium").eq("user_id", uid).single()
@@ -183,7 +240,7 @@ export default function MessagesPage() {
             other_user_id: otherId,
             other_user_name: profile?.name || "Unknown",
             other_user_photo: photo?.user_photos?.[0] || null,
-            last_message: last.content,
+            last_message: last.is_encrypted ? "🔒 Encrypted message" : last.content,
             last_message_at: last.created_at,
             unread_count: conversationMessages.filter((m) => m.receiver_id === uid && !m.is_read).length,
             last_active_at: profile?.last_active_at,
@@ -203,11 +260,30 @@ export default function MessagesPage() {
     }
   }
 
+  // Decrypts any encrypted messages in a conversation into decryptedMap.
+  const decryptMessages = async (msgs: Message[], partnerId: string) => {
+    const priv = privateKeyRef.current
+    if (!priv) return
+    const updates: Record<string, string> = {}
+    await Promise.all(
+      msgs
+        .filter((m) => m.is_encrypted && m.iv)
+        .map(async (m) => {
+          const text = await decryptMessage(m.content, m.iv as string, priv, partnerId)
+          updates[m.id] = text ?? "🔒 Message unavailable on this device"
+        })
+    )
+    if (Object.keys(updates).length > 0) {
+      setDecryptedMap((prev) => ({ ...prev, ...updates }))
+    }
+  }
+
   const loadMessages = async (uid: string, targetId: string) => {
     try {
       const res = await authFetch(`/api/messages?userId=${uid}&targetUserId=${targetId}`)
       const data = await res.json()
       setMessages(data.messages || [])
+      decryptMessages(data.messages || [], targetId)
 
       const patchRes = await authFetch("/api/messages", {
         method: "PATCH",
@@ -238,19 +314,36 @@ export default function MessagesPage() {
     }
 
     setIsSending(true)
+    const plaintext = newMessage
     try {
+      const otherId = activeConversation.other_user_id
+      let body: any = { receiverId: otherId, content: plaintext }
+
+      // Encrypt end-to-end when both sides have keys; otherwise send plaintext
+      // so messaging still works before the recipient has opened the app.
+      const priv = privateKeyRef.current
+      if (priv && (await canEncryptFor(otherId))) {
+        const enc = await encryptMessage(plaintext, priv, otherId)
+        if (enc) {
+          body = { receiverId: otherId, content: enc.ciphertext, iv: enc.iv, isEncrypted: true }
+        }
+      }
+
       const res = await authFetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          receiverId: activeConversation.other_user_id,
-          content: newMessage,
-        }),
+        body: JSON.stringify(body),
       })
 
       if (!res.ok) {
         const err = await res.json()
         throw new Error(err.error)
+      }
+
+      // Keep the readable plaintext for our own view of this ciphertext
+      const sent = await res.json().catch(() => null)
+      if (sent?.message?.id && body.isEncrypted) {
+        setDecryptedMap((prev) => ({ ...prev, [sent.message.id]: plaintext }))
       }
 
       setNewMessage("")
@@ -470,7 +563,9 @@ export default function MessagesPage() {
                             : "bg-white text-[#374151] rounded-bl-md border border-[#f0ebe3]"
                         )}
                       >
-                        <p className="text-sm leading-relaxed">{m.content}</p>
+                        <p className="text-sm leading-relaxed">
+                          {m.is_encrypted ? (decryptedMap[m.id] ?? "🔒 Decrypting…") : m.content}
+                        </p>
                         <div
                           className={cn(
                             "flex items-center gap-1 mt-1.5",
@@ -486,18 +581,28 @@ export default function MessagesPage() {
                             {formatMessageTime(m.created_at)}
                           </p>
                           {isMe && (
-                            <CheckCheck
-                              className={cn(
-                                "h-3.5 w-3.5",
-                                m.is_read ? "text-white/90" : "text-white/50"
-                              )}
-                            />
+                            m.is_read ? (
+                              <CheckCheck className="h-3.5 w-3.5 text-white" />
+                            ) : (
+                              <Check className="h-3.5 w-3.5 text-white/60" />
+                            )
                           )}
                         </div>
                       </div>
                     </div>
                   )
                 })}
+                {otherTyping && (
+                  <div className="flex justify-start">
+                    <div className="bg-white border border-[#f0ebe3] rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                      <div className="flex items-center gap-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#e87898] animate-bounce [animation-delay:-0.3s]" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#e87898] animate-bounce [animation-delay:-0.15s]" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#e87898] animate-bounce" />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="p-4 bg-white border-t border-[#f0ebe3]">
@@ -521,7 +626,7 @@ export default function MessagesPage() {
                   <form onSubmit={handleSendMessage} className="flex gap-2">
                     <Input
                       value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
+                      onChange={(e) => { setNewMessage(e.target.value); broadcastTyping() }}
                       placeholder="Type your message..."
                       className="rounded-xl bg-[#faf8f4] border-[#f0ebe3] h-11 text-sm text-[#1F4068] placeholder:text-[#9ca3af] focus-visible:border-[#e87898] focus-visible:ring-[#e87898]/20"
                     />

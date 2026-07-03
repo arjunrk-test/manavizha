@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/api-client"
 import React, { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ArrowRight, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Bookmark, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle, MoreVertical, UserX, UserMinus, Crown, Gem, Shield, X, Star, Eye } from "lucide-react"
+import { ArrowLeft, ArrowRight, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Bookmark, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle, MoreVertical, UserX, UserMinus, Crown, Gem, Shield, X, Star, Eye, Search } from "lucide-react"
 import { motion } from "framer-motion"
 import { HeartHandshake } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -732,6 +732,15 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
             })
         }
 
+        // 3.5 Search by profile code (MNV#####) or name
+        const q = searchTerm.trim().toLowerCase()
+        if (q) {
+            dataset = dataset.filter(p =>
+                (p.profile_code || "").toLowerCase().includes(q) ||
+                (p.name || "").toLowerCase().includes(q)
+            )
+        }
+
         // 4. Category Filter
         switch (activeCategory) {
             case "newly-joined":
@@ -775,7 +784,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
             default:
                 return dataset
         }
-    }, [profiles, activeCategory, shortlistedIds, shortlistedMeIds, viewedMeIds, iViewedIds, currentUserLocation, userPreferences, applyPreferences, browseManualFilters, isPremium])
+    }, [profiles, activeCategory, shortlistedIds, shortlistedMeIds, viewedMeIds, iViewedIds, currentUserLocation, userPreferences, applyPreferences, browseManualFilters, isPremium, searchTerm])
 
     const getAgeHeightCasteEducationProfessionCityStr = (profile: any) => {
         return getProfileSummaryStr(profile)
@@ -1242,6 +1251,26 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                 </p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2 shrink-0">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9ca3af]" />
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="Search by ID or name"
+                                    className="h-10 w-[190px] rounded-[10px] border border-[#e5e7eb] bg-white pl-9 pr-8 text-[13px] text-[#1F4068] placeholder:text-[#9ca3af] focus:border-[#e87898]/40 focus:outline-none focus:ring-2 focus:ring-[#fce8ef]"
+                                />
+                                {searchTerm && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearchTerm("")}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#e87898]"
+                                        aria-label="Clear search"
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </button>
+                                )}
+                            </div>
                             {hasPreferences && (
                                 <Button
                                     variant="outline"

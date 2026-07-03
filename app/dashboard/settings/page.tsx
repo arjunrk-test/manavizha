@@ -6,8 +6,9 @@ import { authFetch } from "@/lib/api-client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
-    Bell, Phone, UserX, UserMinus, Shield, EyeOff, Key, Mail, RefreshCw, AlertTriangle, Heart, Settings2
+    Bell, Phone, UserX, UserMinus, Shield, EyeOff, Key, Mail, RefreshCw, AlertTriangle, Heart, Settings2, ShieldCheck
 } from "lucide-react"
+import { IdVerificationCard } from "@/components/id-verification-card"
 import { toast } from "sonner"
 import { MarriedConfirmationDialog } from "@/components/married-confirmation-dialog"
 import { DashboardJourneyPatterns } from "@/components/dashboard/dashboard-journey-patterns"
@@ -31,9 +32,11 @@ export default function SettingsPage() {
         horoscope_privacy: "visible_all",
         horoscope_password: "",
         profile_privacy: "show_all",
+        photo_visibility: "everyone",
         is_deactivated: false,
         deactivated_until: null,
     })
+    const [incomingPhotoRequests, setIncomingPhotoRequests] = useState<any[]>([])
 
     const [blockedProfiles, setBlockedProfiles] = useState<any[]>([])
     const [ignoredProfiles, setIgnoredProfiles] = useState<any[]>([])
@@ -81,6 +84,12 @@ export default function SettingsPage() {
                         setIgnoredProfiles(data || [])
                     }
                 }
+
+                const prRes = await authFetch(`/api/photo-requests`).catch(() => null)
+                if (prRes?.ok) {
+                    const prData = await prRes.json()
+                    setIncomingPhotoRequests(prData.requests || [])
+                }
             } catch (err) {
                 console.error("Error loading settings:", err)
             } finally {
@@ -89,6 +98,24 @@ export default function SettingsPage() {
         }
         loadInitialData()
     }, [router])
+
+    const respondToPhotoRequest = async (requesterId: string, status: "approved" | "declined") => {
+        try {
+            const res = await authFetch("/api/photo-requests", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ requesterId, status }),
+            })
+            if (res.ok) {
+                setIncomingPhotoRequests((prev) => prev.filter((r) => r.requester_id !== requesterId))
+                toast.success(status === "approved" ? "Photos shared" : "Request declined")
+            } else {
+                toast.error("Failed to update request")
+            }
+        } catch {
+            toast.error("Network error")
+        }
+    }
 
     const handleSave = async (updates: any) => {
         if (!userId) return
@@ -248,6 +275,7 @@ export default function SettingsPage() {
         { id: "call_prefs", icon: Phone, label: "Call Preferences" },
         { id: "privacy", icon: Shield, label: "Privacy Settings" },
         { id: "profile", icon: EyeOff, label: "Profile Visibility" },
+        { id: "verification", icon: ShieldCheck, label: "ID Verification" },
         { id: "password", icon: Key, label: "Change Password" },
         { id: "ignored", icon: UserMinus, label: "Ignored Profiles" },
         { id: "blocked", icon: UserX, label: "Blocked Profiles" },
@@ -256,7 +284,7 @@ export default function SettingsPage() {
 
     const TAB_GROUPS = [
         { label: "Notifications", ids: ["alerts", "call_prefs"] as const },
-        { label: "Privacy", ids: ["privacy", "profile"] as const },
+        { label: "Privacy", ids: ["privacy", "profile", "verification"] as const },
         { label: "Account", ids: ["password", "ignored", "blocked", "deactivate"] as const },
     ]
 
@@ -579,6 +607,59 @@ export default function SettingsPage() {
                                         onChange={() => handleSave({ profile_privacy: 'registered_only' })}
                                         title="Show my Profile to registered members only."
                                     />
+                                </div>
+
+                                <SectionTitle icon={EyeOff} title="Photo Visibility" description="Control who can see your photos." />
+                                <div className="space-y-3 max-w-lg">
+                                    <RadioOption
+                                        checked={(settings.photo_visibility || 'everyone') === 'everyone'}
+                                        onChange={() => handleSave({ photo_visibility: 'everyone' })}
+                                        title="Show my photos to everyone"
+                                        description="All members who can view your profile can see your photos."
+                                        badge="Default"
+                                    />
+                                    <RadioOption
+                                        checked={settings.photo_visibility === 'on_accept'}
+                                        onChange={() => handleSave({ photo_visibility: 'on_accept' })}
+                                        title="Only after I accept interest or a photo request"
+                                        description="Your photos stay blurred until you accept the member's interest or approve their photo request."
+                                    />
+                                </div>
+
+                                {incomingPhotoRequests.length > 0 && (
+                                    <div className="max-w-lg space-y-3">
+                                        <SectionTitle icon={Bell} title="Photo requests" description="Members asking to view your photos." />
+                                        {incomingPhotoRequests.map((r) => (
+                                            <div key={r.requester_id} className="flex items-center justify-between gap-3 rounded-2xl border border-[#f0ebe3] bg-white p-3.5">
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-medium text-[#1F4068] truncate">
+                                                        {r.requester?.name || "A member"}
+                                                        {r.requester?.profile_code && (
+                                                            <span className="ml-2 text-xs font-normal text-gray-400">{r.requester.profile_code}</span>
+                                                        )}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">wants to view your photos</p>
+                                                </div>
+                                                <div className="flex gap-2 shrink-0">
+                                                    <Button size="sm" className="rounded-xl bg-[#3bb9ac] hover:bg-[#33a396] text-white" onClick={() => respondToPhotoRequest(r.requester_id, "approved")}>
+                                                        Approve
+                                                    </Button>
+                                                    <Button size="sm" variant="outline" className="rounded-xl border-[#f0ebe3] text-gray-500" onClick={() => respondToPhotoRequest(r.requester_id, "declined")}>
+                                                        Decline
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === "verification" && userId && (
+                            <div className="space-y-6 animate-in fade-in">
+                                <SectionTitle icon={ShieldCheck} title="ID Verification" description="Verify your identity to earn a trusted badge on your profile." />
+                                <div className="max-w-lg">
+                                    <IdVerificationCard userId={userId} />
                                 </div>
                             </div>
                         )}

@@ -83,7 +83,7 @@ export async function PATCH(request: Request) {
 export async function POST(request: Request) {
     try {
         const { userId: senderId } = await requireAuthenticatedUser(request)
-        const { receiverId, content } = await request.json()
+        const { receiverId, content, iv, isEncrypted } = await request.json()
 
         if (!receiverId || content === undefined || content === null) {
             return NextResponse.json({ error: 'receiverId and content are required' }, { status: 400 })
@@ -122,13 +122,19 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Premium subscription is required to send messages.' }, { status: 403 })
         }
 
+        const insertRow: any = {
+            sender_id: senderId,
+            receiver_id: receiverId,
+            content: trimmedContent,
+        }
+        if (isEncrypted && typeof iv === 'string') {
+            insertRow.is_encrypted = true
+            insertRow.iv = iv
+        }
+
         const { data, error } = await admin
             .from('messages')
-            .insert({
-                sender_id: senderId,
-                receiver_id: receiverId,
-                content: trimmedContent
-            })
+            .insert(insertRow)
             .select()
             .single()
 

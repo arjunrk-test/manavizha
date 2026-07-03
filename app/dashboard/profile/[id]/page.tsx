@@ -606,6 +606,16 @@ export default function ProfileViewPage({
                             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#fce8ef] text-[#e87898] text-[11px] font-medium border border-[#f0ebe3]">
                                 <ShieldCheck className="h-3 w-3" /> Verified
                             </span>
+                            {profile.profile_code && (
+                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white text-[#6b7280] text-[11px] font-medium border border-[#f0ebe3]">
+                                    ID: {profile.profile_code}
+                                </span>
+                            )}
+                            {profile.id_verified && (
+                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#e6f7f5] text-[#3bb9ac] text-[11px] font-medium border border-[#3bb9ac]/20">
+                                    <ShieldCheck className="h-3 w-3" /> ID Verified
+                                </span>
+                            )}
                             {profile.isPremium && (
                                 <span className={cn(
                                     "inline-flex items-center gap-1 px-3 py-1 rounded-full text-white text-[11px] font-medium",

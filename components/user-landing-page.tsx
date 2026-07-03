@@ -776,6 +776,37 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             premiumBadge={getPremiumBadge()}
           />
 
+          {completionPercentage < 100 && (
+            <div className="rounded-[18px] border border-[#eadfce] bg-gradient-to-r from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 shadow-[0_2px_12px_rgba(31,64,104,0.05)]">
+              <div className="relative h-14 w-14 shrink-0">
+                <svg className="h-14 w-14 -rotate-90" viewBox="0 0 36 36">
+                  <circle cx="18" cy="18" r="15.5" fill="none" stroke="#f0ebe3" strokeWidth="3" />
+                  <circle
+                    cx="18" cy="18" r="15.5" fill="none" stroke="#e87898" strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeDasharray={`${(completionPercentage / 100) * 97.4} 97.4`}
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-[12px] font-semibold text-[#1F4068]">
+                  {completionPercentage}%
+                </span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm font-semibold text-[#1F4068]">Complete your profile</h3>
+                <p className="text-[13px] text-[#6b7280] mt-0.5">
+                  Profiles with complete details and photos get up to 5× more interest. Finish the
+                  remaining sections to appear in more matches.
+                </p>
+              </div>
+              <button
+                onClick={onNavigateToProfileSetup}
+                className="shrink-0 rounded-[10px] bg-[#e87898] hover:bg-[#d66686] px-5 h-10 text-[13px] font-medium text-white transition-colors"
+              >
+                Complete now
+              </button>
+            </div>
+          )}
+
           {isCoreProfileComplete ? (
             <>
               <DashboardStatsRow

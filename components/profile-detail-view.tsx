@@ -48,6 +48,10 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
     const [isMutual, setIsMutual] = useState(false)
     const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false)
     const [isReportDialogOpen, setIsReportDialogOpen] = useState(false)
+    const [contactUnlocked, setContactUnlocked] = useState(false)
+    const [canViewPhotos, setCanViewPhotos] = useState(true)
+    const [photoRequestStatus, setPhotoRequestStatus] = useState<string | null>(null)
+    const [photoRequesting, setPhotoRequesting] = useState(false)
 
     // Interaction dates
     const [iLikedDate, setILikedDate] = useState<string | null>(null)
@@ -180,6 +184,14 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                         setLastViewedMeDate(viewMe?.created_at || null)
                     }
 
+                    // Photo privacy check
+                    const paRes = await authFetch(`/api/photo-access?targetUserId=${targetUserId}`).catch(() => null)
+                    if (paRes?.ok) {
+                        const pa = await paRes.json()
+                        setCanViewPhotos(pa.canView !== false)
+                        setPhotoRequestStatus(pa.requestStatus || null)
+                    }
+
                     if (viewerRes.data) {
                         setViewerProfile(viewerRes.data)
                         if (prefs) {
@@ -247,6 +259,56 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
     }
 
     const handleSendMessage = () => setIsMessageDialogOpen(true)
+
+    const requestPhotos = async () => {
+        if (!currentUserId) return
+        setPhotoRequesting(true)
+        try {
+            const res = await authFetch("/api/photo-requests", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ownerId: targetUserId }),
+            })
+            const data = await res.json().catch(() => ({}))
+            if (res.ok) {
+                setPhotoRequestStatus("pending")
+                toast.success("Photo request sent")
+            } else {
+                toast.error(data.error || "Failed to send request")
+            }
+        } catch {
+            toast.error("Network error. Please try again.")
+        } finally {
+            setPhotoRequesting(false)
+        }
+    }
+
+    // Gates the first contact reveal against the viewer's tier limit. Once a
+    // profile is unlocked, all its contact fields reveal together and re-views
+    // are free (deduplicated server-side).
+    const unlockContact = async (): Promise<boolean> => {
+        if (contactUnlocked) return true
+        try {
+            const res = await authFetch("/api/contact-view", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ viewedUserId: targetUserId }),
+            })
+            const data = await res.json().catch(() => ({}))
+            if (res.ok && data.allowed) {
+                setContactUnlocked(true)
+                if (typeof data.remaining === "number" && !data.alreadyViewed) {
+                    toast.success(`Contact unlocked · ${data.remaining} view${data.remaining !== 1 ? "s" : ""} left this plan`)
+                }
+                return true
+            }
+            toast.error(data.error || "Unable to view contact details")
+            return false
+        } catch {
+            toast.error("Network error. Please try again.")
+            return false
+        }
+    }
 
     const calculateDetailedAge = (dobString: string, currentAge: number) => {
         if (!dobString) return `${currentAge} Years`;
@@ -327,6 +389,16 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#fce8ef] text-[#e87898] text-[11px] font-medium border border-[#f0ebe3]">
                                 <ShieldCheck className="h-3 w-3" /> Verified
                             </span>
+                            {profile.profile_code && (
+                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white text-[#6b7280] text-[11px] font-medium border border-[#f0ebe3]">
+                                    ID: {profile.profile_code}
+                                </span>
+                            )}
+                            {profile.id_verified && (
+                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#e6f7f5] text-[#3bb9ac] text-[11px] font-medium border border-[#3bb9ac]/20">
+                                    <ShieldCheck className="h-3 w-3" /> ID Verified
+                                </span>
+                            )}
                             {profile.isPremium && (
                                 <span
                                     className={cn(
@@ -478,12 +550,36 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
                                             exit={{ opacity: 0 }}
-                                            className="w-full h-full object-cover"
+                                            className={cn("w-full h-full object-cover", !canViewPhotos && "blur-xl scale-110")}
                                         />
                                     </AnimatePresence>
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-[#fce8ef]/30">
                                         <User className="h-12 w-12 text-[#e87898]/30" />
+                                    </div>
+                                )}
+                                {!canViewPhotos && photos.length > 0 && (
+                                    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2.5 bg-black/30 backdrop-blur-sm px-4 text-center">
+                                        <Lock className="h-6 w-6 text-white" />
+                                        <p className="text-xs text-white/90 font-medium">Photos are private</p>
+                                        {photoRequestStatus === "pending" ? (
+                                            <span className="rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-medium text-[#1F4068]">
+                                                Request pending
+                                            </span>
+                                        ) : photoRequestStatus === "declined" ? (
+                                            <span className="rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-medium text-red-500">
+                                                Request declined
+                                            </span>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={requestPhotos}
+                                                disabled={photoRequesting}
+                                                className="rounded-full bg-[#e87898] px-3.5 py-1.5 text-[11px] font-semibold text-white hover:bg-[#d66686] disabled:opacity-60"
+                                            >
+                                                {photoRequesting ? "Sending..." : "Request photos"}
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                                 {photos.length > 1 && (
@@ -636,8 +732,8 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                         </ProfileCard>
 
                         <ProfileCard title="Contact & Location" icon={<Phone className="h-4 w-4" />} iconTint="navy">
-                            <DetailRow label="Phone Number" value={profile.contact?.phone || profile.phone} isLocked isPremiumViewer={isViewerPremium} />
-                            <DetailRow label="WhatsApp" value={profile.contact?.whatsapp_number || profile.phone} isLocked isPremiumViewer={isViewerPremium} />
+                            <DetailRow label="Phone Number" value={profile.contact?.phone || profile.phone} isLocked isPremiumViewer={isViewerPremium} forceRevealed={contactUnlocked} onReveal={unlockContact} />
+                            <DetailRow label="WhatsApp" value={profile.contact?.whatsapp_number || profile.phone} isLocked isPremiumViewer={isViewerPremium} forceRevealed={contactUnlocked} onReveal={unlockContact} />
                             <DetailRow
                                 label="Address"
                                 value={[
@@ -651,6 +747,8 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                                     .join(", ")}
                                 isLocked
                                 isPremiumViewer={isViewerPremium}
+                                forceRevealed={contactUnlocked}
+                                onReveal={unlockContact}
                             />
                         </ProfileCard>
 
@@ -743,36 +841,56 @@ function DetailRow({
     value,
     isLocked,
     isPremiumViewer,
+    forceRevealed,
+    onReveal,
 }: {
     label: string
     value?: React.ReactNode
     isLocked?: boolean
     isPremiumViewer?: boolean
+    forceRevealed?: boolean          // reveal driven by a shared (per-profile) unlock
+    onReveal?: () => Promise<boolean> // gate the reveal (e.g. contact-view limit)
 }) {
     const [revealed, setRevealed] = useState(false)
+    const [checking, setChecking] = useState(false)
+    const isRevealed = revealed || !!forceRevealed
+
+    const handleReveal = async () => {
+        if (onReveal) {
+            setChecking(true)
+            const ok = await onReveal()
+            setChecking(false)
+            if (ok) setRevealed(true)
+        } else {
+            setRevealed(true)
+        }
+    }
 
     const renderValue = () => {
         if (!value) return <span className="text-[#9ca3af] italic text-sm">Not specified</span>
 
         if (isLocked) {
-            if (isPremiumViewer && revealed) {
+            if (isPremiumViewer && isRevealed) {
                 return (
                     <span className="text-sm font-medium text-[#1F4068] break-words flex items-center gap-2 justify-end">
                         {value}
-                        <button onClick={() => setRevealed(false)} className="text-xs text-[#e87898] hover:underline font-medium">
-                            Hide
-                        </button>
+                        {!forceRevealed && (
+                            <button onClick={() => setRevealed(false)} className="text-xs text-[#e87898] hover:underline font-medium">
+                                Hide
+                            </button>
+                        )}
                     </span>
                 )
             }
-            if (isPremiumViewer && !revealed) {
+            if (isPremiumViewer && !isRevealed) {
                 return (
                     <button
-                        onClick={() => setRevealed(true)}
-                        className="flex items-center gap-1.5 px-2.5 py-1 bg-[#fce8ef] rounded-lg border border-[#f0ebe3] text-[#e87898] text-xs font-medium hover:bg-[#f0ebe3] transition-colors"
+                        onClick={handleReveal}
+                        disabled={checking}
+                        className="flex items-center gap-1.5 px-2.5 py-1 bg-[#fce8ef] rounded-lg border border-[#f0ebe3] text-[#e87898] text-xs font-medium hover:bg-[#f0ebe3] transition-colors disabled:opacity-60"
                     >
                         <Crown className="h-3 w-3" />
-                        Reveal
+                        {checking ? "Checking..." : "Reveal"}
                     </button>
                 )
             }

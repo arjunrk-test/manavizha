@@ -2,15 +2,14 @@
 
 import { AdminNavbar } from "@/components/admin-navbar"
 import { AdminDashboardBackground } from "@/components/admin/admin-dashboard-background"
-import { AdminVerificationPanel } from "@/components/admin/admin-verification-panel"
-import { AdminIdVerificationPanel } from "@/components/admin/admin-id-verification-panel"
+import { AdminTierLimitsPanel } from "@/components/admin/admin-tier-limits-panel"
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { supabase } from "@/lib/supabase"
 import { finishAuthRedirect, getUserDashboard } from "@/lib/auth"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
-export default function AdminVerificationPage() {
+export default function AdminTiersPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
 
@@ -44,9 +43,8 @@ export default function AdminVerificationPage() {
       <AdminNavbar variant="dashboard" />
 
       <main className="relative z-10 flex-1 flex flex-col pt-[4.75rem]">
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 pb-10 space-y-6">
-          <AdminVerificationPanel />
-          <AdminIdVerificationPanel />
+        <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 pb-10">
+          <AdminTierLimitsPanel />
         </div>
       </main>
     </div>
