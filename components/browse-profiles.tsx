@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { calculateTrustScore, getProfileSummaryStr, getRoleAndHeightStr } from "@/lib/utils/profile-utils"
 import { toast } from "sonner"
-import { checkTamilPorutham } from "@/lib/astrology"
+import { checkTamilPoruthamByGender } from "@/lib/astrology"
 import { getDistanceInKm, getCoordinatesForCity } from "@/lib/locations"
 import { Badge } from "@/components/ui/badge"
 import { Sparkles as SparklesIcon, Info } from "lucide-react"
@@ -669,8 +669,8 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                         interests: myInterests || null,
                         socialHabits: mySocial || null,
                         horoscope: myHoro || null,
-                        compatibility: (userHoroscope?.star && myHoro?.star) 
-                            ? checkTamilPorutham(userHoroscope.star, userHoroscope.zodiac_sign || "", myHoro.star, myHoro.zodiac_sign || "") 
+                        compatibility: (userHoroscope?.star && myHoro?.star)
+                            ? checkTamilPoruthamByGender(myHoro.star, myHoro.zodiac_sign || "", (p.sex || "").toLowerCase() === "female", userHoroscope.star, userHoroscope.zodiac_sign || "")
                             : { score: 0, status: 'Athamam', breakdown: {} },
                         lifestyleMatch: viewerFullProfile ? calculateLifestyleScore(viewerFullProfile, {
                             ...p,

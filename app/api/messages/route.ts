@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { authErrorResponse, requireAuthenticatedUser, ApiAuthError } from '@/lib/server/api-auth'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin-client'
+import { createNotification } from '@/lib/server/notify'
 
 export async function GET(request: Request) {
     try {
@@ -109,11 +110,7 @@ export async function POST(request: Request) {
             admin.from('user_settings').select('is_premium, premium_expires_at').eq('user_id', senderId).maybeSingle(),
         ])
 
-        if (!like1 || !like2) {
-            return NextResponse.json({ error: 'Mutual interest is required to send messages.' }, { status: 403 })
-        }
-
-        if (like1.status === 'declined' || like2.status === 'declined') {
+        if (like1?.status === 'declined' || like2?.status === 'declined') {
             return NextResponse.json({ error: 'Messaging is not available for declined interests.' }, { status: 403 })
         }
 
@@ -136,6 +133,8 @@ export async function POST(request: Request) {
             .single()
 
         if (error) throw error
+
+        await createNotification(receiverId, senderId, 'message_received')
 
         return NextResponse.json({ message: data })
     } catch (error: any) {

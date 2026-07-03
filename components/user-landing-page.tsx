@@ -47,7 +47,7 @@ import {
 import { SubscriptionDialog } from "./subscription-dialog"
 import { HoroscopeGeneratorDialog } from "./horoscope-generator-dialog"
 import { calculateTrustScore } from "@/lib/utils/profile-utils"
-import { checkTamilPorutham } from "@/lib/astrology"
+import { checkTamilPoruthamByGender } from "@/lib/astrology"
 import { calculateLifestyleScore } from "@/lib/matching"
 import { CompatibilitySheet } from "./compatibility-sheet"
 import { DashboardSidebar } from "./dashboard/dashboard-sidebar"
@@ -543,8 +543,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             }
 
             const lifestyleMatch = viewerData ? calculateLifestyleScore(viewerData as any, targetProfileData as any) : null
-            const horoscopeMatch = (myHoro?.star && targetHoro?.star) 
-                ? checkTamilPorutham(myHoro.star, myHoro.zodiac_sign || "", targetHoro.star, targetHoro.zodiac_sign || "")
+            const horoscopeMatch = (myHoro?.star && targetHoro?.star)
+                ? checkTamilPoruthamByGender(targetHoro.star, targetHoro.zodiac_sign || "", (p.sex || "").toLowerCase() === "female", myHoro.star, myHoro.zodiac_sign || "")
                 : { score: 0, status: 'Athamam', breakdown: {} }
 
             return {

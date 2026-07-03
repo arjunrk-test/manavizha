@@ -40,6 +40,21 @@ export async function requireAuthenticatedUser(request: Request): Promise<Authen
   return { userId: user.id, accessToken }
 }
 
+export async function requireAdmin(request: Request): Promise<AuthenticatedUser & { role: string }> {
+  const auth = await requireAuthenticatedUser(request)
+  const { data: row, error } = await supabaseAdmin
+    .from("admins")
+    .select("role")
+    .eq("user_id", auth.userId)
+    .maybeSingle()
+
+  if (error || !row) {
+    throw new ApiAuthError(403, "Forbidden")
+  }
+
+  return { ...auth, role: row.role as string }
+}
+
 export async function requireSuperAdmin(request: Request): Promise<AuthenticatedUser> {
   const auth = await requireAuthenticatedUser(request)
   const { data: row, error } = await supabaseAdmin
@@ -59,5 +74,6 @@ export function authErrorResponse(error: unknown): NextResponse {
   if (error instanceof ApiAuthError) {
     return NextResponse.json({ error: error.message }, { status: error.status })
   }
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  console.error("[api] Unhandled route error:", error)
+  return NextResponse.json({ error: "Internal server error" }, { status: 500 })
 }

@@ -25,6 +25,7 @@ export default function DashboardLayout({
   const [unreadCount, setUnreadCount] = useState(0)
   const [whoViewedMe, setWhoViewedMe] = useState<any[]>([])
   const [whoExpressedInterest, setWhoExpressedInterest] = useState<any[]>([])
+  const [serverNotifs, setServerNotifs] = useState<any[]>([])
   const [isNotificationsLoading, setIsNotificationsLoading] = useState(false)
   const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null)
 
@@ -175,6 +176,23 @@ export default function DashboardLayout({
              setWhoExpressedInterest([])
           }
         }
+        // Persistent notifications (acceptances, messages, photo requests).
+        // interest_received is excluded — the section above already covers it live.
+        const nRes = await authFetch('/api/notifications').catch(() => null)
+        if (nRes?.ok) {
+          const nData = await nRes.json()
+          const unread = (nData.notifications || []).filter((n: any) => !n.is_read && n.type !== 'interest_received')
+          const actorIds = [...new Set(unread.map((n: any) => n.actor_id).filter(Boolean))]
+          const actorMap: Record<string, any> = {}
+          if (actorIds.length > 0) {
+            const { data: actors } = await supabase
+              .from('personal_details')
+              .select('user_id, name, photos')
+              .in('user_id', actorIds as string[])
+            actors?.forEach((a: any) => { actorMap[a.user_id] = a })
+          }
+          setServerNotifs(unread.map((n: any) => ({ ...n, actor: actorMap[n.actor_id] || null })))
+        }
       } catch (err) {
         console.error("Error fetching header notifications:", err)
       } finally {
@@ -267,7 +285,18 @@ export default function DashboardLayout({
     return <DashboardLoadingScreen />
   }
 
-  const notificationCount = whoViewedMe.length + whoExpressedInterest.length
+  const handleServerNotifClick = (n: any) => {
+    setServerNotifs(prev => prev.filter(x => x.id !== n.id))
+    authFetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notificationId: n.id })
+    }).catch(() => {})
+    if (n.type === 'message_received') router.push('/dashboard/messages')
+    else if (n.actor_id) router.push(`/dashboard/profile/${n.actor_id}`)
+  }
+
+  const notificationCount = whoViewedMe.length + whoExpressedInterest.length + serverNotifs.length
 
   return (
     <div className="h-dvh flex flex-col overflow-hidden bg-[#faf8f4]">
@@ -401,6 +430,46 @@ export default function DashboardLayout({
                     </div>
                   ) : (
                     <>
+                      {serverNotifs.length > 0 && (
+                        <div className="mb-3 space-y-2">
+                          <div className="flex items-center gap-1.5 px-1">
+                            <Bell className="h-3.5 w-3.5 text-[#c9a227]" />
+                            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#c9a227]">
+                              Updates
+                            </span>
+                          </div>
+                          {serverNotifs.slice(0, 6).map((n) => (
+                            <button
+                              key={n.id}
+                              className="group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-[#f0ebe3]/80 bg-white/75 p-2.5 text-left transition-all hover:border-[#c9a227]/25 hover:bg-white hover:shadow-[0_2px_10px_rgba(201,162,39,0.08)]"
+                              onClick={() => handleServerNotifClick(n)}
+                            >
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fdf6e3] ring-2 ring-white">
+                                {n.type === 'message_received'
+                                  ? <MessageSquare className="h-4 w-4 text-[#c9a227]" />
+                                  : <Heart className="h-4 w-4 text-[#c9a227]" />}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="truncate text-[13px] font-medium text-[#374151]">
+                                    <span className="text-[#1F4068]">{n.actor?.name || "A member"}</span>{" "}
+                                    {n.type === 'interest_accepted' ? 'accepted your interest'
+                                      : n.type === 'message_received' ? 'sent you a message'
+                                      : n.type === 'photo_request' ? 'requested your photos'
+                                      : n.type === 'photo_request_approved' ? 'approved your photo request'
+                                      : 'sent you an update'}
+                                  </p>
+                                  <span className="shrink-0 whitespace-nowrap text-[10px] text-[#9ca3af]">
+                                    {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+                                  </span>
+                                </div>
+                              </div>
+                              <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[#d1d5db] transition-colors group-hover:text-[#c9a227]" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
                       {whoExpressedInterest.length > 0 && (
                         <div className="mb-3 space-y-2">
                           <div className="flex items-center gap-1.5 px-1">

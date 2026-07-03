@@ -11,7 +11,7 @@ import {
     Heart, Star, CheckCircle2, Phone, MessageCircle, Lock,
     Calendar, Coffee, Eye, Info, Users, Shield, Sparkles, XCircle, Home,
     Search, Target, Award, HeartHandshake, MoreVertical, UserX, UserMinus, Crown, Gem, Bookmark, ShieldCheck,
-    ChevronLeft, ChevronRight
+    ChevronLeft, ChevronRight, Flag
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -20,6 +20,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { MessageDialog } from "@/components/message-dialog"
+import { ReportProfileDialog } from "@/components/report-profile-dialog"
 import { formatToDDMMYYYY, formatActivityTime } from "@/lib/utils/date-utils"
 import { Badge } from "@/components/ui/badge"
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
@@ -66,6 +67,7 @@ export default function ProfileViewPage({
     const [shortlistedDate, setShortlistedDate] = useState<string | null>(null)
     const [shortlistedMeDate, setShortlistedMeDate] = useState<string | null>(null)
     const [lastViewedMeDate, setLastViewedMeDate] = useState<string | null>(null)
+    const [acceptedDate, setAcceptedDate] = useState<string | null>(null)
     
     // Navigation sequence states
     const [prevProfileId, setPrevProfileId] = useState<string | null>(null)
@@ -73,6 +75,7 @@ export default function ProfileViewPage({
 
     // Confirm dialog state
     const [confirmAction, setConfirmAction] = useState<"ignore" | "block" | null>(null)
+    const [isReportDialogOpen, setIsReportDialogOpen] = useState(false)
 
     useEffect(() => {
         const getSession = async () => {
@@ -209,6 +212,7 @@ export default function ProfileViewPage({
                         setILikedStatus(myLike?.status || null)
                         setLikedMeDate(likeMe?.created_at || null)
                         setLikedMeStatus(likeMe?.status || null)
+                        setAcceptedDate(myLike?.accepted_at || likeMe?.accepted_at || null)
                     }
                     
                     if (shortRes.ok) {
@@ -366,7 +370,10 @@ export default function ProfileViewPage({
         }
 
         fetchProfile()
-    }, [targetUserId])
+        // currentUserId resolves asynchronously from getSession — without it in
+        // the deps, the likes/shortlists/views statuses are skipped on first run
+        // and never fetched.
+    }, [targetUserId, currentUserId])
 
     const handleLike = async () => {
         if (!currentUserId || isLikeProcessing) return
@@ -639,28 +646,28 @@ export default function ProfileViewPage({
                                     <p className={cn("flex items-center lg:justify-end gap-2", iLikedStatus === "declined" ? "text-[#9ca3af]" : "text-[#4b5563]")}>
                                         <Heart className="h-4 w-4 text-[#e87898]" />
                                         {iLikedStatus === "declined"
-                                            ? `${(profile.sex?.toLowerCase() === "male" || profile.gender?.toLowerCase() === "male") ? "He" : "She"} declined your interest on ${formatToDDMMYYYY(iLikedDate)}`
-                                            : `You sent an interest on ${formatToDDMMYYYY(iLikedDate)} — Pending`}
+                                            ? `${(profile.sex?.toLowerCase() === "male" || profile.gender?.toLowerCase() === "male") ? "He" : "She"} declined your interest`
+                                            : `You sent interest on ${formatToDDMMYYYY(iLikedDate)}`}
                                     </p>
                                 )}
                                 {likedMeDate && likedMeStatus !== "accepted" && iLikedStatus !== "accepted" && !isMutual && (
                                     <p className={cn("flex items-center lg:justify-end gap-2", likedMeStatus === "declined" ? "text-[#9ca3af]" : "text-[#4b5563]")}>
                                         <Heart className="h-4 w-4 text-[#e87898]" />
                                         {likedMeStatus === "declined"
-                                            ? `You declined ${(profile.sex?.toLowerCase() === "male" || profile.gender?.toLowerCase() === "male") ? "his" : "her"} interest on ${formatToDDMMYYYY(likedMeDate)}`
+                                            ? `You declined ${(profile.sex?.toLowerCase() === "male" || profile.gender?.toLowerCase() === "male") ? "his" : "her"} interest`
                                             : `${(profile.sex?.toLowerCase() === "male" || profile.gender?.toLowerCase() === "male") ? "He" : "She"} sent you an interest on ${formatToDDMMYYYY(likedMeDate)}`}
                                     </p>
                                 )}
                                 {(isMutual || iLikedStatus === "accepted" || likedMeStatus === "accepted") && (
                                     <p className="flex items-center lg:justify-end gap-2 text-[#e87898] font-medium">
                                         <CheckCircle2 className="h-4 w-4" />
-                                        Mutual interest — you can message each other
+                                        Accepted interest on {formatToDDMMYYYY(acceptedDate || iLikedDate || likedMeDate || "")}
                                     </p>
                                 )}
                                 {lastViewedMeDate && (
                                     <p className="flex items-center lg:justify-end gap-2">
                                         <Eye className="h-4 w-4 text-[#9ca3af]" />
-                                        Viewed your profile on {formatToDDMMYYYY(lastViewedMeDate)}
+                                        {(profile.sex?.toLowerCase() === "male" || profile.gender?.toLowerCase() === "male") ? "He" : "She"} viewed your profile on {formatToDDMMYYYY(lastViewedMeDate)}
                                     </p>
                                 )}
                             </div>
@@ -706,6 +713,9 @@ export default function ProfileViewPage({
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={handleBlock} className="rounded-lg text-sm text-red-600 cursor-pointer">
                                             <UserX className="h-4 w-4 mr-2" /> Block member
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => setIsReportDialogOpen(true)} className="rounded-lg text-sm text-red-600 cursor-pointer">
+                                            <Flag className="h-4 w-4 mr-2" /> Report profile
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -982,6 +992,12 @@ export default function ProfileViewPage({
                     />
                 )}
             </AnimatePresence>
+                <ReportProfileDialog
+                    open={isReportDialogOpen}
+                    onOpenChange={setIsReportDialogOpen}
+                    reportedUserId={targetUserId}
+                    reportedName={profile.name || profile.userName}
+                />
                 </div>
             </div>
 

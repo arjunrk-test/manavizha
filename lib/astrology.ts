@@ -500,9 +500,22 @@ export function checkTamilPorutham(girlStar: string, girlRashi: string, boyStar:
     breakdown['Rasiyathipathi'] = gLord === bLord || (FRIENDSHIP[gLord]?.includes(bLord) || FRIENDSHIP[bLord]?.includes(gLord));
     if (breakdown['Rasiyathipathi']) matchedCount++;
 
-    // 8. Vasya Porutham
-    const vasyaMap: Record<string, string[]> = { "Mesha": ["Simha", "Vrishchika"], "Vrishabha": ["Kadaga", "Thulam"] }; // Simplified
-    breakdown['Vasya'] = vasyaMap[gRashi]?.includes(bRashi) || false;
+    // 8. Vasya Porutham (keys/values must be the Sanskrit RASHIS names; matched in either direction)
+    const vasyaMap: Record<string, string[]> = {
+        "Mesha": ["Simha", "Vrishchika"],
+        "Vrishabha": ["Karka", "Tula"],
+        "Mithuna": ["Kanya"],
+        "Karka": ["Vrishchika", "Dhanu"],
+        "Simha": ["Tula"],
+        "Kanya": ["Mithuna", "Meena"],
+        "Tula": ["Kanya", "Makara"],
+        "Vrishchika": ["Karka"],
+        "Dhanu": ["Meena"],
+        "Makara": ["Mesha", "Kumbha"],
+        "Kumbha": ["Mesha"],
+        "Meena": ["Makara"]
+    };
+    breakdown['Vasya'] = (vasyaMap[gRashi]?.includes(bRashi) || vasyaMap[bRashi]?.includes(gRashi)) || false;
     if (breakdown['Vasya']) matchedCount++;
 
     // 9. Vedha Porutham (Should NOT match)
@@ -519,4 +532,19 @@ export function checkTamilPorutham(girlStar: string, girlRashi: string, boyStar:
     else if (score >= 5) status = 'Madhyamam';
 
     return { score, status, breakdown };
+}
+
+/**
+ * Gender-aware wrapper for checkTamilPorutham. Dina, Mahendra, Stree Deerkha
+ * and Rasi poruthams are counted from the girl's star/rashi, so the female
+ * partner's horoscope must always be passed first — regardless of which of
+ * the two happens to be the viewer.
+ */
+export function checkTamilPoruthamByGender(
+    aStar: string, aRashi: string, aIsFemale: boolean,
+    bStar: string, bRashi: string
+): { score: number; status: MatchStatus; breakdown: Record<string, boolean> } {
+    return aIsFemale
+        ? checkTamilPorutham(aStar, aRashi, bStar, bRashi)
+        : checkTamilPorutham(bStar, bRashi, aStar, aRashi);
 }

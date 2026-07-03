@@ -6,13 +6,14 @@ import React, { useEffect, useState } from "react"
 import {
     User, GraduationCap, Heart, CheckCircle2, Phone, MessageCircle, Lock,
     Eye, Info, Users, Sparkles, Target, HeartHandshake, MoreVertical, UserX, UserMinus, Crown, Gem, Bookmark, ShieldCheck,
-    ChevronLeft, ChevronRight,
+    ChevronLeft, ChevronRight, Flag,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { MessageDialog } from "@/components/message-dialog"
+import { ReportProfileDialog } from "@/components/report-profile-dialog"
 import { formatToDDMMYYYY, formatActivityTime } from "@/lib/utils/date-utils"
 import { Badge } from "@/components/ui/badge"
 import { ProfileEducationCareerSection } from "@/components/profile/profile-education-career-section"
@@ -46,7 +47,8 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
     const [isViewerPremium, setIsViewerPremium] = useState(false)
     const [isMutual, setIsMutual] = useState(false)
     const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false)
-    
+    const [isReportDialogOpen, setIsReportDialogOpen] = useState(false)
+
     // Interaction dates
     const [iLikedDate, setILikedDate] = useState<string | null>(null)
     const [likedMeDate, setLikedMeDate] = useState<string | null>(null)
@@ -55,6 +57,7 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
     const [shortlistedDate, setShortlistedDate] = useState<string | null>(null)
     const [shortlistedMeDate, setShortlistedMeDate] = useState<string | null>(null)
     const [lastViewedMeDate, setLastViewedMeDate] = useState<string | null>(null)
+    const [acceptedDate, setAcceptedDate] = useState<string | null>(null)
 
     useEffect(() => {
         if (!targetUserId) return
@@ -158,6 +161,7 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                         setILikedStatus(myLike?.status || null)
                         setLikedMeDate(likeMe?.created_at || null)
                         setLikedMeStatus(likeMe?.status || null)
+                        setAcceptedDate(myLike?.accepted_at || likeMe?.accepted_at || null)
                     }
                     if (shortRes.ok) {
                         const shortData = await shortRes.json()
@@ -361,22 +365,26 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                                         {isMale ? "He" : "She"} shortlisted you on {formatToDDMMYYYY(shortlistedMeDate)}
                                     </p>
                                 )}
-                                {iLikedDate && iLikedStatus !== "accepted" && likedMeStatus !== "accepted" && !isMutual && (
+                                {(isMutual || iLikedStatus === "accepted" || likedMeStatus === "accepted") ? (
+                                    <p className="flex items-center xl:justify-end gap-1.5 text-[#e87898] font-medium">
+                                        <CheckCircle2 className="h-3.5 w-3.5" />
+                                        Accepted interest on {formatToDDMMYYYY(acceptedDate || iLikedDate || likedMeDate || "")}
+                                    </p>
+                                ) : iLikedStatus === "declined" ? (
+                                    <p className="flex items-center xl:justify-end gap-1.5 text-[#9ca3af]">
+                                        <Heart className="h-3.5 w-3.5 text-[#9ca3af]" />
+                                        {isMale ? "He" : "She"} declined your interest
+                                    </p>
+                                ) : iLikedDate ? (
                                     <p className="flex items-center xl:justify-end gap-1.5">
                                         <Heart className="h-3.5 w-3.5 text-[#e87898]" />
                                         You sent interest on {formatToDDMMYYYY(iLikedDate)}
                                     </p>
-                                )}
-                                {(isMutual || iLikedStatus === "accepted" || likedMeStatus === "accepted") && (
-                                    <p className="flex items-center xl:justify-end gap-1.5 text-[#e87898] font-medium">
-                                        <CheckCircle2 className="h-3.5 w-3.5" />
-                                        Mutual interest
-                                    </p>
-                                )}
+                                ) : null}
                                 {lastViewedMeDate && (
                                     <p className="flex items-center xl:justify-end gap-1.5">
                                         <Eye className="h-3.5 w-3.5 text-[#9ca3af]" />
-                                        Viewed you on {formatToDDMMYYYY(lastViewedMeDate)}
+                                        {isMale ? "He" : "She"} viewed you on {formatToDDMMYYYY(lastViewedMeDate)}
                                     </p>
                                 )}
                             </div>
@@ -430,6 +438,12 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                                         </DropdownMenuItem>
                                         <DropdownMenuItem className="rounded-lg text-xs text-red-600 cursor-pointer">
                                             <UserX className="h-3.5 w-3.5 mr-2" /> Block member
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={() => setIsReportDialogOpen(true)}
+                                            className="rounded-lg text-xs text-red-600 cursor-pointer"
+                                        >
+                                            <Flag className="h-3.5 w-3.5 mr-2" /> Report profile
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -685,6 +699,12 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                     <MessageDialog isOpen={isMessageDialogOpen} onOpenChange={setIsMessageDialogOpen} receiverId={targetUserId} receiverName={profile.name || "this member"} senderId={currentUserId || ""} isPremium={isViewerPremium} />
                 )}
             </AnimatePresence>
+            <ReportProfileDialog
+                open={isReportDialogOpen}
+                onOpenChange={setIsReportDialogOpen}
+                reportedUserId={targetUserId}
+                reportedName={profile.name}
+            />
         </div>
     )
 }

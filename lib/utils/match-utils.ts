@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/api-client"
 import { calculateLifestyleScore } from "@/lib/matching"
-import { checkTamilPorutham } from "@/lib/astrology"
+import { checkTamilPoruthamByGender } from "@/lib/astrology"
 import { filterProfilesByPartnerPreferences } from "@/lib/utils/partner-preference-filter"
 import { calculateTrustScore } from "@/lib/utils/profile-utils"
 
@@ -150,8 +150,8 @@ export async function fetchDailyRecommendations(userId: string) {
             }
 
             const lifestyleMatch = viewerData ? calculateLifestyleScore(viewerData as any, targetProfileData as any) : null
-            const horoscopeMatch = (myHoro?.star && targetHoro?.star) 
-                ? checkTamilPorutham(myHoro.star, myHoro.zodiac_sign || "", targetHoro.star, targetHoro.zodiac_sign || "")
+            const horoscopeMatch = (myHoro?.star && targetHoro?.star)
+                ? checkTamilPoruthamByGender(targetHoro.star, targetHoro.zodiac_sign || "", (p.sex || "").toLowerCase() === "female", myHoro.star, myHoro.zodiac_sign || "")
                 : { score: 0, status: 'Athamam', breakdown: {} }
 
             return {

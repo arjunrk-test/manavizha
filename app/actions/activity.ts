@@ -8,7 +8,11 @@ import { supabase } from '@/lib/supabase'
  */
 export async function updateActivity() {
     try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        // getSession reads the locally stored session without a network call —
+        // getUser() hits the auth endpoint and surfaces "Failed to fetch" errors
+        // on flaky connections for what is just a background ping.
+        const { data: { session }, error: authError } = await supabase.auth.getSession()
+        const user = session?.user
         if (authError || !user) return
 
     const now = new Date().toISOString()
