@@ -142,7 +142,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           { data: interests },
           { data: social },
           { data: photos },
-          { data: settings }
+          { data: settings },
+          { data: preferences }
         ] = await Promise.all([
           supabase.from("personal_details").select("completion_percentage, name, date_of_birth, age, sex, height, weight, skin_color, body_type, marital_status, about, food_preference, languages, photo_verified").eq("user_id", userId).maybeSingle(),
           supabase.from("contact_details").select("completion_percentage, phone, whatsapp_number, permanent_address_line1, permanent_pincode, permanent_area, permanent_taluk, permanent_district, permanent_division, permanent_region, permanent_state, permanent_country, current_address_line1, current_pincode, current_area, current_taluk, current_district, current_division, current_region, current_state, current_country").eq("user_id", userId).maybeSingle(),
@@ -155,7 +156,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           supabase.from("interests").select("hobbies, interests").eq("user_id", userId).maybeSingle(),
           supabase.from("social_habits").select("smoking, drinking, parties, pubs").eq("user_id", userId).maybeSingle(),
           supabase.from("photos").select("user_photos, family_photo, aadhar_front, aadhar_back").eq("user_id", userId).maybeSingle(),
-          supabase.from("user_settings").select("is_premium, premium_plan, premium_expires_at").eq("user_id", userId).maybeSingle()
+          supabase.from("user_settings").select("is_premium, premium_plan, premium_expires_at").eq("user_id", userId).maybeSingle(),
+          supabase.from("partner_preferences").select("preferred_age_min, preferred_age_max, preferred_height_min, preferred_height_max").eq("user_id", userId).maybeSingle()
         ])
 
         const stepProgresses: number[] = []
@@ -265,24 +267,32 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
         let photosProgress = 0
         if (photos) {
           const userPhotos = photos.user_photos || []
-          if (userPhotos.length >= 3 && photos.family_photo && photos.aadhar_front && photos.aadhar_back) {
+          if (userPhotos.length >= 3) {
             photosProgress = 100
           }
         }
         stepProgresses.push(photosProgress)
 
-        // 10. Referral (Always 100% since it's optional, but only if they've started the form)
-        // If they have NO personal data, they haven't started at all, so overall should be 0.
-        // We handle this by calculating a base completeness check.
-        const hasStartedProfile = personalProgress > 0 || contactProgress > 0
-        let referralProgress = hasStartedProfile ? 100 : 0
-        stepProgresses.push(referralProgress)
+        // 10. Partner Preferences
+        let preferencesProgress = 0
+        if (preferences) {
+          // As per setup form, we only strictly require age and height fields to be explicitly filled
+          const prefFields = ["preferred_age_min", "preferred_age_max", "preferred_height_min", "preferred_height_max"]
+          const pFilled = prefFields.filter(f => {
+            const val = preferences[f as keyof typeof preferences]
+            return val !== null && val !== undefined && val !== ""
+          }).length
+          // Simulate the 26 fields by pretending the other 22 are filled with "Any"
+          preferencesProgress = Math.round(((pFilled + 22) / 26) * 100)
+        }
+        stepProgresses.push(preferencesProgress)
 
         const coreComplete = personalProgress === 100 && contactProgress === 100 && eduProgress === 100 && profProgress === 100 && familyProgress === 100
         setIsCoreProfileComplete(coreComplete)
 
         const totalProgress = stepProgresses.reduce((sum, p) => sum + p, 0)
         // Only round and divide if they have started to avoid baseline 10%
+        const hasStartedProfile = personalProgress > 0 || contactProgress > 0
         const averageProgress = hasStartedProfile ? Math.round(totalProgress / stepProgresses.length) : 0
         setCompletionPercentage(averageProgress)
         if (onProgressChange) onProgressChange(averageProgress)
