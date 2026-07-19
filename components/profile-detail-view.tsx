@@ -513,7 +513,7 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                                 ) : (
                                     <Button
                                         onClick={() =>
-                                            isLiked || iLikedStatus === "accepted" || isMutual
+                                            isLiked || iLikedStatus === "accepted" || isMutual || isViewerPremium
                                                 ? handleSendMessage()
                                                 : handleLike()
                                         }
@@ -521,7 +521,7 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                                         className="h-9 px-4 rounded-xl bg-[#e87898] hover:bg-[#d66686] text-white text-xs font-medium"
                                     >
                                         <MessageCircle className="h-3.5 w-3.5 mr-1.5" />
-                                        {isLiked || iLikedStatus === "accepted" || isMutual ? "Message" : "Send interest"}
+                                        {isLiked || iLikedStatus === "accepted" || isMutual || isViewerPremium ? "Message" : "Send interest"}
                                     </Button>
                                 )}
                                 <DropdownMenu>
