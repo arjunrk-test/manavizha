@@ -112,8 +112,76 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
       return
     }
 
-    // Navigate to the generator page with prefilled data
-    router.push(`/dashboard/horoscope?dob=${encodeURIComponent(formData.dateOfBirth)}&tob=${encodeURIComponent(formData.timeOfBirth)}&city=${encodeURIComponent(formData.placeOfBirth)}`)
+    setIsGenerating(true)
+    try {
+      // 1. Geocode the city to get lat/long
+      const geoRes = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(formData.placeOfBirth)}&limit=1&addressdetails=1`);
+      const geoData = geoRes.data;
+      if (!geoData || !geoData[0]) throw new Error("Could not determine location coordinates.");
+      
+      const location = { 
+        latitude: parseFloat(geoData[0].lat), 
+        longitude: parseFloat(geoData[0].lon) 
+      };
+
+      // 2. Generate the horoscope
+      const datePart = formData.dateOfBirth.includes('T') ? formData.dateOfBirth.split('T')[0] : formData.dateOfBirth;
+      const cleanTime = formData.timeOfBirth.length === 5 ? `${formData.timeOfBirth}:00` : formData.timeOfBirth;
+      const fullDateTime = `${datePart}T${cleanTime}`;
+      
+      const result = await generateHoroscope(fullDateTime, location, "+05:30", 'thirukanitham');
+
+      // 3. Match options and set form fields
+      const matchOption = (options: { id: string, value: string }[] | undefined, val: string) => {
+        if (!options || !val) return "";
+        // Extract Tamil text inside parentheses from the generated value (e.g. "Ayilyam (ஆயில்யம்)" -> "ஆயில்யம்")
+        const tamilMatch = val.match(/\((.*?)\)/);
+        const tamilPart = tamilMatch ? tamilMatch[1].trim() : "";
+        
+        if (tamilPart) {
+          const matched = options.find(opt => opt.value.includes(tamilPart));
+          if (matched) return matched.value;
+        }
+        
+        // Fallback to english prefix match if no tamil part
+        const englishPart = val.split(" ")[0].toLowerCase();
+        const matchedEng = options.find(opt => opt.value.toLowerCase().includes(englishPart));
+        return matchedEng ? matchedEng.value : val;
+      };
+
+      onChange("star", matchOption(starOptions, result.star));
+      onChange("zodiacSign", matchOption(zodiacSignOptions, result.rashi));
+      onChange("lagnam", matchOption(lagnamOptions, result.lagnam));
+
+      // 4. Set Dhosham details
+      let dhoshamText = "No Dhosham";
+      if (result.papaPulligal) {
+        const doshams = [];
+        if (result.papaPulligal.sevvaiDosham === "தோஷம் உள்ளது") doshams.push("Chevvai Dhosham");
+        if (result.papaPulligal.rahuDosham === "தோஷம் உள்ளது") doshams.push("Rahu/Ketu Dhosham");
+        if (doshams.length > 0) {
+          dhoshamText = doshams.join(", ");
+        }
+      }
+      onChange("dhosham", dhoshamText);
+      
+      // 5. Store the full generated chart data to render inline
+      onChange("manualGrid", {
+        ...result,
+        name: formData.name || 'User',
+        dob: format(new Date(formData.dateOfBirth), "dd MMM yyyy"),
+        tob: cleanTime,
+        pob: formData.placeOfBirth,
+        calculationMethod: 'thirukanitham'
+      });
+      
+      toast.success("Horoscope details calculated and pre-filled!");
+    } catch (err: any) {
+      console.error("Error generating horoscope:", err);
+      toast.error(err.message || "Failed to calculate horoscope details.");
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const handleViewDetailed = async (method: 'thirukanitham' | 'vakkiyam' = 'thirukanitham') => {
@@ -246,11 +314,48 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
 
         <div className={SETUP_SECTION_CARD}>
           <SetupSectionHeader
-            icon={Zap}
-            title="Calculate details"
-            description="Instant details from birth time using traditional methods"
+            icon={Clock}
+            title="Birth Details & Calculation"
+            description="Review your birth details and calculate horoscope"
           />
-          <div className="setup-section-card-body">
+          <div className={`${SETUP_SECTION_BODY} grid-cols-1 md:grid-cols-3`}>
+            <div className="space-y-2">
+              <Label className="sds-label">Date of Birth</Label>
+              <Input
+                value={formData.dateOfBirth ? format(new Date(formData.dateOfBirth), "dd MMM yyyy") : "Not provided"}
+                disabled
+                className="sds-input w-full bg-black/5 opacity-70 cursor-not-allowed"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="timeOfBirth" className="sds-label">Time of Birth *</Label>
+              <Input
+                id="timeOfBirth"
+                type="time"
+                value={formData.timeOfBirth || ""}
+                onChange={(e) => onChange("timeOfBirth", e.target.value)}
+                required
+                className="sds-input w-full"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <Label className="sds-label text-[#1F4068] border-[#f0ebe3] flex items-center gap-2">Place of Birth *</Label>
+              <GlobalLocationSelector 
+                initialCity={formData.placeOfBirth || ""}
+                initialState={formData.birthState || ""}
+                initialCountry={formData.birthCountry || ""}
+                onLocationChange={(loc) => {
+                  onChange("placeOfBirth", loc.city)
+                  onChange("birthState", loc.state)
+                  onChange("birthCountry", loc.country)
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="setup-section-card-body border-t border-[#f0ebe3] pt-8">
             <div className="p-8 rounded-[3rem] border-2 border-amber-100/50 bg-gradient-to-br from-amber-50/30 to-white/40 flex flex-col md:flex-row items-center justify-between gap-8 overflow-hidden relative group shadow-[0_20px_40px_-10px_rgba(251,191,36,0.1)]">
           <div className="absolute -top-10 -right-10 p-12 opacity-5 group-hover:opacity-10 transition-all duration-1000 group-hover:rotate-45 group-hover:scale-150">
             <Zap className="h-48 w-48 text-amber-500" />
@@ -300,6 +405,35 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
           </div>
         </div>
 
+        {formData.manualGrid && !formData.jaadhagam && (
+          <div className="mt-6 mb-6 mx-2 animate-in fade-in slide-in-from-top-2">
+            <div className="bg-white rounded-[24px] shadow-sm border border-emerald-100 overflow-hidden">
+              <div className="p-4 bg-emerald-50/50 border-b border-emerald-100 flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-emerald-900">Generated Jaadhagam Chart</h3>
+                  <p className="text-xs text-emerald-600/80">This chart will be saved to your profile</p>
+                </div>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => onChange("manualGrid", null)}
+                >
+                  <X className="h-4 w-4 mr-2" /> Clear Chart
+                </Button>
+              </div>
+              <div className="p-2 sm:p-4">
+                <DetailedHoroscopeView 
+                  data={formData.manualGrid} 
+                  hideCloseButton 
+                  variant="embedded"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         <Dialog open={isViewingDetailed} onOpenChange={setIsViewingDetailed}>
           <DialogContent className="max-w-4xl p-1 bg-transparent border-none shadow-none overflow-y-auto max-h-[90vh]">
             <DialogTitle className="sr-only">Detailed Horoscope View</DialogTitle>
@@ -313,40 +447,7 @@ export function HoroscopeDetailsStep({ formData, onChange }: HoroscopeDetailsSte
           </DialogContent>
         </Dialog>
 
-        <div className={SETUP_SECTION_CARD}>
-          <SetupSectionHeader
-            icon={Clock}
-            title="Birth time & place"
-            description="Required for horoscope calculation"
-          />
-          <div className={`${SETUP_SECTION_BODY} grid-cols-1 md:grid-cols-2`}>
-            <div className="space-y-2">
-              <Label htmlFor="timeOfBirth" className="sds-label">Time of Birth *</Label>
-              <Input
-                id="timeOfBirth"
-                type="time"
-                value={formData.timeOfBirth || ""}
-                onChange={(e) => onChange("timeOfBirth", e.target.value)}
-                required
-                className="sds-input w-full"
-              />
-            </div>
 
-            <div className="space-y-4">
-              <Label className="sds-label text-[#1F4068] border-[#f0ebe3] flex items-center gap-2">Place of Birth *</Label>
-              <GlobalLocationSelector 
-                initialCity={formData.placeOfBirth || ""}
-                initialState={formData.birthState || ""}
-                initialCountry={formData.birthCountry || ""}
-                onLocationChange={(loc) => {
-                  onChange("placeOfBirth", loc.city)
-                  onChange("birthState", loc.state)
-                  onChange("birthCountry", loc.country)
-                }}
-              />
-            </div>
-          </div>
-        </div>
 
         <div className={SETUP_SECTION_CARD}>
           <SetupSectionHeader

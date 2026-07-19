@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { AnimatePresence, motion } from "framer-motion"
-import { CheckCircle2, ShieldCheck } from "lucide-react"
+import { CheckCircle2, ShieldCheck, ChevronRight } from "lucide-react"
 import { DashboardJourneyPatterns } from "@/components/dashboard/dashboard-journey-patterns"
 import { ProfileSetupWizardTimeline } from "@/components/profile-setup/profile-setup-wizard-timeline"
 import type { FormData } from "@/types/profile"
@@ -49,6 +50,7 @@ const formSteps = [
 ]
 
 export function ProfileSetupForm({ userId, onProgressChange }: { userId: string; onProgressChange?: (progress: number) => void }) {
+  const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -203,6 +205,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
   })
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const advanceOnSaveRef = useRef(false)
+  // DOB & Gender are locked once set (change requires contacting support)
+  const [identityLocked, setIdentityLocked] = useState(false)
   const [originalPersonalDetails, setOriginalPersonalDetails] = useState<Partial<FormData> | null>(null)
   const [originalContactDetails, setOriginalContactDetails] = useState<Partial<FormData> | null>(null)
   const [originalEducationDetails, setOriginalEducationDetails] = useState<FormData["educationDetails"] | null>(null)
@@ -235,6 +240,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         }
 
         if (data) {
+          // Lock DOB & Gender if they were already provided
+          if (data.date_of_birth && data.sex) {
+            setIdentityLocked(true)
+          }
           // Map database column names (snake_case) to form field names (camelCase)
           const loadedData = {
             name: data.name || "",
@@ -289,12 +298,12 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             preferredAgeMax: data.preferred_age_max?.toString() || "",
             preferredHeightMin: data.preferred_height_min?.toString() || "",
             preferredHeightMax: data.preferred_height_max?.toString() || "",
-            preferredMaritalStatus: data.preferred_marital_status || "Any",
+            preferredMaritalStatus: Array.isArray(data.preferred_marital_status) ? data.preferred_marital_status[0] || "Any" : data.preferred_marital_status || "Any",
             preferredMotherTongue: data.preferred_mother_tongue || "",
             preferredPhysicalStatus: data.preferred_physical_status || "Any",
-            preferredEatingHabits: data.preferred_eating_habits || "Any",
-            preferredSmokingHabits: data.preferred_smoking_habits || "Any",
-            preferredDrinkingHabits: data.preferred_drinking_habits || "Any",
+            preferredEatingHabits: Array.isArray(data.preferred_eating_habits) ? data.preferred_eating_habits[0] || "Any" : data.preferred_eating_habits || "Any",
+            preferredSmokingHabits: Array.isArray(data.preferred_smoking_habits) ? data.preferred_smoking_habits[0] || "Any" : data.preferred_smoking_habits || "Any",
+            preferredDrinkingHabits: Array.isArray(data.preferred_drinking_habits) ? data.preferred_drinking_habits[0] || "Any" : data.preferred_drinking_habits || "Any",
             preferredReligion: data.preferred_religion || "",
             preferredCaste: data.preferred_caste || "",
             preferredSubcaste: data.preferred_subcaste || "",
@@ -306,7 +315,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             preferredDegrees: Array.isArray(data.preferred_degrees) ? data.preferred_degrees : (data.preferred_degrees ? data.preferred_degrees.split(",").map((s: string) => s.trim()) : []),
             preferredBranches: Array.isArray(data.preferred_branches) ? data.preferred_branches : (data.preferred_branches ? data.preferred_branches.split(",").map((s: string) => s.trim()) : []),
             preferredLanguages: Array.isArray(data.preferred_languages) ? data.preferred_languages : (data.preferred_languages ? data.preferred_languages.split(",").map((s: string) => s.trim()) : []),
-            preferredEmploymentType: data.preferred_employment_type || "Any",
+            preferredEmploymentType: Array.isArray(data.preferred_employment_type) ? data.preferred_employment_type[0] || "Any" : data.preferred_employment_type || "Any",
             preferredEmployedIn: Array.isArray(data.preferred_employed_in) ? data.preferred_employed_in : (data.preferred_employed_in ? data.preferred_employed_in.split(",").map((s: string) => s.trim()) : []),
             preferredOccupation: Array.isArray(data.preferred_occupation) ? data.preferred_occupation : (data.preferred_occupation ? data.preferred_occupation.split(",").map((s: string) => s.trim()) : []),
             preferredAnnualIncome: data.preferred_annual_income || "",
@@ -523,6 +532,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             star: data.star || "",
             lagnam: data.lagnam || "",
             dhosham: data.dhosham || "",
+            manualGrid: data.manual_grid || null,
           }
 
           // Store original data for comparison
@@ -918,37 +928,26 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
   // Calculate overall progress
   const calculateOverallProgress = () => {
-    const totalFields = Object.keys(formData).length
-    const filledFields = Object.entries(formData).filter(([key, value]) => {
-      // Special handling for salary field - only count if it has more than just "₹"
-      if (key === "salary") {
-        return value !== "₹" && value !== "" && value !== null && value !== undefined
-      }
+    // Only include steps 0 to 9 (exclude Referral step)
+    const stepsToInclude = [
+      "personal",
+      "contact",
+      "education",
+      "professional",
+      "family",
+      "horoscope",
+      "interests",
+      "social",
+      "photos",
+      "preferences",
+    ]
 
-      // Special handling for educationDetails - check if at least one entry has actual data
-      if (key === "educationDetails") {
-        if (Array.isArray(value) && value.length > 0) {
-          return value.some((edu: any) =>
-            edu && (edu.education || edu.degree || edu.institution || edu.yearOfGraduation)
-          )
-        }
-        return false
-      }
+    let totalProgress = 0
+    stepsToInclude.forEach((stepId) => {
+      totalProgress += calculateStepProgress(stepId)
+    })
 
-      // For arrays, check if they have meaningful content
-      if (Array.isArray(value)) {
-        // For userPhotos, require at least 3 photos
-        if (key === "userPhotos") {
-          return value.length >= 3
-        }
-        // For other arrays, check if they have any items
-        return value.length > 0
-      }
-
-      // For regular fields, check if they're not empty
-      return value !== "" && value !== null && value !== undefined
-    }).length
-    return Math.round((filledFields / totalFields) * 100)
+    return Math.round(totalProgress / stepsToInclude.length)
   }
 
   // Calculate step progress
@@ -980,11 +979,11 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       education: ["educationDetails"],
       professional: [], // Will be calculated dynamically based on employment type
       family: ["fatherName", "fatherOccupation", "motherName", "motherOccupation", "parentsAddressLine1", "parentsPincode", "parentsArea", "parentsTaluk", "parentsDistrict", "parentsDivision", "parentsRegion", "parentsState", "parentsCountry", "caste", "familyType", "familyStatus"],
-      horoscope: ["jaadhagam", "timeOfBirth", "placeOfBirth", "zodiacSign", "star", "lagnam", "dhosham"],
+      horoscope: [], // Will be calculated dynamically
       interests: ["hobbies", "interests"],
       social: ["smoking", "drinking", "parties", "pubs"],
-      photos: ["userPhotos", "familyPhoto", "aadharFront", "aadharBack"],
-      preferences: ["preferredAgeMin", "preferredAgeMax", "preferredHeightMin", "preferredHeightMax", "preferredMaritalStatus", "preferredMotherTongue", "preferredPhysicalStatus", "preferredEatingHabits", "preferredSmokingHabits", "preferredDrinkingHabits", "preferredReligion", "preferredCaste", "preferredSubcaste", "casteCompulsory", "preferredStar", "preferredRaasi", "preferredDosham", "preferredEducation", "preferredEmployedIn", "preferredOccupation", "preferredAnnualIncomeMin", "preferredCountry", "preferredState", "preferredCity", "preferredLanguages"],
+      photos: ["userPhotos", "aadharFront", "aadharBack"],
+      preferences: ["preferredAgeMin", "preferredAgeMax", "preferredHeightMin", "preferredHeightMax", "preferredMaritalStatus", "preferredPhysicalStatus", "preferredEatingHabits", "preferredSmokingHabits", "preferredDrinkingHabits", "preferredReligion", "preferredCaste", "preferredSubcaste", "casteCompulsory", "preferredStar", "preferredRaasi", "preferredDosham", "preferredEducation", "preferredDegrees", "preferredBranches", "preferredEmployedIn", "preferredOccupation", "preferredAnnualIncomeMin", "preferredCountry", "preferredState", "preferredCity", "preferredLanguages"],
       referral: ["referralPartnerId"],
     }
 
@@ -1008,13 +1007,11 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
       let fields: (keyof FormData)[] = []
       if (buckets.isEmployee) {
-        // Exclude payslip as it's optional
-        fields = ["employmentType", "sector", "company", "designation", "salary", "workLocation"]
+        fields = ["employmentType", "sector", "company", "designation", "salaryRange", "workLocation"]
       } else if (buckets.isBusiness) {
-        // Exclude itrDocument as it's optional
-        fields = ["employmentType", "sector", "businessName", "businessType", "designation", "annualReturns", "businessLocation"]
+        fields = ["employmentType", "sector", "businessName", "businessType", "designation", "revenueRange", "businessLocation"]
       } else if (buckets.isStudent) {
-        fields = ["employmentType", "institution", "course", "fieldOfStudy", "yearOfStudy", "expectedGraduationYear"]
+        fields = ["employmentType", "sector", "institution", "designation", "expectedGraduationYear", "workLocation"]
       }
 
       const filled = fields.filter((field) => {
@@ -1049,6 +1046,44 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         return value !== "" && value !== null && value !== undefined
       }).length
 
+      return fields.length > 0 ? Math.round((filled / fields.length) * 100) : 0
+    }
+
+    if (stepId === "horoscope") {
+      let fields: (keyof FormData)[] = ["timeOfBirth", "placeOfBirth", "zodiacSign", "star", "lagnam", "dhosham"]
+      
+      const filled = fields.filter((field) => {
+        const value = formData[field]
+        return value !== "" && value !== null && value !== undefined
+      }).length
+
+      // Check if jaadhagam image or manual grid exists
+      const hasImage = formData.jaadhagam && formData.jaadhagam !== ""
+      const hasGrid = formData.manualGrid && Object.keys(formData.manualGrid).length > 0
+      
+      // The image/chart itself is counted as 1 field
+      const totalFields = fields.length + 1
+      const totalFilled = filled + (hasImage || hasGrid ? 1 : 0)
+      
+      return Math.round((totalFilled / totalFields) * 100)
+    }
+
+    if (stepId === "preferences") {
+      const fields = stepFields[stepId] || []
+      const filled = fields.filter((field) => {
+        const value = formData[field]
+        
+        // These fields must be explicitly filled with a value
+        const requiredNumberFields = ["preferredAgeMin", "preferredAgeMax", "preferredHeightMin", "preferredHeightMax"]
+        if (requiredNumberFields.includes(field)) {
+          return value !== "" && value !== null && value !== undefined
+        }
+        
+        // All other fields in preferences (arrays or strings) have "Any" as their default/valid state, 
+        // which corresponds to [] or "" respectively. Thus they are always considered "filled".
+        return true
+      }).length
+      
       return fields.length > 0 ? Math.round((filled / fields.length) * 100) : 0
     }
 
@@ -1087,10 +1122,6 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       if (field === "userPhotos") {
         // User photos: minimum 3 required
         return Array.isArray(value) && value.length >= 3
-      }
-      if (field === "salary") {
-        // Salary field starts with ₹, so check if there's a value after it
-        return value && value !== "₹" && value !== "" && value !== null && value !== undefined
       }
       if (Array.isArray(value)) {
         return value.length > 0
@@ -1498,11 +1529,6 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       errors.push("userPhotos")
     }
 
-    // Check family photo
-    if (!formData.familyPhoto || formData.familyPhoto.trim() === "") {
-      errors.push("familyPhoto")
-    }
-
     // Check Aadhar front
     if (!formData.aadharFront || formData.aadharFront.trim() === "") {
       errors.push("aadharFront")
@@ -1531,7 +1557,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         })
       } else {
         toast.error("Please fill out all required fields", {
-          description: "All photo fields are mandatory.",
+          description: "User photos and Aadhar verification are mandatory.",
           style: {
             background: "#fee2e2",
             border: "1px solid #ef4444",
@@ -1823,7 +1849,6 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       { key: "parentsRegion", label: "Parents Region" },
       { key: "parentsState", label: "Parents State" },
       { key: "parentsCountry", label: "Parents Country" },
-      { key: "siblings", label: "Siblings Details" },
       { key: "familyDescription", label: "Brief Description About Family" },
       { key: "caste", label: "Caste" },
       { key: "familyStatus", label: "Family Status" },
@@ -2411,7 +2436,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             branch: edu.branch || null,
             institution: edu.institution || null,
             year_of_graduation: edu.yearOfGraduation ? parseInt(edu.yearOfGraduation) : null,
-            status: edu.status || null,
+            status: edu.status ? edu.status.toLowerCase() : null,
           }))
 
           const { error: insertError } = await supabase
@@ -2571,10 +2596,9 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
             }
           }
 
-          // Save to employee table
           const employeeData = {
             user_id: userId,
-            employment_type: formData.employmentType || null,
+            // employment_type: formData.employmentType || null, // TODO: Column missing in DB!
             sector: formData.sector || null,
             sector_other: formData.sector === "other" ? (formData.sectorOther || null) : null,
             company: formData.company || null,
@@ -2930,6 +2954,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           star: formData.star || null,
           lagnam: formData.lagnam || null,
           dhosham: formData.dhosham || null,
+          manual_grid: formData.manualGrid || null,
           completion_percentage: horoscopeDetailsProgress,
         }
 
@@ -2950,6 +2975,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           star: formData.star,
           lagnam: formData.lagnam,
           dhosham: formData.dhosham,
+          manualGrid: formData.manualGrid,
         })
 
         // Update form data with the URL if it was uploaded
@@ -3482,26 +3508,25 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           preferred_age_max: parseInt(formData.preferredAgeMax) || null,
           preferred_height_min: parseInt(formData.preferredHeightMin) || null,
           preferred_height_max: parseInt(formData.preferredHeightMax) || null,
-          preferred_marital_status: formData.preferredMaritalStatus || "Any",
+          preferred_marital_status: [formData.preferredMaritalStatus || "Any"],
           preferred_mother_tongue: formData.preferredMotherTongue || null,
           preferred_physical_status: formData.preferredPhysicalStatus || "Any",
-          preferred_eating_habits: formData.preferredEatingHabits || "Any",
-          preferred_smoking_habits: formData.preferredSmokingHabits || "Any",
-          preferred_drinking_habits: formData.preferredDrinkingHabits || "Any",
+          preferred_eating_habits: [formData.preferredEatingHabits || "Any"],
+          preferred_smoking_habits: [formData.preferredSmokingHabits || "Any"],
+          preferred_drinking_habits: [formData.preferredDrinkingHabits || "Any"],
           preferred_religion: formData.preferredReligion || null,
           preferred_caste: formData.preferredCaste || null,
           preferred_subcaste: formData.preferredSubcaste || null,
-          caste_compulsory: formData.casteCompulsory,
           preferred_star: formData.preferredStar || null,
           preferred_raasi: formData.preferredRaasi || null,
           preferred_dosham: formData.preferredDosham || "Any",
-          preferred_education: formData.preferredEducation || [],
-          preferred_degrees: formData.preferredDegrees || [],
-          preferred_branches: formData.preferredBranches || [],
-          preferred_languages: formData.preferredLanguages || [],
-          preferred_employment_type: formData.preferredEmploymentType || "Any",
-          preferred_employed_in: formData.preferredEmployedIn || [],
-          preferred_occupation: formData.preferredOccupation || [],
+          preferred_education: Array.isArray(formData.preferredEducation) ? formData.preferredEducation : (formData.preferredEducation ? [formData.preferredEducation] : []),
+          preferred_degrees: Array.isArray(formData.preferredDegrees) ? formData.preferredDegrees : (formData.preferredDegrees ? [formData.preferredDegrees] : []),
+          preferred_branches: Array.isArray(formData.preferredBranches) ? formData.preferredBranches : (formData.preferredBranches ? [formData.preferredBranches] : []),
+          preferred_languages: Array.isArray(formData.preferredLanguages) ? formData.preferredLanguages : (formData.preferredLanguages ? [formData.preferredLanguages] : []),
+          preferred_employment_type: [formData.preferredEmploymentType || "Any"],
+          preferred_employed_in: Array.isArray(formData.preferredEmployedIn) ? formData.preferredEmployedIn : (formData.preferredEmployedIn ? [formData.preferredEmployedIn] : []),
+          preferred_occupation: Array.isArray(formData.preferredOccupation) ? formData.preferredOccupation : (formData.preferredOccupation ? [formData.preferredOccupation] : []),
           preferred_annual_income: formData.preferredAnnualIncome || null,
           preferred_annual_income_min: formData.preferredAnnualIncomeMin || null,
           preferred_country: formData.preferredCountry || null,
@@ -3559,6 +3584,11 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       } else {
         throw new Error(`Unknown setup step: ${currentStep}`)
       }
+
+      // If we reach here without returning or throwing, the save was successful.
+      if (advanceOnSaveRef.current && currentStep < formSteps.length - 1) {
+        handleStepClick(currentStep + 1)
+      }
     } catch (error: unknown) {
       const message = getErrorMessage(error)
       console.error(
@@ -3576,6 +3606,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       })
     } finally {
       setIsSaving(false)
+      advanceOnSaveRef.current = false
     }
   }
 
@@ -3660,7 +3691,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.2 }}
             >
-              {currentStep === 0 && <PersonalDetailsStep formData={formData} onChange={handleInputChange} />}
+              {currentStep === 0 && <PersonalDetailsStep formData={formData} onChange={handleInputChange} lockIdentity={identityLocked} />}
               {currentStep === 1 && <ContactDetailsStep formData={formData} onChange={handleInputChange} />}
               {currentStep === 2 && <EducationalDetailsStep formData={formData} onChange={handleInputChange} />}
               {currentStep === 3 && <ProfessionalDetailsStep formData={formData} onChange={handleInputChange} />}
@@ -3685,36 +3716,55 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
               <ShieldCheck className="h-4 w-4 text-[#e87898] shrink-0" />
               <span>Your profile data is stored securely</span>
             </div>
-            <Button
-              onClick={handleSave}
-              disabled={
-                isSaving ||
-                (currentStep === 0 && !hasPersonalDetailsChanged()) ||
-                (currentStep === 1 && !hasContactDetailsChanged()) ||
-                (currentStep === 2 && !hasEducationDetailsChanged()) ||
-                (currentStep === 3 && !hasProfessionalDetailsChanged()) ||
-                (currentStep === 4 && !hasFamilyDetailsChanged()) ||
-                (currentStep === 5 && !hasHoroscopeDetailsChanged()) ||
-                (currentStep === 6 && !hasInterestsDetailsChanged()) ||
-                (currentStep === 7 && !hasSocialHabitsDetailsChanged()) ||
-                (currentStep === 8 && !hasPhotosDetailsChanged()) ||
-                (currentStep === 9 && !hasPartnerPreferencesChanged()) ||
-                (currentStep === 10 && !hasReferralDetailsChanged())
-              }
-              className="h-10 px-6 rounded-[10px] bg-[#e87898] hover:bg-[#d66686] text-white text-[13px] font-medium shadow-none disabled:opacity-40"
-            >
-              {isSaving ? (
-                <span className="flex items-center gap-2">
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                  Saving…
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Save {formSteps[currentStep].title}
-                </span>
+            <div className="flex items-center gap-3">
+              {currentStep === formSteps.length - 1 && (
+                <Button
+                  onClick={() => router.push("/dashboard")}
+                  variant="outline"
+                  className="h-10 px-6 rounded-[10px] border-[#f0ebe3] bg-white text-[#4b5563] hover:text-[#1F4068] hover:bg-[#faf8f4] text-[13px] font-medium"
+                >
+                  Go to Dashboard
+                </Button>
               )}
-            </Button>
+              <Button
+                onClick={() => {
+                  const isDirty = (
+                    (currentStep === 0 && hasPersonalDetailsChanged()) ||
+                    (currentStep === 1 && hasContactDetailsChanged()) ||
+                    (currentStep === 2 && hasEducationDetailsChanged()) ||
+                    (currentStep === 3 && hasProfessionalDetailsChanged()) ||
+                    (currentStep === 4 && hasFamilyDetailsChanged()) ||
+                    (currentStep === 5 && hasHoroscopeDetailsChanged()) ||
+                    (currentStep === 6 && hasInterestsDetailsChanged()) ||
+                    (currentStep === 7 && hasSocialHabitsDetailsChanged()) ||
+                    (currentStep === 8 && hasPhotosDetailsChanged()) ||
+                    (currentStep === 9 && hasPartnerPreferencesChanged()) ||
+                    (currentStep === 10 && hasReferralDetailsChanged())
+                  );
+
+                  if (isDirty) {
+                    advanceOnSaveRef.current = true;
+                    handleSave();
+                  } else if (currentStep < formSteps.length - 1) {
+                    handleStepClick(currentStep + 1);
+                  }
+                }}
+                disabled={isSaving}
+                className="h-10 px-6 rounded-[10px] bg-[#e87898] hover:bg-[#d66686] text-white text-[13px] font-medium shadow-none disabled:opacity-40"
+              >
+                {isSaving ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    Saving…
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" />
+                    {currentStep < formSteps.length - 1 ? "Save & Next Step" : "Save Details"}
+                  </span>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

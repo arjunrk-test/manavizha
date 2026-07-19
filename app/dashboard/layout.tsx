@@ -55,6 +55,18 @@ export default function DashboardLayout({
         setUser(authUser)
         setIsLoading(false)
 
+        // Ensure a users row exists (covers accounts that arrived via the email
+        // verification link, which bypasses the login form). Never overwrites.
+        supabase.from("users").upsert(
+          {
+            id: authUser.id,
+            email: authUser.email,
+            name: authUser.user_metadata?.name ?? null,
+            phone: authUser.user_metadata?.phone ?? null,
+          },
+          { onConflict: "id", ignoreDuplicates: true }
+        ).then(() => {}, () => {})
+
         // Check if account was deactivated — auto-reactivate on login and notify
         try {
           const settingsRes = await authFetch(`/api/settings?userId=${authUser.id}`)
@@ -457,6 +469,7 @@ export default function DashboardLayout({
                                       : n.type === 'message_received' ? 'sent you a message'
                                       : n.type === 'photo_request' ? 'requested your photos'
                                       : n.type === 'photo_request_approved' ? 'approved your photo request'
+                                      : n.type === 'contact_viewed' ? 'viewed your contact details'
                                       : 'sent you an update'}
                                   </p>
                                   <span className="shrink-0 whitespace-nowrap text-[10px] text-[#9ca3af]">

@@ -16,6 +16,8 @@ interface AuthDialogProps {
   defaultMode?: "login" | "signup"
 }
 
+type AuthMode = "login" | "signup" | "reset"
+
 const coupleStories = [
   {
     name: "Arjun & Priya",
@@ -56,7 +58,7 @@ const authPrimaryButtonClass =
 
 export function AuthDialog({ open, onOpenChange, defaultMode = "login" }: AuthDialogProps) {
   const router = useRouter()
-  const [authMode, setAuthMode] = useState<"login" | "signup">("login")
+  const [authMode, setAuthMode] = useState<AuthMode>("login")
   const [email, setEmail] = useState("")
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
@@ -111,9 +113,47 @@ export function AuthDialog({ open, onOpenChange, defaultMode = "login" }: AuthDi
 
   const passwordsMatch = authMode === "login" || !confirmPassword || password === confirmPassword
 
+  // Ensures a row exists in the users table without overwriting existing data
+  // (name/phone come from signup metadata). Safe to call on every login.
+  const ensureUserRow = async (user: { id: string; email?: string | null; user_metadata?: any }) => {
+    try {
+      await supabase.from("users").upsert(
+        {
+          id: user.id,
+          email: user.email,
+          name: user.user_metadata?.name ?? null,
+          phone: user.user_metadata?.phone ?? null,
+        },
+        { onConflict: "id", ignoreDuplicates: true }
+      )
+    } catch {
+      // Non-fatal — the row may already exist or be created elsewhere
+    }
+  }
+
   const handleAuthSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
+    setSuccessMessage(null)
+
+    // Forgot-password: email-only, sends a reset link
+    if (authMode === "reset") {
+      setIsLoading(true)
+      try {
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/account/update-password`,
+        })
+        if (resetError) throw resetError
+        setSuccessMessage(
+          "If an account exists for this email, a password reset link is on its way. Please check your inbox."
+        )
+      } catch (err: any) {
+        setError(err.message || "Could not send the reset email. Please try again.")
+      } finally {
+        setIsLoading(false)
+      }
+      return
+    }
 
     if (authMode === "signup") {
       if (!passwordsMatch || !passwordStrength.isValid) {
@@ -126,63 +166,38 @@ export function AuthDialog({ open, onOpenChange, defaultMode = "login" }: AuthDi
 
     try {
       if (authMode === "signup") {
-        // Sign up the user (email confirmation disabled in Supabase settings)
+        const phoneFull = phone.trim() ? `${countryCode} ${phone.trim()}` : null
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: undefined, // No email confirmation needed
+            // Where the confirmation link lands (when email confirmation is on)
+            emailRedirectTo: `${window.location.origin}/dashboard`,
+            data: { name: name.trim() || null, phone: phoneFull },
           },
         })
 
         if (authError) throw authError
 
-        if (authData.user) {
-          // Add user to users table using upsert to handle duplicates gracefully
-          const { data: insertData, error: insertError } = await supabase
-            .from("users")
-            .upsert(
-              {
-                id: authData.user.id,
-                email: authData.user.email,
-                name: name.trim() || null,
-                phone: phone.trim() ? `${countryCode} ${phone.trim()}` : null,
-              },
-              {
-                onConflict: "id",
-              }
-            )
-            .select()
-
-          if (insertError) {
-            // Only log meaningful errors (not empty objects or duplicate key errors)
-            const hasErrorDetails = insertError.message || insertError.code || insertError.details || insertError.hint
-            const isDuplicateError = insertError.code === "23505" || insertError.message?.includes("duplicate")
-
-            if (hasErrorDetails && !isDuplicateError) {
-              console.error("Error adding user to users table:", {
-                message: insertError.message,
-                code: insertError.code,
-                details: insertError.details,
-                hint: insertError.hint,
-              })
-            }
-            // Don't throw here, as auth was successful
-          } else if (insertData) {
-            // Successfully added/updated user in users table
-            console.log("User added to users table:", insertData)
-          }
-
-          // Switch to login mode with prefilled email
-          setAuthMode("login")
-          setName("")
-          setPhone("")
-          setCountryCode(DEFAULT_COUNTRY_CODE)
-          setPassword("")
-          setConfirmPassword("")
-          setSuccessMessage("Account created successfully! Please sign in to continue.")
-          // Email is already set, so it will remain prefilled
+        if (authData.session && authData.user) {
+          // Email confirmation is OFF in Supabase — the user is signed in now
+          await ensureUserRow(authData.user)
+          setSuccessMessage(null)
+          onOpenChange(false)
+          router.push(await getUserDashboard(authData.user.id))
+          return
         }
+
+        // Email confirmation is ON — the user must verify before signing in
+        setAuthMode("login")
+        setName("")
+        setPhone("")
+        setCountryCode(DEFAULT_COUNTRY_CODE)
+        setPassword("")
+        setConfirmPassword("")
+        setSuccessMessage(
+          `We've sent a verification link to ${email}. Please confirm your email, then sign in.`
+        )
       } else {
         // Login
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
@@ -193,9 +208,16 @@ export function AuthDialog({ open, onOpenChange, defaultMode = "login" }: AuthDi
         if (signInError) throw signInError
 
         if (signInData.user) {
-          // Determine the correct dashboard for the user based on their specific role
+          // Block unverified accounts from proceeding (only relevant when
+          // confirmation is enabled; auto-confirmed users always pass)
+          if (!signInData.user.email_confirmed_at) {
+            await supabase.auth.signOut()
+            setError("Please verify your email address first. Check your inbox for the confirmation link.")
+            return
+          }
+
+          await ensureUserRow(signInData.user)
           const dashboardPath = await getUserDashboard(signInData.user.id)
-          
           setSuccessMessage(null)
           onOpenChange(false)
           router.push(dashboardPath)
@@ -275,58 +297,62 @@ export function AuthDialog({ open, onOpenChange, defaultMode = "login" }: AuthDi
           <div className="bg-[#faf8f4] text-[#1F4068] p-6 sm:p-8 lg:p-9 space-y-5 max-h-[90vh] overflow-y-auto">
             <DialogHeader className="space-y-1.5 text-left pr-8">
               <DialogTitle className="font-display text-2xl sm:text-[1.65rem] font-semibold text-[#1F4068] leading-tight">
-                {authMode === "login" ? "Sign in" : "Create your profile"}
+                {authMode === "login" ? "Sign in" : authMode === "reset" ? "Reset password" : "Create your profile"}
               </DialogTitle>
               <DialogDescription className="text-sm text-gray-600">
                 {authMode === "login"
                   ? "Welcome back — continue building your story."
-                  : "Join the community and connect with verified members."}
+                  : authMode === "reset"
+                    ? "Enter your email and we'll send you a link to reset your password."
+                    : "Join the community and connect with verified members."}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="flex gap-1.5 rounded-xl bg-white border border-gray-100/90 p-1 shadow-sm">
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className={`flex-1 rounded-lg h-10 text-sm font-semibold transition-all ${
-                  authMode === "login"
-                    ? authPrimaryButtonClass
-                    : "text-gray-600 hover:text-[#1F4068] hover:bg-[#faf8f4]"
-                }`}
-                onClick={() => {
-                  setAuthMode("login")
-                  setPassword("")
-                  setConfirmPassword("")
-                  setError(null)
-                  setSuccessMessage(null)
-                }}
-              >
-                Login
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className={`flex-1 rounded-lg h-10 text-sm font-semibold transition-all ${
-                  authMode === "signup"
-                    ? authPrimaryButtonClass
-                    : "text-gray-600 hover:text-[#1F4068] hover:bg-[#faf8f4]"
-                }`}
-                onClick={() => {
-                  setAuthMode("signup")
-                  setName("")
-                  setPhone("")
-                  setCountryCode(DEFAULT_COUNTRY_CODE)
-                  setPassword("")
-                  setConfirmPassword("")
-                  setError(null)
-                  setSuccessMessage(null)
-                }}
-              >
-                Sign up
-              </Button>
-            </div>
+            {authMode !== "reset" && (
+              <div className="flex gap-1.5 rounded-xl bg-white border border-gray-100/90 p-1 shadow-sm">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className={`flex-1 rounded-lg h-10 text-sm font-semibold transition-all ${
+                    authMode === "login"
+                      ? authPrimaryButtonClass
+                      : "text-gray-600 hover:text-[#1F4068] hover:bg-[#faf8f4]"
+                  }`}
+                  onClick={() => {
+                    setAuthMode("login")
+                    setPassword("")
+                    setConfirmPassword("")
+                    setError(null)
+                    setSuccessMessage(null)
+                  }}
+                >
+                  Login
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className={`flex-1 rounded-lg h-10 text-sm font-semibold transition-all ${
+                    authMode === "signup"
+                      ? authPrimaryButtonClass
+                      : "text-gray-600 hover:text-[#1F4068] hover:bg-[#faf8f4]"
+                  }`}
+                  onClick={() => {
+                    setAuthMode("signup")
+                    setName("")
+                    setPhone("")
+                    setCountryCode(DEFAULT_COUNTRY_CODE)
+                    setPassword("")
+                    setConfirmPassword("")
+                    setError(null)
+                    setSuccessMessage(null)
+                  }}
+                >
+                  Sign up
+                </Button>
+              </div>
+            )}
 
             {error && (
               <div className="rounded-xl border border-red-200/90 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -411,11 +437,29 @@ export function AuthDialog({ open, onOpenChange, defaultMode = "login" }: AuthDi
                 </>
               )}
 
+              {authMode !== "reset" && (
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="auth-password" className={authLabelClass}>
-                    Password
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="auth-password" className={authLabelClass}>
+                      Password
+                    </Label>
+                    {authMode === "login" && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthMode("reset")
+                          setPassword("")
+                          setConfirmPassword("")
+                          setError(null)
+                          setSuccessMessage(null)
+                        }}
+                        className="mb-1.5 text-[11px] font-medium text-[#e87898] hover:underline underline-offset-2"
+                      >
+                        Forgot password?
+                      </button>
+                    )}
+                  </div>
                   <div className="relative">
                     <Input
                       id="auth-password"
@@ -492,6 +536,7 @@ export function AuthDialog({ open, onOpenChange, defaultMode = "login" }: AuthDi
                   </div>
                 )}
               </div>
+              )}
 
               {authMode === "signup" && (
                 <div className="space-y-1.5">
@@ -553,14 +598,30 @@ export function AuthDialog({ open, onOpenChange, defaultMode = "login" }: AuthDi
                 {isLoading ? (
                   <span className="flex items-center gap-2">
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                    {authMode === "login" ? "Signing in..." : "Creating account..."}
+                    {authMode === "login" ? "Signing in..." : authMode === "reset" ? "Sending link..." : "Creating account..."}
                   </span>
                 ) : authMode === "login" ? (
                   "Continue"
+                ) : authMode === "reset" ? (
+                  "Send reset link"
                 ) : (
                   "Create account"
                 )}
               </Button>
+
+              {authMode === "reset" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode("login")
+                    setError(null)
+                    setSuccessMessage(null)
+                  }}
+                  className="w-full text-center text-xs font-medium text-[#1F4068] hover:underline underline-offset-2"
+                >
+                  ← Back to sign in
+                </button>
+              )}
             </form>
 
             <p className="text-center text-xs text-gray-500 leading-relaxed">

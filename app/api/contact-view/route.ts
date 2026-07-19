@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { authErrorResponse, requireAuthenticatedUser } from '@/lib/server/api-auth'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin-client'
 import { getUserTier, getContactViewLimit } from '@/lib/server/tier'
+import { createNotification } from '@/lib/server/notify'
 
 // GET: current usage/limit for the caller
 export async function GET(request: Request) {
@@ -82,6 +83,11 @@ export async function POST(request: Request) {
         // Ignore unique-violation races — it just means it's already counted.
         if (error && error.code !== '23505') {
             return NextResponse.json({ error: error.message }, { status: 500 })
+        }
+
+        // Notify the profile owner that their contact was viewed (first time only)
+        if (!error) {
+            await createNotification(viewedUserId, userId, 'contact_viewed')
         }
 
         const used = (count || 0) + 1

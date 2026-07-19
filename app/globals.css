@@ -186,7 +186,7 @@
 
   .profile-setup-theme .setup-section-card {
     padding: 0 !important;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .profile-setup-theme .setup-section-card-body {

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
+import { PORUTHAM_LABELS, getPoruthamStatusInfo, MatchStatus } from "@/lib/astrology"
 
 interface CompatibilityBreakdown {
   category: string;
@@ -130,14 +131,27 @@ export function CompatibilitySheet({
                   <Shield className="h-5 w-5 text-[#3bb9ac]" />
                   <h3 className="text-sm font-black uppercase tracking-[0.1em] text-[#3bb9ac]">Traditional Porutham Analysis</h3>
                 </div>
+                {(() => {
+                  const pStatus: MatchStatus = poruthamScore >= 7 ? "Uthamam" : poruthamScore >= 5 ? "Madhyamam" : "Athamam"
+                  const info = getPoruthamStatusInfo(pStatus, poruthamScore)
+                  return (
+                    <div className={`rounded-2xl p-4 border text-[11px] leading-relaxed font-medium ${
+                      info.tone === "good" ? "bg-green-50 border-green-100 text-green-800" :
+                      info.tone === "average" ? "bg-amber-50 border-amber-100 text-amber-800" :
+                      "bg-gray-50 border-gray-200 text-gray-600"
+                    }`}>
+                      <span className="font-black">{info.label}.</span> {info.summary}
+                    </div>
+                  )
+                })()}
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(poruthamDetails).map(([name, matched], idx) => (
-                    <Badge 
-                      key={idx} 
+                    <Badge
+                      key={idx}
                       variant={matched ? "default" : "outline"}
                       className={`h-8 px-4 border shadow-none font-bold uppercase tracking-wider text-[9px] ${matched ? 'bg-[#3bb9ac] text-white border-[#3bb9ac]' : 'bg-white text-gray-300 border-gray-100'}`}
                     >
-                      {name}
+                      {(PORUTHAM_LABELS[name] || name).split(" (")[0]}
                     </Badge>
                   ))}
                 </div>

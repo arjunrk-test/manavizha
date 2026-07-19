@@ -23,11 +23,20 @@ export async function GET(request: Request) {
             .maybeSingle()
 
         const visibility = settings?.photo_visibility || 'everyone'
-        if (visibility !== 'on_accept') {
+        if (visibility === 'everyone') {
             return NextResponse.json({ canView: true, requestStatus: null })
         }
 
-        // Restricted — check mutual accepted interest
+        // Password-protected — the viewer must supply the correct password (POST)
+        if (visibility === 'password') {
+            return NextResponse.json({
+                canView: false,
+                passwordProtected: true,
+                restricted: true,
+            })
+        }
+
+        // on_accept — check mutual accepted interest or an approved photo request
         const [{ data: like1 }, { data: like2 }, { data: req }] = await Promise.all([
             admin.from('likes').select('status').eq('user_id', userId).eq('liked_user_id', targetUserId).maybeSingle(),
             admin.from('likes').select('status').eq('user_id', targetUserId).eq('liked_user_id', userId).maybeSingle(),
@@ -45,6 +54,42 @@ export async function GET(request: Request) {
             restricted: true,
         })
     } catch (error) {
+        return authErrorResponse(error)
+    }
+}
+
+// Verify a photo password. The password is compared server-side and never
+// returned to the viewer.
+export async function POST(request: Request) {
+    try {
+        const { userId } = await requireAuthenticatedUser(request)
+        const { targetUserId, password } = await request.json()
+
+        if (!targetUserId || typeof password !== 'string') {
+            return NextResponse.json({ error: 'targetUserId and password are required' }, { status: 400 })
+        }
+        if (targetUserId === userId) {
+            return NextResponse.json({ valid: true })
+        }
+
+        const admin = await getSupabaseAdmin()
+        const { data: settings } = await admin
+            .from('user_settings')
+            .select('photo_visibility, photo_password')
+            .eq('user_id', targetUserId)
+            .maybeSingle()
+
+        if (settings?.photo_visibility !== 'password') {
+            // Not password-protected — nothing to verify
+            return NextResponse.json({ valid: true })
+        }
+
+        const valid = !!settings.photo_password && password === settings.photo_password
+        return NextResponse.json({ valid })
+    } catch (error: any) {
+        if (error instanceof SyntaxError) {
+            return NextResponse.json({ error: error.message }, { status: 400 })
+        }
         return authErrorResponse(error)
     }
 }

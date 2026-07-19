@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/api-client"
 import { useState, useEffect } from "react"
@@ -37,6 +38,7 @@ export default function SettingsPage() {
         deactivated_until: null,
     })
     const [incomingPhotoRequests, setIncomingPhotoRequests] = useState<any[]>([])
+    const [photoPasswordDraft, setPhotoPasswordDraft] = useState("")
 
     const [blockedProfiles, setBlockedProfiles] = useState<any[]>([])
     const [ignoredProfiles, setIgnoredProfiles] = useState<any[]>([])
@@ -45,6 +47,9 @@ export default function SettingsPage() {
     const [isReactivating, setIsReactivating] = useState(false)
     const [showMarriedConfirm, setShowMarriedConfirm] = useState(false)
     const [isMarkingMarried, setIsMarkingMarried] = useState(false)
+    const [deleteConfirmText, setDeleteConfirmText] = useState("")
+    const [isDeleting, setIsDeleting] = useState(false)
+    const [isLoggingOutAll, setIsLoggingOutAll] = useState(false)
 
     const isCurrentlyDeactivated = settings.is_deactivated && settings.deactivated_until && new Date(settings.deactivated_until) > new Date()
 
@@ -114,6 +119,38 @@ export default function SettingsPage() {
             }
         } catch {
             toast.error("Network error")
+        }
+    }
+
+    const handleDeleteAccount = async () => {
+        if (deleteConfirmText.trim().toUpperCase() !== "DELETE") return
+        setIsDeleting(true)
+        try {
+            const res = await authFetch("/api/account/delete", { method: "POST" })
+            if (res.ok) {
+                toast.success("Your account has been permanently deleted.")
+                await supabase.auth.signOut()
+                router.push("/")
+            } else {
+                const data = await res.json().catch(() => ({}))
+                toast.error(data.error || "Failed to delete account. Please try again.")
+                setIsDeleting(false)
+            }
+        } catch {
+            toast.error("Network error. Please try again.")
+            setIsDeleting(false)
+        }
+    }
+
+    const handleLogoutAllDevices = async () => {
+        setIsLoggingOutAll(true)
+        try {
+            await supabase.auth.signOut({ scope: "global" })
+            toast.success("Signed out from all devices.")
+            router.push("/")
+        } catch {
+            toast.error("Failed to sign out from all devices")
+            setIsLoggingOutAll(false)
         }
     }
 
@@ -624,6 +661,39 @@ export default function SettingsPage() {
                                         title="Only after I accept interest or a photo request"
                                         description="Your photos stay blurred until you accept the member's interest or approve their photo request."
                                     />
+                                    <RadioOption
+                                        checked={settings.photo_visibility === 'password'}
+                                        onChange={() => handleSave({ photo_visibility: 'password' })}
+                                        title="Protect with a photo password"
+                                        description="Photos stay blurred until a member enters the password you set and share privately."
+                                    />
+                                    {settings.photo_visibility === 'password' && (
+                                        <div className="ml-1 space-y-2 rounded-2xl border border-[#f0ebe3] bg-[#faf8f4]/60 p-4">
+                                            <label className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#9ca3af]">
+                                                Photo password
+                                            </label>
+                                            <div className="flex flex-col sm:flex-row gap-2">
+                                                <Input
+                                                    type="text"
+                                                    value={photoPasswordDraft}
+                                                    onChange={(e) => setPhotoPasswordDraft(e.target.value)}
+                                                    placeholder={settings.photo_password ? "Set — type to change" : "Choose a password to share"}
+                                                    maxLength={100}
+                                                    className="h-10 rounded-[10px] border-[#e5e7eb] text-[13px]"
+                                                />
+                                                <Button
+                                                    className="h-10 px-5 rounded-[10px] bg-[#e87898] hover:bg-[#d66686] text-white text-[13px] font-medium shrink-0"
+                                                    disabled={isSaving || photoPasswordDraft.trim().length < 1}
+                                                    onClick={() => { handleSave({ photo_password: photoPasswordDraft.trim() }); setPhotoPasswordDraft("") }}
+                                                >
+                                                    Save password
+                                                </Button>
+                                            </div>
+                                            <p className="text-[11px] text-gray-400">
+                                                Share this password only with people you want to see your photos. It is never shown to other members.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {incomingPhotoRequests.length > 0 && (
@@ -832,6 +902,56 @@ export default function SettingsPage() {
                                         <Heart className="h-4 w-4 mr-2 fill-white" />
                                         Mark as Married
                                     </Button>
+                                </div>
+
+                                {/* Session: log out everywhere */}
+                                <div className="rounded-[16px] border border-[#f0ebe3] bg-white p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+                                    <div>
+                                        <p className="text-[13px] font-semibold text-[#1F4068]">Log out from all devices</p>
+                                        <p className="text-xs text-[#6b7280] mt-0.5 max-w-md leading-relaxed">
+                                            Ends your session on every device and browser where you're signed in. Useful if you used a shared or public device.
+                                        </p>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        className="shrink-0 h-10 px-5 rounded-[10px] border-[#f0ebe3] text-[#1F4068] text-[13px] font-medium"
+                                        onClick={handleLogoutAllDevices}
+                                        disabled={isLoggingOutAll}
+                                    >
+                                        {isLoggingOutAll ? "Signing out..." : "Log out everywhere"}
+                                    </Button>
+                                </div>
+
+                                {/* Danger zone: permanent deletion */}
+                                <div className="rounded-[16px] border border-[#fecaca]/70 bg-[#fef2f2] p-5">
+                                    <h2 className="text-base font-semibold mb-1.5 text-[#dc2626] flex items-center gap-2">
+                                        <AlertTriangle className="h-5 w-5" /> Delete account permanently
+                                    </h2>
+                                    <p className="text-[13px] text-[#7f1d1d] mb-4 leading-relaxed">
+                                        This erases your profile, photos, matches, messages and all activity, and cannot be undone.
+                                        If you're just taking a break, use <span className="font-medium">Deactivate</span> instead.
+                                        Type <span className="font-semibold">DELETE</span> to confirm.
+                                    </p>
+                                    <div className="space-y-3 max-w-sm">
+                                        <Input
+                                            value={deleteConfirmText}
+                                            onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                            placeholder="Type DELETE"
+                                            className="h-11 rounded-[10px] border-[#fca5a5] bg-white text-[13px]"
+                                        />
+                                        <Button
+                                            className="w-full h-11 bg-[#dc2626] hover:bg-[#b91c1c] text-white font-medium rounded-[10px] shadow-none disabled:opacity-50"
+                                            onClick={handleDeleteAccount}
+                                            disabled={isDeleting || deleteConfirmText.trim().toUpperCase() !== "DELETE"}
+                                        >
+                                            {isDeleting ? (
+                                                <span className="flex items-center gap-2">
+                                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                                    Deleting...
+                                                </span>
+                                            ) : "Permanently delete my account"}
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         )}

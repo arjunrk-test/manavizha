@@ -55,6 +55,7 @@ export default function ProfileViewPage({
     
     // Premium & Messaging states
     const [isViewerPremium, setIsViewerPremium] = useState(false)
+    const [contactUnlocked, setContactUnlocked] = useState(false)
     const [isMutual, setIsMutual] = useState(false)
     const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
@@ -374,6 +375,32 @@ export default function ProfileViewPage({
         // the deps, the likes/shortlists/views statuses are skipped on first run
         // and never fetched.
     }, [targetUserId, currentUserId])
+
+    // Gates the first contact reveal against the viewer's tier quota and logs it
+    // (which also notifies the profile owner). Re-views are free once unlocked.
+    const unlockContact = async (): Promise<boolean> => {
+        if (contactUnlocked) return true
+        try {
+            const res = await authFetch("/api/contact-view", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ viewedUserId: targetUserId }),
+            })
+            const data = await res.json().catch(() => ({}))
+            if (res.ok && data.allowed) {
+                setContactUnlocked(true)
+                if (typeof data.remaining === "number" && !data.alreadyViewed) {
+                    toast.success(`Contact unlocked · ${data.remaining} view${data.remaining !== 1 ? "s" : ""} left this plan`)
+                }
+                return true
+            }
+            toast.error(data.error || "Unable to view contact details")
+            return false
+        } catch {
+            toast.error("Network error. Please try again.")
+            return false
+        }
+    }
 
     const handleLike = async () => {
         if (!currentUserId || isLikeProcessing) return
@@ -943,13 +970,15 @@ export default function ProfileViewPage({
                                 <h2 className="text-base font-semibold text-[#1F4068]">Contact & Location</h2>
                             </div>
                             <div className="grid grid-cols-1 gap-1">
-                                <DetailRow label="Phone Number" value={profile.contact?.phone || profile.phone} isLocked={true} isPremiumViewer={isViewerPremium} />
-                                <DetailRow label="WhatsApp" value={profile.contact?.whatsapp_number} isLocked={true} isPremiumViewer={isViewerPremium} />
-                                <DetailRow 
-                                    label="Address" 
-                                    value={[profile.contact?.current_address_line1, profile.contact?.current_area, profile.contact?.current_district, profile.contact?.current_state].filter(Boolean).join(", ")} 
-                                    isLocked={true} 
-                                    isPremiumViewer={isViewerPremium} 
+                                <DetailRow label="Phone Number" value={profile.contact?.phone || profile.phone} isLocked={true} isPremiumViewer={isViewerPremium} forceRevealed={contactUnlocked} onReveal={unlockContact} />
+                                <DetailRow label="WhatsApp" value={profile.contact?.whatsapp_number} isLocked={true} isPremiumViewer={isViewerPremium} forceRevealed={contactUnlocked} onReveal={unlockContact} />
+                                <DetailRow
+                                    label="Address"
+                                    value={[profile.contact?.current_address_line1, profile.contact?.current_area, profile.contact?.current_district, profile.contact?.current_state].filter(Boolean).join(", ")}
+                                    isLocked={true}
+                                    isPremiumViewer={isViewerPremium}
+                                    forceRevealed={contactUnlocked}
+                                    onReveal={unlockContact}
                                 />
                             </div>
                         </div>
@@ -1035,30 +1064,46 @@ export default function ProfileViewPage({
     )
 }
 
-function DetailRow({ label, value, isLocked, isPremiumViewer, compact }: { label: string, value?: React.ReactNode, isLocked?: boolean, isPremiumViewer?: boolean, compact?: boolean }) {
+function DetailRow({ label, value, isLocked, isPremiumViewer, compact, forceRevealed, onReveal }: { label: string, value?: React.ReactNode, isLocked?: boolean, isPremiumViewer?: boolean, compact?: boolean, forceRevealed?: boolean, onReveal?: () => Promise<boolean> }) {
     const [revealed, setRevealed] = useState(false)
-    
+    const [checking, setChecking] = useState(false)
+    const isRevealed = revealed || !!forceRevealed
+
+    const handleReveal = async () => {
+        if (onReveal) {
+            setChecking(true)
+            const ok = await onReveal()
+            setChecking(false)
+            if (ok) setRevealed(true)
+        } else {
+            setRevealed(true)
+        }
+    }
+
     const renderValue = () => {
         if (!value) return <span className="text-[#9ca3af] italic text-sm">Not specified</span>
-        
+
         if (isLocked) {
-            if (isPremiumViewer && revealed) {
+            if (isPremiumViewer && isRevealed) {
                 return (
                     <span className="text-sm font-medium text-[#1F4068] break-words flex items-center gap-2">
                         {value}
-                        <button onClick={() => setRevealed(false)} className="text-xs text-[#e87898] hover:underline font-medium">Hide</button>
+                        {!forceRevealed && (
+                            <button onClick={() => setRevealed(false)} className="text-xs text-[#e87898] hover:underline font-medium">Hide</button>
+                        )}
                     </span>
                 )
             }
-            
-            if (isPremiumViewer && !revealed) {
+
+            if (isPremiumViewer && !isRevealed) {
                 return (
                     <button
-                        onClick={() => setRevealed(true)}
-                        className="flex items-center gap-1.5 px-2.5 py-1 bg-[#fce8ef] rounded-lg border border-[#f0ebe3] text-[#e87898] text-xs font-medium hover:bg-[#f0ebe3] transition-colors"
+                        onClick={handleReveal}
+                        disabled={checking}
+                        className="flex items-center gap-1.5 px-2.5 py-1 bg-[#fce8ef] rounded-lg border border-[#f0ebe3] text-[#e87898] text-xs font-medium hover:bg-[#f0ebe3] transition-colors disabled:opacity-60"
                     >
                         <Crown className="h-3 w-3" />
-                        Reveal
+                        {checking ? "Checking..." : "Reveal"}
                     </button>
                 )
             }
@@ -1069,7 +1114,7 @@ function DetailRow({ label, value, isLocked, isPremiumViewer, compact }: { label
                 </div>
             )
         }
-        
+
         return <span className={cn("font-medium text-[#1F4068] whitespace-normal break-words", compact ? "text-[13px]" : "text-sm")}>{value}</span>
     }
 

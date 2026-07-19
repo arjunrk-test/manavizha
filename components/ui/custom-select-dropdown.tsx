@@ -40,23 +40,20 @@ export function CustomSelectDropdown({
   useClickOutside<HTMLDivElement>(dropdownRef, () => setIsOpen(false))
 
   const selectedOption = useMemo(() => {
-    if (!value || !options.length) return undefined
+    if (!value) return undefined
     const trimmedValue = (value || "").trim()
     if (!trimmedValue) return undefined
     const found = options.find((opt) => {
-      const optValue = (opt.value || "").trim()
-      return optValue === trimmedValue
+      const optValue = (opt.value || "").trim().toLowerCase()
+      return optValue === trimmedValue.toLowerCase()
     })
-    return found
+    return found || { id: trimmedValue, value: value.trim() }
   }, [value, options])
 
   const handleSelect = (optionValue: string) => {
     // Pass the exact value from the option (don't trim here to preserve exact match)
     onChange(optionValue)
     setIsOpen(false)
-    if (showOtherInput && optionValue.toLowerCase().trim() !== "other") {
-      onOtherChange?.("")
-    }
   }
 
   const showOtherField = showOtherInput && value && options.some(
@@ -88,16 +85,13 @@ export function CustomSelectDropdown({
           <div className="absolute z-50 w-full mt-3 sds-glass rounded-3xl shadow-2xl border-indigo-50/50 backdrop-blur-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="overflow-y-auto max-h-60 p-2 space-y-1 custom-scrollbar">
               {options.map((option) => {
-                const optionValue = (option.value || "").trim()
-                const currentValue = (value || "").trim()
+                const optionValue = (option.value || "").trim().toLowerCase()
+                const currentValue = (value || "").trim().toLowerCase()
                 const isSelected = optionValue === currentValue
                 return (
                   <button
                     key={option.id}
                     type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault()
-                    }}
                     onClick={() => {
                       handleSelect(option.value)
                     }}

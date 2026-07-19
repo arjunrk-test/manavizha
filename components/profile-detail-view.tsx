@@ -18,6 +18,7 @@ import { formatToDDMMYYYY, formatActivityTime } from "@/lib/utils/date-utils"
 import { Badge } from "@/components/ui/badge"
 import { ProfileEducationCareerSection } from "@/components/profile/profile-education-career-section"
 import { cn } from "@/lib/utils"
+import { DetailedHoroscopeView } from "@/components/detailed-horoscope-view"
 
 interface ProfileDetailViewProps {
     targetUserId: string
@@ -52,6 +53,10 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
     const [canViewPhotos, setCanViewPhotos] = useState(true)
     const [photoRequestStatus, setPhotoRequestStatus] = useState<string | null>(null)
     const [photoRequesting, setPhotoRequesting] = useState(false)
+    const [photoPasswordProtected, setPhotoPasswordProtected] = useState(false)
+    const [photoPasswordInput, setPhotoPasswordInput] = useState("")
+    const [photoPasswordError, setPhotoPasswordError] = useState(false)
+    const [photoUnlocking, setPhotoUnlocking] = useState(false)
 
     // Interaction dates
     const [iLikedDate, setILikedDate] = useState<string | null>(null)
@@ -190,6 +195,7 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                         const pa = await paRes.json()
                         setCanViewPhotos(pa.canView !== false)
                         setPhotoRequestStatus(pa.requestStatus || null)
+                        setPhotoPasswordProtected(!!pa.passwordProtected)
                     }
 
                     if (viewerRes.data) {
@@ -259,6 +265,30 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
     }
 
     const handleSendMessage = () => setIsMessageDialogOpen(true)
+
+    const unlockWithPassword = async () => {
+        if (!photoPasswordInput.trim()) return
+        setPhotoUnlocking(true)
+        setPhotoPasswordError(false)
+        try {
+            const res = await authFetch("/api/photo-access", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ targetUserId, password: photoPasswordInput }),
+            })
+            const data = await res.json().catch(() => ({}))
+            if (res.ok && data.valid) {
+                setCanViewPhotos(true)
+                setPhotoPasswordInput("")
+            } else {
+                setPhotoPasswordError(true)
+            }
+        } catch {
+            setPhotoPasswordError(true)
+        } finally {
+            setPhotoUnlocking(false)
+        }
+    }
 
     const requestPhotos = async () => {
         if (!currentUserId) return
@@ -562,7 +592,29 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                                     <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2.5 bg-black/30 backdrop-blur-sm px-4 text-center">
                                         <Lock className="h-6 w-6 text-white" />
                                         <p className="text-xs text-white/90 font-medium">Photos are private</p>
-                                        {photoRequestStatus === "pending" ? (
+                                        {photoPasswordProtected ? (
+                                            <div className="w-full max-w-[180px] space-y-1.5">
+                                                <input
+                                                    type="password"
+                                                    value={photoPasswordInput}
+                                                    onChange={(e) => { setPhotoPasswordInput(e.target.value); setPhotoPasswordError(false) }}
+                                                    onKeyDown={(e) => { if (e.key === "Enter") unlockWithPassword() }}
+                                                    placeholder="Enter photo password"
+                                                    className="w-full rounded-lg bg-white/95 px-2.5 py-1.5 text-[11px] text-[#1F4068] placeholder:text-gray-400 focus:outline-none"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={unlockWithPassword}
+                                                    disabled={photoUnlocking || !photoPasswordInput.trim()}
+                                                    className="w-full rounded-full bg-[#e87898] px-3.5 py-1.5 text-[11px] font-semibold text-white hover:bg-[#d66686] disabled:opacity-60"
+                                                >
+                                                    {photoUnlocking ? "Checking..." : "Unlock"}
+                                                </button>
+                                                {photoPasswordError && (
+                                                    <p className="text-[10px] font-medium text-red-200">Incorrect password</p>
+                                                )}
+                                            </div>
+                                        ) : photoRequestStatus === "pending" ? (
                                             <span className="rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-medium text-[#1F4068]">
                                                 Request pending
                                             </span>
@@ -693,7 +745,7 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                             <DetailRow label="Raasi" value={profile.horoscope?.zodiac_sign} isLocked isPremiumViewer={isViewerPremium} />
                             <DetailRow label="Lagnam" value={profile.horoscope?.lagnam} isLocked isPremiumViewer={isViewerPremium} />
                             <DetailRow label="Dosha(m)" value={profile.horoscope?.dhosham || "No Dosham"} isLocked isPremiumViewer={isViewerPremium} />
-                            {profile.horoscope?.jaadhagam_url && (
+                            {profile.horoscope?.jaadhagam_url ? (
                                 <DetailRow
                                     label="Horoscope Chart (Jaadhagam)"
                                     value={
@@ -704,7 +756,25 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                                     isLocked
                                     isPremiumViewer={isViewerPremium}
                                 />
-                            )}
+                            ) : profile.horoscope?.manual_grid?.planets ? (
+                                <div className="col-span-1 sm:col-span-2 pt-2">
+                                    <div className="text-[11px] font-medium text-[#9ca3af] mb-2 px-1">Horoscope Chart (Generated)</div>
+                                    <div className={cn("p-2 sm:p-4 bg-white rounded-xl border border-[#f0ebe3] relative", !isViewerPremium && !isOwnProfile && "blur-sm select-none pointer-events-none")}>
+                                        <DetailedHoroscopeView data={profile.horoscope.manual_grid} variant="embedded" hideCloseButton />
+                                    </div>
+                                    {!isViewerPremium && !isOwnProfile && (
+                                        <div className="absolute inset-0 flex items-center justify-center p-4">
+                                            <div className="bg-white/95 px-4 py-3 rounded-xl shadow-lg border border-[#f0ebe3] text-center max-w-[280px]">
+                                                <div className="w-10 h-10 mx-auto bg-amber-50 rounded-full flex items-center justify-center mb-2">
+                                                    <Lock className="h-5 w-5 text-amber-500" />
+                                                </div>
+                                                <p className="text-sm font-semibold text-[#1F4068]">Chart Locked</p>
+                                                <p className="text-[11px] text-[#4b5563] mt-1 mb-3">Upgrade to Premium to view generated horoscope charts.</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : null}
                             <DetailRow label="Place of Birth" value={profile.horoscope?.place_of_birth} isLocked isPremiumViewer={isViewerPremium} />
                             <DetailRow label="Time of Birth" value={profile.horoscope?.time_of_birth} isLocked isPremiumViewer={isViewerPremium} />
                         </ProfileCard>

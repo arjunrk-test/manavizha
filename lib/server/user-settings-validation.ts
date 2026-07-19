@@ -9,6 +9,7 @@ const USER_WRITABLE_FIELDS = new Set([
   "horoscope_password",
   "profile_privacy",
   "photo_visibility",
+  "photo_password",
   "is_deactivated",
   "deactivated_until",
 ])
@@ -26,7 +27,7 @@ const ADMIN_ONLY_FIELDS = new Set([
 const MOBILE_PRIVACY_VALUES = new Set(["show_all", "paid_only", "hidden"])
 const HOROSCOPE_PRIVACY_VALUES = new Set(["visible_all", "contacted_only", "password_protected"])
 const PROFILE_PRIVACY_VALUES = new Set(["show_all", "registered_only"])
-const PHOTO_VISIBILITY_VALUES = new Set(["everyone", "on_accept"])
+const PHOTO_VISIBILITY_VALUES = new Set(["everyone", "on_accept", "password"])
 
 const EMAIL_ALERT_KEYS = [
   "member_activity",
@@ -131,6 +132,12 @@ export function sanitizeUserSettingsUpdates(
           return { ok: false, error: "Invalid photo_visibility" }
         }
         sanitized.photo_visibility = value
+        break
+      case "photo_password":
+        if (value !== null && (typeof value !== "string" || value.length < 1 || value.length > 100)) {
+          return { ok: false, error: "Invalid photo_password" }
+        }
+        sanitized.photo_password = value
         break
       case "horoscope_password":
         if (value !== null && (typeof value !== "string" || value.length > 200)) {

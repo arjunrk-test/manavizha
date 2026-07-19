@@ -28,6 +28,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { MasterDataManager } from "@/components/master-data-manager"
 import { MasterDataImportDialog } from "@/components/master-data-import-dialog"
 import { masterDataConfig } from "@/constants/master-data"
+import { useMasterData } from "@/hooks/use-master-data"
 
 type MasterDataItem = { id: string; title: string }
 
@@ -217,6 +218,11 @@ export default function AdminMasterDataPage() {
   }, [activeCategory, currentStep])
 
   const stepConfig = currentStep ? masterDataConfig[currentStep] ?? null : null
+
+  // Parent-caste options for the subcaste editor
+  const { data: casteData, refetch: refetchCastes } = useMasterData({ tableName: "master_caste" })
+  const casteValues = useMemo(() => casteData.map((c) => c.value), [casteData])
+  useEffect(() => { refetchCastes() }, [refreshKey, refetchCastes])
 
   useEffect(() => {
     const checkUser = async () => {
@@ -457,6 +463,8 @@ export default function AdminMasterDataPage() {
                                 showCategory={
                                   currentStep === "education-level" || currentStep === "subcaste"
                                 }
+                                categoryLabel={currentStep === "subcaste" ? "Parent Caste" : "Category"}
+                                categoryOptions={currentStep === "subcaste" ? casteValues : undefined}
                                 refreshKey={refreshKey}
                               />
                             ) : (

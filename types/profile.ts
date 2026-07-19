@@ -127,6 +127,7 @@ export interface FormData {
   star: string
   lagnam: string
   dhosham: string
+  manualGrid?: any
   
   // Interests
   hobbies: string[]

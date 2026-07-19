@@ -186,7 +186,14 @@ export function PublicHoroscopePage({ variant = "public", userId = null }: Publi
         place_of_birth: entryMode === "auto" ? pob.city : "Manual Entry",
         birth_state: entryMode === "auto" ? pob.state : null,
         birth_country: entryMode === "auto" ? pob.country : null,
-        manual_grid: manualPlacements,
+        manual_grid: entryMode === "auto" ? {
+          ...activeResult,
+          name: 'User',
+          dob: dob ? format(dob, "dd MMM yyyy") : "",
+          tob: tob,
+          pob: pob.city,
+          calculationMethod: calculationMethod
+        } : manualPlacements,
         completion_percentage: 100,
         updated_at: new Date().toISOString(),
         dhosham: activeResult.papaPulligal

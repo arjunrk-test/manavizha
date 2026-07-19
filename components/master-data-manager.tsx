@@ -28,6 +28,8 @@ interface MasterDataManagerProps {
   onAddDialogChange?: (open: boolean) => void
   showColourCode?: boolean
   showCategory?: boolean
+  categoryLabel?: string       // label for the category field (e.g. "Parent Caste")
+  categoryOptions?: string[]   // when provided, category becomes a dropdown of these values
   refreshKey?: number // Key to trigger refresh
 }
 
@@ -42,6 +44,8 @@ export function MasterDataManager({
   onAddDialogChange: externalOnDialogChange,
   showColourCode = false,
   showCategory = false,
+  categoryLabel = "Category",
+  categoryOptions,
   refreshKey = 0,
 }: MasterDataManagerProps) {
   const [values, setValues] = useState<MasterDataValue[]>([])
@@ -204,7 +208,7 @@ export function MasterDataManager({
                 </th>
                 {showCategory && (
                   <th className="bg-[#faf8f4]/95 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#1F4068] sm:px-5">
-                    Category
+                    {categoryLabel}
                   </th>
                 )}
                 <th className="bg-[#faf8f4]/95 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#1F4068] sm:px-5">
@@ -298,18 +302,32 @@ export function MasterDataManager({
           <div className="grid gap-4 py-4">
             {showCategory && (
               <div className="grid gap-2">
-                <Label htmlFor="category-input">Category</Label>
-                <Input
-                  id="category-input"
-                  value={categoryValue}
-                  onChange={(e) => setCategoryValue(e.target.value)}
-                  placeholder="Enter category"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !isSaving) {
-                      handleSave()
-                    }
-                  }}
-                />
+                <Label htmlFor="category-input">{categoryLabel}</Label>
+                {categoryOptions ? (
+                  <select
+                    id="category-input"
+                    value={categoryValue}
+                    onChange={(e) => setCategoryValue(e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="">Select {categoryLabel.toLowerCase()}…</option>
+                    {categoryOptions.map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input
+                    id="category-input"
+                    value={categoryValue}
+                    onChange={(e) => setCategoryValue(e.target.value)}
+                    placeholder="Enter category"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !isSaving) {
+                        handleSave()
+                      }
+                    }}
+                  />
+                )}
               </div>
             )}
             <div className="grid gap-2">

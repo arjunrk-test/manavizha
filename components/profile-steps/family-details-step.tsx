@@ -355,29 +355,33 @@ export function FamilyDetailsStep({ formData, onChange }: FamilyDetailsStepProps
             />
             <SelectDropdown
               id="subcaste"
-              label={formData.caste ? "Subcaste *" : "Select Caste First *"}
+              label={formData.caste ? (filteredSubcasteOptions.length > 0 ? "Subcaste *" : "Subcaste") : "Select Caste First *"}
               value={formData.subcaste || ""}
               onChange={(value) => onChange("subcaste", value)}
               options={filteredSubcasteOptions}
               disabled={!formData.caste}
-              required
+              required={filteredSubcasteOptions.length > 0}
             />
-            <SelectDropdown
-              id="kulam"
-              label="Kulam / Kilai *"
-              value={formData.kulam || ""}
-              onChange={(value) => onChange("kulam", value)}
-              options={kulamOptions}
-              required
-            />
-            <SelectDropdown
-              id="gotram"
-              label="Gotram *"
-              value={formData.gotram || ""}
-              onChange={(value) => onChange("gotram", value)}
-              options={gotramOptions}
-              required
-            />
+            <div className="space-y-2">
+              <Label htmlFor="kulam" className="sds-label">Kulam / Kilai</Label>
+              <Input
+                id="kulam"
+                value={formData.kulam || ""}
+                onChange={(e) => onChange("kulam", e.target.value)}
+                placeholder="Enter your kulam / kilai"
+                className="sds-input w-full"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gotram" className="sds-label">Gotram</Label>
+              <Input
+                id="gotram"
+                value={formData.gotram || ""}
+                onChange={(e) => onChange("gotram", e.target.value)}
+                placeholder="Enter your gotram"
+                className="sds-input w-full"
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="ancestralOrigin" className="sds-label">Native Place *</Label>
               <Input
