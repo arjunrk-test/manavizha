@@ -228,68 +228,36 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
         // 6. Horoscope
         let horoscopeProgress = 0
-        if (horoscope?.completion_percentage !== undefined && horoscope?.completion_percentage !== null) {
-          horoscopeProgress = horoscope.completion_percentage
-        } else if (horoscope) {
-          const horoscopeFields = ["jaadhagam_url", "time_of_birth", "place_of_birth", "zodiac_sign", "star", "lagnam", "dhosham"]
-          const hFilled = horoscopeFields.filter(f => {
-            const val = horoscope[f as keyof typeof horoscope]
-            return val !== null && val !== undefined && val !== ""
-          }).length
-          horoscopeProgress = Math.round((hFilled / horoscopeFields.length) * 100)
+        if (horoscope) {
+          horoscopeProgress = 100
         }
         stepProgresses.push(horoscopeProgress)
 
         // 7. Interests
         let interestsProgress = 0
-        if (interests?.completion_percentage !== undefined && interests?.completion_percentage !== null) {
-          interestsProgress = interests.completion_percentage
-        } else if (interests) {
-          const hobbies = interests.hobbies || []
-          const userInterests = interests.interests || []
-          if (hobbies.length > 0 || userInterests.length > 0) {
-            interestsProgress = 100
-          }
+        if (interests) {
+          interestsProgress = 100
         }
         stepProgresses.push(interestsProgress)
 
         // 8. Social
         let socialProgress = 0
-        if (social?.completion_percentage !== undefined && social?.completion_percentage !== null) {
-          socialProgress = social.completion_percentage
-        } else if (social) {
-          const socialFields = ["smoking", "drinking", "parties", "pubs"]
-          const sFilled = socialFields.filter(f => {
-            const val = social[f as keyof typeof social]
-            return val !== null && val !== undefined && val !== ""
-          }).length
-          socialProgress = Math.round((sFilled / socialFields.length) * 100)
+        if (social) {
+          socialProgress = 100
         }
         stepProgresses.push(socialProgress)
 
         // 9. Photos
         let photosProgress = 0
-        if (photos?.completion_percentage !== undefined && photos?.completion_percentage !== null) {
-          photosProgress = photos.completion_percentage
-        } else if (photos) {
-          const userPhotos = photos.user_photos || []
-          if (userPhotos.length >= 3) {
-            photosProgress = 100
-          }
+        if (photos) {
+          photosProgress = 100
         }
         stepProgresses.push(photosProgress)
 
         // 10. Partner Preferences
         let preferencesProgress = 0
         if (preferences) {
-          // As per setup form, we only strictly require age and height fields to be explicitly filled
-          const prefFields = ["preferred_age_min", "preferred_age_max", "preferred_height_min", "preferred_height_max"]
-          const pFilled = prefFields.filter(f => {
-            const val = preferences[f as keyof typeof preferences]
-            return val !== null && val !== undefined && val !== ""
-          }).length
-          // Simulate the 26 fields by pretending the other 22 are filled with "Any"
-          preferencesProgress = Math.round(((pFilled + 22) / 26) * 100)
+          preferencesProgress = 100
         }
         stepProgresses.push(preferencesProgress)
 
