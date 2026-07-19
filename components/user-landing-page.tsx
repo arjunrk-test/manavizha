@@ -153,9 +153,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           supabase.from("profession_student").select("completion_percentage, course, institution").eq("user_id", userId).maybeSingle(),
           supabase.from("family_details").select("completion_percentage, father_name, father_occupation, mother_name, mother_occupation, parents_address_line1, parents_pincode, parents_area, parents_taluk, parents_district, parents_division, parents_region, parents_state, parents_country, caste, family_type, family_status").eq("user_id", userId).maybeSingle(),
           supabase.from("horoscope_details").select("completion_percentage, jaadhagam_url, time_of_birth, place_of_birth, zodiac_sign, star, lagnam, dhosham").eq("user_id", userId).maybeSingle(),
-          supabase.from("interests").select("hobbies, interests").eq("user_id", userId).maybeSingle(),
-          supabase.from("social_habits").select("smoking, drinking, parties, pubs").eq("user_id", userId).maybeSingle(),
-          supabase.from("photos").select("user_photos, family_photo, aadhar_front, aadhar_back").eq("user_id", userId).maybeSingle(),
+          supabase.from("interests").select("completion_percentage, hobbies, interests").eq("user_id", userId).maybeSingle(),
+          supabase.from("social_habits").select("completion_percentage, smoking, drinking, parties, pubs").eq("user_id", userId).maybeSingle(),
+          supabase.from("photos").select("completion_percentage, user_photos, family_photo, aadhar_front, aadhar_back").eq("user_id", userId).maybeSingle(),
           supabase.from("user_settings").select("is_premium, premium_plan, premium_expires_at").eq("user_id", userId).maybeSingle(),
           supabase.from("partner_preferences").select("preferred_age_min, preferred_age_max, preferred_height_min, preferred_height_max").eq("user_id", userId).maybeSingle()
         ])
@@ -242,7 +242,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
         // 7. Interests
         let interestsProgress = 0
-        if (interests) {
+        if (interests?.completion_percentage !== undefined && interests?.completion_percentage !== null) {
+          interestsProgress = interests.completion_percentage
+        } else if (interests) {
           const hobbies = interests.hobbies || []
           const userInterests = interests.interests || []
           if (hobbies.length >= 3 && userInterests.length >= 3) {
@@ -253,7 +255,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
         // 8. Social
         let socialProgress = 0
-        if (social) {
+        if (social?.completion_percentage !== undefined && social?.completion_percentage !== null) {
+          socialProgress = social.completion_percentage
+        } else if (social) {
           const socialFields = ["smoking", "drinking", "parties", "pubs"]
           const sFilled = socialFields.filter(f => {
             const val = social[f as keyof typeof social]
@@ -265,7 +269,9 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
         // 9. Photos
         let photosProgress = 0
-        if (photos) {
+        if (photos?.completion_percentage !== undefined && photos?.completion_percentage !== null) {
+          photosProgress = photos.completion_percentage
+        } else if (photos) {
           const userPhotos = photos.user_photos || []
           if (userPhotos.length >= 3) {
             photosProgress = 100
