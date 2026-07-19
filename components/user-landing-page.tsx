@@ -201,14 +201,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
         // 4. Professional
         let profProgress = 0
-        if (empData?.completion_percentage === 100 || busData?.completion_percentage === 100 || stuData?.completion_percentage === 100) {
+        if (empData || busData || stuData) {
           profProgress = 100
-        } else if (empData?.completion_percentage !== null && empData?.completion_percentage !== undefined) {
-          profProgress = empData.completion_percentage
-        } else if (busData?.completion_percentage !== null && busData?.completion_percentage !== undefined) {
-          profProgress = busData.completion_percentage
-        } else if (stuData?.completion_percentage !== null && stuData?.completion_percentage !== undefined) {
-          profProgress = stuData.completion_percentage
         }
         stepProgresses.push(profProgress)
 
