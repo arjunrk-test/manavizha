@@ -247,7 +247,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
         } else if (interests) {
           const hobbies = interests.hobbies || []
           const userInterests = interests.interests || []
-          if (hobbies.length >= 3 && userInterests.length >= 3) {
+          if (hobbies.length > 0 || userInterests.length > 0) {
             interestsProgress = 100
           }
         }
