@@ -57,6 +57,7 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
     const [photoPasswordInput, setPhotoPasswordInput] = useState("")
     const [photoPasswordError, setPhotoPasswordError] = useState(false)
     const [photoUnlocking, setPhotoUnlocking] = useState(false)
+    const [incomingPhotoRequest, setIncomingPhotoRequest] = useState(false)
 
     // Interaction dates
     const [iLikedDate, setILikedDate] = useState<string | null>(null)
@@ -153,12 +154,19 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                 setCurrentPhotoIndex(0)
 
                 if (currentUserId) {
-                    const [likesRes, shortRes, viewerRes, settingsRes] = await Promise.all([
+                    const [likesRes, shortRes, viewerRes, settingsRes, incomingReqRes] = await Promise.all([
                         authFetch(`/api/likes?userId=${currentUserId}`),
                         authFetch(`/api/shortlists?userId=${currentUserId}`),
                         supabase.from("personal_details").select("*").eq("user_id", currentUserId).maybeSingle(),
-                        supabase.from("user_settings").select("is_premium, premium_plan").eq("user_id", currentUserId).maybeSingle()
+                        supabase.from("user_settings").select("is_premium, premium_plan").eq("user_id", currentUserId).maybeSingle(),
+                        authFetch(`/api/photo-requests`)
                     ])
+                    
+                    if (incomingReqRes.ok) {
+                        const reqData = await incomingReqRes.json()
+                        const hasRequest = reqData.requests?.some((r: any) => r.requester_id === targetUserId)
+                        setIncomingPhotoRequest(hasRequest)
+                    }
                     
                     if (likesRes.ok) {
                         const likesData = await likesRes.json()
@@ -189,13 +197,16 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                         setLastViewedMeDate(viewMe?.created_at || null)
                     }
 
-                    // Photo privacy check
-                    const paRes = await authFetch(`/api/photo-access?targetUserId=${targetUserId}`).catch(() => null)
+                    const paRes = await authFetch(`/api/photo-access?targetUserId=${targetUserId}&_t=${Date.now()}`).catch(() => null)
                     if (paRes?.ok) {
                         const pa = await paRes.json()
+                        console.log("Photo access result:", pa);
                         setCanViewPhotos(pa.canView !== false)
                         setPhotoRequestStatus(pa.requestStatus || null)
                         setPhotoPasswordProtected(!!pa.passwordProtected)
+                    } else {
+                        console.log("Photo access failed, paRes:", paRes);
+                        setCanViewPhotos(false) // Default to false if API fails for safety
                     }
 
                     if (viewerRes.data) {
@@ -310,6 +321,24 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
             toast.error("Network error. Please try again.")
         } finally {
             setPhotoRequesting(false)
+        }
+    }
+
+    const handlePhotoRequestResponse = async (status: 'approved' | 'declined') => {
+        try {
+            const res = await authFetch("/api/photo-requests", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ requesterId: targetUserId, status }),
+            })
+            if (res.ok) {
+                setIncomingPhotoRequest(false)
+                toast.success(status === 'approved' ? "Photo request approved" : "Photo request declined")
+            } else {
+                toast.error("Failed to respond to request")
+            }
+        } catch {
+            toast.error("Network error")
         }
     }
 
@@ -554,6 +583,28 @@ export function ProfileDetailView({ targetUserId, currentUserId, onClose, isModa
                     )}
                 </div>
             </div>
+
+            {incomingPhotoRequest && (
+                <div className="mx-4 sm:mx-5 mb-4 bg-[#1F4068] text-white p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between shadow-md gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-white/10 p-2 rounded-full shrink-0">
+                            <Lock className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                            <p className="font-semibold text-sm">{profile.userName || "This member"} has requested to view your photos.</p>
+                            <p className="text-xs text-white/80">Approve to grant them access to your private gallery.</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0 w-full sm:w-auto">
+                        <Button onClick={() => handlePhotoRequestResponse('declined')} variant="outline" size="sm" className="flex-1 sm:flex-none bg-transparent border-white/20 text-white hover:bg-white/10 hover:text-white rounded-lg">
+                            Decline
+                        </Button>
+                        <Button onClick={() => handlePhotoRequestResponse('approved')} size="sm" className="flex-1 sm:flex-none bg-[#e87898] hover:bg-[#d66686] text-white rounded-lg">
+                            Approve
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             <div className="relative z-10 px-4 sm:px-5 pb-4">
                 <div className="flex flex-col lg:flex-row gap-4 items-start">

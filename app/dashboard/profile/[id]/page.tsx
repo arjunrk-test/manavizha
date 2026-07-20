@@ -59,6 +59,14 @@ export default function ProfileViewPage({
     const [isMutual, setIsMutual] = useState(false)
     const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
+    const [canViewPhotos, setCanViewPhotos] = useState(true)
+    const [photoRequestStatus, setPhotoRequestStatus] = useState<string | null>(null)
+    const [photoRequesting, setPhotoRequesting] = useState(false)
+    const [photoPasswordProtected, setPhotoPasswordProtected] = useState(false)
+    const [photoPasswordInput, setPhotoPasswordInput] = useState("")
+    const [photoPasswordError, setPhotoPasswordError] = useState(false)
+    const [photoUnlocking, setPhotoUnlocking] = useState(false)
+    const [incomingPhotoRequest, setIncomingPhotoRequest] = useState(false)
     
     // Interaction dates
     const [iLikedDate, setILikedDate] = useState<string | null>(null)
@@ -195,13 +203,20 @@ export default function ProfileViewPage({
 
                 // Check initial interaction status & fetch viewer profile for matching
                 if (currentUserId) {
-                    const [likesRes, shortRes, viewerRes, settingsRes] = await Promise.all([
+                    const [likesRes, shortRes, viewerRes, settingsRes, incomingReqRes] = await Promise.all([
                         authFetch(`/api/likes?userId=${currentUserId}`),
                         authFetch(`/api/shortlists?userId=${currentUserId}`),
                         supabase.from("personal_details").select("*").eq("user_id", currentUserId).maybeSingle(),
-                        supabase.from("user_settings").select("is_premium, premium_plan").eq("user_id", currentUserId).maybeSingle()
+                        supabase.from("user_settings").select("is_premium, premium_plan").eq("user_id", currentUserId).maybeSingle(),
+                        authFetch(`/api/photo-requests`)
                     ])
                     
+                    if (incomingReqRes.ok) {
+                        const reqData = await incomingReqRes.json()
+                        const hasRequest = reqData.requests?.some((r: any) => r.requester_id === targetUserId)
+                        setIncomingPhotoRequest(hasRequest)
+                    }
+
                     if (likesRes.ok) {
                         const likesData = await likesRes.json()
                         const myLike = (likesData.iLiked || []).find((l: any) => l.id === targetUserId)
@@ -236,6 +251,16 @@ export default function ProfileViewPage({
                         const viewsData = await viewsRes.json()
                         const viewMe = (viewsData.viewedMe || []).find((v: any) => v.viewer_user_id === targetUserId)
                         setLastViewedMeDate(viewMe?.created_at || null)
+                    }
+
+                    const paRes = await authFetch(`/api/photo-access?targetUserId=${targetUserId}&_t=${Date.now()}`).catch(() => null)
+                    if (paRes?.ok) {
+                        const pa = await paRes.json()
+                        setCanViewPhotos(pa.canView !== false)
+                        setPhotoRequestStatus(pa.requestStatus || null)
+                        setPhotoPasswordProtected(!!pa.passwordProtected)
+                    } else {
+                        setCanViewPhotos(false)
                     }
 
                     if (viewerRes.data) {
@@ -399,6 +424,71 @@ export default function ProfileViewPage({
         } catch {
             toast.error("Network error. Please try again.")
             return false
+        }
+    }
+
+    const unlockWithPassword = async () => {
+        if (!photoPasswordInput.trim()) return
+        setPhotoUnlocking(true)
+        setPhotoPasswordError(false)
+        try {
+            const res = await authFetch("/api/photo-access", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ targetUserId, password: photoPasswordInput }),
+            })
+            const data = await res.json().catch(() => ({}))
+            if (res.ok && data.valid) {
+                setCanViewPhotos(true)
+                setPhotoPasswordInput("")
+            } else {
+                setPhotoPasswordError(true)
+            }
+        } catch {
+            setPhotoPasswordError(true)
+        } finally {
+            setPhotoUnlocking(false)
+        }
+    }
+
+    const requestPhotos = async () => {
+        if (!currentUserId) return
+        setPhotoRequesting(true)
+        try {
+            const res = await authFetch("/api/photo-requests", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ownerId: targetUserId }),
+            })
+            const data = await res.json().catch(() => ({}))
+            if (res.ok) {
+                setPhotoRequestStatus("pending")
+                toast.success("Photo request sent")
+            } else {
+                toast.error(data.error || "Failed to send request")
+            }
+        } catch {
+            toast.error("Network error. Please try again.")
+        } finally {
+            setPhotoRequesting(false)
+        }
+    }
+
+    const handlePhotoRequestResponse = async (status: 'approved' | 'declined') => {
+        try {
+            const res = await authFetch("/api/photo-requests", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ requesterId: targetUserId, status }),
+            })
+            if (res.ok) {
+                setIncomingPhotoRequest(false)
+                toast.success(status === 'approved' ? "Photo request approved" : "Photo request declined")
+            } else {
+                toast.error("Failed to respond to request")
+            }
+        } catch {
+            toast.error("Network error")
         }
     }
 
@@ -611,6 +701,28 @@ export default function ProfileViewPage({
                     </div>
                 </div>
 
+            {incomingPhotoRequest && (
+                <div className="bg-[#1F4068] text-white p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between mb-6 shadow-md gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-white/10 p-2.5 rounded-full shrink-0">
+                            <Lock className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                            <p className="font-medium text-sm sm:text-base">{profile.name || profile.userName || "This member"} has requested to view your photos.</p>
+                            <p className="text-xs sm:text-sm text-white/80 mt-0.5">Approve to grant them access to your private gallery.</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0 w-full sm:w-auto">
+                        <Button onClick={() => handlePhotoRequestResponse('declined')} variant="outline" className="flex-1 sm:flex-none h-10 bg-transparent border-white/20 text-white hover:bg-white/10 hover:text-white rounded-xl text-sm font-medium">
+                            Decline
+                        </Button>
+                        <Button onClick={() => handlePhotoRequestResponse('approved')} className="flex-1 sm:flex-none h-10 bg-[#e87898] hover:bg-[#d66686] text-white rounded-xl text-sm font-medium">
+                            Approve
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             <div className="pb-8">
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr,auto] items-start gap-8">
                     
@@ -784,12 +896,59 @@ export default function ProfileViewPage({
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
                                             exit={{ opacity: 0 }}
-                                            className="w-full h-full object-cover"
+                                            className={cn("w-full h-full object-cover", !canViewPhotos && "blur-xl scale-110")}
                                         />
                                     </AnimatePresence>
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-[#fce8ef]/30">
                                         <User className="h-16 w-16 text-[#e87898]/30" />
+                                    </div>
+                                )}
+
+                                {!canViewPhotos && photos.length > 0 && (
+                                    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2.5 bg-black/30 backdrop-blur-sm px-4 text-center">
+                                        <Lock className="h-6 w-6 text-white" />
+                                        <p className="text-xs text-white/90 font-medium">Photos are private</p>
+                                        {photoPasswordProtected ? (
+                                            <div className="w-full max-w-[180px] space-y-1.5">
+                                                <input
+                                                    type="password"
+                                                    value={photoPasswordInput}
+                                                    onChange={(e) => { setPhotoPasswordInput(e.target.value); setPhotoPasswordError(false) }}
+                                                    onKeyDown={(e) => { if (e.key === "Enter") unlockWithPassword() }}
+                                                    placeholder="Enter photo password"
+                                                    className="w-full rounded-lg bg-white/95 px-2.5 py-1.5 text-[11px] text-[#1F4068] placeholder:text-gray-400 focus:outline-none"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={unlockWithPassword}
+                                                    disabled={photoUnlocking || !photoPasswordInput.trim()}
+                                                    className="w-full rounded-full bg-[#e87898] px-3.5 py-1.5 text-[11px] font-semibold text-white hover:bg-[#d66686] disabled:opacity-60"
+                                                >
+                                                    {photoUnlocking ? "Checking..." : "Unlock"}
+                                                </button>
+                                                {photoPasswordError && (
+                                                    <p className="text-[10px] font-medium text-red-200">Incorrect password</p>
+                                                )}
+                                            </div>
+                                        ) : photoRequestStatus === "pending" ? (
+                                            <span className="rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-medium text-[#1F4068]">
+                                                Request pending
+                                            </span>
+                                        ) : photoRequestStatus === "declined" ? (
+                                            <span className="rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-medium text-red-500">
+                                                Request declined
+                                            </span>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={requestPhotos}
+                                                disabled={photoRequesting}
+                                                className="rounded-full bg-[#e87898] px-3.5 py-1.5 text-[11px] font-semibold text-white hover:bg-[#d66686] disabled:opacity-60"
+                                            >
+                                                {photoRequesting ? "Sending..." : "Request photos"}
+                                            </button>
+                                        )}
                                     </div>
                                 )}
 

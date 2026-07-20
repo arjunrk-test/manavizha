@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { authErrorResponse, requireAuthenticatedUser } from '@/lib/server/api-auth'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin-client'
 
+export const dynamic = 'force-dynamic'
+
 // Decides whether the caller may see a target's photos, honouring the target's
 // photo_visibility setting. Access is granted when the target is public, the
 // two have a mutually accepted interest, or the owner approved a photo request.
@@ -47,6 +49,8 @@ export async function GET(request: Request) {
             !!like1 && !!like2 && (like1.status === 'accepted' || like2.status === 'accepted')
 
         const requestApproved = req?.status === 'approved'
+        
+        console.log('photo-access API:', { targetUserId, userId, visibility, mutualAccepted, requestApproved });
 
         return NextResponse.json({
             canView: mutualAccepted || requestApproved,
@@ -54,6 +58,7 @@ export async function GET(request: Request) {
             restricted: true,
         })
     } catch (error) {
+        console.error('photo-access API error:', error);
         return authErrorResponse(error)
     }
 }
