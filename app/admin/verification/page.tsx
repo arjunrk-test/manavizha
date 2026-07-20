@@ -3,7 +3,6 @@
 import { AdminNavbar } from "@/components/admin-navbar"
 import { AdminDashboardBackground } from "@/components/admin/admin-dashboard-background"
 import { AdminVerificationPanel } from "@/components/admin/admin-verification-panel"
-import { AdminIdVerificationPanel } from "@/components/admin/admin-id-verification-panel"
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
 import { supabase } from "@/lib/supabase"
 import { finishAuthRedirect, getUserDashboard } from "@/lib/auth"
@@ -46,7 +45,6 @@ export default function AdminVerificationPage() {
       <main className="relative z-10 flex-1 flex flex-col pt-[4.75rem]">
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 pb-10 space-y-6">
           <AdminVerificationPanel />
-          <AdminIdVerificationPanel />
         </div>
       </main>
     </div>
