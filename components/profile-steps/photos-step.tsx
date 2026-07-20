@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { FormData } from "@/types/profile"
+import { supabase } from "@/lib/supabase"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import {
@@ -22,6 +23,38 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showVerificationDialog, setShowVerificationDialog] = useState(false)
   const [cropSrc, setCropSrc] = useState<string | null>(null)
+  const [verificationStatus, setVerificationStatus] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!userId) return
+
+    const fetchStatus = async () => {
+      // First check if already verified in personal details
+      const { data: personal } = await supabase
+        .from("personal_details")
+        .select("photo_verified")
+        .eq("user_id", userId)
+        .maybeSingle()
+
+      if (personal?.photo_verified) {
+        setVerificationStatus("verified")
+        return
+      }
+
+      // Then check pending requests in photos
+      const { data: photoData } = await supabase
+        .from("photos")
+        .select("verification_status")
+        .eq("user_id", userId)
+        .maybeSingle()
+
+      if (photoData?.verification_status) {
+        setVerificationStatus(photoData.verification_status)
+      }
+    }
+
+    fetchStatus()
+  }, [userId])
 
   const validateFile = (file: File): string | null => {
     if (file.size > 5 * 1024 * 1024) {
@@ -415,13 +448,32 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
                   Profiles with verified profiles achieve <span className="text-[#e87898] font-black">much faster matches</span>. Complete identity verification to verify your account.
                 </p>
               </div>
-              <Button
-                type="button"
-                onClick={() => setShowVerificationDialog(true)}
-                className="h-16 px-12 rounded-[1.25rem] bg-[#e87898] hover:bg-[#d66686] text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(59,185,172,0.4)] transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
-              >
-                Start Verification
-              </Button>
+              
+              {verificationStatus === "verified" ? (
+                <Button
+                  type="button"
+                  disabled
+                  className="h-16 px-12 rounded-[1.25rem] bg-[#10b981] hover:bg-[#10b981] text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(16,185,129,0.4)] whitespace-nowrap"
+                >
+                  <ShieldCheck className="h-4 w-4 mr-2" /> Verified
+                </Button>
+              ) : verificationStatus === "pending" ? (
+                <Button
+                  type="button"
+                  disabled
+                  className="h-16 px-12 rounded-[1.25rem] bg-[#f59e0b] hover:bg-[#f59e0b] text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(245,158,11,0.4)] whitespace-nowrap"
+                >
+                  <AlertCircle className="h-4 w-4 mr-2" /> Pending Review
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={() => setShowVerificationDialog(true)}
+                  className="h-16 px-12 rounded-[1.25rem] bg-[#e87898] hover:bg-[#d66686] text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(59,185,172,0.4)] transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+                >
+                  Start Verification
+                </Button>
+              )}
             </div>
           </div>
           </div>
