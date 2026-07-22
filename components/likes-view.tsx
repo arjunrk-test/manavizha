@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils"
 import { calculateTrustScore, getProfileSummaryStr, getRoleAndHeightStr } from "@/lib/utils/profile-utils"
 import { MatchScoreBadge } from "@/components/match-score-badge"
 import { Eye, MapPin as MapPinIcon, ShieldCheck, HeartHandshake as HeartHandshakeIcon, MessageCircle as MessageCircleIcon } from "lucide-react"
+import { checkTamilPoruthamByGender } from "@/lib/astrology"
+import { calculateLifestyleScore } from "@/lib/matching"
 
 interface LikesViewProps {
     userId: string
@@ -192,6 +194,8 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                 return
             }
 
+            const idsToFetch = Array.from(new Set([...allIds, userId]))
+
             // Fetch profile data
             const [
                 { data: personalData },
@@ -206,18 +210,41 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                 { data: eduData },
                 { data: usersData }
             ] = await Promise.all([
-                supabase.from("personal_details").select("*").in("user_id", allIds),
-                supabase.from("photos").select("*").in("user_id", allIds),
-                supabase.from("profession_employee").select("*").in("user_id", allIds),
-                supabase.from("profession_business").select("*").in("user_id", allIds),
-                supabase.from("contact_details").select("*").in("user_id", allIds),
-                supabase.from("user_settings").select("*").in("user_id", allIds),
-                supabase.from("horoscope_details").select("*").in("user_id", allIds),
-                supabase.from("social_habits").select("*").in("user_id", allIds),
-                supabase.from("interests").select("*").in("user_id", allIds),
-                supabase.from("education_details").select("*").in("user_id", allIds),
-                supabase.from("users").select("id, name").in("id", allIds)
+                supabase.from("personal_details").select("*").in("user_id", idsToFetch),
+                supabase.from("photos").select("*").in("user_id", idsToFetch),
+                supabase.from("profession_employee").select("*").in("user_id", idsToFetch),
+                supabase.from("profession_business").select("*").in("user_id", idsToFetch),
+                supabase.from("contact_details").select("*").in("user_id", idsToFetch),
+                supabase.from("user_settings").select("*").in("user_id", idsToFetch),
+                supabase.from("horoscope_details").select("*").in("user_id", idsToFetch),
+                supabase.from("social_habits").select("*").in("user_id", idsToFetch),
+                supabase.from("interests").select("*").in("user_id", idsToFetch),
+                supabase.from("education_details").select("*").in("user_id", idsToFetch),
+                supabase.from("users").select("id, name").in("id", idsToFetch)
             ])
+
+            // Construct viewer profile for scores
+            const viewerPersonal = personalData?.find(p => p.user_id === userId)
+            const viewerHoro = horoData?.find(p => p.user_id === userId)
+            const viewerInterests = interestsData?.find(p => p.user_id === userId)
+            const viewerSocial = socialHabitsData?.find(p => p.user_id === userId)
+            const viewerEmp = empData?.find(p => p.user_id === userId)
+            const viewerBus = busData?.find(p => p.user_id === userId)
+            const viewerContact = contactData?.find(p => p.user_id === userId)
+
+            const viewerFullProfile = viewerPersonal ? {
+                ...viewerPersonal,
+                ...(viewerContact || {}),
+                interests: viewerInterests?.interests || [],
+                hobbies: viewerInterests?.hobbies || [],
+                smoking: viewerSocial?.smoking,
+                drinking: viewerSocial?.drinking,
+                foodPreference: viewerPersonal?.food_preference,
+                workLocation: viewerEmp?.work_location || viewerBus?.business_location,
+                sector: viewerEmp?.sector || viewerBus?.business_type,
+                salary: viewerEmp?.salary || viewerBus?.annual_returns,
+                horoscope: viewerHoro
+            } : null
 
             const buildCard = (uid: string): ProfileCard => {
                 const personal = personalData?.find(p => p.user_id === uid)
@@ -252,6 +279,36 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                 }
 
                 const userRow = usersData?.find(u => u.id === uid)
+                
+                let lifestyleMatch
+                let compatibility
+
+                if (viewerFullProfile && viewerPersonal?.sex && uid !== userId) {
+                    const targetProfile = {
+                        ...personal,
+                        foodPreference: personal?.food_preference,
+                        hobbies: interests?.hobbies || [],
+                        interests: interests?.interests || [],
+                        smoking: social?.smoking,
+                        drinking: social?.drinking,
+                        workLocation: emp?.work_location || bus?.business_location,
+                        sector: emp?.sector || bus?.business_type,
+                        salary: emp?.salary || bus?.annual_returns
+                    }
+
+                    lifestyleMatch = calculateLifestyleScore(viewerFullProfile, targetProfile)
+
+                    if (viewerHoro?.star && viewerHoro?.zodiac_sign && horo?.star && horo?.zodiac_sign) {
+                        compatibility = checkTamilPoruthamByGender(
+                            viewerHoro.star,
+                            viewerHoro.zodiac_sign,
+                            viewerPersonal.sex.toLowerCase() === "female",
+                            horo.star,
+                            horo.zodiac_sign
+                        )
+                    }
+                }
+
                 return {
                     user_id: uid,
                     name: personal?.name || userRow?.name || "Unknown",
@@ -272,6 +329,8 @@ export function LikesView({ userId, onBack, initialTab }: LikesViewProps) {
                     last_active_at: settings?.last_active_at,
                     horoscope: horo,
                     education: edu,
+                    lifestyleMatch,
+                    compatibility,
                     interaction_status: "unknown",
                     interaction_date: iLikeds.find(l => l.id === uid)?.created_at || likedMes.find(l => l.id === uid)?.created_at,
                     viewed_me_date: viewData.viewedMe?.find((v: any) => v.viewer_user_id === uid)?.created_at,

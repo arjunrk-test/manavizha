@@ -52,6 +52,7 @@ export default function SettingsPage() {
     const [isLoggingOutAll, setIsLoggingOutAll] = useState(false)
 
     const isCurrentlyDeactivated = settings.is_deactivated && settings.deactivated_until && new Date(settings.deactivated_until) > new Date()
+    const isMarriedDeactivation = isCurrentlyDeactivated && (new Date(settings.deactivated_until).getTime() - Date.now() > 365 * 24 * 60 * 60 * 1000)
 
     useEffect(() => {
         const loadInitialData = async () => {
@@ -818,35 +819,39 @@ export default function SettingsPage() {
                                         isCurrentlyDeactivated ? "bg-[#dc2626]" : "bg-[#059669] animate-pulse"
                                     )} />
                                     {isCurrentlyDeactivated
-                                        ? `Your account is currently Deactivated — hidden from all members until ${new Date(settings.deactivated_until).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                                        ? (isMarriedDeactivation 
+                                            ? "Your account is permanently Deactivated — hidden from all members as you are marked as Married" 
+                                            : `Your account is currently Deactivated — hidden from all members until ${new Date(settings.deactivated_until).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`)
                                         : "Your account is currently Active and visible to members"}
                                 </div>
 
                                 {isCurrentlyDeactivated ? (
-                                    <div className="bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] p-5 rounded-[20px] border border-[#f0ebe3]">
-                                        <h2 className="text-base font-semibold mb-2 text-[#1F4068] flex items-center gap-2">
-                                            <RefreshCw className="h-5 w-5 text-[#3bb9ac]" /> Reactivate Your Profile
-                                        </h2>
-                                        <p className="text-[13px] text-[#6b7280] mb-4 leading-relaxed">
-                                            Your profile is currently deactivated. Reactivating will immediately make your profile visible to all members again.
-                                        </p>
-                                        <Button
-                                            className="h-11 px-8 bg-[#3bb9ac] hover:bg-[#2fa085] text-white font-medium rounded-[10px] shadow-none"
-                                            onClick={handleReactivate}
-                                            disabled={isReactivating}
-                                        >
-                                            {isReactivating ? (
-                                                <span className="flex items-center gap-2">
-                                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                                                    Reactivating...
-                                                </span>
-                                            ) : (
-                                                <span className="flex items-center gap-2">
-                                                    <RefreshCw className="h-4 w-4" /> Reactivate Now
-                                                </span>
-                                            )}
-                                        </Button>
-                                    </div>
+                                    !isMarriedDeactivation && (
+                                        <div className="bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] p-5 rounded-[20px] border border-[#f0ebe3]">
+                                            <h2 className="text-base font-semibold mb-2 text-[#1F4068] flex items-center gap-2">
+                                                <RefreshCw className="h-5 w-5 text-[#3bb9ac]" /> Reactivate Your Profile
+                                            </h2>
+                                            <p className="text-[13px] text-[#6b7280] mb-4 leading-relaxed">
+                                                Your profile is currently deactivated. Reactivating will immediately make your profile visible to all members again.
+                                            </p>
+                                            <Button
+                                                className="h-11 px-8 bg-[#3bb9ac] hover:bg-[#2fa085] text-white font-medium rounded-[10px] shadow-none"
+                                                onClick={handleReactivate}
+                                                disabled={isReactivating}
+                                            >
+                                                {isReactivating ? (
+                                                    <span className="flex items-center gap-2">
+                                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                                        Reactivating...
+                                                    </span>
+                                                ) : (
+                                                    <span className="flex items-center gap-2">
+                                                        <RefreshCw className="h-4 w-4" /> Reactivate Now
+                                                    </span>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    )
                                 ) : (
                                     <div className="bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] p-5 rounded-[20px] border border-[#f0ebe3]">
                                         <h2 className="text-base font-semibold mb-2 text-[#1F4068] flex items-center gap-2">
@@ -883,26 +888,49 @@ export default function SettingsPage() {
                                     </div>
                                 )}
 
-                                <div className="rounded-[16px] bg-gradient-to-br from-[#ecfdf5] via-[#f0fdf4] to-[#ecfdf5] border border-[#a7f3d0]/60 p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-                                    <div className="flex flex-col sm:flex-row items-center gap-3.5">
-                                        <div className="w-11 h-11 rounded-full bg-white/90 border border-[#a7f3d0]/70 flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(5,150,105,0.12)]">
-                                            <Heart className="h-5 w-5 text-[#059669] fill-[#059669]" />
+                                {isMarriedDeactivation ? (
+                                    <div className="rounded-[16px] bg-[#ecfdf5]/50 border border-[#a7f3d0]/60 p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left opacity-70">
+                                        <div className="flex flex-col sm:flex-row items-center gap-3.5">
+                                            <div className="w-11 h-11 rounded-full bg-[#059669]/10 flex items-center justify-center shrink-0">
+                                                <Heart className="h-5 w-5 text-[#059669] fill-[#059669]" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[13px] font-semibold text-[#1F4068]">Match Found</p>
+                                                <p className="text-xs text-[#6b7280] mt-0.5 max-w-sm leading-relaxed">
+                                                    You have already marked your profile as married. It is removed from all match listings.
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-[13px] font-semibold text-[#1F4068]">Found your match?</p>
-                                            <p className="text-xs text-[#6b7280] mt-0.5 max-w-sm leading-relaxed">
-                                                Congratulations! Mark your profile as married to remove it from all match listings.
-                                            </p>
-                                        </div>
+                                        <Button
+                                            disabled
+                                            className="shrink-0 h-10 px-5 bg-[#059669]/50 text-white text-[13px] font-medium rounded-[10px] shadow-none cursor-not-allowed"
+                                        >
+                                            <Heart className="h-4 w-4 mr-2 fill-white" />
+                                            Marked as Married
+                                        </Button>
                                     </div>
-                                    <Button
-                                        className="shrink-0 h-10 px-5 bg-[#059669]/90 hover:bg-[#047857] text-white text-[13px] font-medium rounded-[10px] shadow-none"
-                                        onClick={() => setShowMarriedConfirm(true)}
-                                    >
-                                        <Heart className="h-4 w-4 mr-2 fill-white" />
-                                        Mark as Married
-                                    </Button>
-                                </div>
+                                ) : (
+                                    <div className="rounded-[16px] bg-gradient-to-br from-[#ecfdf5] via-[#f0fdf4] to-[#ecfdf5] border border-[#a7f3d0]/60 p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+                                        <div className="flex flex-col sm:flex-row items-center gap-3.5">
+                                            <div className="w-11 h-11 rounded-full bg-white/90 border border-[#a7f3d0]/70 flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(5,150,105,0.12)]">
+                                                <Heart className="h-5 w-5 text-[#059669] fill-[#059669]" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[13px] font-semibold text-[#1F4068]">Found your match?</p>
+                                                <p className="text-xs text-[#6b7280] mt-0.5 max-w-sm leading-relaxed">
+                                                    Congratulations! Mark your profile as married to remove it from all match listings.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            className="shrink-0 h-10 px-5 bg-[#059669]/90 hover:bg-[#047857] text-white text-[13px] font-medium rounded-[10px] shadow-none"
+                                            onClick={() => setShowMarriedConfirm(true)}
+                                        >
+                                            <Heart className="h-4 w-4 mr-2 fill-white" />
+                                            Mark as Married
+                                        </Button>
+                                    </div>
+                                )}
 
                                 {/* Session: log out everywhere */}
                                 <div className="rounded-[16px] border border-[#f0ebe3] bg-white p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">

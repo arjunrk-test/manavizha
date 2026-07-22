@@ -466,6 +466,7 @@ export default function AdminMasterDataPage() {
                                 categoryLabel={currentStep === "subcaste" ? "Parent Caste" : "Category"}
                                 categoryOptions={currentStep === "subcaste" ? casteValues : undefined}
                                 refreshKey={refreshKey}
+                                onDataChanged={() => setRefreshKey((k) => k + 1)}
                               />
                             ) : (
                               <div className="flex h-full items-center justify-center px-6 py-12 text-center">

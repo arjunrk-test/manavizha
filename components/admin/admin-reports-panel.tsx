@@ -4,8 +4,9 @@ import { useEffect, useState, useCallback } from "react"
 import { authFetch } from "@/lib/api-client"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import { Flag, CheckCircle2, XCircle, Eye, RefreshCw } from "lucide-react"
+import { Flag, CheckCircle2, XCircle, Eye, RefreshCw, Search, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatToDDMMYYYY } from "@/lib/utils/date-utils"
 
@@ -31,6 +32,7 @@ export function AdminReportsPanel() {
     const [isLoading, setIsLoading] = useState(true)
     const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({})
     const [processingId, setProcessingId] = useState<string>("")
+    const [searchQuery, setSearchQuery] = useState("")
 
     const fetchReports = useCallback(async (status: string) => {
         setIsLoading(true)
@@ -113,93 +115,131 @@ export function AdminReportsPanel() {
                 ))}
             </div>
 
+            <div className="px-5 pt-3 pb-2">
+                <div className="relative w-full max-w-md">
+                    <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+                    <Input
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search by profile name, ID, or report reason..."
+                        className="h-9 rounded-lg border-[#c5d4e4] bg-white pl-9 pr-9 text-[12px]"
+                    />
+                    {searchQuery && (
+                        <button
+                            type="button"
+                            onClick={() => setSearchQuery("")}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                            <X className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+                </div>
+            </div>
+
             <div className="p-5 space-y-3">
                 {isLoading ? (
                     <div className="py-12 flex justify-center">
                         <div className="animate-spin rounded-full h-7 w-7 border-2 border-[#f0ebe3] border-t-[#e87898]" />
                     </div>
-                ) : reports.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-[#eadfce] bg-[#faf8f4]/70 py-10 text-center text-sm text-gray-500">
-                        No {STATUS_TABS.find(t => t.value === activeStatus)?.label.toLowerCase()} reports.
-                    </div>
                 ) : (
-                    reports.map(report => (
-                        <div key={report.id} className="rounded-2xl border border-[#f0ebe3] bg-white p-4 space-y-3">
-                            <div className="flex flex-wrap items-start justify-between gap-2">
-                                <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-[#1F4068]">
-                                        {report.reported?.name || "Unknown member"}
-                                        {report.reported?.profile_code && (
-                                            <span className="ml-2 text-xs font-normal text-gray-400">{report.reported.profile_code}</span>
-                                        )}
-                                    </p>
-                                    <p className="text-xs text-gray-500 mt-0.5">
-                                        Reported by {report.reporter?.name || "Unknown"} on {formatToDDMMYYYY(report.created_at)}
-                                    </p>
+                    (() => {
+                        const filteredReports = reports.filter(r => {
+                            if (!searchQuery) return true
+                            const q = searchQuery.toLowerCase()
+                            return (
+                                (r.reported?.name && r.reported.name.toLowerCase().includes(q)) ||
+                                (r.reported_user_id && r.reported_user_id.toLowerCase().includes(q)) ||
+                                (REASON_LABELS[r.reason] && REASON_LABELS[r.reason].toLowerCase().includes(q)) ||
+                                (r.reason && r.reason.toLowerCase().includes(q))
+                            )
+                        })
+
+                        if (filteredReports.length === 0) {
+                            return (
+                                <div className="rounded-2xl border border-dashed border-[#eadfce] bg-[#faf8f4]/70 py-10 text-center text-sm text-gray-500">
+                                    No {searchQuery ? "matching" : ""} {STATUS_TABS.find(t => t.value === activeStatus)?.label.toLowerCase()} reports.
                                 </div>
-                                <span className="shrink-0 rounded-full bg-red-50 text-red-600 border border-red-100 px-2.5 py-1 text-[11px] font-medium">
-                                    {REASON_LABELS[report.reason] || report.reason}
-                                </span>
-                            </div>
+                            )
+                        }
 
-                            {report.details && (
-                                <p className="text-sm text-[#4b5563] bg-[#faf8f4] rounded-xl px-3 py-2 border-l-2 border-red-200">
-                                    {report.details}
-                                </p>
-                            )}
-
-                            {report.admin_note && activeStatus !== "pending" && (
-                                <p className="text-xs text-gray-500 italic">Admin note: {report.admin_note}</p>
-                            )}
-
-                            {activeStatus === "pending" && (
-                                <>
-                                    <Textarea
-                                        placeholder="Admin note (optional)"
-                                        value={noteDrafts[report.id] || ""}
-                                        onChange={(e) => setNoteDrafts(prev => ({ ...prev, [report.id]: e.target.value }))}
-                                        className="rounded-xl border-[#f0ebe3] min-h-[56px] text-sm"
-                                    />
-                                    <div className="flex flex-wrap gap-2">
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="rounded-xl border-[#f0ebe3] text-[#1F4068]"
-                                            disabled={processingId === report.id}
-                                            onClick={() => window.open(`/admin/dashboard/profiles/${report.reported_user_id}`, "_blank")}
-                                        >
-                                            <Eye className="h-3.5 w-3.5 mr-1.5" /> View profile
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            className="rounded-xl bg-[#3bb9ac] hover:bg-[#33a396] text-white"
-                                            disabled={processingId === report.id}
-                                            onClick={() => resolve(report.id, "reviewed")}
-                                        >
-                                            <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" /> Mark reviewed
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            className="rounded-xl bg-red-500 hover:bg-red-600 text-white"
-                                            disabled={processingId === report.id}
-                                            onClick={() => resolve(report.id, "action_taken")}
-                                        >
-                                            <Flag className="h-3.5 w-3.5 mr-1.5" /> Action taken
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="rounded-xl border-[#f0ebe3] text-gray-500"
-                                            disabled={processingId === report.id}
-                                            onClick={() => resolve(report.id, "dismissed")}
-                                        >
-                                            <XCircle className="h-3.5 w-3.5 mr-1.5" /> Dismiss
-                                        </Button>
+                        return filteredReports.map(report => (
+                            <div key={report.id} className="rounded-2xl border border-[#f0ebe3] bg-white p-4 space-y-3">
+                                <div className="flex flex-wrap items-start justify-between gap-2">
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-[#1F4068]">
+                                            {report.reported?.name || "Unknown member"}
+                                            {report.reported?.profile_code && (
+                                                <span className="ml-2 text-xs font-normal text-gray-400">{report.reported.profile_code}</span>
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-0.5">
+                                            Reported by {report.reporter?.name || "Unknown"} on {formatToDDMMYYYY(report.created_at)}
+                                        </p>
                                     </div>
-                                </>
-                            )}
-                        </div>
-                    ))
+                                    <span className="shrink-0 rounded-full bg-red-50 text-red-600 border border-red-100 px-2.5 py-1 text-[11px] font-medium">
+                                        {REASON_LABELS[report.reason] || report.reason}
+                                    </span>
+                                </div>
+
+                                {report.details && (
+                                    <p className="text-sm text-[#4b5563] bg-[#faf8f4] rounded-xl px-3 py-2 border-l-2 border-red-200">
+                                        {report.details}
+                                    </p>
+                                )}
+
+                                {report.admin_note && activeStatus !== "pending" && (
+                                    <p className="text-xs text-gray-500 italic">Admin note: {report.admin_note}</p>
+                                )}
+
+                                {activeStatus === "pending" && (
+                                    <>
+                                        <Textarea
+                                            placeholder="Admin note (optional)"
+                                            value={noteDrafts[report.id] || ""}
+                                            onChange={(e) => setNoteDrafts(prev => ({ ...prev, [report.id]: e.target.value }))}
+                                            className="rounded-xl border-[#f0ebe3] min-h-[56px] text-sm"
+                                        />
+                                        <div className="flex flex-wrap gap-2">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="rounded-xl border-[#f0ebe3] text-[#1F4068]"
+                                                disabled={processingId === report.id}
+                                                onClick={() => window.open(`/admin/dashboard/profiles/${report.reported_user_id}`, "_blank")}
+                                            >
+                                                <Eye className="h-3.5 w-3.5 mr-1.5" /> View profile
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                className="rounded-xl bg-[#3bb9ac] hover:bg-[#33a396] text-white"
+                                                disabled={processingId === report.id}
+                                                onClick={() => resolve(report.id, "reviewed")}
+                                            >
+                                                <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" /> Mark reviewed
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                className="rounded-xl bg-red-500 hover:bg-red-600 text-white"
+                                                disabled={processingId === report.id}
+                                                onClick={() => resolve(report.id, "action_taken")}
+                                            >
+                                                <Flag className="h-3.5 w-3.5 mr-1.5" /> Action taken
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="rounded-xl border-[#f0ebe3] text-gray-500"
+                                                disabled={processingId === report.id}
+                                                onClick={() => resolve(report.id, "dismissed")}
+                                            >
+                                                <XCircle className="h-3.5 w-3.5 mr-1.5" /> Dismiss
+                                            </Button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        ))
+                    })()
                 )}
             </div>
         </div>

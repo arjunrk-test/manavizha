@@ -16,36 +16,15 @@ function adminDebugLog(message: string) {
 // Force Node to prefer IPv4 DNS resolution
 dns.setDefaultResultOrder('ipv4first')
 
-// Resolve Supabase hostname fresh each time to avoid stale DNS cache
-async function resolveHost(): Promise<string> {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-    if (!supabaseUrl) throw new Error("NEXT_PUBLIC_SUPABASE_URL is not set")
-    const supabaseHost = new URL(supabaseUrl).hostname
-
-    return new Promise((resolve, reject) => {
-        dns.resolve4(supabaseHost, (err, addresses) => {
-            if (err) reject(err)
-            else resolve(addresses[0])
-        })
-    })
-}
-
-// Build an axios instance that connects directly to the resolved IP
-// with the correct Host header — bypasses ISP DNS issues entirely
 async function getAxios() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
     if (!supabaseUrl || !supabaseServiceKey) throw new Error("Supabase credentials are not set")
 
-    const supabaseHost = new URL(supabaseUrl).hostname
-    const ip = await resolveHost()
-
     const instance = axios.create({
-        baseURL: `https://${ip}`,
+        baseURL: supabaseUrl,
         timeout: 15000,
-        httpsAgent: new https.Agent({ family: 4 }),
         headers: {
-            'Host': supabaseHost,
             'Authorization': `Bearer ${supabaseServiceKey}`,
             'apikey': supabaseServiceKey,
             'Content-Type': 'application/json',
@@ -325,6 +304,48 @@ export async function updateUserPremiumSubscription(
         const errorMsg = error?.response?.data?.message || error?.message || "Unknown error"
         adminDebugLog(`${new Date().toISOString()} updateUserPremiumSubscription ERROR: ${JSON.stringify(errorMsg)}`)
         console.error("Error updating subscription:", errorMsg)
+        return { success: false, error: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg) }
+    }
+}
+
+export async function updateVerificationStatus(
+    accessToken: string,
+    targetUserId: string,
+    status: "verified" | "rejected"
+) {
+    adminDebugLog(`${new Date().toISOString()} updateVerificationStatus: ${targetUserId} to ${status}`)
+    try {
+        await requireAdminCaller(accessToken, "editor")
+        const ax = await getAxios()
+
+        // 1. Update photos table
+        await ax.patch(
+            `/rest/v1/photos?user_id=eq.${targetUserId}`,
+            { verification_status: status }
+        )
+
+        // 2. Update personal_details table
+        if (status === "verified") {
+            await ax.patch(
+                `/rest/v1/personal_details?user_id=eq.${targetUserId}`,
+                { photo_verified: true, id_verified: true }
+            )
+        } else {
+            await ax.patch(
+                `/rest/v1/personal_details?user_id=eq.${targetUserId}`,
+                { photo_verified: false, id_verified: false }
+            )
+        }
+
+        adminDebugLog(`${new Date().toISOString()} updateVerificationStatus SUCCESS`)
+        return { success: true }
+    } catch (error: any) {
+        if (error instanceof AdminAuthError) {
+            return authErrorResult(error)
+        }
+        const errorMsg = error?.response?.data?.message || error?.message || "Unknown error"
+        adminDebugLog(`${new Date().toISOString()} updateVerificationStatus ERROR: ${JSON.stringify(errorMsg)}`)
+        console.error("Error updating verification:", errorMsg)
         return { success: false, error: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg) }
     }
 }

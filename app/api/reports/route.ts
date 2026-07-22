@@ -46,6 +46,41 @@ export async function POST(request: Request) {
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 500 })
         }
+
+        try {
+            // Fetch profiles for email notification
+            const { data: profiles } = await admin
+                .from('personal_details')
+                .select('user_id, name, profile_code')
+                .in('user_id', [userId, reportedUserId])
+
+            const reporter = profiles?.find(p => p.user_id === userId)
+            const reported = profiles?.find(p => p.user_id === reportedUserId)
+
+            const adminEmail = process.env.ADMIN_EMAIL || 'saaspodium@gmail.com'
+            const reporterName = reporter ? `${reporter.name} (${reporter.profile_code || 'Unknown ID'})` : 'Unknown User'
+            const reportedName = reported ? `${reported.name} (${reported.profile_code || 'Unknown ID'})` : 'Unknown User'
+
+            const { sendEmail, renderEmail } = await import('@/lib/server/email')
+            await sendEmail({
+                to: adminEmail,
+                subject: `New Profile Report: ${reportedName}`,
+                html: renderEmail({
+                    heading: `Profile Reported`,
+                    body: `
+                        <p><strong>Reporter:</strong> ${reporterName}</p>
+                        <p><strong>Reported Profile:</strong> ${reportedName}</p>
+                        <p><strong>Reason:</strong> ${reason}</p>
+                        ${details ? `<p><strong>Message:</strong><br/>${details}</p>` : ''}
+                    `,
+                    ctaText: 'View Reports in Admin',
+                    ctaUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://manavizha.com'}/admin/dashboard/reports`
+                })
+            })
+        } catch (emailErr) {
+            console.error('Failed to send report email:', emailErr)
+        }
+
         return NextResponse.json({ success: true })
     } catch (error: any) {
         if (error instanceof SyntaxError) {

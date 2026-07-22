@@ -7,7 +7,7 @@ import { authFetch } from "@/lib/api-client"
 import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { finishAuthRedirect, getUserDashboard } from "@/lib/auth"
-import { LogOut, ArrowLeft, Edit, Settings, MessageSquare, User, Bell, Heart, Eye, Sparkles, ArrowRight } from "lucide-react"
+import { LogOut, ArrowLeft, Edit, Settings, MessageSquare, User, Bell, Heart, Eye, Sparkles, ArrowRight, Bookmark } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { DashboardScrollProgress } from "@/components/dashboard/dashboard-scroll-progress"
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
@@ -169,17 +169,27 @@ export default function DashboardLayout({
             // Fetch relevant profiles directly from Supabase
             const { data: profiles, error: pError } = await supabase
               .from('personal_details')
-              .select('user_id, name, age, photos, address, profession')
+              .select('user_id, name, age, address, profession')
+              .in('user_id', uniqueUserIds)
+
+            const { data: photosData } = await supabase
+              .from('photos')
+              .select('user_id, user_photos')
               .in('user_id', uniqueUserIds)
 
             if (!pError && profiles) {
+              const fullProfiles = profiles.map(p => {
+                const ph = photosData?.find(x => x.user_id === p.user_id)
+                return { ...p, photos: ph?.user_photos }
+              })
+
               setWhoViewedMe(recentViews.map((rv: any) => {
-                const p = profiles.find((c: any) => c.user_id === rv.viewer_user_id)
+                const p = fullProfiles.find((c: any) => c.user_id === rv.viewer_user_id)
                 return p ? { ...p, interaction_at: rv.created_at, interaction_type: 'view' } : null
               }).filter(Boolean))
 
               setWhoExpressedInterest(recentLikes.map((rl: any) => {
-                const p = profiles.find((c: any) => c.user_id === rl.id)
+                const p = fullProfiles.find((c: any) => c.user_id === rl.id)
                 return p ? { ...p, interaction_at: rl.created_at, interaction_type: 'interest' } : null
               }).filter(Boolean))
             }
@@ -199,9 +209,18 @@ export default function DashboardLayout({
           if (actorIds.length > 0) {
             const { data: actors } = await supabase
               .from('personal_details')
-              .select('user_id, name, photos')
+              .select('user_id, name')
               .in('user_id', actorIds as string[])
-            actors?.forEach((a: any) => { actorMap[a.user_id] = a })
+              
+            const { data: actorPhotos } = await supabase
+              .from('photos')
+              .select('user_id, user_photos')
+              .in('user_id', actorIds as string[])
+
+            actors?.forEach((a: any) => { 
+                const p = actorPhotos?.find(x => x.user_id === a.user_id)
+                actorMap[a.user_id] = { ...a, photos: p?.user_photos } 
+            })
           }
           setServerNotifs(unread.map((n: any) => ({ ...n, actor: actorMap[n.actor_id] || null })))
         }
@@ -456,20 +475,32 @@ export default function DashboardLayout({
                               className="group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-[#f0ebe3]/80 bg-white/75 p-2.5 text-left transition-all hover:border-[#c9a227]/25 hover:bg-white hover:shadow-[0_2px_10px_rgba(201,162,39,0.08)]"
                               onClick={() => handleServerNotifClick(n)}
                             >
-                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fdf6e3] ring-2 ring-white">
-                                {n.type === 'message_received'
-                                  ? <MessageSquare className="h-4 w-4 text-[#c9a227]" />
-                                  : <Heart className="h-4 w-4 text-[#c9a227]" />}
+                              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fdf6e3] ring-2 ring-white overflow-hidden">
+                                <Image
+                                  src={n.actor?.photos?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(n.actor?.name || 'Member')}&background=fdf6e3&color=c9a227`}
+                                  alt={`${n.actor?.name || "Member"}'s profile photo`}
+                                  fill
+                                  className="object-cover"
+                                  unoptimized
+                                />
+                                <div className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-white">
+                                  {n.type === 'message_received'
+                                    ? <MessageSquare className="h-2 w-2 text-[#c9a227]" />
+                                    : n.type === 'profile_shortlisted' 
+                                    ? <Bookmark className="h-2 w-2 text-[#c9a227]" />
+                                    : <Heart className="h-2 w-2 text-[#c9a227]" />}
+                                </div>
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-start justify-between gap-2">
-                                  <p className="truncate text-[13px] font-medium text-[#374151]">
+                                  <p className="line-clamp-2 text-[13px] font-medium text-[#374151] leading-snug">
                                     <span className="text-[#1F4068]">{n.actor?.name || "A member"}</span>{" "}
                                     {n.type === 'interest_accepted' ? 'accepted your interest'
                                       : n.type === 'message_received' ? 'sent you a message'
                                       : n.type === 'photo_request' ? 'requested your photos'
                                       : n.type === 'photo_request_approved' ? 'approved your photo request'
                                       : n.type === 'contact_viewed' ? 'viewed your contact details'
+                                      : n.type === 'profile_shortlisted' ? 'shortlisted you'
                                       : 'sent you an update'}
                                   </p>
                                   <span className="shrink-0 whitespace-nowrap text-[10px] text-[#9ca3af]">
@@ -508,7 +539,7 @@ export default function DashboardLayout({
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-start justify-between gap-2">
-                                  <p className="truncate text-[13px] font-medium text-[#374151]">
+                                  <p className="line-clamp-2 text-[13px] font-medium text-[#374151] leading-snug">
                                     <span className="text-[#1F4068]">{p.name || "Member"}</span> expressed interest
                                   </p>
                                   <span className="shrink-0 whitespace-nowrap text-[10px] text-[#9ca3af]">
@@ -550,7 +581,7 @@ export default function DashboardLayout({
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-start justify-between gap-2">
-                                  <p className="truncate text-[13px] font-medium text-[#374151]">
+                                  <p className="line-clamp-2 text-[13px] font-medium text-[#374151] leading-snug">
                                     <span className="text-[#1F4068]">{p.name || "Member"}</span> viewed you
                                   </p>
                                   <span className="shrink-0 whitespace-nowrap text-[10px] text-[#9ca3af]">

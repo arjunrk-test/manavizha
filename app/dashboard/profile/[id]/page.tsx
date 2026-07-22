@@ -20,6 +20,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { MessageDialog } from "@/components/message-dialog"
+import { SubscriptionDialog } from "@/components/subscription-dialog"
 import { ReportProfileDialog } from "@/components/report-profile-dialog"
 import { formatToDDMMYYYY, formatActivityTime } from "@/lib/utils/date-utils"
 import { Badge } from "@/components/ui/badge"
@@ -58,6 +59,7 @@ export default function ProfileViewPage({
     const [contactUnlocked, setContactUnlocked] = useState(false)
     const [isMutual, setIsMutual] = useState(false)
     const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false)
+    const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
     const [canViewPhotos, setCanViewPhotos] = useState(true)
     const [photoRequestStatus, setPhotoRequestStatus] = useState<string | null>(null)
@@ -1074,20 +1076,21 @@ export default function ProfileViewPage({
                                 <h2 className="text-base font-semibold text-[#1F4068]">Horoscope & Astrology</h2>
                             </div>
                             <div className="grid grid-cols-1 gap-1">
-                                <DetailRow label="Star" value={profile.horoscope?.star} isLocked={true} isPremiumViewer={isViewerPremium} />
-                                <DetailRow label="Raasi" value={profile.horoscope?.zodiac_sign} isLocked={true} isPremiumViewer={isViewerPremium} />
-                                <DetailRow label="Lagnam" value={profile.horoscope?.lagnam} isLocked={true} isPremiumViewer={isViewerPremium} />
-                                <DetailRow label="Dosha(m)" value={profile.horoscope?.dhosham || "No Dosham"} isLocked={true} isPremiumViewer={isViewerPremium} />
+                                <DetailRow label="Star" value={profile.horoscope?.star} isLocked={true} isPremiumViewer={isViewerPremium} onUpgradeClick={() => setIsSubscriptionDialogOpen(true)} />
+                                <DetailRow label="Raasi" value={profile.horoscope?.zodiac_sign} isLocked={true} isPremiumViewer={isViewerPremium} onUpgradeClick={() => setIsSubscriptionDialogOpen(true)} />
+                                <DetailRow label="Lagnam" value={profile.horoscope?.lagnam} isLocked={true} isPremiumViewer={isViewerPremium} onUpgradeClick={() => setIsSubscriptionDialogOpen(true)} />
+                                <DetailRow label="Dosha(m)" value={profile.horoscope?.dhosham || "No Dosham"} isLocked={true} isPremiumViewer={isViewerPremium} onUpgradeClick={() => setIsSubscriptionDialogOpen(true)} />
                                 {profile.horoscope?.jaadhagam_url && (
                                     <DetailRow 
                                         label="Horoscope Chart (Jaadhagam)" 
                                         value={<a href={profile.horoscope.jaadhagam_url} target="_blank" rel="noopener noreferrer" className="text-[#e87898] hover:underline">View Chart</a>} 
                                         isLocked={true} 
                                         isPremiumViewer={isViewerPremium} 
+                                        onUpgradeClick={() => setIsSubscriptionDialogOpen(true)}
                                     />
                                 )}
-                                <DetailRow label="Place of Birth" value={profile.horoscope?.place_of_birth} isLocked={true} isPremiumViewer={isViewerPremium} />
-                                <DetailRow label="Time of Birth" value={profile.horoscope?.time_of_birth} isLocked={true} isPremiumViewer={isViewerPremium} />
+                                <DetailRow label="Place of Birth" value={profile.horoscope?.place_of_birth} isLocked={true} isPremiumViewer={isViewerPremium} onUpgradeClick={() => setIsSubscriptionDialogOpen(true)} />
+                                <DetailRow label="Time of Birth" value={profile.horoscope?.time_of_birth} isLocked={true} isPremiumViewer={isViewerPremium} onUpgradeClick={() => setIsSubscriptionDialogOpen(true)} />
                             </div>
                         </div>
 
@@ -1129,13 +1132,14 @@ export default function ProfileViewPage({
                                 <h2 className="text-base font-semibold text-[#1F4068]">Contact & Location</h2>
                             </div>
                             <div className="grid grid-cols-1 gap-1">
-                                <DetailRow label="Phone Number" value={profile.contact?.phone || profile.phone} isLocked={true} isPremiumViewer={isViewerPremium} forceRevealed={contactUnlocked} onReveal={unlockContact} />
-                                <DetailRow label="WhatsApp" value={profile.contact?.whatsapp_number} isLocked={true} isPremiumViewer={isViewerPremium} forceRevealed={contactUnlocked} onReveal={unlockContact} />
+                                <DetailRow label="Phone Number" value={profile.contact?.phone || profile.phone} isLocked={true} isPremiumViewer={isViewerPremium} forceRevealed={contactUnlocked} onReveal={unlockContact} onUpgradeClick={() => setIsSubscriptionDialogOpen(true)} />
+                                <DetailRow label="WhatsApp" value={profile.contact?.whatsapp_number} isLocked={true} isPremiumViewer={isViewerPremium} forceRevealed={contactUnlocked} onReveal={unlockContact} onUpgradeClick={() => setIsSubscriptionDialogOpen(true)} />
                                 <DetailRow
                                     label="Address"
                                     value={[profile.contact?.current_address_line1, profile.contact?.current_area, profile.contact?.current_district, profile.contact?.current_state].filter(Boolean).join(", ")}
                                     isLocked={true}
                                     isPremiumViewer={isViewerPremium}
+                                    onUpgradeClick={() => setIsSubscriptionDialogOpen(true)}
                                     forceRevealed={contactUnlocked}
                                     onReveal={unlockContact}
                                 />
@@ -1219,11 +1223,16 @@ export default function ProfileViewPage({
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+
+        <SubscriptionDialog
+            isOpen={isSubscriptionDialogOpen}
+            onClose={() => setIsSubscriptionDialogOpen(false)}
+        />
         </div>
     )
 }
 
-function DetailRow({ label, value, isLocked, isPremiumViewer, compact, forceRevealed, onReveal }: { label: string, value?: React.ReactNode, isLocked?: boolean, isPremiumViewer?: boolean, compact?: boolean, forceRevealed?: boolean, onReveal?: () => Promise<boolean> }) {
+function DetailRow({ label, value, isLocked, isPremiumViewer, compact, forceRevealed, onReveal, onUpgradeClick }: { label: string, value?: React.ReactNode, isLocked?: boolean, isPremiumViewer?: boolean, compact?: boolean, forceRevealed?: boolean, onReveal?: () => Promise<boolean>, onUpgradeClick?: () => void }) {
     const [revealed, setRevealed] = useState(false)
     const [checking, setChecking] = useState(false)
     const isRevealed = revealed || !!forceRevealed
@@ -1268,9 +1277,12 @@ function DetailRow({ label, value, isLocked, isPremiumViewer, compact, forceReve
             }
 
             return (
-                <div className="flex items-center gap-1.5 text-[#9ca3af] text-xs font-medium">
+                <button 
+                    onClick={onUpgradeClick}
+                    className="flex items-center gap-1.5 text-[#9ca3af] text-xs font-medium hover:text-[#e87898] transition-colors"
+                >
                     <Lock className="h-3 w-3" /> Locked
-                </div>
+                </button>
             )
         }
 

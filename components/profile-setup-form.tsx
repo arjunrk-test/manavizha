@@ -2229,11 +2229,11 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     setReferralPartnerName(name)
   }
 
-  const handleSave = async () => {
+  const saveProfileData = async (stepToSave: number = currentStep, isFinalSave: boolean = false, silent: boolean = false) => {
     setIsSaving(true)
     try {
       // Save personal details if we're on the personal details step
-      if (currentStep === 0) {
+      if (stepToSave === 0) {
         // Validate all fields
         if (!validatePersonalDetails()) {
           setIsSaving(false)
@@ -2317,14 +2317,16 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           physicalStatus: formData.physicalStatus,
         })
 
-        toast.success("Personal details saved successfully!", {
-          style: {
-            background: "#dcfce7",
-            border: "1px solid #22c55e",
-            color: "#166534",
-          },
-        })
-      } else if (currentStep === 1) {
+        if (!silent) {
+          toast.success("Personal details saved successfully!", {
+            style: {
+              background: "#dcfce7",
+              border: "1px solid #22c55e",
+              color: "#166534",
+            },
+          })
+        }
+      } else if (stepToSave === 1) {
         // Save contact details if we're on the contact details step
         if (!validateContactDetails()) {
           setIsSaving(false)
@@ -2399,14 +2401,16 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           currentLandmark: formData.currentLandmark,
         })
 
-        toast.success("Contact details saved successfully!", {
-          style: {
-            background: "#dcfce7",
-            border: "1px solid #22c55e",
-            color: "#166534",
-          },
-        })
-      } else if (currentStep === 2) {
+        if (!silent) {
+          toast.success("Contact details saved successfully!", {
+            style: {
+              background: "#dcfce7",
+              border: "1px solid #22c55e",
+              color: "#166534",
+            },
+          })
+        }
+      } else if (stepToSave === 2) {
         // Save education details if we're on the education details step
         // Validate all fields
         if (!validateEducationDetails()) {
@@ -2449,14 +2453,16 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         // Update original data after successful save
         setOriginalEducationDetails(formData.educationDetails || [])
 
-        toast.success("Education details saved successfully!", {
-          style: {
-            background: "#dcfce7",
-            border: "1px solid #22c55e",
-            color: "#166534",
-          },
-        })
-      } else if (currentStep === 3) {
+        if (!silent) {
+          toast.success("Education details saved successfully!", {
+            style: {
+              background: "#dcfce7",
+              border: "1px solid #22c55e",
+              color: "#166534",
+            },
+          })
+        }
+      } else if (stepToSave === 3) {
         // Save professional details if we're on the professional details step
         // Validate all fields
         if (!validateProfessionalDetails()) {
@@ -2598,7 +2604,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
 
           const employeeData = {
             user_id: userId,
-            // employment_type: formData.employmentType || null, // TODO: Column missing in DB!
+            employment_type: formData.employmentType || null,
             sector: formData.sector || null,
             sector_other: formData.sector === "other" ? (formData.sectorOther || null) : null,
             company: formData.company || null,
@@ -2712,6 +2718,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           // Save to business table
           const businessData = {
             user_id: userId,
+            employment_type: formData.employmentType || null,
             sector: formData.sector || null,
             sector_other: formData.sector === "other" ? (formData.sectorOther || null) : null,
             business_name: formData.businessName || null,
@@ -2759,6 +2766,7 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           // Save to student table
           const studentData = {
             user_id: userId,
+            employment_type: formData.employmentType || null,
             institution: formData.institution || null,
             course: formData.course || null,
             field_of_study: formData.fieldOfStudy || null,
@@ -2786,21 +2794,37 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           })
         } else if (employmentType === "not working") {
           // No additional tables to update, just clear them (already done above)
-          
+          // But save to employee table so that overall progress detects it
+          const notWorkingData = {
+            user_id: userId,
+            employment_type: "Not Working",
+            completion_percentage: professionalDetailsProgress,
+          }
+
+          const { error } = await supabase
+            .from("profession_employee")
+            .upsert(notWorkingData, {
+              onConflict: "user_id",
+            })
+
+          if (error) throw error
+
           // Update original data so button deactivates
           setOriginalProfessionalDetails({
             employmentType: "Not Working"
           })
         }
 
-        toast.success("Professional details saved successfully!", {
-          style: {
-            background: "#dcfce7",
-            border: "1px solid #22c55e",
-            color: "#166534",
-          },
-        })
-      } else if (currentStep === 4) {
+        if (!silent) {
+          toast.success("Professional details saved successfully!", {
+            style: {
+              background: "#dcfce7",
+              border: "1px solid #22c55e",
+              color: "#166534",
+            },
+          })
+        }
+      } else if (stepToSave === 4) {
         // Save family details if we're on the family details step
         // Validate all fields
         if (!validateFamilyDetails()) {
@@ -2878,14 +2902,16 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           familyStatus: formData.familyStatus,
         })
 
-        toast.success("Family details saved successfully!", {
-          style: {
-            background: "#dcfce7",
-            border: "1px solid #22c55e",
-            color: "#166534",
-          },
-        })
-      } else if (currentStep === 5) {
+        if (!silent) {
+          toast.success("Family details saved successfully!", {
+            style: {
+              background: "#dcfce7",
+              border: "1px solid #22c55e",
+              color: "#166534",
+            },
+          })
+        }
+      } else if (stepToSave === 5) {
         // Save horoscope details if we're on the horoscope details step
         // Validate all fields
         if (!validateHoroscopeDetails()) {
@@ -2986,14 +3012,16 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           }))
         }
 
-        toast.success("Horoscope details saved successfully!", {
-          style: {
-            background: "#dcfce7",
-            border: "1px solid #22c55e",
-            color: "#166534",
-          },
-        })
-      } else if (currentStep === 6) {
+        if (!silent) {
+          toast.success("Horoscope details saved successfully!", {
+            style: {
+              background: "#dcfce7",
+              border: "1px solid #22c55e",
+              color: "#166534",
+            },
+          })
+        }
+      } else if (stepToSave === 6) {
         // Save interests if we're on the interests step
         // Validate all fields
         if (!validateInterestsDetails()) {
@@ -3025,14 +3053,16 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           interests: formData.interests,
         })
 
-        toast.success("Interests saved successfully!", {
-          style: {
-            background: "#dcfce7",
-            border: "1px solid #22c55e",
-            color: "#166534",
-          },
-        })
-      } else if (currentStep === 7) {
+        if (!silent) {
+          toast.success("Interests saved successfully!", {
+            style: {
+              background: "#dcfce7",
+              border: "1px solid #22c55e",
+              color: "#166534",
+            },
+          })
+        }
+      } else if (stepToSave === 7) {
         // Save social habits if we're on the social habits step
         // Validate all fields
         if (!validateSocialHabitsDetails()) {
@@ -3068,14 +3098,16 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           pubs: formData.pubs,
         })
 
-        toast.success("Social habits saved successfully!", {
-          style: {
-            background: "#dcfce7",
-            border: "1px solid #22c55e",
-            color: "#166534",
-          },
-        })
-      } else if (currentStep === 8) {
+        if (!silent) {
+          toast.success("Social habits saved successfully!", {
+            style: {
+              background: "#dcfce7",
+              border: "1px solid #22c55e",
+              color: "#166534",
+            },
+          })
+        }
+      } else if (stepToSave === 8) {
         // Save photos if we're on the photos step
         // Validate all fields
         if (!validatePhotosDetails()) {
@@ -3399,14 +3431,16 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           }))
         }
 
-        toast.success("Photos saved successfully!", {
-          style: {
-            background: "#dcfce7",
-            border: "1px solid #22c55e",
-            color: "#166534",
-          },
-        })
-      } else if (currentStep === 10) {
+        if (!silent) {
+          toast.success("Photos saved successfully!", {
+            style: {
+              background: "#dcfce7",
+              border: "1px solid #22c55e",
+              color: "#166534",
+            },
+          })
+        }
+      } else if (stepToSave === 10) {
         // Save referral if we're on the referral step
         // Validate partner ID format
         if (!validateReferralDetails()) {
@@ -3493,14 +3527,16 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           referralPartnerId: partnerId,
         })
 
-        toast.success("Referral details saved successfully!", {
-          style: {
-            background: "#dcfce7",
-            border: "1px solid #22c55e",
-            color: "#166534",
-          },
-        })
-      } else if (currentStep === 9) {
+        if (!silent) {
+          toast.success("Referral details saved successfully!", {
+            style: {
+              background: "#dcfce7",
+              border: "1px solid #22c55e",
+              color: "#166534",
+            },
+          })
+        }
+      } else if (stepToSave === 9) {
         // Save partner preferences if we're on the partner preferences step
         const preferencesData = {
           user_id: userId,
@@ -3574,15 +3610,17 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
           preferredCity: formData.preferredCity,
         })
 
-        toast.success("Partner preferences saved successfully!", {
-          style: {
-            background: "#dcfce7",
-            border: "1px solid #22c55e",
-            color: "#166534",
-          },
-        })
+        if (!silent) {
+          toast.success("Partner preferences saved successfully!", {
+            style: {
+              background: "#dcfce7",
+              border: "1px solid #22c55e",
+              color: "#166534",
+            },
+          })
+        }
       } else {
-        throw new Error(`Unknown setup step: ${currentStep}`)
+        throw new Error(`Unknown setup step: ${stepToSave}`)
       }
 
       // If we reach here without returning or throwing, the save was successful.
@@ -3592,22 +3630,28 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
     } catch (error: unknown) {
       const message = getErrorMessage(error)
       console.error(
-        `Error saving profile (step ${currentStep}: ${formSteps[currentStep]?.title}):`,
+        `Error saving profile (step ${stepToSave}: ${formSteps[stepToSave]?.title}):`,
         message,
         error
       )
-      toast.error("Error saving profile", {
-        description: message || "Please try again.",
-        style: {
-          background: "#fee2e2",
-          border: "1px solid #ef4444",
-          color: "#991b1b",
-        },
-      })
+      if (!silent) {
+        toast.error("Error saving profile", {
+          description: message || "Please try again.",
+          style: {
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            color: "#991b1b",
+          },
+        })
+      }
     } finally {
       setIsSaving(false)
       advanceOnSaveRef.current = false
     }
+  }
+
+  const handleSave = async () => {
+    await saveProfileData(currentStep, false, false)
   }
 
   const overallProgress = calculateOverallProgress()
@@ -3618,6 +3662,22 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
       onProgressChange(overallProgress)
     }
   }, [overallProgress, onProgressChange])
+
+  // Auto-save photos
+  useEffect(() => {
+    if (currentStep === 8 && hasPhotosDetailsChanged() && !isSaving) {
+      const timer = setTimeout(() => {
+        saveProfileData(8, false, true)
+      }, 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [
+    currentStep,
+    formData.userPhotos,
+    formData.familyPhoto,
+    formData.aadharFront,
+    formData.aadharBack,
+  ])
 
   // Show loading state while data is being loaded
   if (isLoading) {
@@ -3651,8 +3711,10 @@ export function ProfileSetupForm({ userId, onProgressChange }: { userId: string;
         </div>
       </div>
 
-      <div className="relative overflow-hidden rounded-[20px] border border-[#f0ebe3] bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] shadow-[0_2px_12px_rgba(31,64,104,0.04)]">
-        <DashboardJourneyPatterns />
+      <div className="relative rounded-[20px] border border-[#f0ebe3] bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] shadow-[0_2px_12px_rgba(31,64,104,0.04)]">
+        <div className="absolute inset-0 overflow-hidden rounded-[20px] pointer-events-none">
+          <DashboardJourneyPatterns />
+        </div>
 
         <div className="relative border-b border-[#f0ebe3]/80 px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

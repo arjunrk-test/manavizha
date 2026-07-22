@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { updateVerificationStatus } from "@/app/actions/admin"
 import {
   Dialog,
   DialogContent,
@@ -132,25 +133,13 @@ export function AdminVerificationPanel() {
   const handleAction = async (userId: string, status: "verified" | "rejected") => {
     setProcessingId(userId)
     try {
-      const { error: photosError } = await supabase
-        .from("photos")
-        .update({ verification_status: status })
-        .eq("user_id", userId)
+      const { data: session } = await supabase.auth.getSession()
+      const token = session?.session?.access_token
+      if (!token) throw new Error("No admin session found")
 
-      if (photosError) throw photosError
-
-      if (status === "verified") {
-        const { error: personalError } = await supabase
-          .from("personal_details")
-          .update({ photo_verified: true, id_verified: true })
-          .eq("user_id", userId)
-
-        if (personalError) throw personalError
-      } else {
-        await supabase
-          .from("personal_details")
-          .update({ photo_verified: false, id_verified: false })
-          .eq("user_id", userId)
+      const res = await updateVerificationStatus(token, userId, status)
+      if (!res.success) {
+        throw new Error(res.error || "Failed to update verification status")
       }
 
       toast.success(`User ${status === "verified" ? "verified" : "rejected"} successfully`)

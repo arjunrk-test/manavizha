@@ -540,6 +540,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 poruthamScore: horoscopeMatch?.score || 0,
                 viewerIsPremium: profile?.isPremium,
                 onScoreClick: (e: any) => {
+                    e.preventDefault()
                     e.stopPropagation()
                     if (profile?.isPremium) {
                         setActiveBreakdown({ lifestyle: lifestyleMatch, horoscope: horoscopeMatch })

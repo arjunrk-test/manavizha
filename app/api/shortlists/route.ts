@@ -55,6 +55,9 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: error.message }, { status: 500 })
         }
 
+        const { createNotification } = await import('@/lib/server/notify')
+        await createNotification(targetUserId, userId, 'profile_shortlisted')
+
         return NextResponse.json({ success: true })
     } catch (error: any) {
         if (error instanceof SyntaxError) {

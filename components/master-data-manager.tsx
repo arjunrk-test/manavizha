@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Edit, Trash2 } from "lucide-react"
+import { Plus, Edit, Trash2, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { supabase } from "@/lib/supabase"
+import { SearchableSelect } from "@/components/ui/searchable-select"
 
 interface MasterDataValue {
   id: string
@@ -31,6 +32,7 @@ interface MasterDataManagerProps {
   categoryLabel?: string       // label for the category field (e.g. "Parent Caste")
   categoryOptions?: string[]   // when provided, category becomes a dropdown of these values
   refreshKey?: number // Key to trigger refresh
+  onDataChanged?: () => void // Called when data is added, updated, or deleted
 }
 
 export function MasterDataManager({
@@ -47,6 +49,7 @@ export function MasterDataManager({
   categoryLabel = "Category",
   categoryOptions,
   refreshKey = 0,
+  onDataChanged,
 }: MasterDataManagerProps) {
   const [values, setValues] = useState<MasterDataValue[]>([])
   const [internalIsDialogOpen, setInternalIsDialogOpen] = useState(false)
@@ -54,7 +57,7 @@ export function MasterDataManager({
   // Use external state if provided, otherwise use internal state
   const isDialogOpen = externalIsDialogOpen !== undefined ? externalIsDialogOpen : internalIsDialogOpen
   const setIsDialogOpen = externalOnDialogChange || setInternalIsDialogOpen
-  const [inputValue, setInputValue] = useState("")
+  const [inputValues, setInputValues] = useState<string[]>([""])
   const [colourCodeValue, setColourCodeValue] = useState("")
   const [categoryValue, setCategoryValue] = useState("")
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -65,16 +68,37 @@ export function MasterDataManager({
   const [itemToDelete, setItemToDelete] = useState<MasterDataValue | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  // Table search
+  const [tableSearchQuery, setTableSearchQuery] = useState("")
+  const [debouncedQuery, setDebouncedQuery] = useState("")
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(tableSearchQuery)
+    }, 300)
+    return () => clearTimeout(handler)
+  }, [tableSearchQuery])
+
   useEffect(() => {
     fetchValues()
-  }, [tableName, refreshKey])
+  }, [tableName, refreshKey, debouncedQuery])
 
   const fetchValues = async () => {
     try {
-      const { data, error } = await supabase
-        .from(tableName)
-        .select("*")
-        .order("created_at", { ascending: true })
+      let query = supabase.from(tableName).select("*")
+
+      if (debouncedQuery.trim()) {
+        const lowerQuery = debouncedQuery.trim()
+        const orConditions = [`value.ilike.%${lowerQuery}%`]
+        if (showCategory) orConditions.push(`category.ilike.%${lowerQuery}%`)
+        if (showColourCode) orConditions.push(`colour_code.ilike.%${lowerQuery}%`)
+        query = query.or(orConditions.join(","))
+      }
+
+      // Order by created_at descending so newly added items appear at the top, and limit to 200
+      const { data, error } = await query
+        .order("created_at", { ascending: false })
+        .limit(200)
 
       if (error) throw error
       setValues(data || [])
@@ -85,7 +109,7 @@ export function MasterDataManager({
 
   const handleAdd = () => {
     setEditingId(null)
-    setInputValue("")
+    setInputValues([""])
     setColourCodeValue("")
     setCategoryValue("")
     setIsDialogOpen(true)
@@ -93,7 +117,7 @@ export function MasterDataManager({
 
   const handleEdit = (item: MasterDataValue) => {
     setEditingId(item.id)
-    setInputValue(item.value)
+    setInputValues([item.value])
     setColourCodeValue(item.colour_code || "")
     setCategoryValue(item.category || "")
     setIsDialogOpen(true)
@@ -115,6 +139,7 @@ export function MasterDataManager({
       await fetchValues()
       setIsDeleteDialogOpen(false)
       setItemToDelete(null)
+      if (onDataChanged) onDataChanged()
     } catch (error) {
       console.error(`Error deleting ${tableName} value:`, error)
       alert(`Failed to delete ${title.toLowerCase()} value. Please try again.`)
@@ -124,8 +149,9 @@ export function MasterDataManager({
   }
 
   const handleSave = async () => {
-    if (!inputValue.trim()) {
-      alert(`Please enter a ${title.toLowerCase()} value`)
+    const validInputs = inputValues.map((v) => v.trim()).filter(Boolean)
+    if (validInputs.length === 0) {
+      alert(`Please enter at least one ${title.toLowerCase()} value`)
       return
     }
 
@@ -150,20 +176,19 @@ export function MasterDataManager({
 
     setIsSaving(true)
     try {
-      const dataToSave: any = {
-        value: inputValue.trim(),
-      }
-
-      if (showColourCode) {
-        dataToSave.colour_code = colourCodeValue.trim().toUpperCase()
-      }
-
-      if (showCategory) {
-        dataToSave.category = categoryValue.trim()
-      }
-
       if (editingId) {
         // Update existing
+        const dataToSave: any = {
+          value: validInputs[0],
+        }
+
+        if (showColourCode) {
+          dataToSave.colour_code = colourCodeValue.trim().toUpperCase()
+        }
+
+        if (showCategory) {
+          dataToSave.category = categoryValue.trim()
+        }
         const { error } = await supabase
           .from(tableName)
           .update(dataToSave)
@@ -171,18 +196,31 @@ export function MasterDataManager({
 
         if (error) throw error
       } else {
-        // Insert new
-        const { error } = await supabase.from(tableName).insert(dataToSave)
+        // Insert new (bulk)
+        const dataToSaveArray = validInputs.map((val) => {
+          const dataToSave: any = {
+            value: val,
+          }
+          if (showColourCode) {
+            dataToSave.colour_code = colourCodeValue.trim().toUpperCase()
+          }
+          if (showCategory) {
+            dataToSave.category = categoryValue.trim()
+          }
+          return dataToSave
+        })
+        const { error } = await supabase.from(tableName).insert(dataToSaveArray)
 
         if (error) throw error
       }
 
       setIsDialogOpen(false)
-      setInputValue("")
+      setInputValues([""])
       setColourCodeValue("")
       setCategoryValue("")
       setEditingId(null)
       await fetchValues()
+      if (onDataChanged) onDataChanged()
     } catch (error: any) {
       console.error(`Error saving ${tableName} value:`, error)
       if (error.code === "23505") {
@@ -198,6 +236,28 @@ export function MasterDataManager({
   return (
     <>
       <div className="h-full flex flex-col min-h-0">
+        {/* Table Search */}
+        <div className="border-b border-[#f0ebe3] bg-white px-4 py-3">
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              value={tableSearchQuery}
+              onChange={(e) => setTableSearchQuery(e.target.value)}
+              placeholder={`Search ${title.toLowerCase()}...`}
+              className="h-9 w-full rounded-md border-[#e2d6c1] bg-[#faf8f4] pl-9 pr-9 text-[13px] shadow-sm focus-visible:ring-[#c9a227]"
+            />
+            {tableSearchQuery && (
+              <button
+                type="button"
+                onClick={() => setTableSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Scrollable Table Container */}
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
           <table className="w-full border-collapse">
@@ -231,7 +291,7 @@ export function MasterDataManager({
                     colSpan={showCategory ? (showColourCode ? 5 : 4) : showColourCode ? 4 : 3}
                     className="px-5 py-10 text-center text-[12px] text-gray-500"
                   >
-                    No {title.toLowerCase()} values found. Click &ldquo;{addButtonText}&rdquo; to add one.
+                    {debouncedQuery ? `No ${title.toLowerCase()} found matching "${debouncedQuery}".` : `No ${title.toLowerCase()} values found. Click "${addButtonText}" to add one.`}
                   </td>
                 </tr>
               ) : (
@@ -304,17 +364,13 @@ export function MasterDataManager({
               <div className="grid gap-2">
                 <Label htmlFor="category-input">{categoryLabel}</Label>
                 {categoryOptions ? (
-                  <select
+                  <SearchableSelect
                     id="category-input"
                     value={categoryValue}
-                    onChange={(e) => setCategoryValue(e.target.value)}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    <option value="">Select {categoryLabel.toLowerCase()}…</option>
-                    {categoryOptions.map((opt) => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setCategoryValue(val)}
+                    options={categoryOptions}
+                    placeholder={`Select ${categoryLabel.toLowerCase()}…`}
+                  />
                 ) : (
                   <Input
                     id="category-input"
@@ -331,18 +387,48 @@ export function MasterDataManager({
               </div>
             )}
             <div className="grid gap-2">
-              <Label htmlFor="value-input">{title} Value</Label>
-              <Input
-                id="value-input"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder={inputPlaceholder}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !isSaving) {
-                    handleSave()
-                  }
-                }}
-              />
+              <Label>{title} Value</Label>
+              {inputValues.map((val, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input
+                    value={val}
+                    onChange={(e) => {
+                      const newVals = [...inputValues]
+                      newVals[index] = e.target.value
+                      setInputValues(newVals)
+                    }}
+                    placeholder={inputPlaceholder}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !isSaving) {
+                        handleSave()
+                      }
+                    }}
+                  />
+                  {!editingId && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0 h-9 w-9 border-[#f0ebe3]"
+                      onClick={() => {
+                        if (index === inputValues.length - 1) {
+                          setInputValues([...inputValues, ""])
+                        } else {
+                          const newVals = [...inputValues]
+                          newVals.splice(index, 1)
+                          setInputValues(newVals)
+                        }
+                      }}
+                    >
+                      {index === inputValues.length - 1 ? (
+                        <Plus className="h-4 w-4" />
+                      ) : (
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      )}
+                    </Button>
+                  )}
+                </div>
+              ))}
             </div>
             {showColourCode && (
               <div className="grid gap-2">
@@ -385,7 +471,7 @@ export function MasterDataManager({
               variant="outline"
               onClick={() => {
                 setIsDialogOpen(false)
-                setInputValue("")
+                setInputValues([""])
                 setColourCodeValue("")
                 setCategoryValue("")
                 setEditingId(null)
@@ -397,7 +483,12 @@ export function MasterDataManager({
             </Button>
             <Button
               onClick={handleSave}
-              disabled={isSaving || !inputValue.trim() || (showColourCode && !colourCodeValue.trim()) || (showCategory && !categoryValue.trim())}
+              disabled={
+                isSaving ||
+                inputValues.every((v) => !v.trim()) ||
+                (showColourCode && !colourCodeValue.trim()) ||
+                (showCategory && !categoryValue.trim())
+              }
               className="rounded-lg bg-[#1F4068] text-white hover:bg-[#1a3558]"
             >
               {isSaving ? "Saving..." : editingId ? "Update" : "Save"}

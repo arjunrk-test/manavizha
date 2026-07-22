@@ -9,6 +9,7 @@ export type NotificationType =
     | 'photo_request'
     | 'photo_request_approved'
     | 'contact_viewed'
+    | 'profile_shortlisted'
 
 const APP_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://manavizha.com'
 
@@ -57,6 +58,13 @@ const EMAIL_SPEC: Record<
         pref: 'member_activity',
         heading: (n) => `${n} approved your photo request`,
         body: (n) => `${n} approved your request — you can now view their photos.`,
+        cta: 'View profile',
+        path: '/dashboard',
+    },
+    profile_shortlisted: {
+        pref: 'shortlists',
+        heading: (n) => `${n} shortlisted you`,
+        body: (n) => `${n} shortlisted your profile. Log in to view their profile.`,
         cta: 'View profile',
         path: '/dashboard',
     },

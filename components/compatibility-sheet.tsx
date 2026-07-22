@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
+import { useRouter } from "next/navigation"
 import { PORUTHAM_LABELS, getPoruthamStatusInfo, MatchStatus } from "@/lib/astrology"
 
 interface CompatibilityBreakdown {
@@ -44,6 +45,8 @@ export function CompatibilitySheet({
   poruthamDetails,
   isPremium = false
 }: CompatibilitySheetProps) {
+  const router = useRouter()
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden p-0 rounded-t-[3rem] sm:rounded-[3rem] bg-gray-50 border-none shadow-2xl flex flex-col">
@@ -155,9 +158,14 @@ export function CompatibilitySheet({
                     </Badge>
                   ))}
                 </div>
-                <p className="text-[10px] text-indigo-900/40 font-bold uppercase tracking-widest text-center italic mt-4">
-                   Calculated using Vedic Algorithms (Tamil Standard)
-                </p>
+                <div className="text-center mt-4 space-y-1">
+                  <p className="text-[10px] text-indigo-900/40 font-bold uppercase tracking-widest italic">
+                     Calculated using Vedic Algorithms (Tamil Standard)
+                  </p>
+                  <p className="text-[9px] text-indigo-900/40 font-medium">
+                     * Note: This is a system-generated result. Kindly check with your astrologer for verification.
+                  </p>
+                </div>
               </div>
             )}
 
@@ -166,7 +174,13 @@ export function CompatibilitySheet({
                  <Shield className="h-6 w-6 text-amber-500 mb-2" />
                  <h3 className="text-sm font-black uppercase tracking-[0.1em] text-amber-700">Detailed Porutham Analysis</h3>
                  <p className="text-xs font-medium text-amber-600/70 max-w-sm">Unlock full horoscope matching details to see how compatible your stars truly are.</p>
-                 <Button className="mt-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold uppercase tracking-widest text-[10px] rounded-xl hover:scale-105 transition-transform h-10 px-6 shadow-xl shadow-amber-500/20">
+                 <Button 
+                   onClick={() => {
+                     onClose()
+                     router.push('/pricing')
+                   }}
+                   className="mt-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold uppercase tracking-widest text-[10px] rounded-xl hover:scale-105 transition-transform h-10 px-6 shadow-xl shadow-amber-500/20"
+                 >
                     Subscribe to See
                  </Button>
               </div>

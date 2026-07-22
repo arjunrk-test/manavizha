@@ -51,6 +51,16 @@ export function MatchScoreBadge({ lifestyleScore, poruthamScore, isPremium, onCl
             <p className="text-[11px] text-[#6b7280] leading-relaxed">
               Premium members see lifestyle and horoscope match scores for every profile.
             </p>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.location.href = '/pricing';
+              }}
+              className="mt-2 w-full rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 py-2 text-[10px] font-bold uppercase tracking-widest text-white shadow-md shadow-amber-500/20 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Upgrade Now
+            </button>
           </div>
         </PopoverContent>
       </Popover>
