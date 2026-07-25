@@ -8,8 +8,13 @@ import dns from 'dns'
 function resolveHostIp(hostname: string): Promise<string> {
     return new Promise((resolve, reject) => {
         dns.resolve4(hostname, (err, addresses) => {
-            if (err || !addresses?.length) reject(err ?? new Error('No addresses returned'))
-            else resolve(addresses[0])
+            if (!err && addresses?.length) return resolve(addresses[0])
+            // resolve4 queries the DNS servers directly and can be blocked
+            // (ECONNREFUSED) even when the OS resolver works — fall back to lookup.
+            dns.lookup(hostname, { family: 4 }, (lookupErr, address) => {
+                if (lookupErr || !address) reject(err ?? lookupErr ?? new Error('No addresses returned'))
+                else resolve(address)
+            })
         })
     })
 }
@@ -45,10 +50,17 @@ export async function getSupabaseAdmin() {
     }
 
     const hostname = new URL(supabaseUrl).hostname
-    const ip = await resolveHostIp(hostname)
+
+    let ip: string | null = null
+    try {
+        ip = await resolveHostIp(hostname)
+    } catch {
+        // DNS resolution failed entirely — let the default fetch handle the
+        // hostname rather than failing the whole request.
+    }
 
     return createClient(supabaseUrl, supabaseServiceRoleKey, {
         auth: { autoRefreshToken: false, persistSession: false },
-        global: { fetch: buildCustomFetch(hostname, ip) },
+        ...(ip ? { global: { fetch: buildCustomFetch(hostname, ip) } } : {}),
     })
 }

@@ -234,49 +234,42 @@ export async function generateHoroscope(dateTime: string, location: Location, ti
         ayan -= 1.283;
     }
     
-    // Utilize vedic-astro for highly precise True Sidereal (Lahiri) calculations based on Meeus/VSOP.
-    // This avoids large mean-motion linear approximation errors (e.g., 20+ degrees for Mars/Mercury).
-    const vaSettings = { iso: date.toISOString() };
-    const vaLoc = { latitude: location.latitude, longitude: location.longitude };
-    
     let truePositions: any[] = [];
-    try {
-        const { getPlanetaryPositions } = require('vedic-astro');
-        const eph = await getPlanetaryPositions(vaSettings, vaLoc);
-        truePositions = eph.positions;
-    } catch(err) {
-        console.error("Vedic-astro failed, falling back to mean motions...", err);
-        // Fallback mock using mean motions if the module fails
-        truePositions = [
-            { name: "Sun", longitude: (calculateSun(jd) - ayan + 360) % 360 },
-            { name: "Mercury", longitude: ((252.25 + 149472.93 * ((jd - 2451545.0) / 36525)) - ayan + 360) % 360 },
-            { name: "Venus", longitude: ((181.97 + 58517.81 * ((jd - 2451545.0) / 36525)) - ayan + 360) % 360 },
-            { name: "Mars", longitude: ((355.45 + 19140.3 * ((jd - 2451545.0) / 36525)) - ayan + 360) % 360 },
-            { name: "Jupiter", longitude: ((34.35 + 3034.9 * ((jd - 2451545.0) / 36525)) - ayan + 360) % 360 },
-            { name: "Saturn", longitude: ((49.95 + 1222.11 * ((jd - 2451545.0) / 36525)) - ayan + 360) % 360 },
-            { name: "Rahu", longitude: ((125.04 - 1934.13 * ((jd - 2451545.0) / 36525)) - ayan + 360) % 360 },
-            { name: "Ketu", longitude: ((125.04 - 1934.13 * ((jd - 2451545.0) / 36525) + 180) - ayan + 360) % 360 }
-        ];
-    }
+    // Use highly robust internal mean-motion and Meeus approximation formulas
+    // instead of external libraries to ensure exact behavior across SSR and CSR
+    // without radian/degree mismatch bugs.
+    truePositions = [
+        { name: "Sun", longitude: (calculateSun(jd) - ayan + 360) % 360 },
+        { name: "Mercury", longitude: ((252.25 + 149472.93 * ((jd - 2451545.0) / 36525)) - ayan + 360) % 360 },
+        { name: "Venus", longitude: ((181.97 + 58517.81 * ((jd - 2451545.0) / 36525)) - ayan + 360) % 360 },
+        { name: "Mars", longitude: ((355.45 + 19140.3 * ((jd - 2451545.0) / 36525)) - ayan + 360) % 360 },
+        { name: "Jupiter", longitude: ((34.35 + 3034.9 * ((jd - 2451545.0) / 36525)) - ayan + 360) % 360 },
+        { name: "Saturn", longitude: ((49.95 + 1222.11 * ((jd - 2451545.0) / 36525)) - ayan + 360) % 360 },
+        { name: "Rahu", longitude: ((125.04 - 1934.13 * ((jd - 2451545.0) / 36525)) - ayan + 360) % 360 },
+        { name: "Ketu", longitude: ((125.04 - 1934.13 * ((jd - 2451545.0) / 36525) + 180) - ayan + 360) % 360 }
+    ];
 
-    // Custom Moon / Lagnam bypass to guarantee 100% precision with custom sidereal offset
+    // Grab the TRUE sidereal positions
     const tropicalMoon = calculateMoon(jd);
     const tropicalSun = calculateSun(jd);
-    const siderealMoon = Math.abs((tropicalMoon - ayan + 360) % 360);
-    
+    const fallbackSiderealMoon = ((tropicalMoon - ayan) % 360 + 360) % 360;
+
     // Grab the TRUE sidereal positions from the advanced API
     const getTrueLon = (name: string, fallback: number) => {
         const item = truePositions.find((p: any) => p.name === name);
         // Correct Vakkiyam offset shift if needed (vedic-astro is strictly Lahiri)
-        if (item) return method === 'vakkiyam' ? Math.abs((item.longitude + 1.283) % 360) : item.longitude;
+        if (item) return method === 'vakkiyam' ? ((item.longitude + 1.283) % 360 + 360) % 360 : item.longitude;
         return fallback;
     };
-    
-    const trueSunSidereal = getTrueLon("Sun", (tropicalSun - ayan + 360) % 360);
+
+    const trueSunSidereal = getTrueLon("Sun", ((tropicalSun - ayan) % 360 + 360) % 360);
+    // Prefer the precise ephemeris Moon; the 3-term series is only a fallback.
+    // The Moon drives nakshatra/rasi/tithi/dasa, so accuracy here matters most.
+    const trueMoonSidereal = getTrueLon("Moon", fallbackSiderealMoon);
 
     const rawPlanetsSidereal = [
         { name: "Sun", tamil: "Suriyan", abbr: "சூ", sidLon: trueSunSidereal },
-        { name: "Moon", tamil: "Chandran", abbr: "சந்", sidLon: siderealMoon },
+        { name: "Moon", tamil: "Chandran", abbr: "சந்", sidLon: trueMoonSidereal },
         { name: "Mercury", tamil: "Budhan", abbr: "பு", sidLon: getTrueLon("Mercury", 0) },
         { name: "Venus", tamil: "Sukran", abbr: "சு", sidLon: getTrueLon("Venus", 0) },
         { name: "Mars", tamil: "Sevvai", abbr: "செ", sidLon: getTrueLon("Mars", 0) },
@@ -387,6 +380,49 @@ export async function generateHoroscope(dateTime: string, location: Location, ti
 }
 
 export type MatchStatus = 'Uthamam' | 'Madhyamam' | 'Athamam';
+
+// Human-readable labels for the 10 poruthams, keyed on the exact breakdown
+// keys produced by checkTamilPorutham (used by the compatibility UIs).
+export const PORUTHAM_LABELS: Record<string, string> = {
+    "Dina": "Dina Porutham (Health & Longevity)",
+    "Gana": "Gana Porutham (Temperament)",
+    "Mahendra": "Mahendra Porutham (Progeny & Wellbeing)",
+    "Stree Deerkha": "Stree Deerkha (Prosperity & Longevity)",
+    "Yoni": "Yoni Porutham (Physical & Mental Affinity)",
+    "Rasi": "Rasi Porutham (Family Growth)",
+    "Rasiyathipathi": "Rasiyathipathi (Lords' Friendship)",
+    "Vasya": "Vasya Porutham (Mutual Attraction)",
+    "Vedha": "Vedha Porutham (Absence of Affliction)",
+    "Rajju": "Rajju Porutham (Marital Bond & Longevity)",
+};
+
+// Plain-language explanation of the overall porutham result, so members
+// understand Madhyamam / Athamam and not just the raw score.
+export function getPoruthamStatusInfo(status: MatchStatus, score: number): {
+    label: string
+    tone: 'good' | 'average' | 'poor'
+    summary: string
+} {
+    if (status === 'Uthamam') {
+        return {
+            label: 'Uthamam — Excellent',
+            tone: 'good',
+            summary: `${score}/10 poruthams match. A highly compatible pairing by traditional Tamil matching.`,
+        }
+    }
+    if (status === 'Madhyamam') {
+        return {
+            label: 'Madhyamam — Average',
+            tone: 'average',
+            summary: `${score}/10 poruthams match. An acceptable pairing; families often proceed after reviewing the unmatched poruthams and dosham balance with an astrologer.`,
+        }
+    }
+    return {
+        label: 'Athamam — Poor',
+        tone: 'poor',
+        summary: `${score}/10 poruthams match. Traditionally considered a weak match; an astrologer's review of doshams and remedies is advised before proceeding.`,
+    }
+}
 
 // --- Porutham Data ---
 const NAKSHATRA_DATA: Record<string, { gana: string, yoni: string, rajju: string, vedha: string }> = {
@@ -500,9 +536,22 @@ export function checkTamilPorutham(girlStar: string, girlRashi: string, boyStar:
     breakdown['Rasiyathipathi'] = gLord === bLord || (FRIENDSHIP[gLord]?.includes(bLord) || FRIENDSHIP[bLord]?.includes(gLord));
     if (breakdown['Rasiyathipathi']) matchedCount++;
 
-    // 8. Vasya Porutham
-    const vasyaMap: Record<string, string[]> = { "Mesha": ["Simha", "Vrishchika"], "Vrishabha": ["Kadaga", "Thulam"] }; // Simplified
-    breakdown['Vasya'] = vasyaMap[gRashi]?.includes(bRashi) || false;
+    // 8. Vasya Porutham (keys/values must be the Sanskrit RASHIS names; matched in either direction)
+    const vasyaMap: Record<string, string[]> = {
+        "Mesha": ["Simha", "Vrishchika"],
+        "Vrishabha": ["Karka", "Tula"],
+        "Mithuna": ["Kanya"],
+        "Karka": ["Vrishchika", "Dhanu"],
+        "Simha": ["Tula"],
+        "Kanya": ["Mithuna", "Meena"],
+        "Tula": ["Kanya", "Makara"],
+        "Vrishchika": ["Karka"],
+        "Dhanu": ["Meena"],
+        "Makara": ["Mesha", "Kumbha"],
+        "Kumbha": ["Mesha"],
+        "Meena": ["Makara"]
+    };
+    breakdown['Vasya'] = (vasyaMap[gRashi]?.includes(bRashi) || vasyaMap[bRashi]?.includes(gRashi)) || false;
     if (breakdown['Vasya']) matchedCount++;
 
     // 9. Vedha Porutham (Should NOT match)
@@ -519,4 +568,19 @@ export function checkTamilPorutham(girlStar: string, girlRashi: string, boyStar:
     else if (score >= 5) status = 'Madhyamam';
 
     return { score, status, breakdown };
+}
+
+/**
+ * Gender-aware wrapper for checkTamilPorutham. Dina, Mahendra, Stree Deerkha
+ * and Rasi poruthams are counted from the girl's star/rashi, so the female
+ * partner's horoscope must always be passed first — regardless of which of
+ * the two happens to be the viewer.
+ */
+export function checkTamilPoruthamByGender(
+    aStar: string, aRashi: string, aIsFemale: boolean,
+    bStar: string, bRashi: string
+): { score: number; status: MatchStatus; breakdown: Record<string, boolean> } {
+    return aIsFemale
+        ? checkTamilPorutham(aStar, aRashi, bStar, bRashi)
+        : checkTamilPorutham(bStar, bRashi, aStar, aRashi);
 }

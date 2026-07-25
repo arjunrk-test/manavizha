@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/api-client"
 import React, { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ArrowRight, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Bookmark, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle, MoreVertical, UserX, UserMinus, Crown, Gem, Shield, X, Star, Eye } from "lucide-react"
+import { ArrowLeft, ArrowRight, MapPin, Briefcase, User, GraduationCap, Calendar, Heart, ChevronLeft, ChevronRight, Bookmark, Coffee, Filter, SlidersHorizontal, CheckCircle2, Phone, MessageCircle, MoreVertical, UserX, UserMinus, Crown, Gem, Shield, X, Star, Eye, Search } from "lucide-react"
 import { motion } from "framer-motion"
 import { HeartHandshake } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { calculateTrustScore, getProfileSummaryStr, getRoleAndHeightStr } from "@/lib/utils/profile-utils"
 import { toast } from "sonner"
-import { checkTamilPorutham } from "@/lib/astrology"
+import { checkTamilPoruthamByGender } from "@/lib/astrology"
 import { getDistanceInKm, getCoordinatesForCity } from "@/lib/locations"
 import { Badge } from "@/components/ui/badge"
 import { Sparkles as SparklesIcon, Info } from "lucide-react"
@@ -78,6 +78,8 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
     const [likedMeDateMap, setLikedMeDateMap] = useState<Record<string, string>>({})
     const [iViewedDateMap, setIViewedDateMap] = useState<Record<string, string>>({})
     const [viewedMeDateMap, setViewedMeDateMap] = useState<Record<string, string>>({})
+
+    const [childParentSelections, setChildParentSelections] = useState<string[]>([])
     const [shortlistedDateMap, setShortlistedDateMap] = useState<Record<string, string>>({})
     const [shortlistedMeDateMap, setShortlistedMeDateMap] = useState<Record<string, string>>({})
     const [likedMeStatusMap, setLikedMeStatusMap] = useState<Record<string, string>>({})
@@ -105,18 +107,15 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
         if (e) e.stopPropagation()
         if (!profile.user_id) return
         
-        // Record the view
+        // Record the view (fire-and-forget)
         if (!parentViewer?.isParent) {
-            try {
-                // Wait for the view to be recorded so it doesn't get cancelled by navigation
-                await authFetch("/api/views", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ viewerId: userId, viewedUserId: profile.user_id })
-                })
-            } catch (e) {
+            authFetch("/api/views", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ viewerId: userId, viewedUserId: profile.user_id })
+            }).catch(e => {
                 console.error("Error logging view", e)
-            }
+            })
         }
 
         // Save navigation sequence to sessionStorage for Next/Prev functionality
@@ -377,7 +376,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
 
                 // Fetch current user horoscope for matching
                 const [
-                    { data: myHoro },
+                    { data: currentUserHoro },
                     { data: myInterests },
                     { data: mySocial },
                     { data: myEmp },
@@ -390,8 +389,8 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                     supabase.from("profession_business").select("*").eq("user_id", userId).maybeSingle()
                 ])
                 
-                setUserHoroscope(myHoro)
-                setViewerFullProfile({
+                setUserHoroscope(currentUserHoro)
+                const currentViewerProfile = {
                     ...userData,
                     ...(myContact || {}),
                     interests: myInterests?.interests || [],
@@ -402,7 +401,8 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                     workLocation: myEmp?.work_location || myBus?.business_location,
                     sector: myEmp?.sector || myBus?.business_type,
                     salary: myEmp?.salary || myBus?.annual_returns
-                })
+                }
+                setViewerFullProfile(currentViewerProfile)
 
                 // 2. Fetch target profiles
                 let query = supabase
@@ -431,6 +431,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                 let localShortlistedMeIds: string[] = []
                 let localIViewedIds: string[] = []
                 let localViewedMeIds: string[] = []
+                let localChildParentSelections: string[] = []
 
                 try {
                     const [likeRes, shortRes, viewsRes, blockRes, ignoreRes] = await Promise.all([
@@ -531,21 +532,18 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                     !hiddenProfileIds.includes(p.user_id)
                 )
 
-                // Filter out deactivated profiles
-                let deactivatedUserIds: string[] = []
-                try {
-                    const { data: deactivatedSettings } = await supabase
-                        .from('user_settings')
-                        .select('user_id, is_deactivated, deactivated_until')
-                        .in('user_id', unmarriedProfiles.map((p: any) => p.user_id))
-                        .eq('is_deactivated', true)
-                    deactivatedUserIds = (deactivatedSettings || []).filter((s: any) =>
-                        s.deactivated_until && new Date(s.deactivated_until) > new Date()
-                    ).map((s: any) => s.user_id)
-                } catch { }
+                if (!parentViewer?.isParent) {
+                    try {
+                        const { data: selectionsData } = await supabase
+                            .from("parent_selections")
+                            .select("selected_profile_id")
+                            .eq("child_user_id", userId)
+                        localChildParentSelections = (selectionsData || []).map((s: any) => s.selected_profile_id)
+                        setChildParentSelections(localChildParentSelections)
+                    } catch {}
+                }
 
-                const activeProfiles = unmarriedProfiles.filter((p: any) => !deactivatedUserIds.includes(p.user_id))
-                
+                const activeProfiles = unmarriedProfiles
                 // Identify all IDs from activities that might be missing from the target feed
                 const activityIds = Array.from(new Set([
                     ...localIViewedIds,
@@ -553,7 +551,8 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                     ...localShortlistedIds,
                     ...localShortlistedMeIds,
                     ...localLikedIds,
-                    ...localLikedMeIds
+                    ...localLikedMeIds,
+                    ...localChildParentSelections
                 ])).filter(id => id && id !== userId)
 
                 const existingProfileIds = new Set(activeProfiles.map(p => p.user_id))
@@ -572,6 +571,26 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                         combinedProfiles = [...combinedProfiles, ...missingProfiles]
                     }
                 }
+
+                if (combinedProfiles.length === 0) {
+                    setIsLoading(false)
+                    return
+                }
+
+                // Filter out deactivated profiles from the final combined list
+                let deactivatedUserIds: string[] = []
+                try {
+                    const { data: deactivatedSettings } = await supabase
+                        .from('user_settings')
+                        .select('user_id, is_deactivated, deactivated_until')
+                        .in('user_id', combinedProfiles.map((p: any) => p.user_id))
+                        .eq('is_deactivated', true)
+                    deactivatedUserIds = (deactivatedSettings || []).filter((s: any) =>
+                        s.deactivated_until && new Date(s.deactivated_until) > new Date()
+                    ).map((s: any) => s.user_id)
+                } catch { }
+
+                combinedProfiles = combinedProfiles.filter((p: any) => !deactivatedUserIds.includes(p.user_id))
 
                 if (combinedProfiles.length === 0) {
                     setIsLoading(false)
@@ -669,10 +688,10 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                         interests: myInterests || null,
                         socialHabits: mySocial || null,
                         horoscope: myHoro || null,
-                        compatibility: (userHoroscope?.star && myHoro?.star) 
-                            ? checkTamilPorutham(userHoroscope.star, userHoroscope.zodiac_sign || "", myHoro.star, myHoro.zodiac_sign || "") 
+                        compatibility: (currentUserHoro?.star && myHoro?.star)
+                            ? checkTamilPoruthamByGender(myHoro.star, myHoro.zodiac_sign || "", (p.sex || "").toLowerCase() === "female", currentUserHoro.star, currentUserHoro.zodiac_sign || "")
                             : { score: 0, status: 'Athamam', breakdown: {} },
-                        lifestyleMatch: viewerFullProfile ? calculateLifestyleScore(viewerFullProfile, {
+                        lifestyleMatch: currentViewerProfile ? calculateLifestyleScore(currentViewerProfile, {
                             ...p,
                             foodPreference: p.food_preference,
                             hobbies: myInterests?.hobbies || [],
@@ -710,7 +729,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
         const thirtyDaysAgo = new Date()
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-        const isActivityCategory = ["shortlisted-by-you", "shortlisted-you", "viewed-you", "viewed-by-you"].includes(activeCategory)
+        const isActivityCategory = ["shortlisted-by-you", "shortlisted-you", "viewed-you", "viewed-by-you", "sent-interests", "accepted-interests", "parent-selections"].includes(activeCategory)
 
         // 1. Partner preference filter (age always; caste/subcaste when compulsory)
         let dataset = profiles
@@ -721,6 +740,14 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
         // 2. Manual browse filters (combine with partner preferences)
         if (!isActivityCategory) {
             dataset = filterProfilesByBrowseManualFilters(dataset, browseManualFilters)
+
+            // 2.5 Filter out interacted profiles (sent interest, accepted interest, shortlisted) from standard matches
+            dataset = dataset.filter(p => {
+                const isSentInterest = likedIds.includes(p.user_id);
+                const isAcceptedInterest = likedMeIds.includes(p.user_id) && likedMeStatusMap[p.user_id] === 'accepted';
+                const isShortlisted = shortlistedIds.includes(p.user_id);
+                return !isSentInterest && !isAcceptedInterest && !isShortlisted;
+            });
         }
 
         // 3. Sorting (by lifestyle match if premium)
@@ -730,6 +757,15 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                 const scoreB = b.lifestyleMatch?.totalScore || 0
                 return scoreB - scoreA
             })
+        }
+
+        // 3.5 Search by profile code (MNV#####) or name
+        const q = searchTerm.trim().toLowerCase()
+        if (q) {
+            dataset = dataset.filter(p =>
+                (p.profile_code || "").toLowerCase().includes(q) ||
+                (p.name || "").toLowerCase().includes(q)
+            )
         }
 
         // 4. Category Filter
@@ -748,6 +784,14 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                 return dataset.filter(p => viewedMeIds.includes(p.user_id))
             case "viewed-by-you":
                 return dataset.filter(p => iViewedIds.includes(p.user_id))
+            case "sent-interests":
+                return dataset.filter(p => likedIds.includes(p.user_id))
+            case "accepted-interests":
+                return dataset.filter(p => {
+                    const iAcceptedThem = likedMeIds.includes(p.user_id) && likedMeStatusMap[p.user_id] === 'accepted';
+                    const theyAcceptedMe = likedIds.includes(p.user_id) && iLikedStatusMap[p.user_id] === 'accepted';
+                    return iAcceptedThem || theyAcceptedMe;
+                })
             case "nearby-matches":
                 if (!currentUserLocation) return dataset
                 const myCity = currentUserLocation.split(',')[0].trim().toLowerCase()
@@ -771,11 +815,13 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                 return dataset.filter(p => p.horoscope?.star)
             case "horoscope-matches":
                 return dataset.filter(p => p.compatibility && p.compatibility.score >= 6)
+            case "parent-selections":
+                return dataset.filter(p => parentViewer?.isParent ? selectedProfileIds.has(p.user_id) : childParentSelections.includes(p.user_id))
             case "all-matches":
             default:
                 return dataset
         }
-    }, [profiles, activeCategory, shortlistedIds, shortlistedMeIds, viewedMeIds, iViewedIds, currentUserLocation, userPreferences, applyPreferences, browseManualFilters, isPremium])
+    }, [profiles, activeCategory, shortlistedIds, shortlistedMeIds, viewedMeIds, iViewedIds, currentUserLocation, userPreferences, applyPreferences, browseManualFilters, isPremium, searchTerm, likedIds, likedMeIds, likedMeStatusMap, iLikedStatusMap, childParentSelections, selectedProfileIds])
 
     const getAgeHeightCasteEducationProfessionCityStr = (profile: any) => {
         return getProfileSummaryStr(profile)
@@ -795,6 +841,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
         }
 
         const openBreakdown = (e: React.MouseEvent) => {
+            e.preventDefault()
             e.stopPropagation()
             setActiveBreakdown({
                 lifestyle: profile.lifestyleMatch,
@@ -817,8 +864,7 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                 className="w-full"
             >
                 <div
-                    className="rounded-[20px] overflow-hidden hover:shadow-[0_8px_24px_rgba(232,120,152,0.1)] transition-all duration-300 cursor-pointer group flex flex-col md:flex-row h-auto md:h-[260px] border border-[#f0ebe3] hover:border-[#e87898]/25 active:scale-[0.995] bg-white"
-                    onClick={(e) => handleOpenProfile(profile, e)}
+                    className="rounded-[20px] overflow-hidden hover:shadow-[0_8px_24px_rgba(232,120,152,0.1)] transition-all duration-300 group flex flex-col md:flex-row h-auto md:h-[260px] border border-[#f0ebe3] hover:border-[#e87898]/25 bg-white"
                 >
                     {/* Left: Image Section */}
                     <div className="w-full md:w-56 h-72 md:h-full relative overflow-hidden bg-[#faf8f4] shrink-0">
@@ -885,18 +931,20 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                     isPremium={isPremium}
                                     onClick={openBreakdown}
                                 />
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleShortlist(e, profile.user_id); }}
-                                    disabled={shortlistLoadingId === profile.user_id}
-                                    className={cn(
-                                        "p-0 h-auto hover:bg-transparent transition-all hover:scale-110 flex items-start -mt-2",
-                                        shortlistedIds.includes(profile.user_id) ? "text-[#e87898]" : "text-[#d1d5db] hover:text-[#e87898]"
-                                    )}
-                                >
-                                    <Bookmark className={cn("h-[64px] w-[32px]", shortlistedIds.includes(profile.user_id) && "fill-current")} />
-                                </Button>
+                                {!parentViewer?.isParent && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleShortlist(e, profile.user_id); }}
+                                        disabled={shortlistLoadingId === profile.user_id}
+                                        className={cn(
+                                            "p-0 h-auto hover:bg-transparent transition-all hover:scale-110 flex items-start -mt-2",
+                                            shortlistedIds.includes(profile.user_id) ? "text-[#e87898]" : "text-[#d1d5db] hover:text-[#e87898]"
+                                        )}
+                                    >
+                                        <Bookmark className={cn("h-[64px] w-[32px]", shortlistedIds.includes(profile.user_id) && "fill-current")} />
+                                    </Button>
+                                )}
                             </div>
                              
                             {profile.last_active_at && (
@@ -974,65 +1022,92 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
 
                             <div className="flex flex-wrap items-center justify-between gap-4">
                                 <div className="flex items-center gap-4">
-                                    <Button
-                                        onClick={(e) => { e.stopPropagation(); handleContactClick('whatsapp'); }}
-                                        variant="outline"
-                                        size="icon"
-                                        className="h-10 w-10 rounded-[10px] border border-[#f0ebe3] bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-none"
-                                    >
-                                        <MessageCircle className="h-5 w-5" />
-                                    </Button>
-                                    <Button
-                                        onClick={(e) => { e.stopPropagation(); handleContactClick("call"); }}
-                                        variant="outline"
-                                        size="icon"
-                                        className="h-10 w-10 rounded-[10px] border border-[#f0ebe3] bg-[#fce8ef] text-[#e87898] hover:bg-[#e87898] hover:text-white transition-all shadow-none"
-                                    >
-                                        <Phone className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                        onClick={(e) => { 
-                                            e.stopPropagation(); 
-                                            // Smarter check: if both liked, it's a mutual connection
-                                            const isMutual = likedIds.includes(profile.user_id) && likedMeIds.includes(profile.user_id);
-                                            if (likedIds.includes(profile.user_id) || isMutual) {
-                                                setMessageTarget({ id: profile.user_id, name: profile.name || "this member" });
-                                            } else {
-                                                handleCustomerLike(e, profile.user_id);
-                                            }
-                                        }}
-                                        disabled={actionLoadingId === profile.user_id || iLikedStatusMap[profile.user_id] === 'declined'}
-                                        className={cn(
-                                            "h-10 px-5 rounded-[10px] text-[13px] font-medium transition-all shadow-none border-none",
-                                            iLikedStatusMap[profile.user_id] === "declined" ? "bg-gray-100 text-gray-400 cursor-not-allowed" :
-                                            (likedIds.includes(profile.user_id) || (likedMeIds.includes(profile.user_id) && likedIds.includes(profile.user_id)))
-                                                ? "bg-[#FF4500] text-white hover:bg-[#FF6347]"
-                                                : (likedMeIds.includes(profile.user_id) && likedMeStatusMap[profile.user_id] === "pending"
-                                                    ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                                                    : "bg-[#e87898] text-white hover:bg-[#d66686]")
-                                        )}
-                                    >
-                                        {iLikedStatusMap[profile.user_id] === 'declined' ? (
-                                            <span className="capitalize">Declined</span>
-                                        ) : (likedIds.includes(profile.user_id) || (likedMeIds.includes(profile.user_id) && likedIds.includes(profile.user_id))) ? (
-                                            <span className="flex items-center gap-2">
-                                                <MessageCircle className="h-4 w-4" />
-                                                Send Message
-                                            </span>
-                                        ) : (
-                                            likedMeIds.includes(profile.user_id) && likedMeStatusMap[profile.user_id] === 'pending' ? (
+                                    {parentViewer?.isParent ? (
+                                        <Button
+                                            onClick={(e) => handleParentSelect(e, profile.user_id)}
+                                            disabled={actionLoadingId === profile.user_id || selectedProfileIds.has(profile.user_id) || profile.isSelected}
+                                            className={cn(
+                                                "h-10 px-5 rounded-[10px] text-[13px] font-medium transition-all shadow-none border-none",
+                                                (selectedProfileIds.has(profile.user_id) || profile.isSelected) 
+                                                    ? "bg-emerald-600 text-white cursor-default hover:bg-emerald-600" 
+                                                    : "bg-[#e87898] text-white hover:bg-[#d66686]"
+                                            )}
+                                        >
+                                            {selectedProfileIds.has(profile.user_id) || profile.isSelected ? (
                                                 <span className="flex items-center gap-2">
-                                                    <HeartHandshake className="h-4 w-4" />
-                                                    Accept Interest
+                                                    <CheckCircle2 className="h-4 w-4" />
+                                                    Selected for your child
                                                 </span>
                                             ) : (
                                                 <span className="flex items-center gap-2">
-                                                    <Heart className="h-4 w-4" />
-                                                    Send Interest
+                                                    <Shield className="h-4 w-4" />
+                                                    Select Profile for child
                                                 </span>
-                                            )
-                                        )}
-                                    </Button>
+                                            )}
+                                        </Button>
+                                    ) : (
+                                        <>
+                                            <Button
+                                                onClick={(e) => { e.stopPropagation(); handleContactClick('whatsapp'); }}
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-10 w-10 rounded-[10px] border border-[#f0ebe3] bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-none"
+                                            >
+                                                <MessageCircle className="h-5 w-5" />
+                                            </Button>
+                                            <Button
+                                                onClick={(e) => { e.stopPropagation(); handleContactClick("call"); }}
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-10 w-10 rounded-[10px] border border-[#f0ebe3] bg-[#fce8ef] text-[#e87898] hover:bg-[#e87898] hover:text-white transition-all shadow-none"
+                                            >
+                                                <Phone className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                onClick={(e) => { 
+                                                    e.stopPropagation(); 
+                                                    // Smarter check: if both liked, it's a mutual connection
+                                                    const isMutual = likedIds.includes(profile.user_id) && likedMeIds.includes(profile.user_id);
+                                                    if (likedIds.includes(profile.user_id) || isMutual) {
+                                                        setMessageTarget({ id: profile.user_id, name: profile.name || "this member" });
+                                                    } else {
+                                                        handleCustomerLike(e, profile.user_id);
+                                                    }
+                                                }}
+                                                disabled={actionLoadingId === profile.user_id || iLikedStatusMap[profile.user_id] === 'declined'}
+                                                className={cn(
+                                                    "h-10 px-5 rounded-[10px] text-[13px] font-medium transition-all shadow-none border-none",
+                                                    iLikedStatusMap[profile.user_id] === "declined" ? "bg-gray-100 text-gray-400 cursor-not-allowed" :
+                                                    (likedIds.includes(profile.user_id) || (likedMeIds.includes(profile.user_id) && likedIds.includes(profile.user_id)))
+                                                        ? "bg-[#FF4500] text-white hover:bg-[#FF6347]"
+                                                        : (likedMeIds.includes(profile.user_id) && likedMeStatusMap[profile.user_id] === "pending"
+                                                            ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                                                            : "bg-[#e87898] text-white hover:bg-[#d66686]")
+                                                )}
+                                            >
+                                                {iLikedStatusMap[profile.user_id] === 'declined' ? (
+                                                    <span className="capitalize">Declined</span>
+                                                ) : (likedIds.includes(profile.user_id) || (likedMeIds.includes(profile.user_id) && likedIds.includes(profile.user_id))) ? (
+                                                    <span className="flex items-center gap-2">
+                                                        <MessageCircle className="h-4 w-4" />
+                                                        Send Message
+                                                    </span>
+                                                ) : (
+                                                    likedMeIds.includes(profile.user_id) && likedMeStatusMap[profile.user_id] === 'pending' ? (
+                                                        <span className="flex items-center gap-2">
+                                                            <HeartHandshake className="h-4 w-4" />
+                                                            Accept Interest
+                                                        </span>
+                                                    ) : (
+                                                        <span className="flex items-center gap-2">
+                                                            <Heart className="h-4 w-4" />
+                                                            Send Interest
+                                                        </span>
+                                                    )
+                                                )}
+                                            </Button>
+                                        </>
+                                    )}
 
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -1044,43 +1119,45 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                         Full profile
                                         <ArrowRight className="h-4 w-4 ml-1.5 transition-transform group-hover:translate-x-0.5" />
                                     </Button>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="sm" className="h-12 w-12 rounded-2xl text-gray-200 hover:text-gray-900 border border-transparent hover:border-black/[0.05] hover:bg-white transition-all">
-                                                <MoreVertical className="h-5 w-5" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-64 bg-white rounded-3xl p-2 z-50 border border-black/[0.05] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-                                            <DropdownMenuItem
-                                                onClick={(e) => { 
-                                                    e.stopPropagation(); 
-                                                    const isMutual = likedIds.includes(profile.user_id) && likedMeIds.includes(profile.user_id);
-                                                    if (isPremium || isMutual) {
-                                                        setMessageTarget({ id: profile.user_id, name: profile.name });
-                                                    } else {
-                                                        toast.error('Premium Required', { description: 'Upgrade for instant secure messaging.' });
-                                                    }
-                                                }}
-                                                className="gap-3 cursor-pointer rounded-xl p-3 text-[#374151] focus:bg-[#fce8ef] focus:text-[#e87898] text-[13px] font-medium transition-all"
-                                            >
-                                                <MessageCircle className="h-4 w-4 opacity-50" /> Secure Message
-                                                {!isPremium && <Crown className="h-3 w-3 ml-auto text-amber-500" />}
-                                            </DropdownMenuItem>
-                                            <DropdownMenuSeparator className="bg-black/[0.03] mx-2" />
-                                            <DropdownMenuItem
-                                                onClick={(e) => { e.stopPropagation(); handleIgnore(e, profile.user_id); }}
-                                                className="gap-3 cursor-pointer rounded-xl p-3 text-[#6b7280] hover:text-[#374151] focus:bg-[#fce8ef] focus:text-[#e87898] text-[13px] font-medium transition-all"
-                                            >
-                                                <UserMinus className="h-4 w-4 opacity-50" /> Archive Profile
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                onClick={(e) => { e.stopPropagation(); handleBlock(e, profile.user_id); }}
-                                                className="gap-3 cursor-pointer rounded-xl p-4 text-primary focus:bg-primary focus:text-white font-bold text-[10px] uppercase tracking-widest transition-all"
-                                            >
-                                                <UserX className="h-4 w-4 opacity-50" /> Block Entity
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                    {!parentViewer?.isParent && (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="sm" className="h-12 w-12 rounded-2xl text-gray-200 hover:text-gray-900 border border-transparent hover:border-black/[0.05] hover:bg-white transition-all">
+                                                    <MoreVertical className="h-5 w-5" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-64 bg-white rounded-3xl p-2 z-50 border border-black/[0.05] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                                                <DropdownMenuItem
+                                                    onClick={(e) => { 
+                                                        e.stopPropagation(); 
+                                                        const isMutual = likedIds.includes(profile.user_id) && likedMeIds.includes(profile.user_id);
+                                                        if (isPremium || isMutual) {
+                                                            setMessageTarget({ id: profile.user_id, name: profile.name });
+                                                        } else {
+                                                            toast.error('Premium Required', { description: 'Upgrade for instant secure messaging.' });
+                                                        }
+                                                    }}
+                                                    className="gap-3 cursor-pointer rounded-xl p-3 text-[#374151] focus:bg-[#fce8ef] focus:text-[#e87898] text-[13px] font-medium transition-all"
+                                                >
+                                                    <MessageCircle className="h-4 w-4 opacity-50" /> Secure Message
+                                                    {!isPremium && <Crown className="h-3 w-3 ml-auto text-amber-500" />}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator className="bg-black/[0.03] mx-2" />
+                                                <DropdownMenuItem
+                                                    onClick={(e) => { e.stopPropagation(); handleIgnore(e, profile.user_id); }}
+                                                    className="gap-3 cursor-pointer rounded-xl p-3 text-[#6b7280] hover:text-[#374151] focus:bg-[#fce8ef] focus:text-[#e87898] text-[13px] font-medium transition-all"
+                                                >
+                                                    <UserMinus className="h-4 w-4 opacity-50" /> Archive Profile
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={(e) => { e.stopPropagation(); handleBlock(e, profile.user_id); }}
+                                                    className="gap-3 cursor-pointer rounded-xl p-4 text-primary focus:bg-primary focus:text-white font-bold text-[10px] uppercase tracking-widest transition-all"
+                                                >
+                                                    <UserX className="h-4 w-4 opacity-50" /> Block Entity
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -1120,6 +1197,8 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
         {
             title: "Activity",
             items: [
+                { id: "sent-interests", label: "Sent Interests", description: "Profiles you have sent interest to", icon: Heart },
+                { id: "accepted-interests", label: "Accepted Interests", description: "Mutual connections who accepted interest", icon: HeartHandshake },
                 { id: "shortlisted-by-you", label: "Shortlisted", description: "Matches you have saved", icon: Bookmark },
                 { id: "viewed-you", label: "Who viewed me", description: "Matches who have viewed your profile", icon: Filter },
                 { id: "shortlisted-you", label: "Who shortlisted me", description: "Matches who have shortlisted your profile", icon: Bookmark },
@@ -1141,15 +1220,18 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
         }
     ]
     
-    // Add Parent Selections group if parent viewer
-    if (parentViewer?.isParent) {
-        menuGroups.unshift({
-            title: "Parent Choice",
-            items: [
-                { id: "parent-selections", label: "Selection for Child", description: "Manage profiles you've selected for your child", icon: Shield },
-            ]
-        })
-    }
+    // Add Parent Selections group for both parent and child
+    menuGroups.unshift({
+        title: "Parent Choice",
+        items: [
+            { 
+                id: "parent-selections", 
+                label: parentViewer?.isParent ? "Selection for Child" : "Parent's Selections", 
+                description: parentViewer?.isParent ? "Manage profiles you've selected for your child" : "Profiles selected by your parent for you", 
+                icon: Shield 
+            },
+        ]
+    })
 
     return (
         <div className="w-full min-h-0">
@@ -1229,6 +1311,8 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                         if (activeCategory === "shortlisted-by-you") return `${count} match${count !== 1 ? "es" : ""} you saved`
                                         if (activeCategory === "viewed-you") return `${count} match${count !== 1 ? "es" : ""} viewed you`
                                         if (activeCategory === "shortlisted-you") return `${count} match${count !== 1 ? "es" : ""} saved you`
+                                        if (activeCategory === "sent-interests") return `${count} interest${count !== 1 ? "s" : ""} sent`
+                                        if (activeCategory === "accepted-interests") return `${count} accepted interest${count !== 1 ? "s" : ""}`
                                         if (activeCategory === "horoscope-matches") return `${count} compatible match${count !== 1 ? "es" : ""}`
                                         if (activeCategory === "star-matches") return `${count} match${count !== 1 ? "es" : ""} with stars`
                                         if (activeCategory === "nearby-matches") return `${count} match${count !== 1 ? "es" : ""} near you`
@@ -1242,6 +1326,26 @@ export function BrowseProfiles({ userId, onBack, initialCategory, parentViewer }
                                 </p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2 shrink-0">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9ca3af]" />
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="Search by ID or name"
+                                    className="h-10 w-[190px] rounded-[10px] border border-[#e5e7eb] bg-white pl-9 pr-8 text-[13px] text-[#1F4068] placeholder:text-[#9ca3af] focus:border-[#e87898]/40 focus:outline-none focus:ring-2 focus:ring-[#fce8ef]"
+                                />
+                                {searchTerm && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearchTerm("")}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#e87898]"
+                                        aria-label="Clear search"
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </button>
+                                )}
+                            </div>
                             {hasPreferences && (
                                 <Button
                                     variant="outline"

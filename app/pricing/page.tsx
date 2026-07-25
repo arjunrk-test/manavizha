@@ -9,7 +9,7 @@ import { AnimatedBackground } from "@/components/animated-background"
 const plans = [
   {
     name: "Prime",
-    duration: "Flexible Validity",
+    duration: "3 Months Validity",
     price: "2,000",
     originalPrice: "2,999",
     icon: <Shield className="h-6 w-6 text-blue-500" />,

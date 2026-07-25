@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle2, XCircle, AlertCircle, Sparkles, Heart } from "lucide-react"
 import { motion } from "framer-motion"
+import { PORUTHAM_LABELS, getPoruthamStatusInfo, MatchStatus } from "@/lib/astrology"
 
 interface MatchBreakdownDialogProps {
   isOpen: boolean
@@ -16,19 +17,7 @@ export function MatchBreakdownDialog({ isOpen, onClose, compatibility, otherName
   if (!compatibility) return null
 
   const { breakdown, score, status } = compatibility
-
-  const poruthamLabels: Record<string, string> = {
-    dina: "Dina Porutham (Health & Longevity)",
-    gana: "Gana Porutham (Temperament)",
-    mahendra: "Mahendra Porutham (Children)",
-    streeDeergha: "Stree Deergha (Prosperity)",
-    yoni: "Yoni Porutham (Physical Affinity)",
-    rasi: "Rasi Porutham (Family Growth)",
-    rasiAdhipathi: "Rasi Adhipathi (Friendship)",
-    vasya: "Vasya Porutham (Mutual Attraction)",
-    rajju: "Rajju Porutham (Marital Bond)",
-    vedha: "Vedha Porutham (Obstacles)"
-  }
+  const statusInfo = getPoruthamStatusInfo(status as MatchStatus, score)
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -59,6 +48,15 @@ export function MatchBreakdownDialog({ isOpen, onClose, compatibility, otherName
             </div>
           </div>
 
+          {/* Plain-language explanation of the result */}
+          <div className={`-mt-3 rounded-xl p-3 border text-[11px] leading-relaxed ${
+            statusInfo.tone === "good" ? "bg-green-50 border-green-100 text-green-800 dark:bg-green-900/10 dark:text-green-300" :
+            statusInfo.tone === "average" ? "bg-amber-50 border-amber-100 text-amber-800 dark:bg-amber-900/10 dark:text-amber-300" :
+            "bg-gray-50 border-gray-200 text-gray-600 dark:bg-gray-800/40 dark:text-gray-300"
+          }`}>
+            <span className="font-bold">{statusInfo.label}.</span> {statusInfo.summary}
+          </div>
+
           <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin">
             {Object.entries(breakdown).map(([key, matched], index) => (
               <motion.div 
@@ -69,7 +67,7 @@ export function MatchBreakdownDialog({ isOpen, onClose, compatibility, otherName
                 className="flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:shadow-sm transition-shadow"
               >
                 <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                  {poruthamLabels[key] || key}
+                  {PORUTHAM_LABELS[key] || key}
                 </span>
                 {matched ? (
                   <CheckCircle2 className="h-4 w-4 text-green-500" />

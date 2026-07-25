@@ -43,7 +43,7 @@ export default function AdminVerificationPage() {
       <AdminNavbar variant="dashboard" />
 
       <main className="relative z-10 flex-1 flex flex-col pt-[4.75rem]">
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 pb-10">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 pb-10 space-y-6">
           <AdminVerificationPanel />
         </div>
       </main>

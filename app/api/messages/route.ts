@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { authErrorResponse, requireAuthenticatedUser, ApiAuthError } from '@/lib/server/api-auth'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin-client'
+import { createNotification } from '@/lib/server/notify'
 
 export async function GET(request: Request) {
     try {
@@ -82,7 +83,7 @@ export async function PATCH(request: Request) {
 export async function POST(request: Request) {
     try {
         const { userId: senderId } = await requireAuthenticatedUser(request)
-        const { receiverId, content } = await request.json()
+        const { receiverId, content, iv, isEncrypted } = await request.json()
 
         if (!receiverId || content === undefined || content === null) {
             return NextResponse.json({ error: 'receiverId and content are required' }, { status: 400 })
@@ -109,11 +110,7 @@ export async function POST(request: Request) {
             admin.from('user_settings').select('is_premium, premium_expires_at').eq('user_id', senderId).maybeSingle(),
         ])
 
-        if (!like1 || !like2) {
-            return NextResponse.json({ error: 'Mutual interest is required to send messages.' }, { status: 403 })
-        }
-
-        if (like1.status === 'declined' || like2.status === 'declined') {
+        if (like1?.status === 'declined' || like2?.status === 'declined') {
             return NextResponse.json({ error: 'Messaging is not available for declined interests.' }, { status: 403 })
         }
 
@@ -125,17 +122,25 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Premium subscription is required to send messages.' }, { status: 403 })
         }
 
+        const insertRow: any = {
+            sender_id: senderId,
+            receiver_id: receiverId,
+            content: trimmedContent,
+        }
+        if (isEncrypted && typeof iv === 'string') {
+            insertRow.is_encrypted = true
+            insertRow.iv = iv
+        }
+
         const { data, error } = await admin
             .from('messages')
-            .insert({
-                sender_id: senderId,
-                receiver_id: receiverId,
-                content: trimmedContent
-            })
+            .insert(insertRow)
             .select()
             .single()
 
         if (error) throw error
+
+        await createNotification(receiverId, senderId, 'message_received')
 
         return NextResponse.json({ message: data })
     } catch (error: any) {

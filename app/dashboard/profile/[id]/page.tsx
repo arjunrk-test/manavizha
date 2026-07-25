@@ -11,7 +11,7 @@ import {
     Heart, Star, CheckCircle2, Phone, MessageCircle, Lock,
     Calendar, Coffee, Eye, Info, Users, Shield, Sparkles, XCircle, Home,
     Search, Target, Award, HeartHandshake, MoreVertical, UserX, UserMinus, Crown, Gem, Bookmark, ShieldCheck,
-    ChevronLeft, ChevronRight
+    ChevronLeft, ChevronRight, Flag
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -20,6 +20,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { MessageDialog } from "@/components/message-dialog"
+import { SubscriptionDialog } from "@/components/subscription-dialog"
+import { ReportProfileDialog } from "@/components/report-profile-dialog"
 import { formatToDDMMYYYY, formatActivityTime } from "@/lib/utils/date-utils"
 import { Badge } from "@/components/ui/badge"
 import { DashboardLoadingScreen } from "@/components/dashboard/dashboard-loading-screen"
@@ -54,9 +56,19 @@ export default function ProfileViewPage({
     
     // Premium & Messaging states
     const [isViewerPremium, setIsViewerPremium] = useState(false)
+    const [contactUnlocked, setContactUnlocked] = useState(false)
     const [isMutual, setIsMutual] = useState(false)
     const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false)
+    const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
+    const [canViewPhotos, setCanViewPhotos] = useState(true)
+    const [photoRequestStatus, setPhotoRequestStatus] = useState<string | null>(null)
+    const [photoRequesting, setPhotoRequesting] = useState(false)
+    const [photoPasswordProtected, setPhotoPasswordProtected] = useState(false)
+    const [photoPasswordInput, setPhotoPasswordInput] = useState("")
+    const [photoPasswordError, setPhotoPasswordError] = useState(false)
+    const [photoUnlocking, setPhotoUnlocking] = useState(false)
+    const [incomingPhotoRequest, setIncomingPhotoRequest] = useState(false)
     
     // Interaction dates
     const [iLikedDate, setILikedDate] = useState<string | null>(null)
@@ -66,6 +78,7 @@ export default function ProfileViewPage({
     const [shortlistedDate, setShortlistedDate] = useState<string | null>(null)
     const [shortlistedMeDate, setShortlistedMeDate] = useState<string | null>(null)
     const [lastViewedMeDate, setLastViewedMeDate] = useState<string | null>(null)
+    const [acceptedDate, setAcceptedDate] = useState<string | null>(null)
     
     // Navigation sequence states
     const [prevProfileId, setPrevProfileId] = useState<string | null>(null)
@@ -73,6 +86,7 @@ export default function ProfileViewPage({
 
     // Confirm dialog state
     const [confirmAction, setConfirmAction] = useState<"ignore" | "block" | null>(null)
+    const [isReportDialogOpen, setIsReportDialogOpen] = useState(false)
 
     useEffect(() => {
         const getSession = async () => {
@@ -191,13 +205,20 @@ export default function ProfileViewPage({
 
                 // Check initial interaction status & fetch viewer profile for matching
                 if (currentUserId) {
-                    const [likesRes, shortRes, viewerRes, settingsRes] = await Promise.all([
+                    const [likesRes, shortRes, viewerRes, settingsRes, incomingReqRes] = await Promise.all([
                         authFetch(`/api/likes?userId=${currentUserId}`),
                         authFetch(`/api/shortlists?userId=${currentUserId}`),
                         supabase.from("personal_details").select("*").eq("user_id", currentUserId).maybeSingle(),
-                        supabase.from("user_settings").select("is_premium, premium_plan").eq("user_id", currentUserId).maybeSingle()
+                        supabase.from("user_settings").select("is_premium, premium_plan").eq("user_id", currentUserId).maybeSingle(),
+                        authFetch(`/api/photo-requests`)
                     ])
                     
+                    if (incomingReqRes.ok) {
+                        const reqData = await incomingReqRes.json()
+                        const hasRequest = reqData.requests?.some((r: any) => r.requester_id === targetUserId)
+                        setIncomingPhotoRequest(hasRequest)
+                    }
+
                     if (likesRes.ok) {
                         const likesData = await likesRes.json()
                         const myLike = (likesData.iLiked || []).find((l: any) => l.id === targetUserId)
@@ -209,6 +230,7 @@ export default function ProfileViewPage({
                         setILikedStatus(myLike?.status || null)
                         setLikedMeDate(likeMe?.created_at || null)
                         setLikedMeStatus(likeMe?.status || null)
+                        setAcceptedDate(myLike?.accepted_at || likeMe?.accepted_at || null)
                     }
                     
                     if (shortRes.ok) {
@@ -231,6 +253,16 @@ export default function ProfileViewPage({
                         const viewsData = await viewsRes.json()
                         const viewMe = (viewsData.viewedMe || []).find((v: any) => v.viewer_user_id === targetUserId)
                         setLastViewedMeDate(viewMe?.created_at || null)
+                    }
+
+                    const paRes = await authFetch(`/api/photo-access?targetUserId=${targetUserId}&_t=${Date.now()}`).catch(() => null)
+                    if (paRes?.ok) {
+                        const pa = await paRes.json()
+                        setCanViewPhotos(pa.canView !== false)
+                        setPhotoRequestStatus(pa.requestStatus || null)
+                        setPhotoPasswordProtected(!!pa.passwordProtected)
+                    } else {
+                        setCanViewPhotos(false)
                     }
 
                     if (viewerRes.data) {
@@ -366,7 +398,101 @@ export default function ProfileViewPage({
         }
 
         fetchProfile()
-    }, [targetUserId])
+        // currentUserId resolves asynchronously from getSession — without it in
+        // the deps, the likes/shortlists/views statuses are skipped on first run
+        // and never fetched.
+    }, [targetUserId, currentUserId])
+
+    // Gates the first contact reveal against the viewer's tier quota and logs it
+    // (which also notifies the profile owner). Re-views are free once unlocked.
+    const unlockContact = async (): Promise<boolean> => {
+        if (contactUnlocked) return true
+        try {
+            const res = await authFetch("/api/contact-view", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ viewedUserId: targetUserId }),
+            })
+            const data = await res.json().catch(() => ({}))
+            if (res.ok && data.allowed) {
+                setContactUnlocked(true)
+                if (typeof data.remaining === "number" && !data.alreadyViewed) {
+                    toast.success(`Contact unlocked · ${data.remaining} view${data.remaining !== 1 ? "s" : ""} left this plan`)
+                }
+                return true
+            }
+            toast.error(data.error || "Unable to view contact details")
+            return false
+        } catch {
+            toast.error("Network error. Please try again.")
+            return false
+        }
+    }
+
+    const unlockWithPassword = async () => {
+        if (!photoPasswordInput.trim()) return
+        setPhotoUnlocking(true)
+        setPhotoPasswordError(false)
+        try {
+            const res = await authFetch("/api/photo-access", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ targetUserId, password: photoPasswordInput }),
+            })
+            const data = await res.json().catch(() => ({}))
+            if (res.ok && data.valid) {
+                setCanViewPhotos(true)
+                setPhotoPasswordInput("")
+            } else {
+                setPhotoPasswordError(true)
+            }
+        } catch {
+            setPhotoPasswordError(true)
+        } finally {
+            setPhotoUnlocking(false)
+        }
+    }
+
+    const requestPhotos = async () => {
+        if (!currentUserId) return
+        setPhotoRequesting(true)
+        try {
+            const res = await authFetch("/api/photo-requests", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ownerId: targetUserId }),
+            })
+            const data = await res.json().catch(() => ({}))
+            if (res.ok) {
+                setPhotoRequestStatus("pending")
+                toast.success("Photo request sent")
+            } else {
+                toast.error(data.error || "Failed to send request")
+            }
+        } catch {
+            toast.error("Network error. Please try again.")
+        } finally {
+            setPhotoRequesting(false)
+        }
+    }
+
+    const handlePhotoRequestResponse = async (status: 'approved' | 'declined') => {
+        try {
+            const res = await authFetch("/api/photo-requests", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ requesterId: targetUserId, status }),
+            })
+            if (res.ok) {
+                setIncomingPhotoRequest(false)
+                toast.success(status === 'approved' ? "Photo request approved" : "Photo request declined")
+            } else {
+                toast.error("Failed to respond to request")
+            }
+        } catch {
+            toast.error("Network error")
+        }
+    }
 
     const handleLike = async () => {
         if (!currentUserId || isLikeProcessing) return
@@ -577,6 +703,28 @@ export default function ProfileViewPage({
                     </div>
                 </div>
 
+            {incomingPhotoRequest && (
+                <div className="bg-[#1F4068] text-white p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between mb-6 shadow-md gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-white/10 p-2.5 rounded-full shrink-0">
+                            <Lock className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                            <p className="font-medium text-sm sm:text-base">{profile.name || profile.userName || "This member"} has requested to view your photos.</p>
+                            <p className="text-xs sm:text-sm text-white/80 mt-0.5">Approve to grant them access to your private gallery.</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0 w-full sm:w-auto">
+                        <Button onClick={() => handlePhotoRequestResponse('declined')} variant="outline" className="flex-1 sm:flex-none h-10 bg-transparent border-white/20 text-white hover:bg-white/10 hover:text-white rounded-xl text-sm font-medium">
+                            Decline
+                        </Button>
+                        <Button onClick={() => handlePhotoRequestResponse('approved')} className="flex-1 sm:flex-none h-10 bg-[#e87898] hover:bg-[#d66686] text-white rounded-xl text-sm font-medium">
+                            Approve
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             <div className="pb-8">
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr,auto] items-start gap-8">
                     
@@ -599,6 +747,16 @@ export default function ProfileViewPage({
                             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#fce8ef] text-[#e87898] text-[11px] font-medium border border-[#f0ebe3]">
                                 <ShieldCheck className="h-3 w-3" /> Verified
                             </span>
+                            {profile.profile_code && (
+                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white text-[#6b7280] text-[11px] font-medium border border-[#f0ebe3]">
+                                    ID: {profile.profile_code}
+                                </span>
+                            )}
+                            {profile.id_verified && (
+                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#e6f7f5] text-[#3bb9ac] text-[11px] font-medium border border-[#3bb9ac]/20">
+                                    <ShieldCheck className="h-3 w-3" /> ID Verified
+                                </span>
+                            )}
                             {profile.isPremium && (
                                 <span className={cn(
                                     "inline-flex items-center gap-1 px-3 py-1 rounded-full text-white text-[11px] font-medium",
@@ -639,28 +797,28 @@ export default function ProfileViewPage({
                                     <p className={cn("flex items-center lg:justify-end gap-2", iLikedStatus === "declined" ? "text-[#9ca3af]" : "text-[#4b5563]")}>
                                         <Heart className="h-4 w-4 text-[#e87898]" />
                                         {iLikedStatus === "declined"
-                                            ? `${(profile.sex?.toLowerCase() === "male" || profile.gender?.toLowerCase() === "male") ? "He" : "She"} declined your interest on ${formatToDDMMYYYY(iLikedDate)}`
-                                            : `You sent an interest on ${formatToDDMMYYYY(iLikedDate)} — Pending`}
+                                            ? `${(profile.sex?.toLowerCase() === "male" || profile.gender?.toLowerCase() === "male") ? "He" : "She"} declined your interest`
+                                            : `You sent interest on ${formatToDDMMYYYY(iLikedDate)}`}
                                     </p>
                                 )}
                                 {likedMeDate && likedMeStatus !== "accepted" && iLikedStatus !== "accepted" && !isMutual && (
                                     <p className={cn("flex items-center lg:justify-end gap-2", likedMeStatus === "declined" ? "text-[#9ca3af]" : "text-[#4b5563]")}>
                                         <Heart className="h-4 w-4 text-[#e87898]" />
                                         {likedMeStatus === "declined"
-                                            ? `You declined ${(profile.sex?.toLowerCase() === "male" || profile.gender?.toLowerCase() === "male") ? "his" : "her"} interest on ${formatToDDMMYYYY(likedMeDate)}`
+                                            ? `You declined ${(profile.sex?.toLowerCase() === "male" || profile.gender?.toLowerCase() === "male") ? "his" : "her"} interest`
                                             : `${(profile.sex?.toLowerCase() === "male" || profile.gender?.toLowerCase() === "male") ? "He" : "She"} sent you an interest on ${formatToDDMMYYYY(likedMeDate)}`}
                                     </p>
                                 )}
                                 {(isMutual || iLikedStatus === "accepted" || likedMeStatus === "accepted") && (
                                     <p className="flex items-center lg:justify-end gap-2 text-[#e87898] font-medium">
                                         <CheckCircle2 className="h-4 w-4" />
-                                        Mutual interest — you can message each other
+                                        Accepted interest on {formatToDDMMYYYY(acceptedDate || iLikedDate || likedMeDate || "")}
                                     </p>
                                 )}
                                 {lastViewedMeDate && (
                                     <p className="flex items-center lg:justify-end gap-2">
                                         <Eye className="h-4 w-4 text-[#9ca3af]" />
-                                        Viewed your profile on {formatToDDMMYYYY(lastViewedMeDate)}
+                                        {(profile.sex?.toLowerCase() === "male" || profile.gender?.toLowerCase() === "male") ? "He" : "She"} viewed your profile on {formatToDDMMYYYY(lastViewedMeDate)}
                                     </p>
                                 )}
                             </div>
@@ -707,6 +865,9 @@ export default function ProfileViewPage({
                                         <DropdownMenuItem onClick={handleBlock} className="rounded-lg text-sm text-red-600 cursor-pointer">
                                             <UserX className="h-4 w-4 mr-2" /> Block member
                                         </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => setIsReportDialogOpen(true)} className="rounded-lg text-sm text-red-600 cursor-pointer">
+                                            <Flag className="h-4 w-4 mr-2" /> Report profile
+                                        </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
@@ -737,12 +898,59 @@ export default function ProfileViewPage({
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
                                             exit={{ opacity: 0 }}
-                                            className="w-full h-full object-cover"
+                                            className={cn("w-full h-full object-cover", !canViewPhotos && "blur-xl scale-110")}
                                         />
                                     </AnimatePresence>
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-[#fce8ef]/30">
                                         <User className="h-16 w-16 text-[#e87898]/30" />
+                                    </div>
+                                )}
+
+                                {!canViewPhotos && photos.length > 0 && (
+                                    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2.5 bg-black/30 backdrop-blur-sm px-4 text-center">
+                                        <Lock className="h-6 w-6 text-white" />
+                                        <p className="text-xs text-white/90 font-medium">Photos are private</p>
+                                        {photoPasswordProtected ? (
+                                            <div className="w-full max-w-[180px] space-y-1.5">
+                                                <input
+                                                    type="password"
+                                                    value={photoPasswordInput}
+                                                    onChange={(e) => { setPhotoPasswordInput(e.target.value); setPhotoPasswordError(false) }}
+                                                    onKeyDown={(e) => { if (e.key === "Enter") unlockWithPassword() }}
+                                                    placeholder="Enter photo password"
+                                                    className="w-full rounded-lg bg-white/95 px-2.5 py-1.5 text-[11px] text-[#1F4068] placeholder:text-gray-400 focus:outline-none"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={unlockWithPassword}
+                                                    disabled={photoUnlocking || !photoPasswordInput.trim()}
+                                                    className="w-full rounded-full bg-[#e87898] px-3.5 py-1.5 text-[11px] font-semibold text-white hover:bg-[#d66686] disabled:opacity-60"
+                                                >
+                                                    {photoUnlocking ? "Checking..." : "Unlock"}
+                                                </button>
+                                                {photoPasswordError && (
+                                                    <p className="text-[10px] font-medium text-red-200">Incorrect password</p>
+                                                )}
+                                            </div>
+                                        ) : photoRequestStatus === "pending" ? (
+                                            <span className="rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-medium text-[#1F4068]">
+                                                Request pending
+                                            </span>
+                                        ) : photoRequestStatus === "declined" ? (
+                                            <span className="rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-medium text-red-500">
+                                                Request declined
+                                            </span>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={requestPhotos}
+                                                disabled={photoRequesting}
+                                                className="rounded-full bg-[#e87898] px-3.5 py-1.5 text-[11px] font-semibold text-white hover:bg-[#d66686] disabled:opacity-60"
+                                            >
+                                                {photoRequesting ? "Sending..." : "Request photos"}
+                                            </button>
+                                        )}
                                     </div>
                                 )}
 
@@ -868,20 +1076,21 @@ export default function ProfileViewPage({
                                 <h2 className="text-base font-semibold text-[#1F4068]">Horoscope & Astrology</h2>
                             </div>
                             <div className="grid grid-cols-1 gap-1">
-                                <DetailRow label="Star" value={profile.horoscope?.star} isLocked={true} isPremiumViewer={isViewerPremium} />
-                                <DetailRow label="Raasi" value={profile.horoscope?.zodiac_sign} isLocked={true} isPremiumViewer={isViewerPremium} />
-                                <DetailRow label="Lagnam" value={profile.horoscope?.lagnam} isLocked={true} isPremiumViewer={isViewerPremium} />
-                                <DetailRow label="Dosha(m)" value={profile.horoscope?.dhosham || "No Dosham"} isLocked={true} isPremiumViewer={isViewerPremium} />
+                                <DetailRow label="Star" value={profile.horoscope?.star} isLocked={true} isPremiumViewer={isViewerPremium} onUpgradeClick={() => setIsSubscriptionDialogOpen(true)} />
+                                <DetailRow label="Raasi" value={profile.horoscope?.zodiac_sign} isLocked={true} isPremiumViewer={isViewerPremium} onUpgradeClick={() => setIsSubscriptionDialogOpen(true)} />
+                                <DetailRow label="Lagnam" value={profile.horoscope?.lagnam} isLocked={true} isPremiumViewer={isViewerPremium} onUpgradeClick={() => setIsSubscriptionDialogOpen(true)} />
+                                <DetailRow label="Dosha(m)" value={profile.horoscope?.dhosham || "No Dosham"} isLocked={true} isPremiumViewer={isViewerPremium} onUpgradeClick={() => setIsSubscriptionDialogOpen(true)} />
                                 {profile.horoscope?.jaadhagam_url && (
                                     <DetailRow 
                                         label="Horoscope Chart (Jaadhagam)" 
                                         value={<a href={profile.horoscope.jaadhagam_url} target="_blank" rel="noopener noreferrer" className="text-[#e87898] hover:underline">View Chart</a>} 
                                         isLocked={true} 
                                         isPremiumViewer={isViewerPremium} 
+                                        onUpgradeClick={() => setIsSubscriptionDialogOpen(true)}
                                     />
                                 )}
-                                <DetailRow label="Place of Birth" value={profile.horoscope?.place_of_birth} isLocked={true} isPremiumViewer={isViewerPremium} />
-                                <DetailRow label="Time of Birth" value={profile.horoscope?.time_of_birth} isLocked={true} isPremiumViewer={isViewerPremium} />
+                                <DetailRow label="Place of Birth" value={profile.horoscope?.place_of_birth} isLocked={true} isPremiumViewer={isViewerPremium} onUpgradeClick={() => setIsSubscriptionDialogOpen(true)} />
+                                <DetailRow label="Time of Birth" value={profile.horoscope?.time_of_birth} isLocked={true} isPremiumViewer={isViewerPremium} onUpgradeClick={() => setIsSubscriptionDialogOpen(true)} />
                             </div>
                         </div>
 
@@ -923,13 +1132,16 @@ export default function ProfileViewPage({
                                 <h2 className="text-base font-semibold text-[#1F4068]">Contact & Location</h2>
                             </div>
                             <div className="grid grid-cols-1 gap-1">
-                                <DetailRow label="Phone Number" value={profile.contact?.phone || profile.phone} isLocked={true} isPremiumViewer={isViewerPremium} />
-                                <DetailRow label="WhatsApp" value={profile.contact?.whatsapp_number} isLocked={true} isPremiumViewer={isViewerPremium} />
-                                <DetailRow 
-                                    label="Address" 
-                                    value={[profile.contact?.current_address_line1, profile.contact?.current_area, profile.contact?.current_district, profile.contact?.current_state].filter(Boolean).join(", ")} 
-                                    isLocked={true} 
-                                    isPremiumViewer={isViewerPremium} 
+                                <DetailRow label="Phone Number" value={profile.contact?.phone || profile.phone} isLocked={true} isPremiumViewer={isViewerPremium} forceRevealed={contactUnlocked} onReveal={unlockContact} onUpgradeClick={() => setIsSubscriptionDialogOpen(true)} />
+                                <DetailRow label="WhatsApp" value={profile.contact?.whatsapp_number} isLocked={true} isPremiumViewer={isViewerPremium} forceRevealed={contactUnlocked} onReveal={unlockContact} onUpgradeClick={() => setIsSubscriptionDialogOpen(true)} />
+                                <DetailRow
+                                    label="Address"
+                                    value={[profile.contact?.current_address_line1, profile.contact?.current_area, profile.contact?.current_district, profile.contact?.current_state].filter(Boolean).join(", ")}
+                                    isLocked={true}
+                                    isPremiumViewer={isViewerPremium}
+                                    onUpgradeClick={() => setIsSubscriptionDialogOpen(true)}
+                                    forceRevealed={contactUnlocked}
+                                    onReveal={unlockContact}
                                 />
                             </div>
                         </div>
@@ -982,6 +1194,12 @@ export default function ProfileViewPage({
                     />
                 )}
             </AnimatePresence>
+                <ReportProfileDialog
+                    open={isReportDialogOpen}
+                    onOpenChange={setIsReportDialogOpen}
+                    reportedUserId={targetUserId}
+                    reportedName={profile.name || profile.userName}
+                />
                 </div>
             </div>
 
@@ -1005,45 +1223,69 @@ export default function ProfileViewPage({
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+
+        <SubscriptionDialog
+            isOpen={isSubscriptionDialogOpen}
+            onClose={() => setIsSubscriptionDialogOpen(false)}
+        />
         </div>
     )
 }
 
-function DetailRow({ label, value, isLocked, isPremiumViewer, compact }: { label: string, value?: React.ReactNode, isLocked?: boolean, isPremiumViewer?: boolean, compact?: boolean }) {
+function DetailRow({ label, value, isLocked, isPremiumViewer, compact, forceRevealed, onReveal, onUpgradeClick }: { label: string, value?: React.ReactNode, isLocked?: boolean, isPremiumViewer?: boolean, compact?: boolean, forceRevealed?: boolean, onReveal?: () => Promise<boolean>, onUpgradeClick?: () => void }) {
     const [revealed, setRevealed] = useState(false)
-    
+    const [checking, setChecking] = useState(false)
+    const isRevealed = revealed || !!forceRevealed
+
+    const handleReveal = async () => {
+        if (onReveal) {
+            setChecking(true)
+            const ok = await onReveal()
+            setChecking(false)
+            if (ok) setRevealed(true)
+        } else {
+            setRevealed(true)
+        }
+    }
+
     const renderValue = () => {
         if (!value) return <span className="text-[#9ca3af] italic text-sm">Not specified</span>
-        
+
         if (isLocked) {
-            if (isPremiumViewer && revealed) {
+            if (isPremiumViewer && isRevealed) {
                 return (
                     <span className="text-sm font-medium text-[#1F4068] break-words flex items-center gap-2">
                         {value}
-                        <button onClick={() => setRevealed(false)} className="text-xs text-[#e87898] hover:underline font-medium">Hide</button>
+                        {!forceRevealed && (
+                            <button onClick={() => setRevealed(false)} className="text-xs text-[#e87898] hover:underline font-medium">Hide</button>
+                        )}
                     </span>
                 )
             }
-            
-            if (isPremiumViewer && !revealed) {
+
+            if (isPremiumViewer && !isRevealed) {
                 return (
                     <button
-                        onClick={() => setRevealed(true)}
-                        className="flex items-center gap-1.5 px-2.5 py-1 bg-[#fce8ef] rounded-lg border border-[#f0ebe3] text-[#e87898] text-xs font-medium hover:bg-[#f0ebe3] transition-colors"
+                        onClick={handleReveal}
+                        disabled={checking}
+                        className="flex items-center gap-1.5 px-2.5 py-1 bg-[#fce8ef] rounded-lg border border-[#f0ebe3] text-[#e87898] text-xs font-medium hover:bg-[#f0ebe3] transition-colors disabled:opacity-60"
                     >
                         <Crown className="h-3 w-3" />
-                        Reveal
+                        {checking ? "Checking..." : "Reveal"}
                     </button>
                 )
             }
 
             return (
-                <div className="flex items-center gap-1.5 text-[#9ca3af] text-xs font-medium">
+                <button 
+                    onClick={onUpgradeClick}
+                    className="flex items-center gap-1.5 text-[#9ca3af] text-xs font-medium hover:text-[#e87898] transition-colors"
+                >
                     <Lock className="h-3 w-3" /> Locked
-                </div>
+                </button>
             )
         }
-        
+
         return <span className={cn("font-medium text-[#1F4068] whitespace-normal break-words", compact ? "text-[13px]" : "text-sm")}>{value}</span>
     }
 

@@ -47,7 +47,7 @@ import {
 import { SubscriptionDialog } from "./subscription-dialog"
 import { HoroscopeGeneratorDialog } from "./horoscope-generator-dialog"
 import { calculateTrustScore } from "@/lib/utils/profile-utils"
-import { checkTamilPorutham } from "@/lib/astrology"
+import { checkTamilPoruthamByGender } from "@/lib/astrology"
 import { calculateLifestyleScore } from "@/lib/matching"
 import { CompatibilitySheet } from "./compatibility-sheet"
 import { DashboardSidebar } from "./dashboard/dashboard-sidebar"
@@ -142,7 +142,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           { data: interests },
           { data: social },
           { data: photos },
-          { data: settings }
+          { data: settings },
+          { data: preferences }
         ] = await Promise.all([
           supabase.from("personal_details").select("completion_percentage, name, date_of_birth, age, sex, height, weight, skin_color, body_type, marital_status, about, food_preference, languages, photo_verified").eq("user_id", userId).maybeSingle(),
           supabase.from("contact_details").select("completion_percentage, phone, whatsapp_number, permanent_address_line1, permanent_pincode, permanent_area, permanent_taluk, permanent_district, permanent_division, permanent_region, permanent_state, permanent_country, current_address_line1, current_pincode, current_area, current_taluk, current_district, current_division, current_region, current_state, current_country").eq("user_id", userId).maybeSingle(),
@@ -152,10 +153,11 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
           supabase.from("profession_student").select("completion_percentage, course, institution").eq("user_id", userId).maybeSingle(),
           supabase.from("family_details").select("completion_percentage, father_name, father_occupation, mother_name, mother_occupation, parents_address_line1, parents_pincode, parents_area, parents_taluk, parents_district, parents_division, parents_region, parents_state, parents_country, caste, family_type, family_status").eq("user_id", userId).maybeSingle(),
           supabase.from("horoscope_details").select("completion_percentage, jaadhagam_url, time_of_birth, place_of_birth, zodiac_sign, star, lagnam, dhosham").eq("user_id", userId).maybeSingle(),
-          supabase.from("interests").select("hobbies, interests").eq("user_id", userId).maybeSingle(),
-          supabase.from("social_habits").select("smoking, drinking, parties, pubs").eq("user_id", userId).maybeSingle(),
-          supabase.from("photos").select("user_photos, family_photo, aadhar_front, aadhar_back").eq("user_id", userId).maybeSingle(),
-          supabase.from("user_settings").select("is_premium, premium_plan, premium_expires_at").eq("user_id", userId).maybeSingle()
+          supabase.from("interests").select("completion_percentage, hobbies, interests").eq("user_id", userId).maybeSingle(),
+          supabase.from("social_habits").select("completion_percentage, smoking, drinking, parties, pubs").eq("user_id", userId).maybeSingle(),
+          supabase.from("photos").select("completion_percentage, user_photos, family_photo, aadhar_front, aadhar_back").eq("user_id", userId).maybeSingle(),
+          supabase.from("user_settings").select("is_premium, premium_plan, premium_expires_at").eq("user_id", userId).maybeSingle(),
+          supabase.from("partner_preferences").select("preferred_age_min, preferred_age_max, preferred_height_min, preferred_height_max").eq("user_id", userId).maybeSingle()
         ])
 
         const stepProgresses: number[] = []
@@ -199,14 +201,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
         // 4. Professional
         let profProgress = 0
-        if (empData?.completion_percentage === 100 || busData?.completion_percentage === 100 || stuData?.completion_percentage === 100) {
+        if (empData || busData || stuData) {
           profProgress = 100
-        } else if (empData?.completion_percentage !== null && empData?.completion_percentage !== undefined) {
-          profProgress = empData.completion_percentage
-        } else if (busData?.completion_percentage !== null && busData?.completion_percentage !== undefined) {
-          profProgress = busData.completion_percentage
-        } else if (stuData?.completion_percentage !== null && stuData?.completion_percentage !== undefined) {
-          profProgress = stuData.completion_percentage
         }
         stepProgresses.push(profProgress)
 
@@ -226,63 +222,45 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
 
         // 6. Horoscope
         let horoscopeProgress = 0
-        if (horoscope?.completion_percentage !== undefined && horoscope?.completion_percentage !== null) {
-          horoscopeProgress = horoscope.completion_percentage
-        } else if (horoscope) {
-          const horoscopeFields = ["jaadhagam_url", "time_of_birth", "place_of_birth", "zodiac_sign", "star", "lagnam", "dhosham"]
-          const hFilled = horoscopeFields.filter(f => {
-            const val = horoscope[f as keyof typeof horoscope]
-            return val !== null && val !== undefined && val !== ""
-          }).length
-          horoscopeProgress = Math.round((hFilled / horoscopeFields.length) * 100)
+        if (horoscope) {
+          horoscopeProgress = 100
         }
         stepProgresses.push(horoscopeProgress)
 
         // 7. Interests
         let interestsProgress = 0
         if (interests) {
-          const hobbies = interests.hobbies || []
-          const userInterests = interests.interests || []
-          if (hobbies.length >= 3 && userInterests.length >= 3) {
-            interestsProgress = 100
-          }
+          interestsProgress = 100
         }
         stepProgresses.push(interestsProgress)
 
         // 8. Social
         let socialProgress = 0
         if (social) {
-          const socialFields = ["smoking", "drinking", "parties", "pubs"]
-          const sFilled = socialFields.filter(f => {
-            const val = social[f as keyof typeof social]
-            return val !== null && val !== undefined && val !== ""
-          }).length
-          socialProgress = Math.round((sFilled / socialFields.length) * 100)
+          socialProgress = 100
         }
         stepProgresses.push(socialProgress)
 
         // 9. Photos
         let photosProgress = 0
         if (photos) {
-          const userPhotos = photos.user_photos || []
-          if (userPhotos.length >= 3 && photos.family_photo && photos.aadhar_front && photos.aadhar_back) {
-            photosProgress = 100
-          }
+          photosProgress = 100
         }
         stepProgresses.push(photosProgress)
 
-        // 10. Referral (Always 100% since it's optional, but only if they've started the form)
-        // If they have NO personal data, they haven't started at all, so overall should be 0.
-        // We handle this by calculating a base completeness check.
-        const hasStartedProfile = personalProgress > 0 || contactProgress > 0
-        let referralProgress = hasStartedProfile ? 100 : 0
-        stepProgresses.push(referralProgress)
+        // 10. Partner Preferences
+        let preferencesProgress = 0
+        if (preferences) {
+          preferencesProgress = 100
+        }
+        stepProgresses.push(preferencesProgress)
 
         const coreComplete = personalProgress === 100 && contactProgress === 100 && eduProgress === 100 && profProgress === 100 && familyProgress === 100
         setIsCoreProfileComplete(coreComplete)
 
         const totalProgress = stepProgresses.reduce((sum, p) => sum + p, 0)
         // Only round and divide if they have started to avoid baseline 10%
+        const hasStartedProfile = personalProgress > 0 || contactProgress > 0
         const averageProgress = hasStartedProfile ? Math.round(totalProgress / stepProgresses.length) : 0
         setCompletionPercentage(averageProgress)
         if (onProgressChange) onProgressChange(averageProgress)
@@ -543,8 +521,8 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             }
 
             const lifestyleMatch = viewerData ? calculateLifestyleScore(viewerData as any, targetProfileData as any) : null
-            const horoscopeMatch = (myHoro?.star && targetHoro?.star) 
-                ? checkTamilPorutham(myHoro.star, myHoro.zodiac_sign || "", targetHoro.star, targetHoro.zodiac_sign || "")
+            const horoscopeMatch = (myHoro?.star && targetHoro?.star)
+                ? checkTamilPoruthamByGender(targetHoro.star, targetHoro.zodiac_sign || "", (p.sex || "").toLowerCase() === "female", myHoro.star, myHoro.zodiac_sign || "")
                 : { score: 0, status: 'Athamam', breakdown: {} }
 
             return {
@@ -562,6 +540,7 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
                 poruthamScore: horoscopeMatch?.score || 0,
                 viewerIsPremium: profile?.isPremium,
                 onScoreClick: (e: any) => {
+                    e.preventDefault()
                     e.stopPropagation()
                     if (profile?.isPremium) {
                         setActiveBreakdown({ lifestyle: lifestyleMatch, horoscope: horoscopeMatch })
@@ -775,6 +754,37 @@ export function UserLandingPage({ userEmail, userId, onNavigateToProfileSetup, o
             trustLabel={trustLabel}
             premiumBadge={getPremiumBadge()}
           />
+
+          {completionPercentage < 100 && (
+            <div className="rounded-[18px] border border-[#eadfce] bg-gradient-to-r from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 shadow-[0_2px_12px_rgba(31,64,104,0.05)]">
+              <div className="relative h-14 w-14 shrink-0">
+                <svg className="h-14 w-14 -rotate-90" viewBox="0 0 36 36">
+                  <circle cx="18" cy="18" r="15.5" fill="none" stroke="#f0ebe3" strokeWidth="3" />
+                  <circle
+                    cx="18" cy="18" r="15.5" fill="none" stroke="#e87898" strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeDasharray={`${(completionPercentage / 100) * 97.4} 97.4`}
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-[12px] font-semibold text-[#1F4068]">
+                  {completionPercentage}%
+                </span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm font-semibold text-[#1F4068]">Complete your profile</h3>
+                <p className="text-[13px] text-[#6b7280] mt-0.5">
+                  Profiles with complete details and photos get up to 5× more interest. Finish the
+                  remaining sections to appear in more matches.
+                </p>
+              </div>
+              <button
+                onClick={onNavigateToProfileSetup}
+                className="shrink-0 rounded-[10px] bg-[#e87898] hover:bg-[#d66686] px-5 h-10 text-[13px] font-medium text-white transition-colors"
+              >
+                Complete now
+              </button>
+            </div>
+          )}
 
           {isCoreProfileComplete ? (
             <>

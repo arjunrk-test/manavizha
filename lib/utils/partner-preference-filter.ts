@@ -31,7 +31,8 @@ function isAny(value: string | null | undefined): boolean {
 }
 
 /**
- * Discovery filter: age always (when set); caste/subcaste only when caste_compulsory is true.
+ * Discovery filter: age always (when set); caste only when caste_compulsory is
+ * true. Subcaste is intentionally not enforced.
  */
 export function filterProfilesByPartnerPreferences<T extends ProfileForPartnerFilter>(
   profiles: T[],
@@ -53,12 +54,6 @@ export function filterProfilesByPartnerPreferences<T extends ProfileForPartnerFi
       if (!isAny(prefCaste)) {
         const profileCaste = getProfileCaste(profile)
         if (!profileCaste || profileCaste !== prefCaste) return false
-      }
-
-      const prefSubcaste = prefs.preferred_subcaste
-      if (!isAny(prefSubcaste)) {
-        const profileSubcaste = getProfileSubcaste(profile)
-        if (!profileSubcaste || profileSubcaste !== prefSubcaste) return false
       }
     }
 

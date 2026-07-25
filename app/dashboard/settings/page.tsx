@@ -1,13 +1,15 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/api-client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
-    Bell, Phone, UserX, UserMinus, Shield, EyeOff, Key, Mail, RefreshCw, AlertTriangle, Heart, Settings2
+    Bell, Phone, UserX, UserMinus, Shield, EyeOff, Key, Mail, RefreshCw, AlertTriangle, Heart, Settings2, ShieldCheck
 } from "lucide-react"
+import { IdVerificationCard } from "@/components/id-verification-card"
 import { toast } from "sonner"
 import { MarriedConfirmationDialog } from "@/components/married-confirmation-dialog"
 import { DashboardJourneyPatterns } from "@/components/dashboard/dashboard-journey-patterns"
@@ -31,9 +33,12 @@ export default function SettingsPage() {
         horoscope_privacy: "visible_all",
         horoscope_password: "",
         profile_privacy: "show_all",
+        photo_visibility: "everyone",
         is_deactivated: false,
         deactivated_until: null,
     })
+    const [incomingPhotoRequests, setIncomingPhotoRequests] = useState<any[]>([])
+    const [photoPasswordDraft, setPhotoPasswordDraft] = useState("")
 
     const [blockedProfiles, setBlockedProfiles] = useState<any[]>([])
     const [ignoredProfiles, setIgnoredProfiles] = useState<any[]>([])
@@ -42,8 +47,12 @@ export default function SettingsPage() {
     const [isReactivating, setIsReactivating] = useState(false)
     const [showMarriedConfirm, setShowMarriedConfirm] = useState(false)
     const [isMarkingMarried, setIsMarkingMarried] = useState(false)
+    const [deleteConfirmText, setDeleteConfirmText] = useState("")
+    const [isDeleting, setIsDeleting] = useState(false)
+    const [isLoggingOutAll, setIsLoggingOutAll] = useState(false)
 
     const isCurrentlyDeactivated = settings.is_deactivated && settings.deactivated_until && new Date(settings.deactivated_until) > new Date()
+    const isMarriedDeactivation = isCurrentlyDeactivated && (new Date(settings.deactivated_until).getTime() - Date.now() > 365 * 24 * 60 * 60 * 1000)
 
     useEffect(() => {
         const loadInitialData = async () => {
@@ -81,6 +90,12 @@ export default function SettingsPage() {
                         setIgnoredProfiles(data || [])
                     }
                 }
+
+                const prRes = await authFetch(`/api/photo-requests`).catch(() => null)
+                if (prRes?.ok) {
+                    const prData = await prRes.json()
+                    setIncomingPhotoRequests(prData.requests || [])
+                }
             } catch (err) {
                 console.error("Error loading settings:", err)
             } finally {
@@ -89,6 +104,56 @@ export default function SettingsPage() {
         }
         loadInitialData()
     }, [router])
+
+    const respondToPhotoRequest = async (requesterId: string, status: "approved" | "declined") => {
+        try {
+            const res = await authFetch("/api/photo-requests", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ requesterId, status }),
+            })
+            if (res.ok) {
+                setIncomingPhotoRequests((prev) => prev.filter((r) => r.requester_id !== requesterId))
+                toast.success(status === "approved" ? "Photos shared" : "Request declined")
+            } else {
+                toast.error("Failed to update request")
+            }
+        } catch {
+            toast.error("Network error")
+        }
+    }
+
+    const handleDeleteAccount = async () => {
+        if (deleteConfirmText.trim().toUpperCase() !== "DELETE") return
+        setIsDeleting(true)
+        try {
+            const res = await authFetch("/api/account/delete", { method: "POST" })
+            if (res.ok) {
+                toast.success("Your account has been permanently deleted.")
+                await supabase.auth.signOut()
+                router.push("/")
+            } else {
+                const data = await res.json().catch(() => ({}))
+                toast.error(data.error || "Failed to delete account. Please try again.")
+                setIsDeleting(false)
+            }
+        } catch {
+            toast.error("Network error. Please try again.")
+            setIsDeleting(false)
+        }
+    }
+
+    const handleLogoutAllDevices = async () => {
+        setIsLoggingOutAll(true)
+        try {
+            await supabase.auth.signOut({ scope: "global" })
+            toast.success("Signed out from all devices.")
+            router.push("/")
+        } catch {
+            toast.error("Failed to sign out from all devices")
+            setIsLoggingOutAll(false)
+        }
+    }
 
     const handleSave = async (updates: any) => {
         if (!userId) return
@@ -248,6 +313,7 @@ export default function SettingsPage() {
         { id: "call_prefs", icon: Phone, label: "Call Preferences" },
         { id: "privacy", icon: Shield, label: "Privacy Settings" },
         { id: "profile", icon: EyeOff, label: "Profile Visibility" },
+        { id: "verification", icon: ShieldCheck, label: "ID Verification" },
         { id: "password", icon: Key, label: "Change Password" },
         { id: "ignored", icon: UserMinus, label: "Ignored Profiles" },
         { id: "blocked", icon: UserX, label: "Blocked Profiles" },
@@ -256,7 +322,7 @@ export default function SettingsPage() {
 
     const TAB_GROUPS = [
         { label: "Notifications", ids: ["alerts", "call_prefs"] as const },
-        { label: "Privacy", ids: ["privacy", "profile"] as const },
+        { label: "Privacy", ids: ["privacy", "profile", "verification"] as const },
         { label: "Account", ids: ["password", "ignored", "blocked", "deactivate"] as const },
     ]
 
@@ -580,6 +646,92 @@ export default function SettingsPage() {
                                         title="Show my Profile to registered members only."
                                     />
                                 </div>
+
+                                <SectionTitle icon={EyeOff} title="Photo Visibility" description="Control who can see your photos." />
+                                <div className="space-y-3 max-w-lg">
+                                    <RadioOption
+                                        checked={(settings.photo_visibility || 'everyone') === 'everyone'}
+                                        onChange={() => handleSave({ photo_visibility: 'everyone' })}
+                                        title="Show my photos to everyone"
+                                        description="All members who can view your profile can see your photos."
+                                        badge="Default"
+                                    />
+                                    <RadioOption
+                                        checked={settings.photo_visibility === 'on_accept'}
+                                        onChange={() => handleSave({ photo_visibility: 'on_accept' })}
+                                        title="Only after I accept interest or a photo request"
+                                        description="Your photos stay blurred until you accept the member's interest or approve their photo request."
+                                    />
+                                    <RadioOption
+                                        checked={settings.photo_visibility === 'password'}
+                                        onChange={() => handleSave({ photo_visibility: 'password' })}
+                                        title="Protect with a photo password"
+                                        description="Photos stay blurred until a member enters the password you set and share privately."
+                                    />
+                                    {settings.photo_visibility === 'password' && (
+                                        <div className="ml-1 space-y-2 rounded-2xl border border-[#f0ebe3] bg-[#faf8f4]/60 p-4">
+                                            <label className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#9ca3af]">
+                                                Photo password
+                                            </label>
+                                            <div className="flex flex-col sm:flex-row gap-2">
+                                                <Input
+                                                    type="text"
+                                                    value={photoPasswordDraft}
+                                                    onChange={(e) => setPhotoPasswordDraft(e.target.value)}
+                                                    placeholder={settings.photo_password ? "Set — type to change" : "Choose a password to share"}
+                                                    maxLength={100}
+                                                    className="h-10 rounded-[10px] border-[#e5e7eb] text-[13px]"
+                                                />
+                                                <Button
+                                                    className="h-10 px-5 rounded-[10px] bg-[#e87898] hover:bg-[#d66686] text-white text-[13px] font-medium shrink-0"
+                                                    disabled={isSaving || photoPasswordDraft.trim().length < 1}
+                                                    onClick={() => { handleSave({ photo_password: photoPasswordDraft.trim() }); setPhotoPasswordDraft("") }}
+                                                >
+                                                    Save password
+                                                </Button>
+                                            </div>
+                                            <p className="text-[11px] text-gray-400">
+                                                Share this password only with people you want to see your photos. It is never shown to other members.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {incomingPhotoRequests.length > 0 && (
+                                    <div className="max-w-lg space-y-3">
+                                        <SectionTitle icon={Bell} title="Photo requests" description="Members asking to view your photos." />
+                                        {incomingPhotoRequests.map((r) => (
+                                            <div key={r.requester_id} className="flex items-center justify-between gap-3 rounded-2xl border border-[#f0ebe3] bg-white p-3.5">
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-medium text-[#1F4068] truncate">
+                                                        {r.requester?.name || "A member"}
+                                                        {r.requester?.profile_code && (
+                                                            <span className="ml-2 text-xs font-normal text-gray-400">{r.requester.profile_code}</span>
+                                                        )}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">wants to view your photos</p>
+                                                </div>
+                                                <div className="flex gap-2 shrink-0">
+                                                    <Button size="sm" className="rounded-xl bg-[#3bb9ac] hover:bg-[#33a396] text-white" onClick={() => respondToPhotoRequest(r.requester_id, "approved")}>
+                                                        Approve
+                                                    </Button>
+                                                    <Button size="sm" variant="outline" className="rounded-xl border-[#f0ebe3] text-gray-500" onClick={() => respondToPhotoRequest(r.requester_id, "declined")}>
+                                                        Decline
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === "verification" && userId && (
+                            <div className="space-y-6 animate-in fade-in">
+                                <SectionTitle icon={ShieldCheck} title="ID Verification" description="Verify your identity to earn a trusted badge on your profile." />
+                                <div className="max-w-lg">
+                                    <IdVerificationCard userId={userId} />
+                                </div>
                             </div>
                         )}
 
@@ -667,35 +819,39 @@ export default function SettingsPage() {
                                         isCurrentlyDeactivated ? "bg-[#dc2626]" : "bg-[#059669] animate-pulse"
                                     )} />
                                     {isCurrentlyDeactivated
-                                        ? `Your account is currently Deactivated — hidden from all members until ${new Date(settings.deactivated_until).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                                        ? (isMarriedDeactivation 
+                                            ? "Your account is permanently Deactivated — hidden from all members as you are marked as Married" 
+                                            : `Your account is currently Deactivated — hidden from all members until ${new Date(settings.deactivated_until).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`)
                                         : "Your account is currently Active and visible to members"}
                                 </div>
 
                                 {isCurrentlyDeactivated ? (
-                                    <div className="bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] p-5 rounded-[20px] border border-[#f0ebe3]">
-                                        <h2 className="text-base font-semibold mb-2 text-[#1F4068] flex items-center gap-2">
-                                            <RefreshCw className="h-5 w-5 text-[#3bb9ac]" /> Reactivate Your Profile
-                                        </h2>
-                                        <p className="text-[13px] text-[#6b7280] mb-4 leading-relaxed">
-                                            Your profile is currently deactivated. Reactivating will immediately make your profile visible to all members again.
-                                        </p>
-                                        <Button
-                                            className="h-11 px-8 bg-[#3bb9ac] hover:bg-[#2fa085] text-white font-medium rounded-[10px] shadow-none"
-                                            onClick={handleReactivate}
-                                            disabled={isReactivating}
-                                        >
-                                            {isReactivating ? (
-                                                <span className="flex items-center gap-2">
-                                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                                                    Reactivating...
-                                                </span>
-                                            ) : (
-                                                <span className="flex items-center gap-2">
-                                                    <RefreshCw className="h-4 w-4" /> Reactivate Now
-                                                </span>
-                                            )}
-                                        </Button>
-                                    </div>
+                                    !isMarriedDeactivation && (
+                                        <div className="bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] p-5 rounded-[20px] border border-[#f0ebe3]">
+                                            <h2 className="text-base font-semibold mb-2 text-[#1F4068] flex items-center gap-2">
+                                                <RefreshCw className="h-5 w-5 text-[#3bb9ac]" /> Reactivate Your Profile
+                                            </h2>
+                                            <p className="text-[13px] text-[#6b7280] mb-4 leading-relaxed">
+                                                Your profile is currently deactivated. Reactivating will immediately make your profile visible to all members again.
+                                            </p>
+                                            <Button
+                                                className="h-11 px-8 bg-[#3bb9ac] hover:bg-[#2fa085] text-white font-medium rounded-[10px] shadow-none"
+                                                onClick={handleReactivate}
+                                                disabled={isReactivating}
+                                            >
+                                                {isReactivating ? (
+                                                    <span className="flex items-center gap-2">
+                                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                                        Reactivating...
+                                                    </span>
+                                                ) : (
+                                                    <span className="flex items-center gap-2">
+                                                        <RefreshCw className="h-4 w-4" /> Reactivate Now
+                                                    </span>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    )
                                 ) : (
                                     <div className="bg-gradient-to-br from-[#fffdf8] via-[#fefcf7] to-[#fdf6ee] p-5 rounded-[20px] border border-[#f0ebe3]">
                                         <h2 className="text-base font-semibold mb-2 text-[#1F4068] flex items-center gap-2">
@@ -732,25 +888,98 @@ export default function SettingsPage() {
                                     </div>
                                 )}
 
-                                <div className="rounded-[16px] bg-gradient-to-br from-[#ecfdf5] via-[#f0fdf4] to-[#ecfdf5] border border-[#a7f3d0]/60 p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-                                    <div className="flex flex-col sm:flex-row items-center gap-3.5">
-                                        <div className="w-11 h-11 rounded-full bg-white/90 border border-[#a7f3d0]/70 flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(5,150,105,0.12)]">
-                                            <Heart className="h-5 w-5 text-[#059669] fill-[#059669]" />
+                                {isMarriedDeactivation ? (
+                                    <div className="rounded-[16px] bg-[#ecfdf5]/50 border border-[#a7f3d0]/60 p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left opacity-70">
+                                        <div className="flex flex-col sm:flex-row items-center gap-3.5">
+                                            <div className="w-11 h-11 rounded-full bg-[#059669]/10 flex items-center justify-center shrink-0">
+                                                <Heart className="h-5 w-5 text-[#059669] fill-[#059669]" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[13px] font-semibold text-[#1F4068]">Match Found</p>
+                                                <p className="text-xs text-[#6b7280] mt-0.5 max-w-sm leading-relaxed">
+                                                    You have already marked your profile as married. It is removed from all match listings.
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-[13px] font-semibold text-[#1F4068]">Found your match?</p>
-                                            <p className="text-xs text-[#6b7280] mt-0.5 max-w-sm leading-relaxed">
-                                                Congratulations! Mark your profile as married to remove it from all match listings.
-                                            </p>
+                                        <Button
+                                            disabled
+                                            className="shrink-0 h-10 px-5 bg-[#059669]/50 text-white text-[13px] font-medium rounded-[10px] shadow-none cursor-not-allowed"
+                                        >
+                                            <Heart className="h-4 w-4 mr-2 fill-white" />
+                                            Marked as Married
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="rounded-[16px] bg-gradient-to-br from-[#ecfdf5] via-[#f0fdf4] to-[#ecfdf5] border border-[#a7f3d0]/60 p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+                                        <div className="flex flex-col sm:flex-row items-center gap-3.5">
+                                            <div className="w-11 h-11 rounded-full bg-white/90 border border-[#a7f3d0]/70 flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(5,150,105,0.12)]">
+                                                <Heart className="h-5 w-5 text-[#059669] fill-[#059669]" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[13px] font-semibold text-[#1F4068]">Found your match?</p>
+                                                <p className="text-xs text-[#6b7280] mt-0.5 max-w-sm leading-relaxed">
+                                                    Congratulations! Mark your profile as married to remove it from all match listings.
+                                                </p>
+                                            </div>
                                         </div>
+                                        <Button
+                                            className="shrink-0 h-10 px-5 bg-[#059669]/90 hover:bg-[#047857] text-white text-[13px] font-medium rounded-[10px] shadow-none"
+                                            onClick={() => setShowMarriedConfirm(true)}
+                                        >
+                                            <Heart className="h-4 w-4 mr-2 fill-white" />
+                                            Mark as Married
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {/* Session: log out everywhere */}
+                                <div className="rounded-[16px] border border-[#f0ebe3] bg-white p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+                                    <div>
+                                        <p className="text-[13px] font-semibold text-[#1F4068]">Log out from all devices</p>
+                                        <p className="text-xs text-[#6b7280] mt-0.5 max-w-md leading-relaxed">
+                                            Ends your session on every device and browser where you're signed in. Useful if you used a shared or public device.
+                                        </p>
                                     </div>
                                     <Button
-                                        className="shrink-0 h-10 px-5 bg-[#059669]/90 hover:bg-[#047857] text-white text-[13px] font-medium rounded-[10px] shadow-none"
-                                        onClick={() => setShowMarriedConfirm(true)}
+                                        variant="outline"
+                                        className="shrink-0 h-10 px-5 rounded-[10px] border-[#f0ebe3] text-[#1F4068] text-[13px] font-medium"
+                                        onClick={handleLogoutAllDevices}
+                                        disabled={isLoggingOutAll}
                                     >
-                                        <Heart className="h-4 w-4 mr-2 fill-white" />
-                                        Mark as Married
+                                        {isLoggingOutAll ? "Signing out..." : "Log out everywhere"}
                                     </Button>
+                                </div>
+
+                                {/* Danger zone: permanent deletion */}
+                                <div className="rounded-[16px] border border-[#fecaca]/70 bg-[#fef2f2] p-5">
+                                    <h2 className="text-base font-semibold mb-1.5 text-[#dc2626] flex items-center gap-2">
+                                        <AlertTriangle className="h-5 w-5" /> Delete account permanently
+                                    </h2>
+                                    <p className="text-[13px] text-[#7f1d1d] mb-4 leading-relaxed">
+                                        This erases your profile, photos, matches, messages and all activity, and cannot be undone.
+                                        If you're just taking a break, use <span className="font-medium">Deactivate</span> instead.
+                                        Type <span className="font-semibold">DELETE</span> to confirm.
+                                    </p>
+                                    <div className="space-y-3 max-w-sm">
+                                        <Input
+                                            value={deleteConfirmText}
+                                            onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                            placeholder="Type DELETE"
+                                            className="h-11 rounded-[10px] border-[#fca5a5] bg-white text-[13px]"
+                                        />
+                                        <Button
+                                            className="w-full h-11 bg-[#dc2626] hover:bg-[#b91c1c] text-white font-medium rounded-[10px] shadow-none disabled:opacity-50"
+                                            onClick={handleDeleteAccount}
+                                            disabled={isDeleting || deleteConfirmText.trim().toUpperCase() !== "DELETE"}
+                                        >
+                                            {isDeleting ? (
+                                                <span className="flex items-center gap-2">
+                                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                                    Deleting...
+                                                </span>
+                                            ) : "Permanently delete my account"}
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         )}

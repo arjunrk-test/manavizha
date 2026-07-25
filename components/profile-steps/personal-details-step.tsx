@@ -15,12 +15,13 @@ import { FileText, Globe, User, UserRound } from "lucide-react"
 interface PersonalDetailsStepProps {
   formData: FormData
   onChange: (field: keyof FormData, value: any) => void
+  lockIdentity?: boolean
 }
 
 const SECTION_CARD = SETUP_SECTION_CARD
 const SECTION_BODY = SETUP_SECTION_BODY
 
-export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepProps) {
+export function PersonalDetailsStep({ formData, onChange, lockIdentity = false }: PersonalDetailsStepProps) {
   const { data: genderOptions } = useMasterData({ tableName: "master_gender" })
   const { data: skinColorData } = useMasterData({ tableName: "master_skin_colour" })
   const { data: bodyTypeOptions } = useMasterData({ tableName: "master_body_type" })
@@ -105,8 +106,13 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
                 max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split("T")[0]}
                 min={new Date(new Date().setFullYear(new Date().getFullYear() - 100)).toISOString().split("T")[0]}
                 required
-                className="sds-input w-full"
+                readOnly={lockIdentity}
+                disabled={lockIdentity}
+                className={`sds-input w-full ${lockIdentity ? "opacity-60 cursor-not-allowed bg-black/[0.03]" : ""}`}
               />
+              {lockIdentity && (
+                <p className="text-[10px] text-[#9ca3af]">Locked — contact support to change your date of birth.</p>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -141,14 +147,20 @@ export function PersonalDetailsStep({ formData, onChange }: PersonalDetailsStepP
               </Select>
             </div>
 
-            <SelectDropdown
-              id="sex"
-              label="Gender *"
-              value={formData.sex}
-              onChange={(value) => onChange("sex", value)}
-              options={genderOptions}
-              required
-            />
+            <div className="space-y-1">
+              <SelectDropdown
+                id="sex"
+                label="Gender *"
+                value={formData.sex}
+                onChange={(value) => onChange("sex", value)}
+                options={genderOptions}
+                required
+                disabled={lockIdentity}
+              />
+              {lockIdentity && (
+                <p className="text-[10px] text-[#9ca3af]">Locked — contact support to change your gender.</p>
+              )}
+            </div>
 
             <SelectDropdown
               id="maritalStatus"

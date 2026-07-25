@@ -4,6 +4,8 @@ import Link from "next/link"
 import {
   ArrowRight,
   Database,
+  Flag,
+  Gauge,
   Mail,
   ShieldCheck,
   Users,
@@ -64,6 +66,25 @@ const QUICK_ACTIONS: QuickAction[] = [
     iconColor: "text-[#3bb9ac]",
     accentColor: "group-hover:text-[#3bb9ac]",
     verification: true,
+  },
+  {
+    href: "/admin/dashboard/reports",
+    title: "Reports",
+    description: "Member reports and moderation queue",
+    icon: Flag,
+    iconBg: "bg-red-50",
+    iconColor: "text-red-500",
+    accentColor: "group-hover:text-red-500",
+  },
+  {
+    href: "/admin/dashboard/tiers",
+    title: "Tier limits",
+    description: "Contact-view limits per membership tier",
+    icon: Gauge,
+    iconBg: "bg-[#1F4068]/10",
+    iconColor: "text-[#1F4068]",
+    accentColor: "group-hover:text-[#1F4068]",
+    allowedRoles: ["super_admin"],
   },
 ]
 

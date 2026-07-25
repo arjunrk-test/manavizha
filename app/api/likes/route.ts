@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { authErrorResponse, requireAuthenticatedUser } from '@/lib/server/api-auth'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin-client'
+import { createNotification } from '@/lib/server/notify'
 
 function resolveLikeParticipants(authUserId: string, userId?: string, likedUserId?: string) {
     if (!userId || !likedUserId) return null
@@ -30,12 +31,14 @@ export async function GET(request: Request) {
             iLiked: (iLikedData || []).map((r: any) => ({
                 id: r.liked_user_id,
                 created_at: r.created_at,
+                accepted_at: r.accepted_at || null,
                 is_read: r.is_read,
                 status: r.status || 'pending'
             })),
             likedMe: (likedMeData || []).map((r: any) => ({
                 id: r.user_id,
                 created_at: r.created_at,
+                accepted_at: r.accepted_at || null,
                 is_read: r.is_read,
                 status: r.status || 'pending'
             })),
@@ -58,6 +61,7 @@ export async function PATCH(request: Request) {
         const admin = await getSupabaseAdmin()
         const updateData: any = {}
         if (status !== undefined) updateData.status = status
+        if (status === 'accepted') updateData.accepted_at = new Date().toISOString()
         if (is_read !== undefined) updateData.is_read = is_read
 
         const { error } = await admin
@@ -68,6 +72,10 @@ export async function PATCH(request: Request) {
 
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 500 })
+        }
+
+        if (status === 'accepted' && participants.likerId !== authUserId) {
+            await createNotification(participants.likerId, authUserId, 'interest_accepted')
         }
 
         return NextResponse.json({ success: true })
@@ -91,6 +99,7 @@ export async function POST(request: Request) {
         const admin = await getSupabaseAdmin()
         const insertData: any = { user_id: authUserId, liked_user_id: likedUserId }
         if (status) insertData.status = status
+        if (status === 'accepted') insertData.accepted_at = new Date().toISOString()
 
         const { error } = await admin.from('likes').insert(insertData)
 
@@ -100,6 +109,12 @@ export async function POST(request: Request) {
             }
             return NextResponse.json({ error: error.message }, { status: 500 })
         }
+
+        await createNotification(
+            likedUserId,
+            authUserId,
+            status === 'accepted' ? 'interest_accepted' : 'interest_received'
+        )
 
         return NextResponse.json({ success: true })
     } catch (error: any) {

@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { DashboardJourneyPatterns } from "@/components/dashboard/dashboard-journey-patterns"
+import { sendEmail } from "@/app/actions/email"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -201,6 +202,7 @@ export function AdminEmailPanel() {
   const [testEmail, setTestEmail] = useState("")
   const [testTemplateId, setTestTemplateId] = useState(DEFAULT_EMAIL_TEMPLATES[0].id)
   const [isHydrated, setIsHydrated] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     setTemplates(loadStored(STORAGE_KEYS.templates, DEFAULT_EMAIL_TEMPLATES))
@@ -297,13 +299,39 @@ export function AdminEmailPanel() {
     toast.success("Campaign draft created")
   }
 
-  const handleTestSend = () => {
+  const handleTestSend = async () => {
     if (!testEmail.trim()) {
       toast.error("Enter a recipient email address")
       return
     }
     const template = templates.find((t) => t.id === testTemplateId)
-    toast.success(`Test email queued: "${template?.name}" → ${testEmail}`)
+    if (!template) {
+      toast.error("Select a template first")
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const result = await sendEmail({
+        to: testEmail,
+        subject: `[Test] ${template.subject}`,
+        html: `<div>
+          <p><em>This is a test email from Manavizha Admin Panel</em></p>
+          <hr />
+          ${template.body.replace(/\n/g, '<br/>')}
+        </div>`,
+      })
+
+      if (result.success) {
+        toast.success(`Test email sent to ${testEmail}!`)
+      } else {
+        toast.error(`Failed to send test email: ${result.error}`)
+      }
+    } catch (err: any) {
+      toast.error(`Error: ${err.message}`)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (!isHydrated) {

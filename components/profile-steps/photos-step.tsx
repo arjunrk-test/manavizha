@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { FormData } from "@/types/profile"
+import { supabase } from "@/lib/supabase"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import {
@@ -10,6 +11,7 @@ import {
 } from "@/components/profile-steps/setup-section-header"
 import { AlertCircle, Camera, IdCard, ShieldCheck, Upload, Users, X } from "lucide-react"
 import { VerificationDialog } from "@/components/verification-dialog"
+import { ImageCropModal } from "@/components/ui/image-crop-modal"
 
 interface PhotosStepProps {
   formData: FormData
@@ -20,6 +22,39 @@ interface PhotosStepProps {
 export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showVerificationDialog, setShowVerificationDialog] = useState(false)
+  const [cropSrc, setCropSrc] = useState<string | null>(null)
+  const [verificationStatus, setVerificationStatus] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!userId) return
+
+    const fetchStatus = async () => {
+      // First check if already verified in personal details
+      const { data: personal } = await supabase
+        .from("personal_details")
+        .select("photo_verified")
+        .eq("user_id", userId)
+        .maybeSingle()
+
+      if (personal?.photo_verified) {
+        setVerificationStatus("verified")
+        return
+      }
+
+      // Then check pending requests in photos
+      const { data: photoData } = await supabase
+        .from("photos")
+        .select("verification_status")
+        .eq("user_id", userId)
+        .maybeSingle()
+
+      if (photoData?.verification_status) {
+        setVerificationStatus(photoData.verification_status)
+      }
+    }
+
+    fetchStatus()
+  }, [userId])
 
   const validateFile = (file: File): string | null => {
     if (file.size > 5 * 1024 * 1024) {
@@ -31,65 +66,44 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
     return null
   }
 
+  // Photos are added one at a time so each can be cropped before saving.
   const handleUserPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files) return
+    const file = e.target.files?.[0]
+    if (!file) return
 
     const currentPhotos = formData.userPhotos || []
-    const filesArray = Array.from(files)
-    const newErrors: string[] = []
-    const validFiles: File[] = []
-
-    // First, validate all files
-    filesArray.forEach((file) => {
-      const error = validateFile(file)
-      if (error) {
-        newErrors.push(`${file.name}: ${error}`)
-      } else {
-        validFiles.push(file)
-      }
-    })
-
-    // Check if adding valid files would exceed max limit
-    if (currentPhotos.length + validFiles.length > 6) {
-      newErrors.push(`Maximum 6 photos allowed. You currently have ${currentPhotos.length} photo(s). Cannot add ${validFiles.length} more.`)
-    }
-
-    if (newErrors.length > 0) {
-      setErrors((prev) => ({
-        ...prev,
-        userPhotos: newErrors.join(", "),
-      }))
+    if (currentPhotos.length >= 6) {
+      setErrors((prev) => ({ ...prev, userPhotos: "Maximum 6 photos allowed." }))
       e.target.value = ""
       return
     }
 
-    // Process valid files
-    let processedCount = 0
-    const newPhotos: string[] = []
+    const error = validateFile(file)
+    if (error) {
+      setErrors((prev) => ({ ...prev, userPhotos: `${file.name}: ${error}` }))
+      e.target.value = ""
+      return
+    }
 
-    validFiles.forEach((file) => {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const result = reader.result as string
-        newPhotos.push(result)
-        processedCount++
-
-        // When all files are processed, update state
-        if (processedCount === validFiles.length) {
-          const updatedPhotos = [...currentPhotos, ...newPhotos]
-          onChange("userPhotos", updatedPhotos)
-          setErrors((prev) => {
-            const { userPhotos, ...rest } = prev
-            return rest
-          })
-        }
-      }
-      reader.readAsDataURL(file)
-    })
-
-    // Reset input
+    // Read the file, then open the crop modal
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setCropSrc(reader.result as string)
+      setErrors((prev) => {
+        const { userPhotos, ...rest } = prev
+        return rest
+      })
+    }
+    reader.readAsDataURL(file)
     e.target.value = ""
+  }
+
+  const handleCroppedPhoto = (dataUrl: string) => {
+    const currentPhotos = formData.userPhotos || []
+    if (currentPhotos.length < 6) {
+      onChange("userPhotos", [...currentPhotos, dataUrl])
+    }
+    setCropSrc(null)
   }
 
   const handleFamilyPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -255,7 +269,6 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
             <div className="relative group aspect-[3/4]">
               <input
                 type="file"
-                multiple
                 accept="image/*"
                 onChange={handleUserPhotoUpload}
                 className="hidden"
@@ -283,7 +296,7 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
           <SetupSectionHeader
             icon={Users}
             title="Family photo"
-            description="Required photo of your family"
+            description="Optional photo of your family"
           />
           <div className="setup-section-card-body space-y-4">
         {errors.familyPhoto && (
@@ -329,9 +342,9 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
                 </div>
                 <div className="text-center">
                   <span className="block text-[12px] font-black uppercase tracking-[0.4em] text-[#e87898] mb-2">Upload Family Photo</span>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest px-4 py-2 rounded-full bg-white/40 border border-[#f0ebe3] w-fit mx-auto">
-                    Required for Profile
-                  </p>
+                  <div className="mx-auto w-fit px-3 py-1 rounded-full border border-[#f0ebe3] bg-white text-[9px] font-black tracking-widest text-[#6b7280]">
+                    Optional
+                  </div>
                 </div>
               </label>
             </div>
@@ -435,13 +448,32 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
                   Profiles with verified profiles achieve <span className="text-[#e87898] font-black">much faster matches</span>. Complete identity verification to verify your account.
                 </p>
               </div>
-              <Button
-                type="button"
-                onClick={() => setShowVerificationDialog(true)}
-                className="h-16 px-12 rounded-[1.25rem] bg-[#e87898] hover:bg-[#d66686] text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(59,185,172,0.4)] transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
-              >
-                Start Verification
-              </Button>
+              
+              {verificationStatus === "verified" ? (
+                <Button
+                  type="button"
+                  disabled
+                  className="h-16 px-12 rounded-[1.25rem] bg-[#10b981] hover:bg-[#10b981] text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(16,185,129,0.4)] whitespace-nowrap"
+                >
+                  <ShieldCheck className="h-4 w-4 mr-2" /> Verified
+                </Button>
+              ) : verificationStatus === "pending" ? (
+                <Button
+                  type="button"
+                  disabled
+                  className="h-16 px-12 rounded-[1.25rem] bg-[#f59e0b] hover:bg-[#f59e0b] text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(245,158,11,0.4)] whitespace-nowrap"
+                >
+                  <AlertCircle className="h-4 w-4 mr-2" /> Pending Review
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={() => setShowVerificationDialog(true)}
+                  className="h-16 px-12 rounded-[1.25rem] bg-[#e87898] hover:bg-[#d66686] text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(59,185,172,0.4)] transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+                >
+                  Start Verification
+                </Button>
+              )}
             </div>
           </div>
           </div>
@@ -456,6 +488,14 @@ export function PhotosStep({ formData, onChange, userId }: PhotosStepProps) {
           existingPhotos={userPhotos}
         />
       )}
+
+      <ImageCropModal
+        open={!!cropSrc}
+        imageSrc={cropSrc}
+        aspect={3 / 4}
+        onCancel={() => setCropSrc(null)}
+        onCropped={handleCroppedPhoto}
+      />
       </div>
     </div>
   )

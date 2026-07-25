@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { updateVerificationStatus } from "@/app/actions/admin"
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,8 @@ interface VerificationRequest {
   name: string
   live_photo_url: string
   comparison_photo_url: string
+  aadhar_front?: string
+  aadhar_back?: string
   created_at: string
   verification_status: string
 }
@@ -78,6 +81,8 @@ export function AdminVerificationPanel() {
           user_id,
           live_photo_url,
           comparison_photo_url,
+          aadhar_front,
+          aadhar_back,
           verification_status,
           created_at
         `)
@@ -104,6 +109,8 @@ export function AdminVerificationPanel() {
           name: personal?.name || "Unknown User",
           live_photo_url: photo.live_photo_url,
           comparison_photo_url: photo.comparison_photo_url,
+          aadhar_front: photo.aadhar_front,
+          aadhar_back: photo.aadhar_back,
           created_at: photo.created_at,
           verification_status: photo.verification_status,
         }
@@ -126,25 +133,13 @@ export function AdminVerificationPanel() {
   const handleAction = async (userId: string, status: "verified" | "rejected") => {
     setProcessingId(userId)
     try {
-      const { error: photosError } = await supabase
-        .from("photos")
-        .update({ verification_status: status })
-        .eq("user_id", userId)
+      const { data: session } = await supabase.auth.getSession()
+      const token = session?.session?.access_token
+      if (!token) throw new Error("No admin session found")
 
-      if (photosError) throw photosError
-
-      if (status === "verified") {
-        const { error: personalError } = await supabase
-          .from("personal_details")
-          .update({ photo_verified: true })
-          .eq("user_id", userId)
-
-        if (personalError) throw personalError
-      } else {
-        await supabase
-          .from("personal_details")
-          .update({ photo_verified: false })
-          .eq("user_id", userId)
+      const res = await updateVerificationStatus(token, userId, status)
+      if (!res.success) {
+        throw new Error(res.error || "Failed to update verification status")
       }
 
       toast.success(`User ${status === "verified" ? "verified" : "rejected"} successfully`)
@@ -448,6 +443,67 @@ export function AdminVerificationPanel() {
                     </div>
                   </div>
                 </div>
+
+                {/* Optional Aadhaar Document Display */}
+                {(selectedRequest.aadhar_front || selectedRequest.aadhar_back) && (
+                  <div className="mt-6 border-t border-[#f0ebe3] pt-5">
+                    <h4 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1F4068] mb-4">
+                      <ShieldCheck className="h-4 w-4 text-[#3bb9ac]" />
+                      Submitted ID (Aadhaar)
+                    </h4>
+                    <div className="grid items-stretch gap-6 md:grid-cols-2">
+                      {selectedRequest.aadhar_front && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between px-0.5">
+                            <h4 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-500">
+                              Aadhaar Front
+                            </h4>
+                            <a
+                              href={selectedRequest.aadhar_front}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-1 text-[10px] font-medium text-[#3bb9ac] hover:underline"
+                            >
+                              Full image <ExternalLink className="h-2.5 w-2.5" />
+                            </a>
+                          </div>
+                          <div className="aspect-[3/2] overflow-hidden rounded-xl border-2 border-[#f0ebe3] bg-[#faf8f4]">
+                            <img
+                              src={selectedRequest.aadhar_front}
+                              alt="Aadhaar Front"
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
+                      {selectedRequest.aadhar_back && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between px-0.5">
+                            <h4 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-500">
+                              Aadhaar Back
+                            </h4>
+                            <a
+                              href={selectedRequest.aadhar_back}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-1 text-[10px] font-medium text-[#3bb9ac] hover:underline"
+                            >
+                              Full image <ExternalLink className="h-2.5 w-2.5" />
+                            </a>
+                          </div>
+                          <div className="aspect-[3/2] overflow-hidden rounded-xl border-2 border-[#f0ebe3] bg-[#faf8f4]">
+                            <img
+                              src={selectedRequest.aadhar_back}
+                              alt="Aadhaar Back"
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div className="mt-5 flex items-start gap-2.5 rounded-lg border border-[#c5d4e4] bg-[#e8eef5] px-3.5 py-3">
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#1F4068]" />

@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import { authFetch } from "@/lib/api-client"
 import { MessageCircle, Send, Crown } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getOrCreatePrivateKey, canEncryptFor, encryptMessage } from "@/lib/e2e"
 
 interface MessageDialogProps {
     isOpen: boolean
@@ -43,13 +44,21 @@ export function MessageDialog({
 
         setIsSending(true)
         try {
+            let body: any = { receiverId, content: message }
+
+            // Encrypt end-to-end when the recipient has a published key
+            try {
+                const priv = senderId ? await getOrCreatePrivateKey(senderId) : null
+                if (priv && (await canEncryptFor(receiverId))) {
+                    const enc = await encryptMessage(message, priv, receiverId)
+                    if (enc) body = { receiverId, content: enc.ciphertext, iv: enc.iv, isEncrypted: true }
+                }
+            } catch { /* fall back to plaintext */ }
+
             const res = await authFetch("/api/messages", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    receiverId,
-                    content: message
-                })
+                body: JSON.stringify(body)
             })
 
             if (!res.ok) {
